@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAB Consulting — Admin panelė</title>
+  <meta name="robots" content="noindex, nofollow">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --kab-navy: #0B1E3F;
+      --kab-gold: #C9A961;
+      --kab-cream: #F7F4EC;
+      --kab-gray: #5A5A5A;
+      --kab-light: #F9F9F9;
+      --kab-border: #E5E5E5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: #F5F5F5;
+      color: #333;
+    }
+
+    header {
+      background: var(--kab-navy);
+      color: white;
+      padding: 20px 30px;
+      border-bottom: 4px solid var(--kab-gold);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 { margin: 0; font-size: 20px; }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .logout-btn:hover { background: rgba(255,255,255,0.2); }
+
+    main { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+    .card {
+      background: white;
+      border-radius: 6px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      color: var(--kab-navy);
+      font-size: 17px;
+      margin: 0 0 15px 0;
+      border-bottom: 2px solid var(--kab-gold);
+      padding-bottom: 10px;
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 6px;
+      text-align: center;
+      border-left: 4px solid var(--kab-gold);
+    }
+
+    .stat-value { font-size: 32px; font-weight: 700; color: var(--kab-navy); }
+    .stat-label { color: var(--kab-gray); font-size: 13px; margin-top: 5px; }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary { background: var(--kab-navy); color: white; }
+    .btn-primary:hover { background: #1a3055; }
+    .btn-gold { background: var(--kab-gold); color: var(--kab-navy); font-weight: 600; }
+    .btn-gold:hover { background: #b59552; }
+    .btn-small { padding: 6px 12px; font-size: 12px; }
+    .btn-ghost { background: transparent; color: var(--kab-navy); border: 1px solid var(--kab-border); }
+    .btn-ghost:hover { background: var(--kab-light); }
+
+    /* Forma */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 12px;
+    }
+
+    .form-field label {
+      display: block;
+      font-size: 13px;
+      color: var(--kab-gray);
+      margin-bottom: 4px;
+    }
+
+    .form-field input, .form-field textarea, .form-field select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--kab-border);
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: var(--kab-cream);
+      padding: 12px;
+      text-align: left;
+      font-size: 12px;
+      color: var(--kab-navy);
+      border-bottom: 2px solid var(--kab-gold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td { padding: 12px; border-bottom: 1px solid var(--kab-border); font-size: 14px; }
+    tr:hover { background: var(--kab-light); }
+
+    /* Status badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-draft { background: #FFF3E0; color: #E65100; }
+    .badge-submitted-interim { background: #FFF9E6; color: #B8860B; }
+    .badge-submitted-final { background: #E8F5E9; color: #2E7D32; }
+    .badge-reviewed { background: #E3F2FD; color: #1565C0; }
+    .badge-archived { background: #EEE; color: #666; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 30, 63, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 6px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 25px;
+    }
+
+    .modal h2 { margin-top: 0; }
+
+    .copy-link-box {
+      background: var(--kab-cream);
+      padding: 15px;
+      border-radius: 4px;
+      border-left: 4px solid var(--kab-gold);
+      font-family: monospace;
+      font-size: 13px;
+      word-break: break-all;
+      margin: 15px 0;
+      position: relative;
+    }
+
+    /* Login */
+    .login-box {
+      max-width: 400px;
+      margin: 100px auto;
+      background: white;
+      padding: 40px;
+      border-radius: 6px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .login-box h1 {
+      color: var(--kab-navy);
+      text-align: center;
+      margin: 0 0 20px 0;
+    }
+
+    .hidden { display: none !important; }
+
+    /* File list in modal */
+    .file-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--kab-light);
+      border-radius: 4px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .alert {
+      padding: 12px 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-size: 13px;
+    }
+
+    .alert-success { background: #E8F5E9; color: #2E7D32; border-left: 4px solid #2E7D32; }
+    .alert-error { background: #FFEBEE; color: #C62828; border-left: 4px solid #C62828; }
+    .alert-info { background: #E3F2FD; color: #1565C0; border-left: 4px solid #1565C0; }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--kab-gray); }
+
+    .actions-cell { display: flex; gap: 5px; flex-wrap: wrap; }
+
+    @media (max-width: 768px) {
+      .form-row { grid-template-columns: 1fr; }
+      header { padding: 15px 20px; flex-direction: column; gap: 10px; }
+      table { font-size: 12px; }
+      th, td { padding: 8px 6px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-view" class="hidden">
+    <div class="login-box">
+      <h1>🔐 KAB Admin</h1>
+      <p style="text-align: center; color: var(--kab-gray); font-size: 13px;">Prisijungimas prie klausimynų valdymo sistemos</p>
+
+      <div class="form-field" style="margin-bottom: 12px;">
+        <label>El. paštas</label>
+        <input type="email" id="login-email" placeholder="tomas@kab.lt">
+      </div>
+
+      <div class="form-field" style="margin-bottom: 15px;">
+        <label>Slaptažodis</label>
+        <input type="password" id="login-password">
+      </div>
+
+      <div id="login-error" class="alert alert-error hidden"></div>
+
+      <button class="btn btn-primary" style="width: 100%;" onclick="doLogin()">Prisijungti</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard-view" class="hidden">
+
+    <header>
+      <h1>KAB Consulting — Klausimynų valdymas</h1>
+      <div>
+        <span id="user-email" style="font-size: 13px; margin-right: 15px; opacity: 0.8;"></span>
+        <button class="logout-btn" onclick="doLogout()">Atsijungti</button>
+      </div>
+    </header>
+
+    <main>
+
+      <!-- Statistikos -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-draft">-</div>
+          <div class="stat-label">📝 Juodraštis</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-interim">-</div>
+          <div class="stat-label">📬 Tarpiniai</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-final">-</div>
+          <div class="stat-label">✅ Galutiniai</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-reviewed">-</div>
+          <div class="stat-label">✓ Peržiūrėti</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">-</div>
+          <div class="stat-label">Iš viso</div>
+        </div>
+      </div>
+
+      <!-- Naujo kliento kūrimas -->
+      <div class="card">
+        <h2>➕ Sukurti naują klausimyno nuorodą klientui</h2>
+
+        <div id="create-alert"></div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Įmonės pavadinimas *</label>
+            <input type="text" id="new-client-name" placeholder="UAB ...">
+          </div>
+          <div class="form-field">
+            <label>Kontaktinis asmuo *</label>
+            <input type="text" id="new-client-contact" placeholder="Vardas Pavardė">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>El. paštas *</label>
+            <input type="email" id="new-client-email" placeholder="kontaktas@imone.lt">
+          </div>
+          <div class="form-field">
+            <label>Telefonas</label>
+            <input type="tel" id="new-client-phone" placeholder="+370 ...">
+          </div>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 15px;">
+          <label>Vidinės pastabos (klientas nematys)</label>
+          <textarea id="new-client-notes" rows="2" placeholder="Papildoma info apie klientą"></textarea>
+        </div>
+
+        <button class="btn btn-gold" onclick="createSubmission()">Sukurti nuorodą</button>
+      </div>
+
+      <!-- Lentelė -->
+      <div class="card">
+        <h2>📋 Klausimynų sąrašas</h2>
+
+        <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-ghost btn-small" onclick="filterBy('all')">Visi</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('draft')">📝 Juodraštis</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('submitted_interim')">📬 Tarpiniai</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('submitted_final')">✅ Galutiniai</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('reviewed')">✓ Peržiūrėti</button>
+          <button class="btn btn-ghost btn-small" onclick="loadSubmissions()">🔄 Atnaujinti</button>
+        </div>
+
+        <div id="submissions-table-container">
+          <div class="empty-state">Kraunasi...</div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Modal: kliento detali peržiūra -->
+  <div id="detail-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeModal()">
+    <div class="modal">
+      <div id="modal-content">
+        <!-- užpildoma per JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: naujai sukurta nuoroda -->
+  <div id="link-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeLinkModal()">
+    <div class="modal">
+      <h2>✅ Nuoroda sukurta</h2>
+      <p>Nuoroda kliento klausimynui:</p>
+      <div class="copy-link-box" id="generated-link"></div>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-gold" onclick="copyGeneratedLink()">📋 Kopijuoti nuorodą</button>
+        <button class="btn btn-primary" id="email-btn">📧 Siųsti klientui email'u</button>
+        <button class="btn btn-ghost" onclick="closeLinkModal()">Uždaryti</button>
+      </div>
+
+      <div class="alert alert-info" style="margin-top: 20px;">
+        <strong>Rekomenduojame:</strong> siųsdami nuorodą klientui, pridėkite trumpą paaiškinimą, kad šis klausimynas yra KAB Consulting pasirengimo nemokumo procesui dalis.
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // =====================================================================
+  // KAB ADMIN PANELĖ
+  // =====================================================================
+
+  // ======== PAKEISKITE PRIEŠ DEPLOY ==========
+  const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
+  const CLIENT_BASE_URL = 'https://kab-consulting.github.io/kab-auditas';  // GitHub Pages URL
+  // ===========================================
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let allSubmissions = [];
+  let currentFilter = 'all';
+  let lastGeneratedLink = null;
+  let lastCreatedSubmission = null;
+
+  // Init
+  (async function init() {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+      showDashboard(session.user);
+      await loadSubmissions();
+    } else {
+      showLogin();
+    }
+  })();
+
+  function showLogin() {
+    document.getElementById('login-view').classList.remove('hidden');
+    document.getElementById('dashboard-view').classList.add('hidden');
+  }
+
+  function showDashboard(user) {
+    document.getElementById('login-view').classList.add('hidden');
+    document.getElementById('dashboard-view').classList.remove('hidden');
+    document.getElementById('user-email').textContent = user.email;
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+
+    errorEl.classList.add('hidden');
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      errorEl.textContent = 'Prisijungti nepavyko: ' + error.message;
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    showDashboard(data.user);
+    await loadSubmissions();
+  }
+
+  async function doLogout() {
+    await supabase.auth.signOut();
+    showLogin();
+  }
+
+  // ===== SUBMISSIONS =====
+
+  async function loadSubmissions() {
+    const container = document.getElementById('submissions-table-container');
+    container.innerHTML = '<div class="empty-state">Kraunasi...</div>';
+
+    const { data, error } = await supabase
+      .from('questionnaire_submissions')
+      .select('*, questionnaire_files(count)')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      container.innerHTML = `<div class="alert alert-error">Klaida: ${error.message}</div>`;
+      return;
+    }
+
+    allSubmissions = data || [];
+    updateStats();
+    renderTable();
+  }
+
+  function updateStats() {
+    const counts = {
+      draft: 0,
+      submitted_interim: 0,
+      submitted_final: 0,
+      reviewed: 0,
+      archived: 0
+    };
+    allSubmissions.forEach(s => counts[s.status] = (counts[s.status] || 0) + 1);
+
+    document.getElementById('stat-draft').textContent = counts.draft;
+    document.getElementById('stat-interim').textContent = counts.submitted_interim;
+    document.getElementById('stat-final').textContent = counts.submitted_final;
+    document.getElementById('stat-reviewed').textContent = counts.reviewed;
+    document.getElementById('stat-total').textContent = allSubmissions.length;
+  }
+
+  function filterBy(status) {
+    currentFilter = status;
+    renderTable();
+  }
+
+  function renderTable() {
+    const container = document.getElementById('submissions-table-container');
+    const filtered = currentFilter === 'all'
+      ? allSubmissions
+      : allSubmissions.filter(s => s.status === currentFilter);
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state">Nėra įrašų</div>';
+      return;
+    }
+
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Klientas</th>
+            <th>Kontaktas</th>
+            <th>Būsena</th>
+            <th>Failų</th>
+            <th>Sukurta / Pateikta</th>
+            <th>Veiksmai</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    const statusLabels = {
+      draft: { label: '📝 Juodraštis', class: 'badge-draft' },
+      submitted_interim: { label: '📬 Tarpinis', class: 'badge-submitted-interim' },
+      submitted_final: { label: '✅ Galutinis', class: 'badge-submitted-final' },
+      reviewed: { label: '✓ Peržiūrėtas', class: 'badge-reviewed' },
+      archived: { label: '🗄️ Archyvas', class: 'badge-archived' }
+    };
+
+    for (const s of filtered) {
+      const badge = statusLabels[s.status] || statusLabels.draft;
+      const filesCount = (s.questionnaire_files && s.questionnaire_files[0] && s.questionnaire_files[0].count) || 0;
+      const date = new Date(s.submitted_at || s.interim_submitted_at || s.created_at);
+      const dateStr = date.toLocaleDateString('lt-LT') + ' ' + date.toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' });
+
+      html += `
+        <tr>
+          <td><strong>${escapeHtml(s.client_name || '-')}</strong></td>
+          <td>
+            ${escapeHtml(s.client_contact || '-')}<br>
+            <small style="color: #999;">${escapeHtml(s.client_email || '')}</small>
+          </td>
+          <td><span class="badge ${badge.class}">${badge.label}</span></td>
+          <td style="text-align: center;">${filesCount}</td>
+          <td style="font-size: 12px;">${dateStr}</td>
+          <td class="actions-cell">
+            <button class="btn btn-primary btn-small" onclick="viewDetail('${s.id}')">Peržiūrėti</button>
+            ${(s.status === 'draft' || s.status === 'submitted_interim') ? `<button class="btn btn-ghost btn-small" onclick="copyLink('${s.access_token}')" title="Kopijuoti kliento nuorodą">🔗</button>` : ''}
+          </td>
+        </tr>
+      `;
+    }
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  // ===== SUKURTI NAUJĄ =====
+
+  async function createSubmission() {
+    const name = document.getElementById('new-client-name').value.trim();
+    const contact = document.getElementById('new-client-contact').value.trim();
+    const email = document.getElementById('new-client-email').value.trim();
+    const phone = document.getElementById('new-client-phone').value.trim();
+    const notes = document.getElementById('new-client-notes').value.trim();
+
+    const alertEl = document.getElementById('create-alert');
+    alertEl.innerHTML = '';
+
+    if (!name || !contact || !email) {
+      alertEl.innerHTML = '<div class="alert alert-error">Užpildykite privalomus laukus (pažymėti *)</div>';
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('questionnaire_submissions')
+      .insert({
+        client_name: name,
+        client_contact: contact,
+        client_email: email,
+        client_phone: phone || null,
+        notes: notes || null,
+        status: 'draft'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      alertEl.innerHTML = `<div class="alert alert-error">Klaida: ${error.message}</div>`;
+      return;
+    }
+
+    lastCreatedSubmission = data;
+    lastGeneratedLink = `${CLIENT_BASE_URL}/?t=${data.access_token}`;
+    showLinkModal(lastGeneratedLink, email);
+
+    // Išvalom formą
+    ['new-client-name','new-client-contact','new-client-email','new-client-phone','new-client-notes'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+
+    await loadSubmissions();
+  }
+
+  function showLinkModal(link, email) {
+    document.getElementById('generated-link').textContent = link;
+
+    const emailBtn = document.getElementById('email-btn');
+    const subject = encodeURIComponent('KAB Consulting — nuoroda klausimyno pildymui');
+    const body = encodeURIComponent(
+      `Sveiki,\n\n` +
+      `Prisegame nuorodą KAB Consulting klausimynui. Užpildžius atsakymus ir įkėlus reikiamus dokumentus, mūsų specialistai galės įvertinti Jūsų situaciją.\n\n` +
+      `Nuoroda: ${link}\n\n` +
+      `Klausimas ar pastabos: klausk@kab.lt\n\n` +
+      `Pagarbiai,\n` +
+      `KAB Consulting`
+    );
+    emailBtn.onclick = () => {
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    };
+
+    document.getElementById('link-modal').classList.remove('hidden');
+  }
+
+  function closeLinkModal() {
+    document.getElementById('link-modal').classList.add('hidden');
+  }
+
+  function copyGeneratedLink() {
+    navigator.clipboard.writeText(lastGeneratedLink).then(() => {
+      alert('Nuoroda nukopijuota!');
+    });
+  }
+
+  function copyLink(token) {
+    const link = `${CLIENT_BASE_URL}/?t=${token}`;
+    navigator.clipboard.writeText(link).then(() => {
+      alert('Nuoroda nukopijuota:\n' + link);
+    });
+  }
+
+  // ===== DETAL PERŽIŪRA =====
+
+  async function viewDetail(id) {
+    const modal = document.getElementById('detail-modal');
+    const content = document.getElementById('modal-content');
+    content.innerHTML = 'Kraunasi...';
+    modal.classList.remove('hidden');
+
+    const { data: sub } = await supabase
+      .from('questionnaire_submissions')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    const { data: files } = await supabase
+      .from('questionnaire_files')
+      .select('*')
+      .eq('submission_id', id)
+      .order('section_id');
+
+    // Generate signed URLs for files
+    const filesWithUrls = [];
+    for (const f of files || []) {
+      const { data: urlData } = await supabase.storage
+        .from('client-documents')
+        .createSignedUrl(f.storage_path, 7 * 24 * 60 * 60, { download: f.original_name });
+      filesWithUrls.push({ ...f, download_url: urlData?.signedUrl });
+    }
+
+    renderDetail(sub, filesWithUrls);
+  }
+
+  // Visi galimi skyriai
+  const ALL_SECTIONS_ADMIN = ['01_bendri', '02_finansai', '03_kreditoriai', '04_teismai', '05_kita'];
+
+  // KLAUSIMŲ KATALOGAS (sinchronizuotas su index.html)
+  const QUESTIONS_CATALOG = [
+    {
+      id: '01_bendri',
+      title: '1. Bendri įmonės duomenys',
+      questions: [
+        { id: 'q1_1', number: '1.1', text: 'Įmonės pavadinimas' },
+        { id: 'q1_2', number: '1.2', text: 'Įmonės kodas' },
+        { id: 'q1_3', number: '1.3', text: 'Registracijos adresas' },
+        { id: 'q1_4', number: '1.4', text: 'Veiklos pobūdis (pagrindinis)' },
+        { id: 'q1_5', number: '1.5', text: 'Vadovas (vardas, pavardė)' },
+        { id: 'q1_6', number: '1.6', text: 'Kada įmonė įsteigta?' },
+        { id: 'q1_7', number: '1.7', text: 'Darbuotojų skaičius (dabar)' },
+      ],
+    },
+    {
+      id: '02_finansai',
+      title: '2. Finansinė būklė',
+      questions: [
+        { id: 'q2_1', number: '2.1', text: 'Paskutinio finansinio laikotarpio apyvarta (EUR)' },
+        { id: 'q2_2', number: '2.2', text: 'Ar įmonė turi neigiamą pelną?' },
+        { id: 'q2_3', number: '2.3', text: 'Bendras turto vertė balansu (EUR)' },
+        { id: 'q2_4', number: '2.4', text: 'Bendri įsipareigojimai (EUR)' },
+        { id: 'q2_5', number: '2.5', text: 'Ar įmonė vėluoja atsiskaityti su kreditoriais daugiau nei 3 mėn.?' },
+      ],
+    },
+    {
+      id: '03_kreditoriai',
+      title: '3. Kreditoriai ir skolos',
+      questions: [
+        { id: 'q3_1', number: '3.1', text: 'Bendra skolų suma (EUR)' },
+        { id: 'q3_2', number: '3.2', text: 'Kreditorių skaičius' },
+        { id: 'q3_3', number: '3.3', text: 'Ar yra įkeistų įmonės turtų?' },
+        { id: 'q3_4', number: '3.4', text: 'Ar yra skolų VMI / Sodra?' },
+        { id: 'q3_5', number: '3.5', text: 'Ar yra darbo užmokesčio įsiskolinimų darbuotojams?' },
+      ],
+    },
+    {
+      id: '04_teismai',
+      title: '4. Teisminiai ginčai',
+      questions: [
+        { id: 'q4_1', number: '4.1', text: 'Ar įmonė turi teisminius ginčus?' },
+        { id: 'q4_2', number: '4.2', text: 'Teisminių ginčų aprašymas (jei yra)' },
+      ],
+    },
+    {
+      id: '05_kita',
+      title: '5. Papildoma informacija',
+      questions: [
+        { id: 'q5_1', number: '5.1', text: 'Kokio tikslo siekiate? (galima pasirinkti kelis)' },
+        { id: 'q5_2', number: '5.2', text: 'Papildomos pastabos' },
+      ],
+    },
+  ];
+
+  // Saugome failus globaliai, kad ZIP/XLSX funkcijos juos matytų
+  let currentFiles = [];
+  let currentSubmission = null;
+
+  function renderDetail(sub, files) {
+    const content = document.getElementById('modal-content');
+    const answers = sub.answers || {};
+
+    // Saugom globaliai ZIP funkcijai
+    currentFiles = files;
+    currentSubmission = sub;
+
+    let answersHtml = '';
+    if (Object.keys(answers).length === 0) {
+      answersHtml = '<p style="color:#999;">Nėra atsakymų</p>';
+    } else {
+      answersHtml = '<table style="width:100%;"><tbody>';
+      for (const [k, v] of Object.entries(answers)) {
+        const val = Array.isArray(v) ? v.join(', ') : (v || '-');
+        answersHtml += `<tr><td style="width:120px; color:#666; vertical-align:top;"><strong>${escapeHtml(k)}</strong></td><td>${escapeHtml(String(val))}</td></tr>`;
+      }
+      answersHtml += '</tbody></table>';
+    }
+
+    // Grupuojame failus pagal skyrių (rodome VISUS skyrius, net tuščius)
+    const filesBySection = {};
+    for (const sec of ALL_SECTIONS_ADMIN) {
+      filesBySection[sec] = [];
+    }
+    files.forEach(f => {
+      if (!filesBySection[f.section_id]) filesBySection[f.section_id] = [];
+      filesBySection[f.section_id].push(f);
+    });
+
+    let filesHtml = '';
+    for (const sec of ALL_SECTIONS_ADMIN) {
+      const secFiles = filesBySection[sec] || [];
+      filesHtml += `<h4 style="color: var(--kab-navy); margin: 15px 0 8px 0;">📁 ${escapeHtml(sec)} (${secFiles.length})</h4>`;
+
+      if (secFiles.length === 0) {
+        filesHtml += `<p style="color:#999; font-style:italic; margin: 5px 0 0 20px; font-size: 13px;">Klientas neįkėlė dokumentų šiame skyriuje</p>`;
+      } else {
+        for (const f of secFiles) {
+          filesHtml += `
+            <div class="file-list-item">
+              <span>📄 ${escapeHtml(f.original_name)} <small style="color:#999;">(${formatBytes(f.file_size)})</small></span>
+              <a href="${f.download_url}" class="btn btn-gold btn-small" download>Parsisiųsti</a>
+            </div>
+          `;
+        }
+      }
+    }
+
+    // Status dropdown su visais statusais
+    const statusSelectOptions = ['draft','submitted_interim','submitted_final','reviewed','archived'].map(s => {
+      const labels = {
+        'draft': '📝 Juodraštis',
+        'submitted_interim': '📬 Tarpinis',
+        'submitted_final': '✅ Galutinis',
+        'reviewed': '✓ Peržiūrėtas',
+        'archived': '🗄️ Archyvas'
+      };
+      return `<option value="${s}" ${sub.status === s ? 'selected' : ''}>${labels[s] || s}</option>`;
+    }).join('');
+
+    // ZIP + XLSX download mygtukai (tik jei yra failų arba atsakymų)
+    const hasContent = files.length > 0 || Object.keys(sub.answers || {}).length > 0;
+    const actionButtonsHtml = hasContent ? `
+      <div style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="download-xlsx-btn" class="btn" onclick="downloadXlsxReport()"
+          style="background: #2E7D32; color: white;">
+          📊 Atsisiųsti atsakymų ataskaitą (XLSX)
+        </button>
+        ${files.length > 0 ? `
+          <button id="download-all-zip-btn" class="btn btn-primary" onclick="downloadAllAsZip()">
+            📦 Atsisiųsti VISUS failus kaip ZIP
+          </button>
+        ` : ''}
+        <div id="zip-progress" style="flex: 1 1 100%; font-size: 13px; color: var(--kab-gray); display: none;"></div>
+      </div>
+    ` : '';
+
+    // Tarpinio pateikimo info
+    let interimInfoHtml = '';
+    if (sub.interim_submitted_at) {
+      interimInfoHtml = `
+        <tr>
+          <td style="color:#666;">Tarpiniai pateikimai:</td>
+          <td>${sub.interim_count || 1} kartas(-ai), paskutinis: ${new Date(sub.interim_submitted_at).toLocaleString('lt-LT')}</td>
+        </tr>
+      `;
+    }
+
+    content.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: start;">
+        <h2 style="margin-top:0;">${escapeHtml(sub.client_name || '-')}</h2>
+        <button class="btn btn-ghost btn-small" onclick="closeModal()">✕ Uždaryti</button>
+      </div>
+
+      <table style="width:100%; margin-bottom: 20px;">
+        <tr><td style="color:#666; width:150px;">Kontaktinis asmuo:</td><td>${escapeHtml(sub.client_contact || '-')}</td></tr>
+        <tr><td style="color:#666;">El. paštas:</td><td><a href="mailto:${escapeHtml(sub.client_email)}">${escapeHtml(sub.client_email || '-')}</a></td></tr>
+        <tr><td style="color:#666;">Telefonas:</td><td>${escapeHtml(sub.client_phone || '-')}</td></tr>
+        <tr><td style="color:#666;">Sukurta:</td><td>${new Date(sub.created_at).toLocaleString('lt-LT')}</td></tr>
+        ${interimInfoHtml}
+        ${sub.submitted_at ? `<tr><td style="color:#666;">Galutinai pateikta:</td><td>${new Date(sub.submitted_at).toLocaleString('lt-LT')}</td></tr>` : ''}
+        <tr><td style="color:#666;">Vidinės pastabos:</td><td>${escapeHtml(sub.notes || '-')}</td></tr>
+      </table>
+
+      <div style="margin-bottom: 15px;">
+        <label style="color:#666; font-size: 13px;">Būsena:</label>
+        <select id="status-select" style="padding: 6px; margin-left: 10px;" onchange="updateStatus('${sub.id}', this.value)">
+          ${statusSelectOptions}
+        </select>
+      </div>
+
+      <h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px;">📝 Atsakymai</h3>
+      ${answersHtml}
+
+      <h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px; margin-top: 25px;">📎 Dokumentai (${files.length})</h3>
+      <p style="font-size: 12px; color: #999;">⏱️ Parsisiuntimo nuorodos galioja 7 dienas</p>
+      ${actionButtonsHtml}
+      ${filesHtml}
+
+      ${(sub.status === 'draft' || sub.status === 'submitted_interim') ? `
+        <div class="alert alert-info" style="margin-top: 20px;">
+          <strong>Kliento nuoroda:</strong><br>
+          <code style="font-size: 11px; word-break: break-all;">${CLIENT_BASE_URL}/?t=${sub.access_token}</code>
+          <br><br>
+          <button class="btn btn-gold btn-small" onclick="navigator.clipboard.writeText('${CLIENT_BASE_URL}/?t=${sub.access_token}').then(() => alert('Nuoroda nukopijuota'))">📋 Kopijuoti nuorodą</button>
+        </div>
+      ` : ''}
+    `;
+  }
+
+  // ===== ZIP DOWNLOAD =====
+
+  async function downloadAllAsZip() {
+    if (!currentFiles || currentFiles.length === 0) {
+      alert('Nėra failų atsisiuntimui');
+      return;
+    }
+
+    const btn = document.getElementById('download-all-zip-btn');
+    const progressEl = document.getElementById('zip-progress');
+
+    // Disable mygtuką ir rodom progress
+    btn.disabled = true;
+    btn.textContent = '⏳ Ruošiama...';
+    progressEl.style.display = 'block';
+    progressEl.textContent = 'Pradedama ZIP kūrimas...';
+
+    try {
+      const zip = new JSZip();
+      let completedFiles = 0;
+
+      // Grupuojame failus pagal skyrių
+      const filesBySection = {};
+      currentFiles.forEach(f => {
+        if (!filesBySection[f.section_id]) filesBySection[f.section_id] = [];
+        filesBySection[f.section_id].push(f);
+      });
+
+      // Atsisiunčiame visus failus paraleliai
+      const downloadPromises = [];
+
+      for (const [sectionId, sectionFiles] of Object.entries(filesBySection)) {
+        for (const file of sectionFiles) {
+          const promise = fetch(file.download_url)
+            .then(response => {
+              if (!response.ok) throw new Error(`HTTP ${response.status} for ${file.original_name}`);
+              return response.blob();
+            })
+            .then(blob => {
+              // Dedame į ZIP su skyriaus aplanku
+              zip.file(`${sectionId}/${file.original_name}`, blob);
+              completedFiles++;
+              progressEl.textContent = `Parsisiųsta ${completedFiles} iš ${currentFiles.length} failų...`;
+            })
+            .catch(err => {
+              console.error(`Nepavyko parsisiųsti ${file.original_name}:`, err);
+              // Nekelias klaidos — bandysim kitus failus
+            });
+
+          downloadPromises.push(promise);
+        }
+      }
+
+      await Promise.all(downloadPromises);
+
+      // Pridedam metainfo failą
+      const clientName = currentSubmission.client_name || 'be-pavadinimo';
+      const metainfo = [
+        `KAB CONSULTING KLAUSIMYNAS`,
+        `=========================`,
+        ``,
+        `Klientas: ${currentSubmission.client_name || '-'}`,
+        `Kontaktas: ${currentSubmission.client_contact || '-'}`,
+        `El. paštas: ${currentSubmission.client_email || '-'}`,
+        `Telefonas: ${currentSubmission.client_phone || '-'}`,
+        ``,
+        `Pateikimo ID: ${currentSubmission.id}`,
+        `Sukurta: ${new Date(currentSubmission.created_at).toLocaleString('lt-LT')}`,
+        currentSubmission.submitted_at ? `Galutinai pateikta: ${new Date(currentSubmission.submitted_at).toLocaleString('lt-LT')}` : '',
+        currentSubmission.interim_submitted_at ? `Paskutinis tarpinis: ${new Date(currentSubmission.interim_submitted_at).toLocaleString('lt-LT')} (kartas ${currentSubmission.interim_count || 1})` : '',
+        ``,
+        `Statusas: ${currentSubmission.status}`,
+        ``,
+        `Atsisiųsta: ${new Date().toLocaleString('lt-LT')}`,
+        ``,
+        `--- ATSAKYMAI ---`,
+        ``,
+        ...Object.entries(currentSubmission.answers || {}).map(([k, v]) => {
+          const val = Array.isArray(v) ? v.join(', ') : String(v || '');
+          return `${k}: ${val}`;
+        })
+      ].filter(Boolean).join('\n');
+
+      zip.file('0_KLAUSIMYNO_INFORMACIJA.txt', metainfo);
+
+      // Generuojame ZIP
+      progressEl.textContent = 'Kuriamas ZIP archyvas...';
+      const zipBlob = await zip.generateAsync({
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      });
+
+      // Download link
+      const sanitizedName = clientName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const zipFileName = `KAB_${sanitizedName}_${dateStr}.zip`;
+
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = zipFileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      progressEl.textContent = `✅ ZIP atsisiųstas: ${zipFileName}`;
+      btn.disabled = false;
+      btn.textContent = '📦 Atsisiųsti VISUS failus kaip ZIP';
+
+    } catch (err) {
+      console.error('ZIP klaida:', err);
+      progressEl.textContent = '❌ Klaida kuriant ZIP: ' + err.message;
+      progressEl.style.color = 'var(--kab-error, #C62828)';
+      btn.disabled = false;
+      btn.textContent = '📦 Bandyti dar kartą';
+    }
+  }
+
+  // ===== XLSX REPORT GENERATION (client-side) =====
+
+  function downloadXlsxReport() {
+    if (!currentSubmission) {
+      alert('Nepavyko gauti duomenų');
+      return;
+    }
+
+    const btn = document.getElementById('download-xlsx-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Generuojama...';
+
+    try {
+      const sub = currentSubmission;
+      const files = currentFiles || [];
+      const answers = sub.answers || {};
+
+      // Kuriame workbook'ą
+      const wb = XLSX.utils.book_new();
+
+      // --- SHEET 1: Informacija ---
+      const infoData = [
+        ['KAB CONSULTING — KLAUSIMYNO ATASKAITA'],
+        [],
+        ['KLIENTO INFORMACIJA'],
+        ['Įmonė:', sub.client_name || '-'],
+        ['Kontaktinis asmuo:', sub.client_contact || '-'],
+        ['El. paštas:', sub.client_email || '-'],
+        ['Telefonas:', sub.client_phone || '-'],
+        [],
+        ['PATEIKIMO INFORMACIJA'],
+        ['Statusas:', getStatusLabel(sub.status)],
+        ['Sukurta:', sub.created_at ? new Date(sub.created_at).toLocaleString('lt-LT') : '-'],
+      ];
+
+      if (sub.interim_submitted_at) {
+        infoData.push(['Paskutinis tarpinis pateikimas:', new Date(sub.interim_submitted_at).toLocaleString('lt-LT')]);
+        infoData.push(['Tarpinių pateikimų kartų:', String(sub.interim_count || 1)]);
+      }
+
+      if (sub.submitted_at) {
+        infoData.push(['Galutinai pateikta:', new Date(sub.submitted_at).toLocaleString('lt-LT')]);
+      }
+
+      infoData.push([]);
+      infoData.push(['Įkeltų dokumentų skaičius:', String(files.length)]);
+      infoData.push(['Pateikimo ID:', sub.id]);
+      infoData.push([]);
+      infoData.push(['Ataskaita sugeneruota:', new Date().toLocaleString('lt-LT')]);
+
+      const wsInfo = XLSX.utils.aoa_to_sheet(infoData);
+      wsInfo['!cols'] = [{ wch: 32 }, { wch: 45 }];
+      XLSX.utils.book_append_sheet(wb, wsInfo, 'Informacija');
+
+      // --- SHEET 2: Klausimai ir atsakymai ---
+      const answersData = [
+        ['KLAUSIMAI IR ATSAKYMAI'],
+        [],
+        ['Skyrius', 'Klausimo Nr.', 'Klausimas', 'Atsakymas']
+      ];
+
+      for (const section of QUESTIONS_CATALOG) {
+        // Skyriaus antraštė kaip atskira eilutė
+        answersData.push([section.title, '', '', '']);
+
+        for (const q of section.questions) {
+          let answer = answers[q.id];
+          let answerStr = '';
+
+          if (answer === undefined || answer === null || answer === '') {
+            answerStr = '(neužpildyta)';
+          } else if (Array.isArray(answer)) {
+            answerStr = answer.join(', ');
+          } else if (typeof answer === 'object') {
+            answerStr = JSON.stringify(answer);
+          } else {
+            answerStr = String(answer);
+          }
+
+          answersData.push([
+            section.title,
+            q.number,
+            q.text,
+            answerStr
+          ]);
+        }
+
+        // Tuščia eilutė tarp skyrių
+        answersData.push(['', '', '', '']);
+      }
+
+      const wsAnswers = XLSX.utils.aoa_to_sheet(answersData);
+      wsAnswers['!cols'] = [
+        { wch: 28 }, // skyrius
+        { wch: 12 }, // nr
+        { wch: 55 }, // klausimas
+        { wch: 50 }  // atsakymas
+      ];
+
+      // Bandome pridėti freeze panes (kai kuriose Excel versijose neveiks, bet nepakenkia)
+      wsAnswers['!freeze'] = { xSplit: 0, ySplit: 3 };
+
+      XLSX.utils.book_append_sheet(wb, wsAnswers, 'Atsakymai');
+
+      // --- SHEET 3: Įkelti dokumentai ---
+      const filesData = [
+        ['ĮKELTI DOKUMENTAI'],
+        [],
+        ['Skyrius', 'Dokumento pavadinimas', 'Dydis', 'Parsisiuntimo nuoroda']
+      ];
+
+      const filesBySection = {};
+      for (const section of QUESTIONS_CATALOG) {
+        filesBySection[section.id] = [];
+      }
+      for (const f of files) {
+        if (!filesBySection[f.section_id]) filesBySection[f.section_id] = [];
+        filesBySection[f.section_id].push(f);
+      }
+
+      for (const section of QUESTIONS_CATALOG) {
+        const secFiles = filesBySection[section.id] || [];
+        if (secFiles.length === 0) {
+          filesData.push([section.title, '(klientas neįkėlė dokumentų)', '', '']);
+        } else {
+          for (const f of secFiles) {
+            filesData.push([
+              section.title,
+              f.original_name,
+              formatBytes(f.file_size),
+              f.download_url || ''
+            ]);
+          }
+        }
+      }
+
+      const wsFiles = XLSX.utils.aoa_to_sheet(filesData);
+      wsFiles['!cols'] = [
+        { wch: 28 },
+        { wch: 45 },
+        { wch: 10 },
+        { wch: 80 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsFiles, 'Dokumentai');
+
+      // --- Parsisiuntimas ---
+      const clientNameSafe = (sub.client_name || 'be_pavadinimo')
+        .replace(/[^a-zA-Z0-9ąčęėįšųūžĄČĘĖĮŠŲŪŽ_-]/g, '_')
+        .substring(0, 50);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const fileName = `KAB_Ataskaita_${clientNameSafe}_${dateStr}.xlsx`;
+
+      XLSX.writeFile(wb, fileName);
+
+      btn.disabled = false;
+      btn.textContent = '📊 Atsisiųsti atsakymų ataskaitą (XLSX)';
+
+    } catch (err) {
+      console.error('XLSX klaida:', err);
+      alert('Klaida generuojant XLSX: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = '📊 Bandyti dar kartą';
+    }
+  }
+
+  function getStatusLabel(status) {
+    const labels = {
+      'draft': 'Juodraštis',
+      'submitted_interim': 'Tarpinė ataskaita',
+      'submitted_final': 'Galutinė ataskaita',
+      'reviewed': 'Peržiūrėta',
+      'archived': 'Archyvas'
+    };
+    return labels[status] || status;
+  }
+
+  async function updateStatus(id, newStatus) {
+    const update = { status: newStatus };
+    if (newStatus === 'reviewed') update.reviewed_at = new Date().toISOString();
+
+    const { error } = await supabase
+      .from('questionnaire_submissions')
+      .update(update)
+      .eq('id', id);
+
+    if (error) {
+      alert('Klaida: ' + error.message);
+      return;
+    }
+
+    await loadSubmissions();
+  }
+
+  function closeModal() {
+    document.getElementById('detail-modal').classList.add('hidden');
+  }
+
+  // ===== HELPERS =====
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  }
+  </script>
+
+</body>
+</html>
