@@ -1203,16 +1203,30 @@
       }
 
       // Files (visi per submission)
+      // SVARBU: questionnaire_item_files.item_id yra UUID (nuoroda į items.id),
+      // bet UI naudoja section item_id (pvz., '01_1'). Reikia sukurti mapping'ą.
       const { data: filesData } = await supabase
         .from('questionnaire_item_files')
         .select('*')
         .eq('submission_id', submission.id)
         .order('uploaded_at', { ascending: false });
 
+      // Sukurti mapping'ą: items.id (UUID) → items.item_id (section's id)
+      const itemIdToSectionId = {};
+      for (const [sectionItemId, itemRecord] of Object.entries(items)) {
+        if (itemRecord.id) {
+          itemIdToSectionId[itemRecord.id] = sectionItemId;
+        }
+      }
+
       if (filesData) {
         for (const f of filesData) {
-          if (!files[f.item_id]) files[f.item_id] = [];
-          files[f.item_id].push(f);
+          // Konvertuoti UUID į section item_id
+          const sectionItemId = itemIdToSectionId[f.item_id];
+          if (sectionItemId) {
+            if (!files[sectionItemId]) files[sectionItemId] = [];
+            files[sectionItemId].push(f);
+          }
         }
       }
 
@@ -1227,8 +1241,12 @@
         for (const c of commentsData) {
           // Klientas mato tik visible_to_client
           if (c.visible_to_client) {
-            if (!comments[c.item_id]) comments[c.item_id] = [];
-            comments[c.item_id].push(c);
+            // Konvertuoti UUID į section item_id (tas pats mapping'as kaip files)
+            const sectionItemId = itemIdToSectionId[c.item_id];
+            if (sectionItemId) {
+              if (!comments[sectionItemId]) comments[sectionItemId] = [];
+              comments[sectionItemId].push(c);
+            }
           }
         }
       }
@@ -1865,7 +1883,7 @@
 
           const { error: uploadError } = await supabase.storage
             .from('client-documents')
-            .upload(storagePath, file, { upsert: false });
+            .upload(storagePath, file, { upsert: true });  // upsert: true — perrašys, jei failas jau yra
 
           if (uploadError) throw uploadError;
 
