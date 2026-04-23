@@ -102,6 +102,8 @@
 
     .btn-primary { background: var(--kab-navy); color: white; }
     .btn-primary:hover { background: #1a3055; }
+    .btn-navy { background: var(--kab-navy); color: white; font-weight: 600; }
+    .btn-navy:hover { background: #1a3055; }
     .btn-gold { background: var(--kab-gold); color: var(--kab-navy); font-weight: 600; }
     .btn-gold:hover { background: #b59552; }
     .btn-small { padding: 6px 12px; font-size: 12px; }
@@ -325,7 +327,7 @@
           <button class="template-tab active" data-template="all" onclick="filterByTemplate('all')">
             📋 Visi <span class="tab-count" id="count-all">0</span>
           </button>
-          <button class="template-tab" data-template="audit" onclick="filterByTemplate('audit')">
+          <button class="template-tab" data-template="auditas" onclick="filterByTemplate('auditas')">
             🔍 Auditas <span class="tab-count" id="count-audit">0</span>
           </button>
           <button class="template-tab" data-template="restrukturizavimas" onclick="filterByTemplate('restrukturizavimas')">
@@ -638,10 +640,13 @@
   const CLIENT_BASE_URL = 'https://kab-consulting.github.io/kab-auditas';
 
   // Šablonas → kliento puslapio failas
+  // Visi v4 šabloniniai klausimynai naudoja universalų questionnaire.html
+  // (kuris dirbs su bet kuriuo template_id)
   const TEMPLATE_URL_MAP = {
-    'restrukturizavimas': 'restructuring.html',
-    'audit': 'index.html',
-    // Atgalinis suderinamumas: jei šabloną sudaryt nepavyks, naudos index.html
+    'restrukturizavimas': 'questionnaire.html',
+    'auditas': 'questionnaire.html',
+    // Fallback: senas audito klausimynas (be template_id)
+    'audit_legacy': 'index.html',
   };
   // ===================================
 
@@ -810,7 +815,8 @@
 
     for (const s of allSubmissions) {
       const tplCode = getTemplateCode(s);
-      if (tplCode === 'audit' || tplCode === null) auditCount++;       // null = legacy audit
+      // 'auditas' = naujas v4 šablonas, null = legacy audit (senas index.html formatas)
+      if (tplCode === 'auditas' || tplCode === null) auditCount++;
       else if (tplCode === 'restrukturizavimas') restrCount++;
     }
 
@@ -902,7 +908,7 @@
       let tplBadge;
       if (tplCode === 'restrukturizavimas') {
         tplBadge = '<span class="template-badge restrukturizavimas">📊 Restrukt.</span>';
-      } else if (tplCode === 'audit') {
+      } else if (tplCode === 'auditas') {
         tplBadge = '<span class="template-badge audit">🔍 Auditas</span>';
       } else {
         tplBadge = '<span class="template-badge legacy">📋 Auditas (senas)</span>';
@@ -1404,6 +1410,22 @@
         ${sub.reviewed_at ? `<span>✓ Peržiūrėta: <strong>${new Date(sub.reviewed_at).toLocaleString('lt-LT')}</strong></span>` : ''}
       </div>
 
+      <!-- Ataskaitos generavimas -->
+      <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; padding: 12px 15px; background: linear-gradient(135deg, var(--kab-cream), #FFF); border-radius: 5px; border: 1px solid var(--kab-gold);">
+        <div style="flex: 1;">
+          <strong style="color: var(--kab-navy); font-size: 13px;">📊 Generuoti ataskaitą:</strong>
+          <div style="font-size: 11px; color: #666; margin-top: 2px;">
+            Excel — tik tekstinė ataskaita · ZIP — tekstinė ataskaita + visi failai (visos versijos)
+          </div>
+        </div>
+        <button class="btn btn-gold btn-small" onclick="generateReport('${sub.id}', 'xlsx')" id="btn-gen-xlsx">
+          📄 Excel
+        </button>
+        <button class="btn btn-navy btn-small" onclick="generateReport('${sub.id}', 'zip')" id="btn-gen-zip">
+          📦 ZIP archyvas
+        </button>
+      </div>
+
       <!-- Status + kliento nuoroda -->
       <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; padding: 10px; background: #F9F9F9; border-radius: 5px;">
         <label style="color:#666; font-size: 13px;">Būsena:</label>
@@ -1677,6 +1699,83 @@
     state.comments[itemId].push(newComment);
 
     renderTemplateDetailHtml();
+  }
+
+  // ============================================================
+  // ATASKAITŲ GENERAVIMAS (Etapas 3)
+  // ============================================================
+
+  async function generateReport(submissionId, reportType) {
+    const btnXlsx = document.getElementById('btn-gen-xlsx');
+    const btnZip = document.getElementById('btn-gen-zip');
+    const originalXlsxText = btnXlsx?.innerHTML;
+    const originalZipText = btnZip?.innerHTML;
+
+    // Disable buttons
+    if (btnXlsx) btnXlsx.disabled = true;
+    if (btnZip) btnZip.disabled = true;
+
+    // Loading indicator
+    const activeBtn = reportType === 'xlsx' ? btnXlsx : btnZip;
+    if (activeBtn) {
+      activeBtn.innerHTML = reportType === 'xlsx'
+        ? '⏳ Generuojama...'
+        : '⏳ Generuojama (gali užtrukti)...';
+    }
+
+    try {
+      // Gauti JWT token (kad Edge Function galėtų autentifikuoti)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Nesate prisijungę. Prisijunkite iš naujo.');
+      }
+
+      // Kviesti Edge Function
+      const supabaseUrl = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          submission_id: submissionId,
+          report_type: reportType
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Nežinoma klaida');
+      }
+
+      // Sėkmė — atidaryti download URL
+      const link = document.createElement('a');
+      link.href = result.download_url;
+      link.download = result.file_name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Show success
+      const fileSizeKb = (result.file_size / 1024).toFixed(1);
+      alert(`✅ Ataskaita sugeneruota!\n\nFailas: ${result.file_name}\nDydis: ${fileSizeKb} KB\nProgreso %: ${result.stats.progress_pct}%\n\nAtsisiuntimas prasideda automatiškai.`);
+
+    } catch (error) {
+      console.error('Report generation error:', error);
+      alert(`❌ Klaida generuojant ataskaitą:\n\n${error.message}`);
+    } finally {
+      // Restore buttons
+      if (btnXlsx) {
+        btnXlsx.disabled = false;
+        btnXlsx.innerHTML = originalXlsxText;
+      }
+      if (btnZip) {
+        btnZip.disabled = false;
+        btnZip.innerHTML = originalZipText;
+      }
+    }
   }
 
   async function updateStatus(id, newStatus) {
