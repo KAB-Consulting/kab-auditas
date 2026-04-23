@@ -1225,16 +1225,30 @@
     const items = {};
     (itemsRes.data || []).forEach(i => items[i.item_id] = i);
 
+    // SVARBU: questionnaire_item_files.item_id IR questionnaire_comments.item_id
+    // yra UUID (nuoroda į items.id), o UI naudoja section item_id (pvz., '01_1').
+    // Reikia mapping'o: UUID → section item_id.
+    const itemIdToSectionId = {};
+    (itemsRes.data || []).forEach(i => {
+      itemIdToSectionId[i.id] = i.item_id;  // i.id = UUID, i.item_id = '01_1'
+    });
+
     const files = {};
     for (const f of filesRes.data || []) {
-      if (!files[f.item_id]) files[f.item_id] = [];
-      files[f.item_id].push(f);
+      // Konvertuoti UUID į section item_id
+      const sectionItemId = itemIdToSectionId[f.item_id];
+      if (!sectionItemId) continue; // orphan file, skip
+      if (!files[sectionItemId]) files[sectionItemId] = [];
+      files[sectionItemId].push(f);
     }
 
     const comments = {};
     for (const c of commentsRes.data || []) {
-      if (!comments[c.item_id]) comments[c.item_id] = [];
-      comments[c.item_id].push(c);
+      // Konvertuoti UUID į section item_id (tas pats mapping'as kaip files)
+      const sectionItemId = itemIdToSectionId[c.item_id];
+      if (!sectionItemId) continue;
+      if (!comments[sectionItemId]) comments[sectionItemId] = [];
+      comments[sectionItemId].push(c);
     }
 
     // Generuoti signed URL'us failams (batch - vienas kartą)
@@ -1731,12 +1745,14 @@
       }
 
       // Kviesti Edge Function
+      // SVARBU: Supabase reikalauja ir apikey, ir Authorization header'ių
       const supabaseUrl = 'https://pezhnbcsifxnrswsdhui.supabase.co';
       const response = await fetch(`${supabaseUrl}/functions/v1/generate-report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
+          'apikey': SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
           submission_id: submissionId,
