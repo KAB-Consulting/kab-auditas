@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KAB Consulting — Nemokumo klausimynas</title>
   <meta name="robots" content="noindex, nofollow">
+  <!-- ============ SECURITY HEADERS (Phase 3) ============ -->
+<meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: blob:;
+    font-src 'self' data:;
+    connect-src 'self' https://pezhnbcsifxnrswsdhui.supabase.co wss://pezhnbcsifxnrswsdhui.supabase.co;
+    frame-src 'none';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+">
+<meta name="referrer" content="no-referrer">
 
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
