@@ -809,9 +809,32 @@
         .single();
 
       if (error || !data) {
-        showError('Klausimynas nerastas. Patikrinkite, ar nuoroda teisinga.');
-        return;
-      }
+
+            // Phase 3.3: detect expired/revoked tokens
+            try {
+                const { data: tokenInfo } = await supabase.rpc('check_token_status_public', {
+                    p_token: accessToken
+                });
+
+                if (tokenInfo && tokenInfo[0]) {
+                    if (tokenInfo[0].is_revoked) {
+                        showError('Šios nuorodos prieiga buvo atšaukta. Susisiekite su KAB Consulting dėl naujos nuorodos: klausk@kab.lt');
+                        return;
+                    }
+                    if (tokenInfo[0].is_expired) {
+                        showError('Nuorodos galiojimas pasibaigė (90 dienų). Susisiekite su KAB Consulting dėl naujos nuorodos: klausk@kab.lt');
+                        return;
+                    }
+                }
+            } catch (statusErr) {
+                console.warn('Token status check failed:', statusErr);
+            }
+
+            showError('Klausimynas nerastas. Patikrinkite, ar nuoroda teisinga, arba susisiekite su KAB Consulting: klausk@kab.lt');
+
+            return;
+
+        }
 
       submission = data;
 
