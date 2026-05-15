@@ -1,0 +1,2528 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAB Consulting — Klausimynas</title>
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+
+  <style>
+    :root {
+      --kab-navy: #0B1E3F;
+      --kab-navy-light: #1A3660;
+      --kab-gold: #C9A961;
+      --kab-gold-light: #E5C87A;
+      --kab-cream: #F7F4EC;
+      --kab-gray: #5A5A5A;
+      --kab-gray-light: #999;
+      --kab-light: #F9F9F9;
+      --kab-border: #E5E5E5;
+      --kab-success: #2E7D32;
+      --kab-warning: #E65100;
+      --kab-error: #C62828;
+      --kab-info: #1565C0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: var(--kab-cream);
+      color: #333;
+      line-height: 1.6;
+    }
+
+    /* ============ HEADER ============ */
+    header {
+      background: var(--kab-navy);
+      color: white;
+      padding: 20px 0;
+      border-bottom: 4px solid var(--kab-gold);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    header .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-badge {
+      width: 42px; height: 42px;
+      background: var(--kab-gold);
+      color: var(--kab-navy);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 22px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    header .subtitle {
+      font-size: 11px;
+      opacity: 0.85;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    .save-indicator {
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .save-indicator.saving { background: rgba(201, 169, 97, 0.3); }
+    .save-indicator.saved { background: rgba(46, 125, 50, 0.3); }
+    .save-indicator.error { background: rgba(198, 40, 40, 0.3); }
+
+    /* ============ PROGRESS BAR ============ */
+    .progress-bar-container {
+      background: var(--kab-navy-light);
+      padding: 14px 0;
+      color: white;
+    }
+
+    .progress-bar-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-label {
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0.9;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--kab-gold), var(--kab-gold-light));
+      transition: width 0.4s ease;
+      box-shadow: 0 0 8px rgba(201,169,97,0.4);
+    }
+
+    .progress-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+    }
+
+    .progress-stats strong { color: var(--kab-gold-light); }
+
+    /* ============ LAYOUT ============ */
+    main {
+      max-width: 1100px;
+      margin: 25px auto;
+      padding: 0 20px;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--kab-gray);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 40px; height: 40px;
+      border: 3px solid var(--kab-border);
+      border-top-color: var(--kab-gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-state {
+      background: #FFEBEE;
+      border: 1px solid #EF9A9A;
+      border-radius: 6px;
+      padding: 20px;
+      color: var(--kab-error);
+      margin: 20px 0;
+    }
+
+    /* Client info card */
+    .client-card {
+      background: white;
+      border-radius: 8px;
+      padding: 22px 26px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border-left: 4px solid var(--kab-gold);
+    }
+
+    .client-card h2 {
+      margin: 0 0 4px;
+      color: var(--kab-navy);
+      font-size: 20px;
+    }
+
+    .client-card .subtitle {
+      color: var(--kab-gray);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .client-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 12px;
+      color: var(--kab-gray);
+      flex-wrap: wrap;
+    }
+
+    .client-meta strong { color: var(--kab-navy); }
+
+    /* Intro banner */
+    .intro-banner {
+      background: linear-gradient(135deg, var(--kab-navy), var(--kab-navy-light));
+      color: white;
+      padding: 20px 26px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+    }
+
+    .intro-banner h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .intro-banner p {
+      margin: 4px 0;
+      opacity: 0.95;
+      font-size: 13px;
+    }
+
+    .interim-banner {
+      background: linear-gradient(135deg, #FFF9E6, #FEF3CD);
+      border: 2px solid var(--kab-gold);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .interim-banner-icon {
+      width: 38px; height: 38px;
+      background: var(--kab-gold);
+      color: var(--kab-navy);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .interim-banner strong { color: var(--kab-navy); display: block; margin-bottom: 2px; font-size: 14px; }
+    .interim-banner p { font-size: 12px; color: var(--kab-gray); margin: 0; }
+
+    /* ============ SECTIONS ============ */
+    .section {
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .section-header {
+      background: linear-gradient(135deg, var(--kab-navy), var(--kab-navy-light));
+      color: white;
+      padding: 16px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.2s;
+    }
+
+    .section-header:hover { opacity: 0.95; }
+
+    .section-title-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .section-number {
+      background: var(--kab-gold);
+      color: var(--kab-navy);
+      padding: 4px 9px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 12px;
+      min-width: 28px;
+      text-align: center;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .section-status-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-pill {
+      padding: 3px 9px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .status-pill.completed { background: rgba(46,125,50,0.2); color: #A5D6A7; }
+    .status-pill.partial { background: rgba(230,81,0,0.2); color: #FFB74D; }
+    .status-pill.empty { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.55); }
+
+    .section-toggle {
+      color: var(--kab-gold-light);
+      font-size: 14px;
+      transition: transform 0.3s;
+    }
+
+    .section.collapsed .section-toggle { transform: rotate(-90deg); }
+    .section.collapsed .section-content { display: none; }
+
+    .section-description {
+      padding: 12px 22px;
+      background: var(--kab-cream);
+      border-bottom: 1px solid var(--kab-border);
+      font-size: 12px;
+      color: var(--kab-gray);
+      font-style: italic;
+    }
+
+    /* ============ ITEMS ============ */
+    .item {
+      border-bottom: 1px solid var(--kab-border);
+      padding: 20px 22px;
+      transition: background 0.2s;
+    }
+
+    .item:last-child { border-bottom: none; }
+
+    .item.has-query {
+      background: linear-gradient(to right, rgba(255,249,230,0.6), transparent 60%);
+      border-left: 3px solid var(--kab-gold);
+    }
+
+    .item.answered {
+      background: linear-gradient(to right, rgba(232,245,233,0.4), transparent 60%);
+      border-left: 3px solid var(--kab-success);
+    }
+
+    .item.na {
+      background: linear-gradient(to right, rgba(227,242,253,0.4), transparent 60%);
+      border-left: 3px solid var(--kab-info);
+      opacity: 0.85;
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .item-title-group { flex: 1; }
+
+    .item-number {
+      display: inline-block;
+      color: var(--kab-gold);
+      font-weight: 700;
+      font-size: 13px;
+      margin-right: 6px;
+    }
+
+    .item-title {
+      color: var(--kab-navy);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .item-description {
+      color: var(--kab-gray);
+      font-size: 12px;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    .badge {
+      padding: 3px 9px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .badge.query { background: #FFF3E0; color: var(--kab-warning); border: 1px solid #FFE0B2; }
+    .badge.answered { background: #E8F5E9; color: var(--kab-success); border: 1px solid #C8E6C9; }
+    .badge.pending { background: #F5F5F5; color: var(--kab-gray); border: 1px solid #E0E0E0; }
+    .badge.na { background: #E3F2FD; color: var(--kab-info); border: 1px solid #BBDEFB; }
+
+    /* Applicability radio */
+    .applicability {
+      display: flex;
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .radio-btn {
+      flex: 1;
+      padding: 9px 12px;
+      border: 2px solid var(--kab-border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--kab-gray);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      background: white;
+      user-select: none;
+    }
+
+    .radio-btn:hover { border-color: var(--kab-gold); }
+
+    .radio-btn.active {
+      border-color: var(--kab-navy);
+      background: linear-gradient(135deg, var(--kab-cream), white);
+      color: var(--kab-navy);
+    }
+
+    .radio-btn.active.na {
+      border-color: var(--kab-info);
+      background: #E3F2FD;
+      color: var(--kab-info);
+    }
+
+    .radio-dot {
+      width: 14px; height: 14px;
+      border: 2px solid var(--kab-border);
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .radio-btn.active .radio-dot { border-color: currentColor; }
+    .radio-btn.active .radio-dot::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 5px; height: 5px;
+      background: currentColor;
+      border-radius: 50%;
+    }
+
+    /* ========== LAYOUT: DOCUMENT PRIMARY ========== */
+    .layout-document .upload-section { margin-top: 12px; }
+
+    .layout-document .upload-section-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--kab-navy);
+      margin-bottom: 6px;
+    }
+
+    .required-star { color: var(--kab-error); }
+
+    .layout-document .upload-zone {
+      border: 2px dashed var(--kab-border);
+      border-radius: 6px;
+      padding: 22px;
+      text-align: center;
+      color: var(--kab-gray);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .layout-document .upload-zone:hover,
+    .layout-document .upload-zone.dragover {
+      border-color: var(--kab-gold);
+      background: #FFF9E6;
+      color: var(--kab-navy);
+    }
+
+    .upload-zone-icon {
+      font-size: 26px;
+      margin-bottom: 4px;
+    }
+
+    .upload-zone-hint {
+      font-size: 11px;
+      color: var(--kab-gray-light);
+      margin-top: 4px;
+    }
+
+    .layout-document .comment-section { margin-top: 12px; }
+
+    .layout-document .comment-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--kab-gray);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .layout-document .comment-input {
+      width: 100%;
+      padding: 8px 11px;
+      border: 1px solid var(--kab-border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 13px;
+      background: white;
+      min-height: 36px;
+      max-height: 100px;
+      resize: vertical;
+    }
+
+    .layout-document .comment-input:focus {
+      outline: none;
+      border-color: var(--kab-gold);
+      box-shadow: 0 0 0 3px rgba(201,169,97,0.1);
+    }
+
+    /* ========== LAYOUT: TEXT PRIMARY ========== */
+    .layout-text .text-section { margin-top: 12px; }
+
+    .layout-text .text-section-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--kab-navy);
+      margin-bottom: 6px;
+    }
+
+    .layout-text .text-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--kab-border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      background: white;
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .layout-text .text-input:focus {
+      outline: none;
+      border-color: var(--kab-gold);
+      box-shadow: 0 0 0 3px rgba(201,169,97,0.1);
+    }
+
+    .layout-text .text-char-counter {
+      font-size: 11px;
+      color: var(--kab-gray-light);
+      text-align: right;
+      margin-top: 3px;
+    }
+
+    .layout-text .attachments-section {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--kab-border);
+    }
+
+    .layout-text .attachments-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--kab-gray);
+      margin-bottom: 5px;
+    }
+
+    .layout-text .upload-zone-compact {
+      border: 1px dashed var(--kab-border);
+      border-radius: 5px;
+      padding: 10px;
+      text-align: center;
+      color: var(--kab-gray);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--kab-cream);
+    }
+
+    .layout-text .upload-zone-compact:hover,
+    .layout-text .upload-zone-compact.dragover {
+      border-color: var(--kab-gold);
+      background: #FFF9E6;
+    }
+
+    /* Files list */
+    .files-list {
+      margin-bottom: 8px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 11px;
+      background: var(--kab-cream);
+      border: 1px solid var(--kab-border);
+      border-radius: 5px;
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .file-item.current {
+      background: linear-gradient(to right, #FFF9E6, white);
+      border-color: var(--kab-gold);
+    }
+
+    .file-icon { color: var(--kab-navy); font-size: 14px; }
+    .file-name { flex: 1; color: var(--kab-navy); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-meta { color: var(--kab-gray-light); font-size: 10px; white-space: nowrap; }
+
+    .file-version-badge {
+      background: var(--kab-gold);
+      color: var(--kab-navy);
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .file-old-badge {
+      background: #E0E0E0;
+      color: var(--kab-gray);
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-size: 9px;
+      font-weight: 600;
+    }
+
+    .file-action-btn {
+      background: none;
+      border: none;
+      color: var(--kab-gray);
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .file-action-btn:hover {
+      background: var(--kab-navy);
+      color: white;
+    }
+
+    /* Comments thread */
+    .comments-thread {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, #FFF9E6, #FEF3CD);
+      border-radius: 6px;
+      border-left: 3px solid var(--kab-gold);
+    }
+
+    .comments-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--kab-navy);
+    }
+
+    .comments-count {
+      background: var(--kab-gold);
+      color: var(--kab-navy);
+      padding: 1px 7px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .comment {
+      padding: 8px 11px;
+      border-radius: 5px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .comment:last-child { margin-bottom: 0; }
+
+    .comment.admin {
+      background: white;
+      border-left: 3px solid var(--kab-gold);
+    }
+
+    .comment.client {
+      background: rgba(11,30,63,0.04);
+      border-left: 3px solid var(--kab-navy);
+      margin-left: 18px;
+    }
+
+    .comment-author {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+
+    .comment-author-name {
+      font-weight: 700;
+      font-size: 11px;
+      color: var(--kab-navy);
+    }
+
+    .role-tag {
+      background: var(--kab-gold);
+      color: var(--kab-navy);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    .comment.client .role-tag {
+      background: var(--kab-navy);
+      color: white;
+    }
+
+    .comment-date {
+      color: var(--kab-gray-light);
+      font-size: 10px;
+    }
+
+    .reply-form {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .reply-input {
+      flex: 1;
+      padding: 7px 10px;
+      border: 1px solid var(--kab-border);
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 9px 16px;
+      border: none;
+      border-radius: 5px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary { background: var(--kab-navy); color: white; }
+    .btn-primary:hover { background: var(--kab-navy-light); }
+    .btn-gold { background: var(--kab-gold); color: var(--kab-navy); }
+    .btn-gold:hover { background: var(--kab-gold-light); }
+    .btn-small { padding: 5px 10px; font-size: 11px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Custom section add */
+    .custom-section-add {
+      background: white;
+      border: 2px dashed var(--kab-gold);
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .custom-section-add:hover {
+      background: #FFF9E6;
+      border-style: solid;
+    }
+
+    .custom-section-add h3 {
+      color: var(--kab-navy);
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .custom-section-add p {
+      color: var(--kab-gray);
+      font-size: 12px;
+      margin: 0;
+    }
+
+    .custom-section-add .icon {
+      font-size: 24px;
+      color: var(--kab-gold);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    /* Custom section modal / edit form */
+    .custom-form {
+      background: #FFF9E6;
+      border: 2px solid var(--kab-gold);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 14px;
+    }
+
+    .custom-form label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--kab-navy);
+      margin-bottom: 4px;
+      margin-top: 10px;
+    }
+
+    .custom-form input, .custom-form textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--kab-border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 13px;
+    }
+
+    .custom-form-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      justify-content: flex-end;
+    }
+
+    /* Submit */
+    .submit-section {
+      background: white;
+      border-radius: 8px;
+      padding: 26px;
+      margin-top: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border-top: 4px solid var(--kab-gold);
+    }
+
+    .submit-section h2 {
+      color: var(--kab-navy);
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .submit-section p {
+      color: var(--kab-gray);
+      font-size: 13px;
+      margin: 0 0 14px;
+    }
+
+    .consent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      background: var(--kab-cream);
+      border-radius: 5px;
+      font-size: 12px;
+      margin: 12px 0;
+    }
+
+    .consent-row input { margin-top: 2px; flex-shrink: 0; }
+
+    .submit-btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-submit-interim {
+      padding: 12px 22px;
+      background: linear-gradient(135deg, #FFF9E6, #FEF3CD);
+      color: var(--kab-navy);
+      border: 2px solid var(--kab-gold);
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .btn-submit-final {
+      padding: 12px 22px;
+      background: linear-gradient(135deg, var(--kab-navy), var(--kab-navy-light));
+      color: white;
+      border: none;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    /* Read-only banner */
+    .readonly-banner {
+      background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+      border: 2px solid var(--kab-success);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .readonly-banner-icon {
+      width: 38px; height: 38px;
+      background: var(--kab-success);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    body.readonly input,
+    body.readonly textarea,
+    body.readonly button:not(.file-action-btn),
+    body.readonly .radio-btn,
+    body.readonly .upload-zone,
+    body.readonly .upload-zone-compact,
+    body.readonly .custom-section-add {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      header .container { flex-direction: column; align-items: flex-start; }
+      .progress-bar-inner { flex-direction: column; align-items: stretch; gap: 8px; }
+      .progress-stats { justify-content: space-between; }
+      .applicability { flex-direction: column; }
+      .item-header { flex-direction: column; align-items: flex-start; }
+      .submit-btns { flex-direction: column; }
+      .submit-btns button { width: 100%; }
+    }
+
+    /* ============ EMAIL + OTP GATE (v3 security) ============ */
+    .gate-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--kab-cream);
+      z-index: 9999;
+      overflow-y: auto;
+      padding: 60px 20px;
+    }
+    .gate-box {
+      max-width: 480px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      padding: 35px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .gate-box h2 {
+      margin: 0 0 8px 0;
+      color: var(--kab-navy);
+      font-size: 20px;
+      border-bottom: 2px solid var(--kab-gold);
+      padding-bottom: 10px;
+      display: inline-block;
+    }
+    .gate-box .gate-sub {
+      color: var(--kab-gray);
+      font-size: 13px;
+      margin: 0 0 22px 0;
+    }
+    .gate-box label.gate-field-label {
+      display: block;
+      font-weight: 600;
+      color: var(--kab-navy);
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .gate-box input[type=email], .gate-box input[type=text] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--kab-border);
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+      background: white;
+      box-sizing: border-box;
+    }
+    .gate-box .lang-toggle {
+      font-size: 11px;
+      color: var(--kab-gray);
+      text-align: right;
+      margin-bottom: 10px;
+    }
+    .gate-otp-input {
+      letter-spacing: 12px !important;
+      font-family: Menlo, Consolas, monospace !important;
+      font-size: 24px !important;
+      text-align: center !important;
+      font-weight: 700 !important;
+      color: var(--kab-navy) !important;
+    }
+    .gate-btn {
+      display: block;
+      width: 100%;
+      padding: 14px 20px;
+      background: var(--kab-navy);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 18px;
+    }
+    .gate-btn:hover { background: #1a3055; }
+    .gate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .gate-helper {
+      font-size: 12px;
+      color: var(--kab-gray);
+      margin-top: 15px;
+      text-align: center;
+    }
+    .gate-helper a { color: var(--kab-navy); }
+    .gate-error {
+      background: #FFEBEE;
+      color: var(--kab-error);
+      padding: 10px 12px;
+      border-radius: 4px;
+      border-left: 4px solid var(--kab-error);
+      margin: 12px 0 0 0;
+      font-size: 13px;
+    }
+    .gate-hidden { display: none !important; }
+
+  </style>
+</head>
+
+<body>
+  <!-- ============ EMAIL + OTP GATE (v3 security) ============ -->
+  <div id="gate-overlay" class="gate-overlay gate-hidden">
+
+    <!-- 1) Email gate -->
+    <div id="gate-email-view" class="gate-box gate-hidden">
+      <div class="lang-toggle">LT - EN</div>
+      <h2>Patvirtinkite tapatybe</h2>
+      <p class="gate-sub">
+        Saugumo sumetimais prie&#353; atidarant klausimyna pra&#353;ome ivesti el. pa&#353;to adresa, i kuri buvo siusta &#353;i nuoroda.<br>
+        <em>For security, please enter the email address this link was sent to.</em>
+      </p>
+      <label class="gate-field-label" for="gate-email-input">El. pa&#353;tas / Email</label>
+      <input type="email" id="gate-email-input" placeholder="vardas@imones-pavadinimas.lt" autocomplete="email">
+      <div id="gate-email-error" class="gate-error gate-hidden"></div>
+      <button id="gate-email-btn" class="gate-btn">Siusti patvirtinimo koda / Send verification code</button>
+      <div class="gate-helper">
+        Problemos? / Need help? <a href="mailto:klausk@kab.lt">klausk@kab.lt</a>
+      </div>
+    </div>
+
+    <!-- 2) OTP gate -->
+    <div id="gate-otp-view" class="gate-box gate-hidden">
+      <div class="lang-toggle">LT - EN</div>
+      <h2>Iveskite koda</h2>
+      <p class="gate-sub">
+        I <strong id="gate-otp-email-display"></strong> i&#353;siuntem 6 skaitmenu koda. Iveskite ji &#382;emiau (kodas galioja 15 min.).<br>
+        <em>We sent a 6-digit code to the address above. Enter it below (valid 15 min).</em>
+      </p>
+      <label class="gate-field-label" for="gate-otp-input">Kodas / Code</label>
+      <input type="text" id="gate-otp-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" class="gate-otp-input" placeholder="------" autocomplete="one-time-code">
+      <div id="gate-otp-error" class="gate-error gate-hidden"></div>
+      <button id="gate-otp-btn" class="gate-btn">Patvirtinti / Verify</button>
+      <div class="gate-helper">
+        Negavote lai&#353;ko? <a href="#" id="gate-otp-resend">Siusti dar karta / Resend</a><br>
+        <a href="#" id="gate-otp-back">Pakeisti el. pa&#353;ta / Change email</a>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- HEADER -->
+  <header>
+    <div class="container">
+      <div class="logo-group">
+        <div class="logo-badge">K</div>
+        <div>
+          <h1>KAB CONSULTING</h1>
+          <div class="subtitle" id="templateSubtitle">Restruktūrizavimo klausimynas</div>
+        </div>
+      </div>
+      <div class="save-indicator" id="saveIndicator">
+        <span>??</span><span id="saveText">Pasiruošęs</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-bar-container" id="progressBar" style="display:none;">
+    <div class="progress-bar-inner">
+      <div class="progress-label">Užpildymo progresas</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-stats">
+        <div>✓ <strong id="statsCompleted">0</strong> užpildyta</div>
+        <div>⚠ <strong id="statsQueries">0</strong> paklausimai</div>
+        <div>○ <strong id="statsPending">0</strong> likę</div>
+      </div>
+    </div>
+  </div>
+
+  <main id="main">
+
+    <!-- LOADING STATE -->
+    <div class="loading-state" id="loadingState">
+      <div class="loading-spinner"></div>
+      <p style="margin-top:16px;">Kraunama klausimyno duomenys...</p>
+    </div>
+
+    <!-- FORM CONTAINER (populated by JS) -->
+    <div id="formContainer" style="display:none;"></div>
+
+  </main>
+
+  <script>
+    // ============================================================
+    // KAB RESTRUCTURING QUESTIONNAIRE — Dynamic renderer (v4.0)
+    // ============================================================
+
+    // Supabase konfigūracija
+    const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Globalūs kintamieji
+    let submission = null;
+    let template = null;
+    let sections = [];
+    let items = {};         // { item_id: item_data }
+    let files = {};         // { item_id: [file_data, ...] }
+    let comments = {};      // { item_id: [comment_data, ...] }
+    let customSections = [];
+    let accessToken = null;
+    let saveTimeout = null;
+    let isReadonly = false;
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+
+    async function init() {
+      try {
+        // 1. Gauti access_token iš URL
+        const urlParams = new URLSearchParams(window.location.search);
+        accessToken = urlParams.get('t');
+
+        if (!accessToken) {
+          showError('Nuoroda neteisinga. Trūksta access_token parametro.');
+          return;
+        }
+
+        // 2. Nuskaityti submission pagal token
+        const { data: submissionData, error: subError } = await supabase
+          .from('questionnaire_submissions')
+          .select('*')
+          .eq('access_token', accessToken)
+          .single();
+
+        if (subError || !submissionData) {
+          showError('Klausimyno nerasta. Nuoroda gali būti pasenusi arba neteisinga.');
+          return;
+        }
+
+        submission = submissionData;
+
+        // 3. Jei neturi template_id — tai senas klausimynas
+        if (!submission.template_id) {
+          showError('Ši nuoroda priklauso senesniam klausimyno formatui. Naudokite kitą nuorodą.');
+          return;
+        }
+
+        // 4. Nuskaityti template
+        const { data: templateData, error: tplError } = await supabase
+          .from('questionnaire_templates')
+          .select('*')
+          .eq('id', submission.template_id)
+          .single();
+
+        if (tplError || !templateData) {
+          showError('Šablonas nerastas. Susisiekite su KAB Consulting.');
+          return;
+        }
+
+        template = templateData;
+
+        // 5. Generuoti dinaminius periodus (jei reikia)
+        sections = generateSections(template.sections.sections, submission.period_config);
+
+        // 6. Nuskaityti esamus items / files / comments / custom
+        await loadExistingData();
+
+        // 7. Nustatyti readonly jei submitted_final
+        isReadonly = submission.status === 'submitted_final' || submission.status === 'reviewed';
+        if (isReadonly) {
+          document.body.classList.add('readonly');
+        }
+
+        // 8. Renderinti
+        renderForm();
+
+      } catch (err) {
+        console.error('Init error:', err);
+        showError('Klaida: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // PERIOD GENERATION (dynamic periods)
+    // ============================================================
+
+    function generateSections(templateSections, periodConfig) {
+      const result = [];
+
+      for (const section of templateSections) {
+        if (!section.is_dynamic_period) {
+          result.push(section);
+          continue;
+        }
+
+        // Section with dynamic periods — expand
+        const periods = periodConfig || generateDefaultPeriods();
+        const expanded = {
+          ...section,
+          items: []
+        };
+
+        const cfg = section.period_config;
+        const defaults = section.item_defaults || {};
+
+        // Yearly items
+        if (periods.yearly && cfg.label_yearly) {
+          let idx = 1;
+          for (const year of periods.yearly) {
+            expanded.items.push({
+              id: `${section.id}_y${year}`,
+              title: cfg.label_yearly.replace('{YEAR}', year),
+              description: (cfg.description_yearly || '').replace('{YEAR}', year),
+              ...defaults,
+              _period_label: `${section.number}.${idx}`
+            });
+            idx++;
+          }
+        }
+
+        // Quarterly item
+        if (periods.current_quarter_end && cfg.label_quarterly) {
+          const date = periods.current_quarter_end;
+          expanded.items.push({
+            id: `${section.id}_q${date}`,
+            title: cfg.label_quarterly.replace('{DATE}', date),
+            description: (cfg.description_quarterly || '').replace('{DATE}', date),
+            ...defaults,
+            _period_label: `${section.number}.${expanded.items.length + 1}`
+          });
+        }
+
+        result.push(expanded);
+      }
+
+      return result;
+    }
+
+    function generateDefaultPeriods() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+
+      // Last 4 completed years (default: previous year and 3 before)
+      const yearly = [year - 4, year - 3, year - 2, year - 1];
+
+      // Last completed quarter
+      let quarterEnd;
+      if (month <= 3) {
+        quarterEnd = `${year - 1}-12-31`;
+      } else if (month <= 6) {
+        quarterEnd = `${year}-03-31`;
+      } else if (month <= 9) {
+        quarterEnd = `${year}-06-30`;
+      } else {
+        quarterEnd = `${year}-09-30`;
+      }
+
+      return { yearly, current_quarter_end: quarterEnd };
+    }
+
+    // ============================================================
+    // DATA LOADING
+    // ============================================================
+
+    async function loadExistingData() {
+      // Items
+      const { data: itemsData } = await supabase
+        .from('questionnaire_items')
+        .select('*')
+        .eq('submission_id', submission.id);
+
+      if (itemsData) {
+        for (const item of itemsData) {
+          items[item.item_id] = item;
+        }
+      }
+
+      // Files (visi per submission)
+      // SVARBU: questionnaire_item_files.item_id yra UUID (nuoroda į items.id),
+      // bet UI naudoja section item_id (pvz., '01_1'). Reikia sukurti mapping'ą.
+      const { data: filesData } = await supabase
+        .from('questionnaire_item_files')
+        .select('*')
+        .eq('submission_id', submission.id)
+        .order('uploaded_at', { ascending: false });
+
+      // Sukurti mapping'ą: items.id (UUID) → items.item_id (section's id)
+      const itemIdToSectionId = {};
+      for (const [sectionItemId, itemRecord] of Object.entries(items)) {
+        if (itemRecord.id) {
+          itemIdToSectionId[itemRecord.id] = sectionItemId;
+        }
+      }
+
+      if (filesData) {
+        for (const f of filesData) {
+          // Konvertuoti UUID į section item_id
+          const sectionItemId = itemIdToSectionId[f.item_id];
+          if (sectionItemId) {
+            if (!files[sectionItemId]) files[sectionItemId] = [];
+            files[sectionItemId].push(f);
+          }
+        }
+      }
+
+      // Comments
+      const { data: commentsData } = await supabase
+        .from('questionnaire_comments')
+        .select('*')
+        .eq('submission_id', submission.id)
+        .order('created_at', { ascending: true });
+
+      if (commentsData) {
+        for (const c of commentsData) {
+          // Klientas mato tik visible_to_client
+          if (c.visible_to_client) {
+            // Konvertuoti UUID į section item_id (tas pats mapping'as kaip files)
+            const sectionItemId = itemIdToSectionId[c.item_id];
+            if (sectionItemId) {
+              if (!comments[sectionItemId]) comments[sectionItemId] = [];
+              comments[sectionItemId].push(c);
+            }
+          }
+        }
+      }
+
+      // Custom sections
+      const { data: customData } = await supabase
+        .from('questionnaire_custom_sections')
+        .select('*')
+        .eq('submission_id', submission.id)
+        .order('sort_order', { ascending: true });
+
+      if (customData) {
+        customSections = customData;
+      }
+    }
+
+    // ============================================================
+    // RENDERING
+    // ============================================================
+
+    function renderForm() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('formContainer').style.display = 'block';
+      document.getElementById('progressBar').style.display = 'block';
+
+      // Update template subtitle
+      document.getElementById('templateSubtitle').textContent = template.name;
+
+      const container = document.getElementById('formContainer');
+
+      let html = '';
+
+      // Client info
+      html += renderClientInfo();
+
+      // Status banner
+      html += renderStatusBanner();
+
+      // Readonly banner (if final)
+      if (isReadonly) {
+        html += renderReadonlyBanner();
+      }
+
+      // Sections
+      for (const section of sections) {
+        html += renderSection(section);
+      }
+
+      // Custom sections (client-added)
+      for (const custom of customSections) {
+        html += renderCustomSection(custom);
+      }
+
+      // Add custom section button
+      if (!isReadonly) {
+        html += renderCustomSectionAdd();
+      }
+
+      // Submit section
+      if (!isReadonly) {
+        html += renderSubmitSection();
+      }
+
+      container.innerHTML = html;
+
+      // Attach event listeners
+      attachEventListeners();
+
+      // Update progress
+      updateProgress();
+    }
+
+    function renderClientInfo() {
+      const d = submission;
+      return `
+        <div class="client-card">
+          <h2>${escapeHtml(d.client_name || 'Nenurodyta')}</h2>
+          <div class="subtitle">Restrukturizavimo procesą inicijuojanti įmonė</div>
+          <div class="client-meta">
+            ${d.client_contact ? `<span><strong>Kontaktinis asmuo:</strong> ${escapeHtml(d.client_contact)}</span>` : ''}
+            ${d.created_at ? `<span><strong>Pradėta:</strong> ${formatDate(d.created_at)}</span>` : ''}
+            <span><strong>Statusas:</strong> ${statusLabel(d.status)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStatusBanner() {
+      if (submission.status === 'submitted_interim') {
+        return `
+          <div class="interim-banner">
+            <div class="interim-banner-icon">??</div>
+            <div>
+              <strong>Tarpinė ataskaita pateikta</strong>
+              <p>${formatDate(submission.interim_submitted_at || submission.updated_at)} · Galite tęsti pildymą. KAB Consulting peržiūri pateiktą medžiagą.</p>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="intro-banner">
+          <h3>${escapeHtml(template.name)}</h3>
+          <p>${escapeHtml(template.description || '')}</p>
+          <p style="margin-top:10px;font-size:12px;opacity:0.9;">?? Galite išsaugoti ir grįžti bet kuriuo metu. Duomenys automatiškai įrašomi.</p>
+        </div>
+      `;
+    }
+
+    function renderReadonlyBanner() {
+      return `
+        <div class="readonly-banner">
+          <div class="readonly-banner-icon">✓</div>
+          <div>
+            <strong>Galutinė ataskaita pateikta</strong>
+            <p style="margin:0;font-size:12px;color:var(--kab-gray);">${formatDate(submission.submitted_at || submission.updated_at)} · Klausimynas užbaigtas. Duomenys matomi tik peržiūrai.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSection(section) {
+      const stats = getSectionStats(section);
+      const statusPill = stats.completed === stats.total
+        ? `<span class="status-pill completed">✓ Atlikta</span>`
+        : stats.queries > 0
+        ? `<span class="status-pill partial">⚠ ${stats.queries} paklausimas</span>`
+        : stats.completed > 0
+        ? `<span class="status-pill partial">${stats.completed} iš ${stats.total}</span>`
+        : `<span class="status-pill empty">○ Laukia</span>`;
+
+      const collapsedClass = stats.completed === stats.total ? 'collapsed' : '';
+
+      let itemsHtml = '';
+      for (const item of section.items) {
+        itemsHtml += renderItem(item, section);
+      }
+
+      return `
+        <section class="section ${collapsedClass}" data-section-id="${section.id}">
+          <div class="section-header" onclick="toggleSection(this)">
+            <div class="section-title-left">
+              <span class="section-number">${section.number}</span>
+              <span class="section-title">${escapeHtml(section.title)}</span>
+            </div>
+            <div class="section-status-right">
+              ${statusPill}
+              <span class="section-toggle">▼</span>
+            </div>
+          </div>
+          <div class="section-content">
+            ${section.description ? `<div class="section-description">${escapeHtml(section.description)}</div>` : ''}
+            ${itemsHtml}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderItem(itemDef, section) {
+      const itemState = items[itemDef.id] || {};
+      const itemFiles = files[itemDef.id] || [];
+      const itemComments = comments[itemDef.id] || [];
+
+      const layout = itemDef.layout || 'document_primary';
+      const layoutClass = `layout-${layout === 'text_primary' ? 'text' : 'document'}`;
+
+      // Determine state
+      const isNA = itemState.client_marked_as === 'not_applicable';
+      const isAnswered = itemState.admin_status === 'answered';
+      const hasQuery = itemComments.some(c => c.author_role === 'admin' && !c.read_by_client);
+
+      let itemClass = 'item ' + layoutClass;
+      if (isNA) itemClass += ' na';
+      else if (hasQuery) itemClass += ' has-query';
+      else if (isAnswered) itemClass += ' answered';
+
+      // Badge
+      let badge = '';
+      if (isNA) badge = `<span class="badge na">Neaktualu</span>`;
+      else if (hasQuery) badge = `<span class="badge query">⚠ Paklausimas</span>`;
+      else if (isAnswered) badge = `<span class="badge answered">✓ Atsakyta</span>`;
+      else if (itemFiles.length > 0 || itemState.client_comment) badge = `<span class="badge pending">○ Pateikta</span>`;
+      else badge = `<span class="badge pending">○ Laukia</span>`;
+
+      // Number label (item.id's last portion or period label)
+      const numberLabel = itemDef._period_label || `${section.number}.${section.items.indexOf(itemDef) + 1}`;
+
+      // Applicability radios (show only if can_skip or already answered)
+      const canSkip = itemDef.can_skip !== false;
+      let applicabilityHtml = '';
+      if (canSkip) {
+        const isActive = itemState.client_marked_as === 'completed' ||
+                        (itemFiles.length > 0 || itemState.client_comment);
+        applicabilityHtml = `
+          <div class="applicability">
+            <div class="radio-btn ${isActive && !isNA ? 'active' : ''}" data-value="completed">
+              <span class="radio-dot"></span>
+              <span>Pateikiu informaciją</span>
+            </div>
+            <div class="radio-btn na ${isNA ? 'active' : ''}" data-value="not_applicable">
+              <span class="radio-dot"></span>
+              <span>Neaktualu</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // Content by layout
+      let contentHtml = '';
+      if (isNA) {
+        contentHtml = '<p style="color:var(--kab-gray);font-size:13px;font-style:italic;margin:8px 0;">Klientas pažymėjo, kad šis punktas neaktualus.</p>';
+      } else if (layout === 'text_primary') {
+        contentHtml = renderLayoutTextPrimary(itemDef, itemState, itemFiles);
+      } else {
+        contentHtml = renderLayoutDocumentPrimary(itemDef, itemState, itemFiles);
+      }
+
+      // Comments thread
+      let commentsHtml = '';
+      if (itemComments.length > 0) {
+        commentsHtml = renderCommentsThread(itemDef.id, itemComments);
+      }
+
+      return `
+        <div class="${itemClass}" data-item-id="${itemDef.id}">
+          <div class="item-header">
+            <div class="item-title-group">
+              <h4 style="margin:0;">
+                <span class="item-number">${numberLabel}.</span>
+                <span class="item-title">${escapeHtml(itemDef.title)}</span>
+              </h4>
+              ${itemDef.description ? `<p class="item-description">${escapeHtml(itemDef.description)}</p>` : ''}
+            </div>
+            <div>${badge}</div>
+          </div>
+          ${applicabilityHtml}
+          ${contentHtml}
+          ${commentsHtml}
+        </div>
+      `;
+    }
+
+    function renderLayoutDocumentPrimary(itemDef, itemState, itemFiles) {
+      const filesHtml = itemFiles.length > 0 ? renderFilesList(itemDef.id, itemFiles) : '';
+
+      return `
+        <div class="upload-section">
+          <label class="upload-section-label">
+            ?? Įkelti dokumentai <span class="required-star">*</span>
+          </label>
+          ${filesHtml}
+          <div class="upload-zone" data-item-id="${itemDef.id}">
+            <div class="upload-zone-icon">??</div>
+            <div><strong>Nutempkite failus čia</strong> arba spustelėkite pasirinkti</div>
+            <div class="upload-zone-hint">Maks. 10 MB vienam failui</div>
+            <input type="file" multiple style="display:none;" onchange="handleFileSelect(event, '${itemDef.id}')">
+          </div>
+        </div>
+        <div class="comment-section">
+          <label class="comment-label">?? ${escapeHtml(itemDef.text_label || 'Pastaba (neprivaloma)')}</label>
+          <textarea class="comment-input" data-item-id="${itemDef.id}" data-field="client_comment"
+            placeholder="${escapeHtml(itemDef.text_placeholder || '')}">${escapeHtml(itemState.client_comment || '')}</textarea>
+        </div>
+      `;
+    }
+
+    function renderLayoutTextPrimary(itemDef, itemState, itemFiles) {
+      const filesHtml = itemFiles.length > 0 ? renderFilesList(itemDef.id, itemFiles) : '';
+      const textLen = (itemState.client_comment || '').length;
+
+      return `
+        <div class="text-section">
+          <label class="text-section-label">
+            ?? ${escapeHtml(itemDef.text_label || 'Jūsų atsakymas')} <span class="required-star">*</span>
+          </label>
+          <textarea class="text-input" data-item-id="${itemDef.id}" data-field="client_comment"
+            placeholder="${escapeHtml(itemDef.text_placeholder || '')}">${escapeHtml(itemState.client_comment || '')}</textarea>
+          <div class="text-char-counter">${textLen} simbolių</div>
+        </div>
+        <div class="attachments-section">
+          <div class="attachments-label">?? Priedai (neprivaloma)</div>
+          ${filesHtml}
+          <div class="upload-zone-compact" data-item-id="${itemDef.id}">
+            Nutempkite failus arba <strong>spustelėkite pasirinkti</strong>
+            <input type="file" multiple style="display:none;" onchange="handleFileSelect(event, '${itemDef.id}')">
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFilesList(itemId, itemFiles) {
+      let html = '<div class="files-list">';
+      for (const f of itemFiles) {
+        const isCurrent = f.is_current;
+        const badgeHtml = isCurrent
+          ? '<span class="file-version-badge">AKTUALI</span>'
+          : `<span class="file-old-badge">v${f.version_number}</span>`;
+
+        html += `
+          <div class="file-item ${isCurrent ? 'current' : ''}">
+            <span class="file-icon">??</span>
+            <span class="file-name">${escapeHtml(f.original_name)}</span>
+            <span class="file-meta">${formatSize(f.file_size)} · ${formatDate(f.uploaded_at)}</span>
+            ${badgeHtml}
+            <button class="file-action-btn" onclick="downloadFile('${f.id}', '${escapeHtml(f.storage_path)}', '${escapeHtml(f.original_name)}')">??</button>
+            ${!isReadonly ? `<button class="file-action-btn" onclick="deleteFile('${f.id}', '${f.storage_path}')" title="Ištrinti">??️</button>` : ''}
+          </div>
+        `;
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function renderCommentsThread(itemId, itemComments) {
+      let html = `
+        <div class="comments-thread">
+          <div class="comments-header">
+            <span>?? Rengėjo paklausimai</span>
+            <span class="comments-count">${itemComments.length}</span>
+          </div>
+      `;
+
+      for (const c of itemComments) {
+        const roleTag = c.author_role === 'admin' ? 'RENGEJAS' : 'JŪS';
+        html += `
+          <div class="comment ${c.author_role}">
+            <div class="comment-author">
+              <span>
+                <span class="comment-author-name">${escapeHtml(c.author_name || (c.author_role === 'admin' ? 'KAB specialistas' : 'Jūs'))}</span>
+                <span class="role-tag">${roleTag}</span>
+              </span>
+              <span class="comment-date">${formatDateTime(c.created_at)}</span>
+            </div>
+            <div class="comment-text">${escapeHtml(c.comment_text)}</div>
+          </div>
+        `;
+      }
+
+      if (!isReadonly) {
+        html += `
+          <div class="reply-form">
+            <input type="text" class="reply-input" placeholder="Įrašykite atsakymą rengejui..." data-item-id="${itemId}">
+            <button class="btn btn-primary btn-small" onclick="submitReply('${itemId}')">Siųsti</button>
+          </div>
+        `;
+      }
+
+      html += '</div>';
+      return html;
+    }
+
+    function renderCustomSection(custom) {
+      // Custom sections naudoja document_primary layout'ą
+      const itemFiles = files[`custom_${custom.id}`] || [];
+      const filesHtml = itemFiles.length > 0 ? renderFilesList(`custom_${custom.id}`, itemFiles) : '';
+
+      return `
+        <section class="section" data-custom-id="${custom.id}">
+          <div class="section-header" onclick="toggleSection(this)">
+            <div class="section-title-left">
+              <span class="section-number" style="background:var(--kab-navy-light);color:white;">+</span>
+              <span class="section-title">${escapeHtml(custom.title)}</span>
+            </div>
+            <div class="section-status-right">
+              <span class="status-pill empty">Papildomas</span>
+              <span class="section-toggle">▼</span>
+            </div>
+          </div>
+          <div class="section-content">
+            <div class="item layout-document">
+              <div class="item-header">
+                <div class="item-title-group">
+                  <p class="item-description">${escapeHtml(custom.description || '')}</p>
+                </div>
+                ${!isReadonly ? `<button class="btn btn-small" onclick="deleteCustomSection('${custom.id}')">??️ Ištrinti</button>` : ''}
+              </div>
+              <div class="upload-section">
+                <label class="upload-section-label">?? Pridėti dokumentus</label>
+                ${filesHtml}
+                <div class="upload-zone" data-item-id="custom_${custom.id}">
+                  <div class="upload-zone-icon">??</div>
+                  <div><strong>Nutempkite failus čia</strong> arba spustelėkite pasirinkti</div>
+                  <input type="file" multiple style="display:none;" onchange="handleFileSelect(event, 'custom_${custom.id}')">
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderCustomSectionAdd() {
+      return `
+        <div class="custom-section-add" onclick="showCustomForm()">
+          <span class="icon">➕</span>
+          <h3>Papildomas straipsnis</h3>
+          <p>Jei turite kitos svarbios informacijos, nepateiktos viršuje — pridėkite savo straipsnį</p>
+        </div>
+        <div id="customFormContainer"></div>
+      `;
+    }
+
+    function renderSubmitSection() {
+      const hasInterim = submission.status === 'submitted_interim';
+      return `
+        <div class="submit-section">
+          <h2>?? Pateikimas</h2>
+          <p>Galite išsaugoti kaip tarpinį pateikimą ir grįžti vėliau, arba pateikti galutinę ataskaitą, kai visi duomenys paruošti.</p>
+          <div class="consent-row">
+            <input type="checkbox" id="consentCheckbox">
+            <label for="consentCheckbox">Patvirtinu, kad pateikta informacija yra teisinga, pilna ir sutinku su asmens duomenų tvarkymu pagal KAB Consulting privatumo politiką.</label>
+          </div>
+          <div class="submit-btns">
+            <button class="btn btn-submit-interim" onclick="submitInterim()">?? Pateikti tarpinę ataskaitą</button>
+            <button class="btn btn-submit-final" id="btnFinal" onclick="submitFinal()">?? Pateikti GALUTINĘ ataskaitą</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ============================================================
+    // EVENT HANDLERS
+    // ============================================================
+
+    function attachEventListeners() {
+      // Textarea auto-save
+      document.querySelectorAll('textarea[data-item-id]').forEach(ta => {
+        ta.addEventListener('input', e => {
+          const itemId = e.target.dataset.itemId;
+          const field = e.target.dataset.field;
+          scheduleSave(itemId, { [field]: e.target.value });
+
+          // Char counter update
+          const counter = e.target.parentElement.querySelector('.text-char-counter');
+          if (counter) counter.textContent = `${e.target.value.length} simbolių`;
+        });
+      });
+
+      // Radio buttons
+      document.querySelectorAll('.applicability').forEach(group => {
+        group.addEventListener('click', e => {
+          const btn = e.target.closest('.radio-btn');
+          if (!btn) return;
+          const item = btn.closest('.item');
+          const itemId = item.dataset.itemId;
+          const value = btn.dataset.value;
+
+          group.querySelectorAll('.radio-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          // Iš karto atnaujiname vietinę items būseną (kad UI atnaujintu akimirksniu)
+          if (!items[itemId]) {
+            items[itemId] = {
+              submission_id: submission.id,
+              item_id: itemId,
+              client_marked_as: value
+            };
+          } else {
+            items[itemId].client_marked_as = value;
+          }
+
+          // Išsaugoti į DB
+          scheduleSave(itemId, { client_marked_as: value });
+
+          // Perrender'inti visą formą, kad UI būtų konsistentiška
+          // (badge, spalva, upload/text zonų matomumas)
+          renderForm();
+        });
+      });
+
+      // Upload zones (click to open file picker)
+      document.querySelectorAll('.upload-zone, .upload-zone-compact').forEach(zone => {
+        zone.addEventListener('click', e => {
+          if (e.target.tagName === 'INPUT') return;
+          const input = zone.querySelector('input[type=file]');
+          if (input) input.click();
+        });
+
+        // Drag and drop
+        zone.addEventListener('dragover', e => {
+          e.preventDefault();
+          zone.classList.add('dragover');
+        });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop', e => {
+          e.preventDefault();
+          zone.classList.remove('dragover');
+          const itemId = zone.dataset.itemId;
+          handleDroppedFiles(e.dataTransfer.files, itemId);
+        });
+      });
+    }
+
+    function refreshItem(itemId) {
+      // Perrender'iname visą formą, kad UI būtų sinchronizuotas
+      renderForm();
+    }
+
+    // ============================================================
+    // SAVING
+    // ============================================================
+
+    function scheduleSave(itemId, fields) {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      setSaveStatus('saving');
+      saveTimeout = setTimeout(() => {
+        saveItem(itemId, fields);
+      }, 800);
+    }
+
+    async function saveItem(itemId, fields) {
+      try {
+        // Find item_id's section
+        let sectionId = null;
+        let itemTitle = null;
+        for (const section of sections) {
+          for (const item of section.items) {
+            if (item.id === itemId) {
+              sectionId = section.id;
+              itemTitle = item.title;
+              break;
+            }
+          }
+          if (sectionId) break;
+        }
+
+        if (!sectionId) {
+          // Custom section item?
+          if (itemId.startsWith('custom_')) {
+            sectionId = 'custom';
+            itemTitle = 'Custom';
+          } else {
+            console.error('Section not found for item:', itemId);
+            return;
+          }
+        }
+
+        const existing = items[itemId];
+        const payload = {
+          submission_id: submission.id,
+          section_id: sectionId,
+          item_id: itemId,
+          item_title: itemTitle,
+          ...fields,
+          updated_at: new Date().toISOString()
+        };
+
+        let result;
+        // SVARBU: tikriname ne tik 'existing', bet ir 'existing.id'
+        // Nes vietinis items[itemId] objektas gali egzistuoti be 'id'
+        // (kai radio handler'is sukuria placeholder'į prieš save'ą)
+        if (existing && existing.id) {
+          result = await supabase
+            .from('questionnaire_items')
+            .update(payload)
+            .eq('id', existing.id)
+            .select()
+            .single();
+        } else {
+          // Naudojame upsert su onConflict, kad išvengtume duplikatų
+          // (jei tas pats submission_id + item_id jau egzistuoja DB)
+          result = await supabase
+            .from('questionnaire_items')
+            .upsert(payload, { onConflict: 'submission_id,item_id' })
+            .select()
+            .single();
+        }
+
+        if (result.error) throw result.error;
+        items[itemId] = result.data;
+
+        setSaveStatus('saved');
+        updateProgress();
+
+      } catch (err) {
+        console.error('Save error:', err);
+        setSaveStatus('error');
+      }
+    }
+
+    // ============================================================
+    // FILE HANDLING
+    // ============================================================
+
+    async function handleFileSelect(event, itemId) {
+      const filesList = Array.from(event.target.files);
+      await uploadFiles(filesList, itemId);
+      event.target.value = ''; // reset
+    }
+
+    async function handleDroppedFiles(fileList, itemId) {
+      const filesList = Array.from(fileList);
+      await uploadFiles(filesList, itemId);
+    }
+
+    async function uploadFiles(filesList, itemId) {
+      for (const file of filesList) {
+        if (file.size > 10 * 1024 * 1024) {
+          alert(`Failas "${file.name}" per didelis (>10 MB)`);
+          continue;
+        }
+
+        setSaveStatus('saving');
+
+        try {
+          // Ensure item record exists
+          if (!items[itemId]) {
+            await saveItem(itemId, { client_marked_as: 'completed' });
+          }
+
+          const itemRecord = items[itemId];
+          if (!itemRecord) {
+            throw new Error('Nepavyko sukurti item įrašo');
+          }
+
+          // Determine version number
+          const existingFiles = files[itemId] || [];
+          const sameFilename = existingFiles.filter(f => f.original_name === file.name);
+          const versionNumber = sameFilename.length + 1;
+
+          // Mark previous versions as not current
+          if (sameFilename.length > 0) {
+            for (const old of sameFilename.filter(f => f.is_current)) {
+              await supabase
+                .from('questionnaire_item_files')
+                .update({ is_current: false })
+                .eq('id', old.id);
+              old.is_current = false;
+            }
+          }
+
+          // Upload to storage
+          const sectionId = itemRecord.section_id;
+          const storagePath = `${submission.id}/${sectionId}/${itemId}/v${versionNumber}_${file.name}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('client-documents')
+            .upload(storagePath, file, { upsert: true });  // upsert: true — perrašys, jei failas jau yra
+
+          if (uploadError) throw uploadError;
+
+          // Insert file record
+          const { data: fileRecord, error: insertError } = await supabase
+            .from('questionnaire_item_files')
+            .insert({
+              item_id: itemRecord.id,
+              submission_id: submission.id,
+              original_name: file.name,
+              storage_path: storagePath,
+              file_size: file.size,
+              mime_type: file.type,
+              version_number: versionNumber,
+              is_current: true,
+              uploaded_by: 'client'
+            })
+            .select()
+            .single();
+
+          if (insertError) throw insertError;
+
+          // Add to local state
+          if (!files[itemId]) files[itemId] = [];
+          files[itemId].unshift(fileRecord);
+
+          setSaveStatus('saved');
+
+        } catch (err) {
+          console.error('Upload error:', err);
+          alert('Klaida įkeliant failą: ' + err.message);
+          setSaveStatus('error');
+        }
+      }
+
+      // Re-render (simple approach)
+      renderForm();
+    }
+
+    async function downloadFile(fileId, storagePath, originalName) {
+      try {
+        const { data, error } = await supabase.storage
+          .from('client-documents')
+          .createSignedUrl(storagePath, 60);
+
+        if (error) throw error;
+
+        const a = document.createElement('a');
+        a.href = data.signedUrl;
+        a.download = originalName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (err) {
+        alert('Nepavyko atsisiųsti: ' + err.message);
+      }
+    }
+
+    async function deleteFile(fileId, storagePath) {
+      if (!confirm('Ar tikrai norite ištrinti šį failą?')) return;
+
+      try {
+        // Delete from storage
+        await supabase.storage.from('client-documents').remove([storagePath]);
+
+        // Delete from DB
+        await supabase.from('questionnaire_item_files').delete().eq('id', fileId);
+
+        // Remove from local state
+        for (const itemId in files) {
+          files[itemId] = files[itemId].filter(f => f.id !== fileId);
+        }
+
+        renderForm();
+        setSaveStatus('saved');
+      } catch (err) {
+        alert('Klaida trinant: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // COMMENTS / REPLIES
+    // ============================================================
+
+    async function submitReply(itemId) {
+      const input = document.querySelector(`.reply-input[data-item-id="${itemId}"]`);
+      if (!input || !input.value.trim()) return;
+
+      try {
+        const itemRecord = items[itemId];
+        if (!itemRecord) {
+          alert('Pirma pridėkite atsakymą ar dokumentus į šį straipsnį.');
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('questionnaire_comments')
+          .insert({
+            item_id: itemRecord.id,
+            submission_id: submission.id,
+            author_role: 'client',
+            author_name: submission.client_contact || 'Klientas',
+            comment_text: input.value.trim(),
+            visible_to_client: true,
+            read_by_admin: false,
+            read_by_client: true
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (!comments[itemId]) comments[itemId] = [];
+        comments[itemId].push(data);
+
+        input.value = '';
+        renderForm();
+
+      } catch (err) {
+        alert('Klaida: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // CUSTOM SECTIONS
+    // ============================================================
+
+    function showCustomForm() {
+      const container = document.getElementById('customFormContainer');
+      container.innerHTML = `
+        <div class="custom-form">
+          <label>Straipsnio pavadinimas *</label>
+          <input type="text" id="customTitle" placeholder="Pvz.: 'Papildoma informacija apie tiekėjus'">
+          <label>Situacijos aprašymas</label>
+          <textarea id="customDescription" placeholder="Aprašykite, apie ką yra šis papildomas straipsnis..."></textarea>
+          <div class="custom-form-actions">
+            <button class="btn btn-small" onclick="hideCustomForm()">Atšaukti</button>
+            <button class="btn btn-primary btn-small" onclick="saveCustomSection()">Pridėti straipsnį</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function hideCustomForm() {
+      document.getElementById('customFormContainer').innerHTML = '';
+    }
+
+    async function saveCustomSection() {
+      const title = document.getElementById('customTitle').value.trim();
+      const description = document.getElementById('customDescription').value.trim();
+
+      if (!title) {
+        alert('Įveskite straipsnio pavadinimą');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('questionnaire_custom_sections')
+          .insert({
+            submission_id: submission.id,
+            title,
+            description,
+            added_by: 'client',
+            sort_order: customSections.length
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        customSections.push(data);
+        hideCustomForm();
+        renderForm();
+      } catch (err) {
+        alert('Klaida: ' + err.message);
+      }
+    }
+
+    async function deleteCustomSection(id) {
+      if (!confirm('Ar tikrai norite ištrinti šį papildomą straipsnį? Visi jo failai taip pat bus ištrinti.')) return;
+
+      try {
+        // Delete files
+        const customFilesList = files[`custom_${id}`] || [];
+        for (const f of customFilesList) {
+          await supabase.storage.from('client-documents').remove([f.storage_path]);
+        }
+
+        // Delete record
+        await supabase.from('questionnaire_custom_sections').delete().eq('id', id);
+
+        customSections = customSections.filter(c => c.id !== id);
+        delete files[`custom_${id}`];
+        renderForm();
+      } catch (err) {
+        alert('Klaida: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // SUBMIT HANDLERS
+    // ============================================================
+
+    async function submitInterim() {
+      if (!confirm('Pateikti tarpinę ataskaitą? Galėsite tęsti pildymą vėliau.')) return;
+
+      try {
+        const { error } = await supabase
+          .from('questionnaire_submissions')
+          .update({
+            status: 'submitted_interim',
+            interim_submitted_at: new Date().toISOString()
+          })
+          .eq('id', submission.id);
+
+        if (error) throw error;
+
+        alert('✓ Tarpinė ataskaita pateikta. KAB Consulting specialistai peržiūrės medžiagą.');
+        location.reload();
+      } catch (err) {
+        alert('Klaida: ' + err.message);
+      }
+    }
+
+    async function submitFinal() {
+      const consent = document.getElementById('consentCheckbox').checked;
+      if (!consent) {
+        alert('Pažymėkite patvirtinimo checkbox prieš pateikiant galutinę ataskaitą.');
+        return;
+      }
+
+      if (!confirm('⚠️ DĖMESIO: Po galutinio pateikimo NEBEGALĖSITE keisti duomenų.\n\nAr tikrai norite pateikti galutinę ataskaitą?')) return;
+
+      try {
+        const { error } = await supabase
+          .from('questionnaire_submissions')
+          .update({
+            status: 'submitted_final',
+            submitted_at: new Date().toISOString()
+          })
+          .eq('id', submission.id);
+
+        if (error) throw error;
+
+        alert('?? Galutinė ataskaita pateikta sėkmingai! KAB Consulting specialistai susisieks su jumis per artimiausias darbo dienas.');
+        location.reload();
+      } catch (err) {
+        alert('Klaida: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // PROGRESS CALCULATION
+    // ============================================================
+
+    function getSectionStats(section) {
+      let total = section.items.length;
+      let completed = 0;
+      let queries = 0;
+
+      for (const item of section.items) {
+        const state = items[item.id];
+        const itemFiles = files[item.id] || [];
+        const itemComments = comments[item.id] || [];
+
+        if (state?.client_marked_as === 'not_applicable') {
+          completed++;
+        } else if (itemFiles.length > 0 || state?.client_comment) {
+          completed++;
+        }
+
+        if (itemComments.some(c => c.author_role === 'admin' && !c.read_by_client)) {
+          queries++;
+        }
+      }
+
+      return { total, completed, queries };
+    }
+
+    function updateProgress() {
+      let total = 0, completed = 0, queries = 0;
+
+      for (const section of sections) {
+        const stats = getSectionStats(section);
+        total += stats.total;
+        completed += stats.completed;
+        queries += stats.queries;
+      }
+
+      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('statsCompleted').textContent = completed;
+      document.getElementById('statsQueries').textContent = queries;
+      document.getElementById('statsPending').textContent = total - completed;
+    }
+
+    // ============================================================
+    // UTILITIES
+    // ============================================================
+
+    function toggleSection(headerEl) {
+      headerEl.parentElement.classList.toggle('collapsed');
+    }
+
+    function setSaveStatus(status) {
+      const el = document.getElementById('saveIndicator');
+      const text = document.getElementById('saveText');
+      el.className = 'save-indicator ' + status;
+      text.textContent = {
+        saving: 'Saugoma...',
+        saved: 'Išsaugota',
+        error: 'Klaida',
+      }[status] || 'Pasiruošęs';
+    }
+
+    function escapeHtml(text) {
+      if (text == null) return '';
+      const div = document.createElement('div');
+      div.textContent = String(text);
+      return div.innerHTML;
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleDateString('lt-LT');
+    }
+
+    function formatDateTime(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleDateString('lt-LT') + ' ' + d.toLocaleTimeString('lt-LT', {hour:'2-digit', minute:'2-digit'});
+    }
+
+    function formatSize(bytes) {
+      if (!bytes) return '0 B';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024*1024) return Math.round(bytes / 1024) + ' KB';
+      return (bytes / (1024*1024)).toFixed(1) + ' MB';
+    }
+
+    function statusLabel(status) {
+      return {
+        draft: 'Juodraštis',
+        submitted_interim: 'Tarpinis pateikimas',
+        submitted_final: 'Galutinė ataskaita',
+        reviewed: 'Peržiūrėta',
+        archived: 'Archyvuota'
+      }[status] || status;
+    }
+
+    function showError(msg) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('formContainer').style.display = 'block';
+      document.getElementById('formContainer').innerHTML = `
+        <div class="error-state">
+          <h3 style="margin-top:0;">⚠️ Klaida</h3>
+          <p>${escapeHtml(msg)}</p>
+          <p style="margin-bottom:0;font-size:12px;">Jei problema tęsiasi, susisiekite su KAB Consulting: <strong>klausk@kab.lt</strong></p>
+        </div>
+      `;
+    }
+
+    // ============================================================
+    // START
+    // ============================================================
+
+    // ============================================================
+    // EMAIL + OTP GATE (v3 security) - runs BEFORE original init()
+    // ============================================================
+
+    const _gateUrlParams = new URLSearchParams(window.location.search);
+    const _gateAccessToken = _gateUrlParams.get('t');
+    const _gateSessionKey = _gateAccessToken ? `kab_otp_ok_${_gateAccessToken}` : null;
+    let _gatePendingEmail = null;
+
+    function _gateShowOverlay() {
+      document.getElementById('gate-overlay').classList.remove('gate-hidden');
+      document.getElementById('loadingState').style.display = 'none';
+    }
+    function _gateHideOverlay() {
+      document.getElementById('gate-overlay').classList.add('gate-hidden');
+    }
+    function _gateShowEmailView() {
+      document.getElementById('gate-email-view').classList.remove('gate-hidden');
+      document.getElementById('gate-otp-view').classList.add('gate-hidden');
+      setTimeout(() => document.getElementById('gate-email-input').focus(), 50);
+    }
+    function _gateShowOtpView(email) {
+      document.getElementById('gate-email-view').classList.add('gate-hidden');
+      document.getElementById('gate-otp-view').classList.remove('gate-hidden');
+      document.getElementById('gate-otp-email-display').textContent = email;
+      document.getElementById('gate-otp-input').value = '';
+      setTimeout(() => document.getElementById('gate-otp-input').focus(), 50);
+    }
+
+    async function _gateSendOtp(isResend) {
+      const email = (document.getElementById('gate-email-input').value || _gatePendingEmail || '').trim().toLowerCase();
+      const errEl = isResend ? document.getElementById('gate-otp-error') : document.getElementById('gate-email-error');
+      errEl.classList.add('gate-hidden');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errEl.textContent = 'Neteisingas el. pašto formatas. / Invalid email format.';
+        errEl.classList.remove('gate-hidden');
+        return;
+      }
+      const btn = isResend ? null : document.getElementById('gate-email-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Siunčiama... / Sending...'; }
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/send-client-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify({ access_token: _gateAccessToken, email })
+        });
+        const result = await response.json();
+        if (btn) { btn.disabled = false; btn.textContent = 'Siųsti patvirtinimo kodą / Send verification code'; }
+        if (!result.success) {
+          errEl.textContent = result.message || 'Nepavyko išsiųsti kodo. / Failed to send code.';
+          errEl.classList.remove('gate-hidden');
+          return;
+        }
+        _gatePendingEmail = email;
+        _gateShowOtpView(email);
+      } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Siųsti patvirtinimo kodą / Send verification code'; }
+        errEl.textContent = 'Ryšio klaida. Bandykite vėliau. / Connection error.';
+        errEl.classList.remove('gate-hidden');
+      }
+    }
+
+    async function _gateVerifyOtp() {
+      const code = (document.getElementById('gate-otp-input').value || '').trim();
+      const errEl = document.getElementById('gate-otp-error');
+      errEl.classList.add('gate-hidden');
+      if (!/^\d{6}$/.test(code)) {
+        errEl.textContent = 'Kodas turi būti 6 skaitmenys. / Code must be 6 digits.';
+        errEl.classList.remove('gate-hidden');
+        return;
+      }
+      if (!_gatePendingEmail) {
+        errEl.textContent = 'Sesija pasibaigė. Įveskite el. paštą iš naujo. / Session expired.';
+        errEl.classList.remove('gate-hidden');
+        _gateShowEmailView();
+        return;
+      }
+      const btn = document.getElementById('gate-otp-btn');
+      btn.disabled = true; btn.textContent = 'Tikrinama... / Verifying...';
+      try {
+        const { data, error } = await supabase.rpc('verify_client_otp', {
+          p_access_token: _gateAccessToken, p_email: _gatePendingEmail, p_code: code
+        });
+        btn.disabled = false; btn.textContent = 'Patvirtinti / Verify';
+        if (error) {
+          errEl.textContent = 'Klaida tikrinant koda. / Verification error.';
+          errEl.classList.remove('gate-hidden');
+          return;
+        }
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row || !row.ok) {
+          const errMap = {
+            wrong_code: 'Neteisingas kodas. / Wrong code.',
+            code_expired: 'Kodo galiojimas baigėsi. Prašykite naujo. / Code expired.',
+            too_many_attempts: 'Per daug klaidingų bandymų. Prašykite naujo kodo. / Too many attempts.',
+            no_active_code: 'Aktyvaus kodo nėra. Prašykite naujo. / No active code.',
+            email_mismatch: 'Tapatybės patvirtinti nepavyko. / Verification failed.',
+            invalid_token: 'Nuoroda neteisinga arba nebegalioja. / Invalid or expired link.'
+          };
+          errEl.textContent = errMap[row && row.error_code] || 'Patvirtinimas nepavyko. / Verification failed.';
+          errEl.classList.remove('gate-hidden');
+          return;
+        }
+        sessionStorage.setItem(_gateSessionKey, 'verified');
+        _gateHideOverlay();
+        document.getElementById('loadingState').style.display = 'flex';
+        init();
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Patvirtinti / Verify';
+        errEl.textContent = 'Ryšio klaida. / Connection error.';
+        errEl.classList.remove('gate-hidden');
+      }
+    }
+
+    function _gateBoot() {
+      if (!_gateAccessToken) {
+        showError('Nuoroda neteisinga - trūksta prieigos kodo. / Invalid link - missing access code.');
+        return;
+      }
+      if (sessionStorage.getItem(_gateSessionKey) === 'verified') {
+        init();
+        return;
+      }
+      _gateShowOverlay();
+      _gateShowEmailView();
+      document.getElementById('gate-email-btn').addEventListener('click', () => _gateSendOtp(false));
+      document.getElementById('gate-email-input').addEventListener('keydown', e => { if (e.key === 'Enter') _gateSendOtp(false); });
+      document.getElementById('gate-otp-btn').addEventListener('click', _gateVerifyOtp);
+      document.getElementById('gate-otp-input').addEventListener('keydown', e => { if (e.key === 'Enter') _gateVerifyOtp(); });
+      document.getElementById('gate-otp-input').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^\d]/g, '').slice(0, 6); });
+      document.getElementById('gate-otp-resend').addEventListener('click', e => { e.preventDefault(); if (_gatePendingEmail) _gateSendOtp(true); });
+      document.getElementById('gate-otp-back').addEventListener('click', e => { e.preventDefault(); _gatePendingEmail = null; _gateShowEmailView(); });
+    }
+
+    // Replace direct init() call with gate boot
+    _gateBoot();
+  </script>
+</body>
+</html>
