@@ -1,0 +1,62 @@
+name: Supabase Keep-Alive
+
+# Tikslas: kas 6 val. siųsti autentifikuotą užklausą į Supabase,
+# kad Free tier projektas niekada nepasiektų 7 d. neaktyvumo ribos.
+#
+# Šis failas yra apsauginis sluoksnis — jis siunčia užklausą su apikey'umi,
+# kurios UptimeRobot Free planas neleidžia.
+
+on:
+  schedule:
+    # Kas 6 valandas (4 kartus per parą — 24 ping'ai per savaitę)
+    # Cron formatas: minutė valandos diena_men menuo savaitės_diena
+    - cron: '0 */6 * * *'
+
+  # Galima paleisti rankomis per GitHub UI (Actions → Run workflow)
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "Pinging Supabase at $(date -u)"
+
+          # Su apikey header'iu, kad gautume 200 (ne 401)
+          # Endpoint'as questionnaire_templates yra public per RLS politiką
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/questionnaire_templates?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Accept: application/json")
+
+          echo "HTTP Status: $response"
+
+          if [ "$response" = "200" ]; then
+            echo "✅ Supabase responding successfully"
+            exit 0
+          else
+            echo "❌ Supabase returned non-200 status: $response"
+            exit 1
+          fi
+
+      - name: Ping help.vvc.lt frontend
+        run: |
+          echo "Pinging help.vvc.lt at $(date -u)"
+
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://help.vvc.lt/")
+
+          echo "HTTP Status: $response"
+
+          if [ "$response" = "200" ]; then
+            echo "✅ help.vvc.lt responding successfully"
+            exit 0
+          else
+            echo "⚠️  help.vvc.lt returned non-200 status: $response"
+            # Nepakelti exit klaidos — tik įspėjimas
+          fi
