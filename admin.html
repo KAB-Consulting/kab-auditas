@@ -347,6 +347,9 @@
           <button class="template-tab" data-template="restrukturizavimas" onclick="filterByTemplate('restrukturizavimas')">
             📊 Restruktūrizavimas <span class="tab-count" id="count-restr">0</span>
           </button>
+          <button class="template-tab" data-template="bankrotas_fizinis" onclick="filterByTemplate('bankrotas_fizinis')">
+            ⚖️ Fizinių asmenų bankrotas <span class="tab-count" id="count-bankr">0</span>
+          </button>
         </div>
 
         <!-- Statuso filter + refresh -->
@@ -509,6 +512,10 @@
       background: #FFF3E0;
       color: #E65100;
     }
+    .template-badge.bankrotas {
+      background: #EDE7F6;
+      color: #4527A0;
+    }
     .template-badge.legacy {
       background: #F5F5F5;
       color: #666;
@@ -659,6 +666,7 @@
   const TEMPLATE_URL_MAP = {
     'restrukturizavimas': 'questionnaire.html',
     'auditas': 'questionnaire.html',
+    'bankrotas_fizinis': 'questionnaire.html',
     // Fallback: senas audito klausimynas (be template_id)
     'audit_legacy': 'index.html',
   };
@@ -827,17 +835,21 @@
     const total = allSubmissions.length;
     let auditCount = 0;
     let restrCount = 0;
+    let bankrCount = 0;
 
     for (const s of allSubmissions) {
       const tplCode = getTemplateCode(s);
       // 'auditas' = naujas v4 šablonas, null = legacy audit (senas index.html formatas)
       if (tplCode === 'auditas' || tplCode === null) auditCount++;
       else if (tplCode === 'restrukturizavimas') restrCount++;
+      else if (tplCode === 'bankrotas_fizinis') bankrCount++;
     }
 
     document.getElementById('count-all').textContent = total;
     document.getElementById('count-audit').textContent = auditCount;
     document.getElementById('count-restr').textContent = restrCount;
+    const bankrEl = document.getElementById('count-bankr');
+    if (bankrEl) bankrEl.textContent = bankrCount;
   }
 
   function getTemplateCode(submission) {
@@ -925,6 +937,8 @@
         tplBadge = '<span class="template-badge restrukturizavimas">📊 Restrukt.</span>';
       } else if (tplCode === 'auditas') {
         tplBadge = '<span class="template-badge audit">🔍 Auditas</span>';
+      } else if (tplCode === 'bankrotas_fizinis') {
+        tplBadge = '<span class="template-badge bankrotas">⚖️ FA bankrotas</span>';
       } else {
         tplBadge = '<span class="template-badge legacy">📋 Auditas (senas)</span>';
       }
