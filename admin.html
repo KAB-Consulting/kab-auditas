@@ -976,9 +976,12 @@
   }
 
   function buildClientUrl(submission) {
-    // Pagal template_id arba legacy submission — nustatyti URL'ą
+    // Pagal template_id nustatyti kliento puslapio failą.
+    // Visi v4 šablonai (auditas, restrukturizavimas, bankrotas_fizinis) naudoja
+    // universalų questionnaire.html. Atsarginis variantas TAIP PAT questionnaire.html
+    // (NE index.html — index yra tik titulinis landing puslapis, jis token'o nepriima).
     const tplCode = getTemplateCode(submission);
-    const htmlFile = TEMPLATE_URL_MAP[tplCode] || 'index.html';
+    const htmlFile = TEMPLATE_URL_MAP[tplCode] || 'questionnaire.html';
     return `${CLIENT_BASE_URL}/${htmlFile}?t=${submission.access_token}`;
   }
 
@@ -1089,14 +1092,10 @@
     });
   }
 
-  function copyLink(token) {
-    const link = `${CLIENT_BASE_URL}/?t=${token}`;
-    navigator.clipboard.writeText(link).then(() => {
-      alert('Nuoroda nukopijuota:\n' + link);
-    });
-  }
+  // PASTABA: sena copyLink(token) funkcija pašalinta — ji vesdavo į /?t= (index.html),
+  // kuris token'o nepriima. Naudokite buildClientUrl(submission) / copyLinkForSubmission().
 
-  // ===== DETAL PERŽIŪRA =====
+  // ===== DETALI PERŽIŪRA =====
 
   async function viewDetail(id) {
     const modal = document.getElementById('detail-modal');
