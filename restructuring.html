@@ -1118,7 +1118,7 @@
         </div>
       </div>
       <div class="save-indicator" id="saveIndicator">
-        <span>??</span><span id="saveText">Pasiruošęs</span>
+        <span>💾</span><span id="saveText">Pasiruošęs</span>
       </div>
     </div>
   </header>
@@ -1477,7 +1477,7 @@
       if (submission.status === 'submitted_interim') {
         return `
           <div class="interim-banner">
-            <div class="interim-banner-icon">??</div>
+            <div class="interim-banner-icon">📋</div>
             <div>
               <strong>Tarpinė ataskaita pateikta</strong>
               <p>${formatDate(submission.interim_submitted_at || submission.updated_at)} · Galite tęsti pildymą. KAB Consulting peržiūri pateiktą medžiagą.</p>
@@ -1489,7 +1489,7 @@
         <div class="intro-banner">
           <h3>${escapeHtml(template.name)}</h3>
           <p>${escapeHtml(template.description || '')}</p>
-          <p style="margin-top:10px;font-size:12px;opacity:0.9;">?? Galite išsaugoti ir grįžti bet kuriuo metu. Duomenys automatiškai įrašomi.</p>
+          <p style="margin-top:10px;font-size:12px;opacity:0.9;">💡 Galite išsaugoti ir grįžti bet kuriuo metu. Duomenys automatiškai įrašomi.</p>
         </div>
       `;
     }
@@ -1633,18 +1633,18 @@
       return `
         <div class="upload-section">
           <label class="upload-section-label">
-            ?? Įkelti dokumentai <span class="required-star">*</span>
+            📎 Įkelti dokumentai <span class="required-star">*</span>
           </label>
           ${filesHtml}
           <div class="upload-zone" data-item-id="${itemDef.id}">
-            <div class="upload-zone-icon">??</div>
+            <div class="upload-zone-icon">📁</div>
             <div><strong>Nutempkite failus čia</strong> arba spustelėkite pasirinkti</div>
             <div class="upload-zone-hint">Maks. 10 MB vienam failui</div>
             <input type="file" multiple style="display:none;" onchange="handleFileSelect(event, '${itemDef.id}')">
           </div>
         </div>
         <div class="comment-section">
-          <label class="comment-label">?? ${escapeHtml(itemDef.text_label || 'Pastaba (neprivaloma)')}</label>
+          <label class="comment-label">💬 ${escapeHtml(itemDef.text_label || 'Pastaba (neprivaloma)')}</label>
           <textarea class="comment-input" data-item-id="${itemDef.id}" data-field="client_comment"
             placeholder="${escapeHtml(itemDef.text_placeholder || '')}">${escapeHtml(itemState.client_comment || '')}</textarea>
         </div>
@@ -1658,14 +1658,14 @@
       return `
         <div class="text-section">
           <label class="text-section-label">
-            ?? ${escapeHtml(itemDef.text_label || 'Jūsų atsakymas')} <span class="required-star">*</span>
+            ✏️ ${escapeHtml(itemDef.text_label || 'Jūsų atsakymas')} <span class="required-star">*</span>
           </label>
           <textarea class="text-input" data-item-id="${itemDef.id}" data-field="client_comment"
             placeholder="${escapeHtml(itemDef.text_placeholder || '')}">${escapeHtml(itemState.client_comment || '')}</textarea>
           <div class="text-char-counter">${textLen} simbolių</div>
         </div>
         <div class="attachments-section">
-          <div class="attachments-label">?? Priedai (neprivaloma)</div>
+          <div class="attachments-label">📎 Priedai (neprivaloma)</div>
           ${filesHtml}
           <div class="upload-zone-compact" data-item-id="${itemDef.id}">
             Nutempkite failus arba <strong>spustelėkite pasirinkti</strong>
@@ -1685,12 +1685,12 @@
 
         html += `
           <div class="file-item ${isCurrent ? 'current' : ''}">
-            <span class="file-icon">??</span>
+            <span class="file-icon">📄</span>
             <span class="file-name">${escapeHtml(f.original_name)}</span>
             <span class="file-meta">${formatSize(f.file_size)} · ${formatDate(f.uploaded_at)}</span>
             ${badgeHtml}
-            <button class="file-action-btn" onclick="downloadFile('${f.id}', '${escapeHtml(f.storage_path)}', '${escapeHtml(f.original_name)}')">??</button>
-            ${!isReadonly ? `<button class="file-action-btn" onclick="deleteFile('${f.id}', '${f.storage_path}')" title="Ištrinti">??️</button>` : ''}
+            <button class="file-action-btn" onclick="downloadFile('${f.id}', '${escapeHtml(f.storage_path)}', '${escapeHtml(f.original_name)}')">⬇️</button>
+            ${!isReadonly ? `<button class="file-action-btn" onclick="deleteFile('${f.id}', '${f.storage_path}')" title="Ištrinti">🗑️</button>` : ''}
           </div>
         `;
       }
@@ -1702,7 +1702,7 @@
       let html = `
         <div class="comments-thread">
           <div class="comments-header">
-            <span>?? Rengėjo paklausimai</span>
+            <span>❓ Rengėjo paklausimai</span>
             <span class="comments-count">${itemComments.length}</span>
           </div>
       `;
@@ -1759,13 +1759,13 @@
                 <div class="item-title-group">
                   <p class="item-description">${escapeHtml(custom.description || '')}</p>
                 </div>
-                ${!isReadonly ? `<button class="btn btn-small" onclick="deleteCustomSection('${custom.id}')">??️ Ištrinti</button>` : ''}
+                ${!isReadonly ? `<button class="btn btn-small" onclick="deleteCustomSection('${custom.id}')">🗑️ Ištrinti</button>` : ''}
               </div>
               <div class="upload-section">
-                <label class="upload-section-label">?? Pridėti dokumentus</label>
+                <label class="upload-section-label">📎 Pridėti dokumentus</label>
                 ${filesHtml}
                 <div class="upload-zone" data-item-id="custom_${custom.id}">
-                  <div class="upload-zone-icon">??</div>
+                  <div class="upload-zone-icon">📁</div>
                   <div><strong>Nutempkite failus čia</strong> arba spustelėkite pasirinkti</div>
                   <input type="file" multiple style="display:none;" onchange="handleFileSelect(event, 'custom_${custom.id}')">
                 </div>
@@ -1791,15 +1791,15 @@
       const hasInterim = submission.status === 'submitted_interim';
       return `
         <div class="submit-section">
-          <h2>?? Pateikimas</h2>
+          <h2>📤 Pateikimas</h2>
           <p>Galite išsaugoti kaip tarpinį pateikimą ir grįžti vėliau, arba pateikti galutinę ataskaitą, kai visi duomenys paruošti.</p>
           <div class="consent-row">
             <input type="checkbox" id="consentCheckbox">
             <label for="consentCheckbox">Patvirtinu, kad pateikta informacija yra teisinga, pilna ir sutinku su asmens duomenų tvarkymu pagal KAB Consulting privatumo politiką.</label>
           </div>
           <div class="submit-btns">
-            <button class="btn btn-submit-interim" onclick="submitInterim()">?? Pateikti tarpinę ataskaitą</button>
-            <button class="btn btn-submit-final" id="btnFinal" onclick="submitFinal()">?? Pateikti GALUTINĘ ataskaitą</button>
+            <button class="btn btn-submit-interim" onclick="submitInterim()">📨 Pateikti tarpinę ataskaitą</button>
+            <button class="btn btn-submit-final" id="btnFinal" onclick="submitFinal()">✅ Pateikti GALUTINĘ ataskaitą</button>
           </div>
         </div>
       `;
@@ -2268,7 +2268,7 @@
 
         if (error) throw error;
 
-        alert('?? Galutinė ataskaita pateikta sėkmingai! KAB Consulting specialistai susisieks su jumis per artimiausias darbo dienas.');
+        alert('✅ Galutinė ataskaita pateikta sėkmingai! KAB Consulting specialistai susisieks su jumis per artimiausias darbo dienas.');
         location.reload();
       } catch (err) {
         alert('Klaida: ' + err.message);

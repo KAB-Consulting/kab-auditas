@@ -422,11 +422,11 @@
         <!-- 2. KLIENTO INFO -->
         <div class="form-row">
           <div class="form-field">
-            <label>Įmonės pavadinimas *</label>
+            <label id="label-client-name">Įmonės pavadinimas *</label>
             <input type="text" id="new-client-name" placeholder="UAB ...">
           </div>
-          <div class="form-field">
-            <label>Kontaktinis asmuo *</label>
+          <div class="form-field" id="field-client-contact">
+            <label id="label-client-contact">Kontaktinis asmuo *</label>
             <input type="text" id="new-client-contact" placeholder="Vardas Pavardė">
           </div>
         </div>
@@ -728,6 +728,7 @@
     const select = document.getElementById('new-template-id');
     const opt = select.options[select.selectedIndex];
     const description = opt.dataset.description;
+    const code = opt.dataset.code || '';
     const descEl = document.getElementById('template-description');
 
     if (description) {
@@ -735,6 +736,24 @@
       descEl.style.display = 'block';
     } else {
       descEl.style.display = 'none';
+    }
+
+    // Pritaikyti formos laukus pagal kliento tipą:
+    // fizinis asmuo (bankrotas) vs juridinis asmuo (auditas, restrukturizavimas)
+    const isPerson = code === 'bankrotas_fizinis';
+    const nameLabel = document.getElementById('label-client-name');
+    const nameInput = document.getElementById('new-client-name');
+    const contactField = document.getElementById('field-client-contact');
+
+    if (isPerson) {
+      nameLabel.textContent = 'Vardas, pavardė *';
+      nameInput.placeholder = 'Vardenis Pavardenis';
+      contactField.style.display = 'none';        // fiziniam asmeniui kontaktinio asmens nereikia
+      document.getElementById('new-client-contact').value = '';
+    } else {
+      nameLabel.textContent = 'Įmonės pavadinimas *';
+      nameInput.placeholder = 'UAB ...';
+      contactField.style.display = '';
     }
   }
 
@@ -746,6 +765,9 @@
     document.getElementById('new-template-id').value = '';
     document.getElementById('template-description').style.display = 'none';
     document.getElementById('create-modal-alert').innerHTML = '';
+
+    // Atstatyti laukus į numatytą (juridinio asmens) būseną
+    onTemplateChange();
 
     document.getElementById('create-modal').classList.remove('hidden');
   }
@@ -995,6 +1017,11 @@
     const phone = document.getElementById('new-client-phone').value.trim();
     const notes = document.getElementById('new-client-notes').value.trim();
 
+    // Kliento tipas pagal pasirinktą šabloną
+    const tplOpt = document.getElementById('new-template-id').options[document.getElementById('new-template-id').selectedIndex];
+    const tplCode = tplOpt ? (tplOpt.dataset.code || '') : '';
+    const isPerson = tplCode === 'bankrotas_fizinis';
+
     const alertEl = document.getElementById('create-modal-alert');
     alertEl.innerHTML = '';
 
@@ -1003,15 +1030,18 @@
       return;
     }
 
-    if (!name || !contact || !email) {
+    // Fiziniam asmeniui (bankrotas) kontaktinio asmens nereikia — privalomi tik vardas ir el. paštas
+    const contactRequired = !isPerson;
+    if (!name || !email || (contactRequired && !contact)) {
       alertEl.innerHTML = '<div class="alert alert-error">Užpildykite privalomus laukus (pažymėti *)</div>';
       return;
     }
 
     // Parengti insert payload
+    // Fiziniam asmeniui kontaktinis asmuo = pats klientas (vardas, pavardė)
     const payload = {
       client_name: name,
-      client_contact: contact,
+      client_contact: isPerson ? name : contact,
       client_email: email,
       client_phone: phone || null,
       notes: notes || null,
