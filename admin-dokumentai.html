@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAB Admin — Dokumentų pateikimas kreditoriams</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root { --navy:#0B1E3F; --navy2:#1A3660; --gold:#C9A961; --cream:#F7F4EC; --gray:#5A5A5A; --bd:#E5E5E5; --light:#F9F9F9; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; background:var(--cream); color:#333; line-height:1.55; }
+    .header { background:var(--navy); border-bottom:4px solid var(--gold); padding:14px 24px; display:flex; justify-content:space-between; align-items:center; }
+    .header h1 { color:#fff; font-size:18px; font-weight:600; }
+    .header .right { color:rgba(255,255,255,.85); font-size:13px; display:flex; gap:14px; align-items:center; }
+    .container { max-width:1100px; margin:0 auto; padding:24px 20px; }
+    .card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .btn { background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; }
+    .btn:hover { background:var(--navy2); } .btn:disabled { opacity:.55; cursor:not-allowed; }
+    .btn-ghost { background:#fff; color:var(--navy); border:1px solid var(--navy); }
+    .btn-gold { background:var(--gold); color:var(--navy); } .btn-danger { background:#C0392B; }
+    .btn-sm { padding:6px 12px; font-size:13px; }
+    .input,.textarea,.select { width:100%; padding:10px 12px; border:1px solid var(--bd); border-radius:6px; font-size:14px; font-family:inherit; }
+    .input:focus,.textarea:focus,.select:focus { outline:none; border-color:var(--gold); }
+    .textarea { min-height:80px; resize:vertical; }
+    .label { display:block; font-size:13px; color:var(--gray); margin-bottom:5px; font-weight:600; margin-top:12px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; } .row > * { flex:1; min-width:180px; }
+    .error { background:#FDECEA; color:#C0392B; border:1px solid #F5B7B1; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
+    .success { background:#E8F8F0; color:#1E8449; border:1px solid #ABEBC6; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
+    .hidden { display:none !important; } .center { text-align:center; } .muted { color:var(--gray); font-size:13px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th { text-align:left; background:var(--light); padding:10px 12px; border-bottom:2px solid var(--bd); font-size:12px; color:var(--gray); text-transform:uppercase; }
+    td { padding:10px 12px; border-bottom:1px solid #F0F0F0; }
+    tr:hover td { background:#FBFAF6; }
+    .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; }
+    .badge-green { background:#E8F8F0; color:#1E8449; } .badge-gray { background:#EEE; color:#777; } .badge-gold { background:#FBF3DF; color:#9A7B24; }
+    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; z-index:100; overflow:auto; }
+    .modal { background:#fff; border-radius:12px; max-width:640px; width:100%; padding:26px; }
+    .modal h2 { color:var(--navy); font-size:19px; margin-bottom:14px; }
+    .crumb { font-size:13px; color:var(--gray); margin-bottom:14px; cursor:pointer; }
+    .crumb:hover { color:var(--navy); text-decoration:underline; }
+    .tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .tab { padding:8px 16px; border:1px solid var(--bd); border-radius:20px; background:#fff; cursor:pointer; font-size:13px; font-weight:600; color:var(--gray); }
+    .tab.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+    .filebox { border:2px dashed var(--bd); border-radius:8px; padding:20px; text-align:center; cursor:pointer; }
+    .filebox:hover { border-color:var(--gold); }
+    .file-item { display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:var(--light); border-radius:6px; margin-top:6px; font-size:13px; }
+    .spinner { border:3px solid #eee; border-top:3px solid var(--gold); border-radius:50%; width:28px; height:28px; animation:spin 1s linear infinite; margin:20px auto; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .import-report { font-size:13px; } .import-report .ok { color:#1E8449; } .import-report .bad { color:#C0392B; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>KAB Admin — Dokumentų pateikimas kreditoriams</h1>
+    <div class="right">
+      <a href="admin.html" style="color:#fff;text-decoration:underline;font-size:12px;">← Klausimynai</a>
+      <span id="userEmail"></span>
+      <button class="btn btn-sm btn-ghost" id="logoutBtn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4);">Atsijungti</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- LOGIN -->
+    <div id="loginView" class="card hidden" style="max-width:420px;margin:60px auto;">
+      <h2 style="color:var(--navy);font-size:20px;margin-bottom:12px;">Administratoriaus prisijungimas</h2>
+      <label class="label">El. paštas</label><input id="loginEmail" class="input" type="email">
+      <label class="label">Slaptažodis</label><input id="loginPassword" class="input" type="password">
+      <div id="loginError" class="error hidden"></div>
+      <button id="loginBtn" class="btn" style="width:100%;margin-top:16px;">Prisijungti</button>
+    </div>
+
+    <div id="loadingView" class="card center"><div class="spinner"></div><div class="muted">Kraunama…</div></div>
+
+    <!-- BYLŲ SĄRAŠAS -->
+    <div id="casesView" class="hidden">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <h2 style="color:var(--navy);font-size:18px;">Bylos (juridiniai asmenys)</h2>
+          <button class="btn" id="newCaseBtn">+ Sukurti naują bylą</button>
+        </div>
+        <input id="caseSearch" class="input" placeholder="Paieška pagal pavadinimą…" style="margin-top:14px;">
+      </div>
+      <div class="card"><div id="casesTable"></div></div>
+    </div>
+
+    <!-- BYLOS VIDUS -->
+    <div id="caseDetailView" class="hidden">
+      <div class="crumb" id="backToCases">← Grįžti į bylų sąrašą</div>
+      <div class="card">
+        <h2 style="color:var(--navy);font-size:19px;" id="cdTitle"></h2>
+        <div class="muted" id="cdSub"></div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" data-pane="recipients">👥 Gavėjai</div>
+        <div class="tab" data-pane="upload">⬆️ Įkelti naują dokumentą</div>
+        <div class="tab" data-pane="history">🕓 Peržiūrėti istorinius duomenis</div>
+      </div>
+
+      <!-- GAVĖJAI -->
+      <div id="paneRecipients" class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <strong>Gavėjų sąrašas</strong>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-ghost" id="addRecipientBtn">+ Pridėti gavėją</button>
+            <button class="btn btn-sm btn-ghost" id="importRecipientsBtn">📋 Importuoti (Excel/CSV/įklijuoti)</button>
+          </div>
+        </div>
+        <div id="recipientsTable"></div>
+      </div>
+
+      <!-- ĮKĖLIMAS -->
+      <div id="paneUpload" class="card hidden">
+        <strong>Naujos dokumentų partijos įkėlimas</strong>
+        <label class="label">Partijos pavadinimas *</label>
+        <input id="batchTitle" class="input" placeholder="Pvz. Kreditorių susirinkimo medžiaga 2026-06">
+        <label class="label">Platesnis aprašymas (nebūtina)</label>
+        <textarea id="batchDesc" class="textarea" placeholder="Kas teikiama susipažinimui…"></textarea>
+        <label class="label">Dokumentai (PDF, DOCX, XLSX, JPG, PNG; iki 50 MB)</label>
+        <div class="filebox" id="fileBox">Spustelėkite arba nuvilkite failus čia</div>
+        <input id="fileInput" type="file" multiple class="hidden" accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png">
+        <div id="fileList"></div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;cursor:pointer;">
+          <input type="checkbox" id="notifyCheck"> Pranešti gavėjams el. paštu apie naujus dokumentus
+        </label>
+        <div id="uploadAlert"></div>
+        <button class="btn" id="uploadBtn" style="margin-top:14px;">Pateikti</button>
+      </div>
+
+      <!-- ISTORIJA -->
+      <div id="paneHistory" class="card hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <strong>Audito žurnalas</strong>
+          <button class="btn btn-sm btn-ghost" id="exportCsvBtn">⬇️ Eksportuoti CSV</button>
+        </div>
+        <div class="row" style="margin-bottom:12px;">
+          <select id="filterAction" class="select">
+            <option value="">Visi veiksmai</option>
+            <option value="doc_otp_verified">Prisijungimai</option>
+            <option value="doc_viewed">Peržiūros</option>
+            <option value="doc_downloaded">Atsisiuntimai</option>
+            <option value="doc_batch_uploaded">Įkėlimai</option>
+            <option value="doc_batch_notified">Pranešimai</option>
+            <option value="doc_recipient_invited">Kvietimai</option>
+          </select>
+        </div>
+        <div id="historyTable"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALAI -->
+  <div id="modalRoot"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
+    const CLIENT_BASE_URL = 'https://help.vvc.lt';
+    const RECIPIENT_PAGE = 'kreditoriai.html';
+    const STORAGE_BUCKET = 'shared-documents';
+    const MAX_FILE = 50 * 1024 * 1024;
+    const ALLOWED_EXT = ['pdf','docx','xlsx','jpg','jpeg','png'];
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const $ = id => document.getElementById(id);
+    const show = id => $(id).classList.remove('hidden');
+    const hide = id => $(id).classList.add('hidden');
+    function esc(s){return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+    function fmtSize(b){if(b==null)return'';if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(0)+' KB';return(b/1048576).toFixed(1)+' MB';}
+    function fmtDate(d){try{return new Date(d).toLocaleString('lt-LT',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(e){return d;}}
+
+    let currentCase = null;
+    let pendingFiles = [];
+
+    // ===== AUTH =====
+    (async function init(){
+      const { data:{ session } } = await supabase.auth.getSession();
+      if (session){ await afterLogin(session.user); } else { hide('loadingView'); show('loginView'); }
+    })();
+
+    async function afterLogin(user){
+      $('userEmail').textContent = user.email;
+      hide('loginView'); hide('loadingView'); show('casesView');
+      await loadCases();
+    }
+    $('loginBtn').addEventListener('click', async () => {
+      const email=$('loginEmail').value.trim(), pw=$('loginPassword').value;
+      hide('loginError');
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pw });
+      if (error){ $('loginError').textContent='Prisijungti nepavyko: '+error.message; show('loginError'); return; }
+      await afterLogin(data.user);
+    });
+    $('logoutBtn').addEventListener('click', async () => { await supabase.auth.signOut(); location.reload(); });
+
+    // ===== BYLOS =====
+    async function loadCases(){
+      const { data, error } = await supabase.from('document_cases')
+        .select('*, document_recipients(count), document_batches(count)')
+        .order('created_at',{ascending:false});
+      if (error){ $('casesTable').innerHTML='<div class="error">Klaida: '+esc(error.message)+'</div>'; return; }
+      window._cases = data||[];
+      renderCases(window._cases);
+    }
+    function renderCases(rows){
+      if(!rows.length){ $('casesTable').innerHTML='<div class="muted center" style="padding:20px;">Bylų dar nėra. Sukurkite naują.</div>'; return; }
+      let h='<table><thead><tr><th>Juridinis asmuo</th><th>Bylos pavadinimas</th><th>Gavėjai</th><th>Partijos</th><th>Statusas</th><th></th></tr></thead><tbody>';
+      rows.forEach(c=>{
+        const rc=(c.document_recipients&&c.document_recipients[0]&&c.document_recipients[0].count)||0;
+        const bc=(c.document_batches&&c.document_batches[0]&&c.document_batches[0].count)||0;
+        const badge=c.status==='active'?'<span class="badge badge-green">Aktyvi</span>':'<span class="badge badge-gray">Archyvuota</span>';
+        h+=`<tr><td><strong>${esc(c.legal_entity_name)}</strong>${c.legal_entity_code?'<div class="muted">'+esc(c.legal_entity_code)+'</div>':''}</td>
+        <td>${esc(c.case_title)}</td><td>${rc}</td><td>${bc}</td><td>${badge}</td>
+        <td><button class="btn btn-sm" onclick="openCase('${c.id}')">Atidaryti</button></td></tr>`;
+      });
+      $('casesTable').innerHTML=h+'</tbody></table>';
+    }
+    $('caseSearch').addEventListener('input', e=>{
+      const q=e.target.value.toLowerCase();
+      renderCases((window._cases||[]).filter(c=>(c.legal_entity_name+' '+c.case_title).toLowerCase().includes(q)));
+    });
+
+    window.openCase = async function(id){
+      const c=(window._cases||[]).find(x=>x.id===id); if(!c)return;
+      currentCase=c;
+      hide('casesView'); show('caseDetailView');
+      $('cdTitle').textContent=c.legal_entity_name;
+      $('cdSub').textContent=c.case_title+(c.case_description?' — '+c.case_description:'');
+      switchPane('recipients');
+      await loadRecipients();
+    };
+    $('backToCases').addEventListener('click', ()=>{ hide('caseDetailView'); show('casesView'); loadCases(); });
+
+    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchPane(t.dataset.pane)));
+    function switchPane(pane){
+      document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.pane===pane));
+      ['Recipients','Upload','History'].forEach(p=>$('pane'+p).classList.add('hidden'));
+      $('pane'+pane.charAt(0).toUpperCase()+pane.slice(1)).classList.remove('hidden');
+      if(pane==='history') loadHistory();
+    }
+
+    // ===== SUKURTI BYLĄ =====
+    $('newCaseBtn').addEventListener('click', ()=>{
+      $('modalRoot').innerHTML=`<div class="modal-bg"><div class="modal">
+        <h2>Sukurti naują bylą</h2>
+        <label class="label">Juridinio asmens pavadinimas *</label><input id="mCaseEntity" class="input">
+        <label class="label">Įmonės kodas (nebūtina)</label><input id="mCaseCode" class="input">
+        <label class="label">Bylos pavadinimas *</label><input id="mCaseTitle" class="input" placeholder="Pvz. Nemokumo procesas">
+        <label class="label">Aprašymas (nebūtina)</label><textarea id="mCaseDesc" class="textarea"></textarea>
+        <div id="mCaseAlert"></div>
+        <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+          <button class="btn btn-ghost" onclick="closeModal()">Atšaukti</button>
+          <button class="btn" id="mCaseSave">Sukurti</button>
+        </div></div></div>`;
+      $('mCaseSave').addEventListener('click', saveCase);
+    });
+    async function saveCase(){
+      const entity=$('mCaseEntity').value.trim(), code=$('mCaseCode').value.trim(),
+            title=$('mCaseTitle').value.trim(), desc=$('mCaseDesc').value.trim();
+      if(!entity||!title){ $('mCaseAlert').innerHTML='<div class="error">Pavadinimas ir bylos pavadinimas privalomi.</div>'; return; }
+      const { data:{ user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.from('document_cases')
+        .insert({ legal_entity_name:entity, legal_entity_code:code||null, case_title:title, case_description:desc||null, created_by:user.id })
+        .select().single();
+      if(error){ $('mCaseAlert').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      closeModal(); await loadCases();
+    }
+
+    // ===== GAVĖJAI =====
+    async function loadRecipients(){
+      const { data, error } = await supabase.from('document_recipients')
+        .select('*').eq('case_id',currentCase.id).order('created_at');
+      if(error){ $('recipientsTable').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      window._recipients=data||[];
+      renderRecipients(window._recipients);
+    }
+    function renderRecipients(rows){
+      if(!rows.length){ $('recipientsTable').innerHTML='<div class="muted center" style="padding:16px;">Gavėjų dar nėra.</div>'; return; }
+      let h='<table><thead><tr><th>Pavadinimas</th><th>El. paštas</th><th>Atstovas</th><th>Būsena</th><th>Pask. prisij.</th><th></th></tr></thead><tbody>';
+      rows.forEach(r=>{
+        const st=r.token_revoked_at?'<span class="badge badge-gray">Atšaukta</span>':(r.invited_at?'<span class="badge badge-green">Pakviesta</span>':'<span class="badge badge-gold">Nepakviesta</span>');
+        const rep=[r.rep_full_name,r.rep_phone].filter(Boolean).join(', ');
+        h+=`<tr><td><strong>${esc(r.recipient_name)}</strong></td><td>${esc(r.email)}</td><td class="muted">${esc(rep)||'—'}</td>
+        <td>${st}</td><td class="muted">${r.last_login_at?fmtDate(r.last_login_at):'—'}</td>
+        <td><button class="btn btn-sm btn-ghost" onclick="inviteRecipient('${r.id}')" ${r.token_revoked_at?'disabled':''}>${r.invited_at?'Siųsti vėl':'Kviesti'}</button>
+        <button class="btn btn-sm" onclick="copyLink('${r.access_token}')">Kopijuoti nuorodą</button></td></tr>`;
+      });
+      $('recipientsTable').innerHTML=h+'</tbody></table>';
+    }
+    window.copyLink=function(token){
+      const url=`${CLIENT_BASE_URL}/${RECIPIENT_PAGE}?t=${token}`;
+      navigator.clipboard.writeText(url).then(()=>alert('✓ Nuoroda nukopijuota!')).catch(()=>prompt('Nukopijuokite:',url));
+    };
+
+    // Pridėti vieną gavėją
+    $('addRecipientBtn').addEventListener('click', ()=>{
+      $('modalRoot').innerHTML=`<div class="modal-bg"><div class="modal">
+        <h2>Pridėti gavėją</h2>
+        <label class="label">Gavėjo pavadinimas *</label><input id="mRName" class="input" placeholder="UAB / antstolis / kreditorius">
+        <label class="label">El. paštas *</label><input id="mREmail" class="input" type="email">
+        <label class="label">Atstovo vardas ir pavardė (nebūtina)</label><input id="mRRep" class="input" placeholder="Jonas Jonaitis">
+        <label class="label">Atstovo telefonas (nebūtina)</label><input id="mRPhone" class="input">
+        <div id="mRAlert"></div>
+        <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+          <button class="btn btn-ghost" onclick="closeModal()">Atšaukti</button>
+          <button class="btn" id="mRSave">Pridėti</button></div></div></div>`;
+      $('mRSave').addEventListener('click', saveRecipient);
+    });
+    async function saveRecipient(){
+      const name=$('mRName').value.trim(), email=$('mREmail').value.trim().toLowerCase(),
+            rep=$('mRRep').value.trim(), phone=$('mRPhone').value.trim();
+      if(!name||!email){ $('mRAlert').innerHTML='<div class="error">Pavadinimas ir el. paštas privalomi.</div>'; return; }
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ $('mRAlert').innerHTML='<div class="error">Neteisingas el. pašto formatas.</div>'; return; }
+      const { error } = await supabase.from('document_recipients')
+        .insert({ case_id:currentCase.id, recipient_name:name, email, rep_full_name:rep||null, rep_phone:phone||null });
+      if(error){ $('mRAlert').innerHTML='<div class="error">'+(error.code==='23505'?'Šis el. paštas byloje jau yra.':esc(error.message))+'</div>'; return; }
+      closeModal(); await loadRecipients();
+    }
+
+    // Importas (CSV/Excel/įklijavimas)
+    $('importRecipientsBtn').addEventListener('click', ()=>{
+      $('modalRoot').innerHTML=`<div class="modal-bg"><div class="modal">
+        <h2>Importuoti gavėjus</h2>
+        <p class="muted">Įklijuokite eilutes iš Excel (stulpeliai: Pavadinimas, El. paštas, Atstovas, Telefonas) ARBA įkelkite CSV.</p>
+        <label class="label">Įklijuokite čia (po vieną gavėją eilutėje)</label>
+        <textarea id="mPaste" class="textarea" style="min-height:140px;font-family:monospace;font-size:13px;" placeholder="UAB Pavyzdys	info@pavyzdys.lt	Jonas Jonaitis	+37060000000"></textarea>
+        <label class="label">arba įkelkite CSV failą</label>
+        <input id="mCsv" type="file" accept=".csv" class="input">
+        <div id="mImpAlert"></div>
+        <div id="mImpReport" class="import-report"></div>
+        <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+          <button class="btn btn-ghost" onclick="closeModal()">Atšaukti</button>
+          <button class="btn btn-ghost" id="mImpPreview">Peržiūrėti</button>
+          <button class="btn" id="mImpSave" disabled>Patvirtinti importą</button></div></div></div>`;
+      $('mCsv').addEventListener('change', readCsv);
+      $('mImpPreview').addEventListener('click', ()=>previewImport($('mPaste').value));
+      $('mImpSave').addEventListener('click', confirmImport);
+    });
+    function readCsv(e){
+      const f=e.target.files[0]; if(!f)return;
+      const r=new FileReader(); r.onload=()=>{ $('mPaste').value=r.result; previewImport(r.result); }; r.readAsText(f,'UTF-8');
+    }
+    let _importValid=[];
+    function previewImport(text){
+      const lines=(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+      const valid=[], invalid=[]; const seen=new Set();
+      const existing=new Set((window._recipients||[]).map(r=>r.email.toLowerCase()));
+      lines.forEach((line,i)=>{
+        // praleidžiam antraštės eilutę
+        if(i===0 && /pavadinim|el.?\s*pa|email|gavejo_pavadinimas/i.test(line)) return;
+        const parts=line.split(/\t|,|;/).map(p=>p.trim());
+        const [name,email,rep,phone]=[parts[0],parts[1],parts[2],parts[3]];
+        if(!name||!email){ invalid.push({line,reason:'trūksta pavadinimo arba el. pašto'}); return; }
+        const em=email.toLowerCase();
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ invalid.push({line,reason:'blogas el. pašto formatas'}); return; }
+        if(existing.has(em)){ invalid.push({line,reason:'jau yra byloje'}); return; }
+        if(seen.has(em)){ invalid.push({line,reason:'kartojasi sąraše'}); return; }
+        seen.add(em);
+        valid.push({ recipient_name:name, email:em, rep_full_name:rep||null, rep_phone:phone||null });
+      });
+      _importValid=valid;
+      let h=`<div style="margin-top:10px;"><div class="ok">✓ Bus pridėta: ${valid.length}</div>`;
+      if(invalid.length){ h+=`<div class="bad" style="margin-top:6px;">✗ Atmesta: ${invalid.length}</div><ul style="margin:6px 0 0 18px;">`+invalid.map(x=>`<li class="bad">${esc(x.line.slice(0,60))} — ${x.reason}</li>`).join('')+'</ul>'; }
+      h+='</div>'; $('mImpReport').innerHTML=h;
+      $('mImpSave').disabled = valid.length===0;
+    }
+    async function confirmImport(){
+      if(!_importValid.length)return;
+      const rows=_importValid.map(r=>({...r, case_id:currentCase.id}));
+      const { error } = await supabase.from('document_recipients').insert(rows);
+      if(error){ $('mImpAlert').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      closeModal(); await loadRecipients();
+    }
+
+    window.inviteRecipient = async function(id){
+      const { data:{ session } } = await supabase.auth.getSession();
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/send-recipient-invite`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+          body: JSON.stringify({ recipient_id:id })
+        });
+        const r=await res.json();
+        if(r.success){ alert('✓ Kvietimas išsiųstas.'); await loadRecipients(); }
+        else alert('Klaida: '+(r.error||'nepavyko išsiųsti.'));
+      } catch(e){ alert('Ryšio klaida.'); }
+    };
+
+    // ===== ĮKĖLIMAS =====
+    $('fileBox').addEventListener('click', ()=>$('fileInput').click());
+    $('fileBox').addEventListener('dragover', e=>{e.preventDefault();});
+    $('fileBox').addEventListener('drop', e=>{e.preventDefault(); addFiles(e.dataTransfer.files);});
+    $('fileInput').addEventListener('change', e=>addFiles(e.target.files));
+    function addFiles(files){
+      for(const f of files){
+        const ext=f.name.split('.').pop().toLowerCase();
+        if(!ALLOWED_EXT.includes(ext)){ alert(`Failas „${f.name}" — neleidžiamas tipas. Leidžiama: PDF, DOCX, XLSX, JPG, PNG.`); continue; }
+        if(f.size>MAX_FILE){ alert(`Failas „${f.name}" viršija 50 MB.`); continue; }
+        pendingFiles.push(f);
+      }
+      renderFileList();
+    }
+    function renderFileList(){
+      $('fileList').innerHTML=pendingFiles.map((f,i)=>`<div class="file-item"><span>${esc(f.name)} <span class="muted">(${fmtSize(f.size)})</span></span><button class="btn btn-sm btn-danger" onclick="removeFile(${i})">×</button></div>`).join('');
+    }
+    window.removeFile=i=>{ pendingFiles.splice(i,1); renderFileList(); };
+
+    $('uploadBtn').addEventListener('click', async ()=>{
+      const title=$('batchTitle').value.trim(), desc=$('batchDesc').value.trim(), notify=$('notifyCheck').checked;
+      $('uploadAlert').innerHTML='';
+      if(!title){ $('uploadAlert').innerHTML='<div class="error">Partijos pavadinimas privalomas.</div>'; return; }
+      if(!pendingFiles.length){ $('uploadAlert').innerHTML='<div class="error">Įkelkite bent vieną failą.</div>'; return; }
+      const btn=$('uploadBtn'); btn.disabled=true; btn.textContent='Įkeliama…';
+      try {
+        const { data:{ user } } = await supabase.auth.getUser();
+        // 1) sukurti partiją
+        const { data:batch, error:bErr } = await supabase.from('document_batches')
+          .insert({ case_id:currentCase.id, title, description:desc||null, uploaded_by:user.id }).select().single();
+        if(bErr) throw bErr;
+        // 2) įkelti failus į Storage + įrašyti shared_documents
+        for(const f of pendingFiles){
+          const safe=f.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+          const path=`${currentCase.id}/${batch.id}/${crypto.randomUUID()}__${safe}`;
+          const { error:upErr } = await supabase.storage.from(STORAGE_BUCKET).upload(path, f, { contentType:f.type, upsert:false });
+          if(upErr) throw upErr;
+          const { error:dErr } = await supabase.from('shared_documents')
+            .insert({ batch_id:batch.id, case_id:currentCase.id, original_name:f.name, storage_path:path, file_size:f.size, mime_type:f.type });
+          if(dErr) throw dErr;
+        }
+        // 3) audit
+        await supabase.from('questionnaire_activity').insert({
+          case_id:currentCase.id, action:'doc_batch_uploaded',
+          details:{ batch_id:batch.id, title, files:pendingFiles.length }
+        });
+        // 4) pranešimai (jei pažymėta)
+        let notifyMsg='';
+        if(notify){
+          const { data:{ session } } = await supabase.auth.getSession();
+          const res=await fetch(`${SUPABASE_URL}/functions/v1/notify-recipients-batch`,{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+            body:JSON.stringify({ batch_id:batch.id })
+          });
+          const nr=await res.json();
+          if(nr.success) notifyMsg=` Pranešimai — išsiųsta: ${nr.summary.sent_count}, nepavyko: ${nr.summary.failed_count}.`;
+          else notifyMsg=' Pranešimų išsiųsti nepavyko.';
+        }
+        $('uploadAlert').innerHTML='<div class="success">✓ Dokumentai įkelti.'+notifyMsg+'</div>';
+        pendingFiles=[]; renderFileList(); $('batchTitle').value=''; $('batchDesc').value=''; $('notifyCheck').checked=false;
+      } catch(e){
+        $('uploadAlert').innerHTML='<div class="error">Klaida: '+esc(e.message||e)+'</div>';
+      } finally { btn.disabled=false; btn.textContent='Pateikti'; }
+    });
+
+    // ===== ISTORIJA =====
+    async function loadHistory(){
+      $('historyTable').innerHTML='<div class="spinner"></div>';
+      const { data, error } = await supabase.from('questionnaire_activity')
+        .select('*, document_recipients(recipient_name,email)')
+        .eq('case_id',currentCase.id).order('created_at',{ascending:false}).limit(500);
+      if(error){ $('historyTable').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      window._history=data||[];
+      renderHistory();
+    }
+    const ACTION_LT={doc_otp_generated:'Kodas išsiųstas',doc_otp_verified:'Prisijungimas',doc_otp_failed:'Neteisingas kodas',
+      doc_recipient_invited:'Kvietimas',doc_batch_uploaded:'Įkelta partija',doc_batch_notified:'Pranešimai išsiųsti',
+      doc_batch_revoked:'Partija atšaukta',doc_viewed:'Peržiūra',doc_downloaded:'Atsisiuntimas'};
+    function renderHistory(){
+      const f=$('filterAction').value;
+      let rows=(window._history||[]).filter(r=>!f||r.action===f);
+      if(!rows.length){ $('historyTable').innerHTML='<div class="muted center" style="padding:16px;">Įrašų nėra.</div>'; return; }
+      let h='<table><thead><tr><th>Laikas</th><th>Veiksmas</th><th>Gavėjas</th><th>Detalės</th></tr></thead><tbody>';
+      rows.forEach(r=>{
+        const rec=r.document_recipients?`${esc(r.document_recipients.recipient_name||'')} (${esc(r.document_recipients.email||'')})`:'—';
+        const det=r.details?esc(r.details.original_name||r.details.title||JSON.stringify(r.details).slice(0,80)):'';
+        h+=`<tr><td class="muted">${fmtDate(r.created_at)}</td><td>${ACTION_LT[r.action]||esc(r.action)}</td><td>${rec}</td><td class="muted">${det}</td></tr>`;
+      });
+      $('historyTable').innerHTML=h+'</tbody></table>';
+    }
+    $('filterAction').addEventListener('change', renderHistory);
+    $('exportCsvBtn').addEventListener('click', ()=>{
+      const rows=(window._history||[]);
+      const csv=['Laikas,Veiksmas,Gavejas,El.pastas,Detales'];
+      rows.forEach(r=>{
+        const rec=r.document_recipients||{};
+        csv.push([fmtDate(r.created_at),ACTION_LT[r.action]||r.action,(rec.recipient_name||'').replace(/,/g,' '),(rec.email||''),JSON.stringify(r.details||{}).replace(/,/g,';').replace(/"/g,'')].join(','));
+      });
+      const blob=new Blob(['﻿'+csv.join('\n')],{type:'text/csv;charset=utf-8'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`istorija_${currentCase.legal_entity_name}.csv`; a.click();
+    });
+
+    window.closeModal=()=>{ $('modalRoot').innerHTML=''; };
+  </script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAB Consulting — Dokumentai susipažinimui</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root {
+      --kab-navy: #0B1E3F; --kab-navy-light: #1A3660; --kab-gold: #C9A961;
+      --kab-cream: #F7F4EC; --kab-gray: #5A5A5A; --kab-border: #E5E5E5; --kab-light: #F9F9F9;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: var(--kab-cream); color: #333; line-height: 1.6; min-height: 100vh; }
+    .header { background: var(--kab-navy); border-bottom: 4px solid var(--kab-gold); padding: 18px 24px; }
+    .header h1 { color: #fff; font-size: 19px; font-weight: 600; letter-spacing: .5px; }
+    .header .sub { color: rgba(255,255,255,.8); font-size: 12px; margin-top: 2px; }
+    .container { max-width: 920px; margin: 0 auto; padding: 28px 20px; }
+    .card { background: #fff; border: 1px solid var(--kab-border); border-radius: 10px; padding: 24px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+    .btn { display: inline-block; background: var(--kab-navy); color: #fff; border: none; padding: 11px 20px;
+      border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .btn:hover { background: var(--kab-navy-light); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-ghost { background: #fff; color: var(--kab-navy); border: 1px solid var(--kab-navy); }
+    .btn-sm { padding: 7px 14px; font-size: 13px; }
+    .input { width: 100%; padding: 11px 13px; border: 1px solid var(--kab-border); border-radius: 6px; font-size: 15px; }
+    .input:focus { outline: none; border-color: var(--kab-gold); }
+    .label { display: block; font-size: 13px; color: var(--kab-gray); margin-bottom: 6px; font-weight: 600; }
+    .error { background: #FDECEA; color: #C0392B; border: 1px solid #F5B7B1; padding: 10px 13px; border-radius: 6px; font-size: 13px; margin: 10px 0; }
+    .hidden { display: none !important; }
+    .center { text-align: center; }
+    .muted { color: var(--kab-gray); font-size: 13px; }
+    .batch { border: 1px solid var(--kab-border); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .batch-head { background: var(--kab-light); padding: 14px 18px; border-bottom: 1px solid var(--kab-border); }
+    .batch-title { font-weight: 600; color: var(--kab-navy); font-size: 16px; }
+    .batch-desc { font-size: 13px; color: var(--kab-gray); margin-top: 4px; }
+    .batch-date { font-size: 12px; color: #999; margin-top: 4px; }
+    .doc-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid #F0F0F0; gap: 12px; flex-wrap: wrap; }
+    .doc-row:last-child { border-bottom: none; }
+    .doc-name { font-size: 14px; flex: 1; min-width: 180px; word-break: break-word; }
+    .doc-meta { font-size: 11px; color: #999; }
+    .doc-actions { display: flex; gap: 8px; }
+    .otp-box { max-width: 420px; margin: 40px auto; }
+    .otp-code { font-family: Menlo, Consolas, monospace; letter-spacing: 6px; text-align: center; font-size: 22px; }
+    .footer { text-align: center; color: var(--kab-gray); font-size: 11px; padding: 20px; }
+    .spinner { border: 3px solid #eee; border-top: 3px solid var(--kab-gold); border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 30px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>KAB Consulting</h1>
+    <div class="sub">Dokumentai susipažinimui / Documents for review</div>
+  </div>
+
+  <div class="container">
+    <!-- Įkėlimo būsena -->
+    <div id="loadingState" class="card center"><div class="spinner"></div><div class="muted">Kraunama… / Loading…</div></div>
+
+    <!-- Klaida (pvz. bloga nuoroda) -->
+    <div id="fatalError" class="card hidden"><div class="error" id="fatalErrorMsg"></div></div>
+
+    <!-- OTP prisijungimas -->
+    <div id="gateView" class="card otp-box hidden">
+      <!-- El. pašto žingsnis -->
+      <div id="emailStep">
+        <h2 style="color:var(--kab-navy);font-size:18px;margin-bottom:6px;">Prisijungimas / Sign in</h2>
+        <p class="muted" style="margin-bottom:18px;">Įveskite el. pašto adresą, kuriuo gavote kvietimą. Atsiųsime patvirtinimo kodą.<br><span style="font-size:12px;">Enter the email where you received the invitation. We'll send a verification code.</span></p>
+        <label class="label" for="emailInput">El. paštas / Email</label>
+        <input id="emailInput" class="input" type="email" autocomplete="email" placeholder="vardas@imone.lt">
+        <div id="emailError" class="error hidden"></div>
+        <button id="emailBtn" class="btn" style="margin-top:16px;width:100%;">Siųsti patvirtinimo kodą / Send code</button>
+      </div>
+      <!-- OTP žingsnis -->
+      <div id="otpStep" class="hidden">
+        <h2 style="color:var(--kab-navy);font-size:18px;margin-bottom:6px;">Patvirtinimo kodas / Verification code</h2>
+        <p class="muted" style="margin-bottom:18px;">Kodas išsiųstas: <strong id="otpEmailDisplay"></strong><br><span style="font-size:12px;">Code sent to the email above. Valid for 15 min.</span></p>
+        <label class="label" for="otpInput">6 skaitmenų kodas / 6-digit code</label>
+        <input id="otpInput" class="input otp-code" inputmode="numeric" maxlength="6" placeholder="••••••">
+        <div id="otpError" class="error hidden"></div>
+        <button id="otpBtn" class="btn" style="margin-top:16px;width:100%;">Patvirtinti / Verify</button>
+        <div class="center" style="margin-top:14px;">
+          <a href="#" id="resendLink" class="muted" style="text-decoration:underline;">Negavote kodo? Siųsti iš naujo / Resend code</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dokumentų sąrašas -->
+    <div id="docsView" class="hidden">
+      <div class="card">
+        <h2 style="color:var(--kab-navy);font-size:18px;" id="docsCaseTitle">Pateikti dokumentai</h2>
+        <p class="muted" id="docsCaseSub"></p>
+      </div>
+      <div id="batchList"></div>
+      <div id="docsEmpty" class="card center hidden"><p class="muted">Šiuo metu dokumentų nėra. / No documents available yet.</p></div>
+    </div>
+  </div>
+
+  <div class="footer">KAB Consulting &nbsp;•&nbsp; klausk@kab.lt</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
+    const STORAGE_BUCKET = 'shared-documents';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get('t');
+    const sessionKey = accessToken ? `kab_docs_ok_${accessToken}` : null;
+    let pendingEmail = null;
+    let verifiedEmail = null;
+
+    const $ = (id) => document.getElementById(id);
+    function show(id) { $(id).classList.remove('hidden'); }
+    function hide(id) { $(id).classList.add('hidden'); }
+    function showErr(elId, msg) { const e = $(elId); e.textContent = msg; e.classList.remove('hidden'); }
+    function hideErr(elId) { $(elId).classList.add('hidden'); }
+    function fatal(msg) { hide('loadingState'); hide('gateView'); show('fatalError'); $('fatalErrorMsg').textContent = msg; }
+
+    function escapeHtml(s) { return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function fmtSize(b) { if (!b && b !== 0) return ''; if (b < 1024) return b+' B'; if (b < 1048576) return (b/1024).toFixed(0)+' KB'; return (b/1048576).toFixed(1)+' MB'; }
+    function fmtDate(d) { try { return new Date(d).toLocaleString('lt-LT', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); } catch(e){ return d; } }
+
+    // ===== OTP srautas =====
+    async function sendOtp(isResend) {
+      const email = ((isResend ? pendingEmail : $('emailInput').value) || '').trim().toLowerCase();
+      const errId = isResend ? 'otpError' : 'emailError';
+      hideErr(errId);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr(errId, 'Neteisingas el. pašto formatas. / Invalid email format.'); return; }
+      const btn = isResend ? null : $('emailBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Siunčiama… / Sending…'; }
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/send-recipient-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify({ access_token: accessToken, email })
+        });
+        const r = await res.json();
+        if (btn) { btn.disabled = false; btn.textContent = 'Siųsti patvirtinimo kodą / Send code'; }
+        if (!r.success) { showErr(errId, r.message || 'Nepavyko išsiųsti kodo. / Failed to send code.'); return; }
+        pendingEmail = email;
+        $('otpEmailDisplay').textContent = email;
+        hide('emailStep'); show('otpStep');
+        setTimeout(() => $('otpInput').focus(), 50);
+      } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Siųsti patvirtinimo kodą / Send code'; }
+        showErr(errId, 'Ryšio klaida. Bandykite vėliau. / Connection error.');
+      }
+    }
+
+    async function verifyOtp() {
+      const code = ($('otpInput').value || '').trim();
+      hideErr('otpError');
+      if (!/^\d{6}$/.test(code)) { showErr('otpError', 'Kodas turi būti 6 skaitmenys. / Code must be 6 digits.'); return; }
+      if (!pendingEmail) { showErr('otpError', 'Sesija pasibaigė. Įveskite el. paštą iš naujo. / Session expired.'); hide('otpStep'); show('emailStep'); return; }
+      const btn = $('otpBtn'); btn.disabled = true; btn.textContent = 'Tikrinama… / Verifying…';
+      try {
+        const { data, error } = await supabase.rpc('verify_recipient_otp', {
+          p_access_token: accessToken, p_email: pendingEmail, p_code: code
+        });
+        btn.disabled = false; btn.textContent = 'Patvirtinti / Verify';
+        if (error) { showErr('otpError', 'Klaida tikrinant kodą. / Verification error.'); return; }
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row || !row.ok) {
+          const map = {
+            wrong_code: 'Neteisingas kodas. / Wrong code.',
+            code_expired: 'Kodo galiojimas baigėsi. Prašykite naujo. / Code expired.',
+            too_many_attempts: 'Per daug klaidingų bandymų. Prašykite naujo kodo. / Too many attempts.',
+            no_active_code: 'Aktyvaus kodo nėra. Prašykite naujo. / No active code.',
+            email_mismatch: 'Tapatybės patvirtinti nepavyko. / Verification failed.',
+            invalid_token: 'Nuoroda neteisinga arba nebegalioja. / Invalid or expired link.'
+          };
+          showErr('otpError', map[row && row.error_code] || 'Patvirtinimas nepavyko. / Verification failed.');
+          return;
+        }
+        verifiedEmail = pendingEmail;
+        try { sessionStorage.setItem(sessionKey, JSON.stringify({ email: verifiedEmail })); } catch(e){}
+        hide('gateView');
+        loadDocuments();
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Patvirtinti / Verify';
+        showErr('otpError', 'Ryšio klaida. / Connection error.');
+      }
+    }
+
+    // ===== Dokumentų sąrašas =====
+    async function loadDocuments() {
+      show('loadingState');
+      try {
+        const { data, error } = await supabase.rpc('list_recipient_documents', {
+          p_access_token: accessToken, p_email: verifiedEmail
+        });
+        hide('loadingState');
+        if (error) { fatal('Nepavyko užkrauti dokumentų. / Failed to load documents.'); return; }
+        renderDocuments(data || []);
+        show('docsView');
+      } catch (e) { hide('loadingState'); fatal('Ryšio klaida. / Connection error.'); }
+    }
+
+    function renderDocuments(rows) {
+      const list = $('batchList');
+      list.innerHTML = '';
+      if (!rows.length) { show('docsEmpty'); return; }
+      hide('docsEmpty');
+      // grupuojam pagal partiją
+      const batches = {};
+      const order = [];
+      rows.forEach(r => {
+        if (!batches[r.batch_id]) { batches[r.batch_id] = { title: r.batch_title, desc: r.batch_description, date: r.batch_created_at, docs: [] }; order.push(r.batch_id); }
+        batches[r.batch_id].docs.push(r);
+      });
+      order.forEach(bid => {
+        const b = batches[bid];
+        const docsHtml = b.docs.map(d => `
+          <div class="doc-row">
+            <div class="doc-name">${escapeHtml(d.original_name)}<div class="doc-meta">${fmtSize(d.file_size)}</div></div>
+            <div class="doc-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openDoc('${d.document_id}','doc_viewed')">Peržiūrėti</button>
+              <button class="btn btn-sm" onclick="openDoc('${d.document_id}','doc_downloaded')">Atsisiųsti</button>
+            </div>
+          </div>`).join('');
+        const div = document.createElement('div');
+        div.className = 'batch';
+        div.innerHTML = `
+          <div class="batch-head">
+            <div class="batch-title">${escapeHtml(b.title)}</div>
+            ${b.desc ? `<div class="batch-desc">${escapeHtml(b.desc)}</div>` : ''}
+            <div class="batch-date">Pateikta: ${fmtDate(b.date)}</div>
+          </div>
+          ${docsHtml}`;
+        list.appendChild(div);
+      });
+    }
+
+    // ===== Peržiūra / atsisiuntimas per RPC (fiksuojama serveryje) =====
+    async function openDoc(documentId, action) {
+      try {
+        const { data, error } = await supabase.rpc('log_document_access', {
+          p_access_token: accessToken, p_email: verifiedEmail,
+          p_document_id: documentId, p_action: action
+        });
+        if (error) { alert('Klaida. Bandykite dar kartą. / Error, please try again.'); return; }
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row || !row.ok) { alert('Dokumentas nepasiekiamas. / Document unavailable.'); return; }
+        // Sukuriam laikiną signed URL atsisiuntimui/peržiūrai
+        const { data: signed, error: sErr } = await supabase.storage
+          .from(STORAGE_BUCKET)
+          .createSignedUrl(row.storage_path, 300, action === 'doc_downloaded' ? { download: row.original_name } : {});
+        if (sErr || !signed) { alert('Nepavyko sukurti nuorodos. / Could not create link.'); return; }
+        window.open(signed.signedUrl, '_blank');
+      } catch (e) { alert('Ryšio klaida. / Connection error.'); }
+    }
+
+    // ===== Boot =====
+    function boot() {
+      if (!accessToken) { fatal('Nuoroda neteisinga — trūksta prieigos kodo. / Invalid link — missing access code.'); return; }
+      // jei jau patvirtinta šioje sesijoje
+      try {
+        const saved = sessionStorage.getItem(sessionKey);
+        if (saved) { const o = JSON.parse(saved); if (o && o.email) { verifiedEmail = o.email; hide('loadingState'); loadDocuments(); return; } }
+      } catch(e){}
+      hide('loadingState');
+      show('gateView');
+      setTimeout(() => $('emailInput').focus(), 50);
+    }
+
+    $('emailBtn').addEventListener('click', () => sendOtp(false));
+    $('emailInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendOtp(false); });
+    $('otpBtn').addEventListener('click', verifyOtp);
+    $('otpInput').addEventListener('keydown', e => { if (e.key === 'Enter') verifyOtp(); });
+    $('resendLink').addEventListener('click', e => { e.preventDefault(); sendOtp(true); });
+
+    boot();
+  </script>
+</body>
+</html>
