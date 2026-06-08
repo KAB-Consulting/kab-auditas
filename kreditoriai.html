@@ -217,8 +217,8 @@
           <div class="doc-row">
             <div class="doc-name">${escapeHtml(d.original_name)}<div class="doc-meta">${fmtSize(d.file_size)}</div></div>
             <div class="doc-actions">
-              <button class="btn btn-ghost btn-sm" onclick="openDoc('${d.document_id}','doc_viewed')">Peržiūrėti</button>
-              <button class="btn btn-sm" onclick="openDoc('${d.document_id}','doc_downloaded')">Atsisiųsti</button>
+              <button class="btn btn-ghost btn-sm" onclick="openDoc('${d.document_id}','doc_viewed','${esc(d.original_name)}')">Peržiūrėti</button>
+              <button class="btn btn-sm" onclick="openDoc('${d.document_id}','doc_downloaded','${esc(d.original_name)}')">Atsisiųsti</button>
             </div>
           </div>`).join('');
         const div = document.createElement('div');
@@ -234,8 +234,11 @@
       });
     }
 
+    // Tipai, kuriuos naršyklė gali rodyti tiesiogiai (peržiūrai)
+    const INLINE_VIEWABLE = ['pdf','jpg','jpeg','png'];
+
     // ===== Peržiūra / atsisiuntimas per RPC (fiksuojama serveryje) =====
-    async function openDoc(documentId, action) {
+    async function openDoc(documentId, action, fileName) {
       try {
         const { data, error } = await supabase.rpc('log_document_access', {
           p_access_token: accessToken, p_email: verifiedEmail,
@@ -244,12 +247,35 @@
         if (error) { alert('Klaida. Bandykite dar kartą. / Error, please try again.'); return; }
         const row = Array.isArray(data) ? data[0] : data;
         if (!row || !row.ok) { alert('Dokumentas nepasiekiamas. / Document unavailable.'); return; }
-        // Sukuriam laikiną signed URL atsisiuntimui/peržiūrai
+
+        const ext = (row.original_name || fileName || '').split('.').pop().toLowerCase();
+        const isDownload = action === 'doc_downloaded';
+
+        // Sukuriam laikiną signed URL
+        const opts = isDownload ? { download: row.original_name } : {};
         const { data: signed, error: sErr } = await supabase.storage
           .from(STORAGE_BUCKET)
-          .createSignedUrl(row.storage_path, 300, action === 'doc_downloaded' ? { download: row.original_name } : {});
+          .createSignedUrl(row.storage_path, 300, opts);
         if (sErr || !signed) { alert('Nepavyko sukurti nuorodos. / Could not create link.'); return; }
-        window.open(signed.signedUrl, '_blank');
+
+        if (isDownload) {
+          // Atsisiuntimas — patikimas būdas per <a download> (be popup blokavimo)
+          const a = document.createElement('a');
+          a.href = signed.signedUrl;
+          a.download = row.original_name || '';
+          document.body.appendChild(a); a.click(); a.remove();
+          return;
+        }
+
+        // Peržiūra
+        if (INLINE_VIEWABLE.includes(ext)) {
+          // PDF / paveikslėliai atsidaro naršyklėje tiesiogiai
+          window.open(signed.signedUrl, '_blank');
+        } else {
+          // DOCX / XLSX naršyklėje neatsivaizduoja — atidarom per Office Online peržiūrą
+          const viewer = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(signed.signedUrl);
+          window.open(viewer, '_blank');
+        }
       } catch (e) { alert('Ryšio klaida. / Connection error.'); }
     }
 
