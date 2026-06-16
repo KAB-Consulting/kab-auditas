@@ -110,6 +110,17 @@
             <button class="btn btn-sm btn-ghost" id="importRecipientsBtn">📋 Importuoti (Excel/CSV/įklijuoti)</button>
           </div>
         </div>
+        <!-- Bendra bylos nuoroda (visiems gavėjams) -->
+        <div style="background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:12px 14px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+              <strong style="color:var(--navy);">🔗 Bendra bylos nuoroda</strong>
+              <div class="muted" style="font-size:12px;">Viena nuoroda visiems gavėjams. Jie įveda savo el. paštą + OTP. Tinka kai gavėjų daug (nereikia siųsti šimtų laiškų).</div>
+            </div>
+            <button class="btn btn-sm" id="copyCaseLinkBtn">Kopijuoti bendrą nuorodą</button>
+          </div>
+        </div>
+
         <!-- Masinio siuntimo veiksmų juosta -->
         <div id="bulkActionsBar" style="background:var(--cream);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
           <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
@@ -141,6 +152,9 @@
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;cursor:pointer;">
           <input type="checkbox" id="notifyCheck"> Pranešti gavėjams el. paštu apie naujus dokumentus
         </label>
+        <div class="muted" style="font-size:12px;margin-top:6px;">
+          💡 Jei gavėjų daug (pvz. 100+), vietoj masinio el. laiškų siuntimo naudokite <strong>bendrą bylos nuorodą</strong> (skiltis „Gavėjai“) — taip išvengsite Resend limito ir Microsoft/Outlook spam filtrų.
+        </div>
         <div id="uploadAlert"></div>
         <button class="btn" id="uploadBtn" style="margin-top:14px;">Pateikti</button>
       </div>
@@ -338,6 +352,13 @@
     };
     $('backToCases').addEventListener('click', ()=>{ hide('caseDetailView'); show('casesView'); loadCases(); });
 
+    // Bendra bylos nuoroda — kopijavimas
+    $('copyCaseLinkBtn').addEventListener('click', ()=>{
+      if(!currentCase || !currentCase.case_access_token){ alert('Šios bylos bendra nuoroda nepasiekiama. Atnaujinkite puslapį.'); return; }
+      const url = `${CLIENT_BASE_URL}/${RECIPIENT_PAGE}?c=${currentCase.case_access_token}`;
+      navigator.clipboard.writeText(url).then(()=>alert('✓ Bendra bylos nuoroda nukopijuota!\n\n'+url)).catch(()=>prompt('Nukopijuokite bendrą nuorodą:', url));
+    });
+
     document.querySelectorAll('.tab[data-pane]').forEach(t=>t.addEventListener('click',()=>switchPane(t.dataset.pane)));
     function switchPane(pane){
       document.querySelectorAll('.tab[data-pane]').forEach(t=>t.classList.toggle('active',t.dataset.pane===pane));
@@ -390,19 +411,26 @@
       }
       let h='<table><thead><tr><th style="width:36px;"></th><th>Pavadinimas</th><th>El. paštas</th><th>Atstovas</th><th>Būsena</th><th>Pask. prisij.</th><th style="text-align:right;">Veiksmai</th></tr></thead><tbody>';
       rows.forEach(r=>{
-        const st=r.token_revoked_at?'<span class="badge badge-gray">Atšaukta</span>':(r.invited_at?'<span class="badge badge-green">Pakviesta</span>':'<span class="badge badge-gold">Nepakviesta</span>');
+        const incomplete = !r.email || !r.recipient_name;
+        let st;
+        if(incomplete) st='<span class="badge" style="background:#FBF3DF;color:#9A7B24;">Nepilnas</span>';
+        else if(r.token_revoked_at) st='<span class="badge badge-gray">Atšaukta</span>';
+        else if(r.invited_at) st='<span class="badge badge-green">Pakviesta</span>';
+        else st='<span class="badge badge-gold">Nepakviesta</span>';
         const rep=[r.rep_full_name,r.rep_phone].filter(Boolean).join(', ');
-        const cbDisabled = r.token_revoked_at ? 'disabled' : '';
+        const cbDisabled = (r.token_revoked_at || incomplete) ? 'disabled' : '';
+        const canInvite = r.email && !r.token_revoked_at;
         h+=`<tr>
           <td><input type="checkbox" class="recipient-cb" data-id="${r.id}" ${cbDisabled} style="transform:scale(1.2);cursor:pointer;"></td>
-          <td><strong>${esc(r.recipient_name)}</strong></td>
-          <td>${esc(r.email)}</td>
+          <td><strong>${r.recipient_name?esc(r.recipient_name):'<span style="color:#C0392B;">(nenurodyta)</span>'}</strong></td>
+          <td>${r.email?esc(r.email):'<span style="color:#C0392B;">(nenurodytas)</span>'}</td>
           <td class="muted">${esc(rep)||'—'}</td>
           <td>${st}</td>
           <td class="muted">${r.last_login_at?fmtDate(r.last_login_at):'—'}</td>
           <td style="text-align:right;white-space:nowrap;">
-            <button class="btn btn-sm btn-ghost" onclick="inviteRecipient('${r.id}')" ${r.token_revoked_at?'disabled':''}>${r.invited_at?'Siųsti vėl':'Kviesti'}</button>
-            <button class="btn btn-sm" onclick="copyLink('${r.access_token}')">Kopijuoti nuorodą</button>
+            <button class="btn btn-sm btn-ghost" onclick="editRecipient('${r.id}')">Redaguoti</button>
+            <button class="btn btn-sm btn-ghost" onclick="inviteRecipient('${r.id}')" ${canInvite?'':'disabled'}>${r.invited_at?'Siųsti vėl':'Kviesti'}</button>
+            <button class="btn btn-sm" onclick="copyLink('${r.access_token}')">Nuoroda</button>
           </td></tr>`;
       });
       $('recipientsTable').innerHTML=h+'</tbody></table>';
@@ -412,7 +440,7 @@
       const sel = $('filterRecipient');
       if (sel){
         sel.innerHTML = '<option value="">Visi gavėjai</option>' +
-          rows.map(r => `<option value="${r.id}">${esc(r.recipient_name)} (${esc(r.email)})</option>`).join('');
+          rows.map(r => `<option value="${r.id}">${esc(r.recipient_name)||'(nenurodyta)'} (${esc(r.email)||'be el. pašto'})</option>`).join('');
       }
       updateBulkActionsState();
     }
@@ -530,32 +558,99 @@
     let _importValid=[];
     function previewImport(text){
       const lines=(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
-      const valid=[], invalid=[]; const seen=new Set();
-      const existing=new Set((window._recipients||[]).map(r=>r.email.toLowerCase()));
+      const complete=[], incomplete=[], skipped=[]; const seen=new Set();
+      // esami el. paštai byloje (be NULL)
+      const existing=new Set((window._recipients||[]).filter(r=>r.email).map(r=>r.email.toLowerCase()));
       lines.forEach((line,i)=>{
         // praleidžiam antraštės eilutę
         if(i===0 && /pavadinim|el.?\s*pa|email|gavejo_pavadinimas/i.test(line)) return;
         const parts=line.split(/\t|,|;/).map(p=>p.trim());
         const [name,email,rep,phone]=[parts[0],parts[1],parts[2],parts[3]];
-        if(!name||!email){ invalid.push({line,reason:'trūksta pavadinimo arba el. pašto'}); return; }
-        const em=email.toLowerCase();
-        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ invalid.push({line,reason:'blogas el. pašto formatas'}); return; }
-        if(existing.has(em)){ invalid.push({line,reason:'jau yra byloje'}); return; }
-        if(seen.has(em)){ invalid.push({line,reason:'kartojasi sąraše'}); return; }
-        seen.add(em);
-        valid.push({ recipient_name:name, email:em, rep_full_name:rep||null, rep_phone:phone||null });
+        const em=(email||'').toLowerCase();
+        const emailValid = em && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
+
+        // Dublikatus (galiojantis el. paštas jau byloje arba kartojasi faile) — praleidžiam
+        if(emailValid && existing.has(em)){ skipped.push({line,reason:'jau yra byloje'}); return; }
+        if(emailValid && seen.has(em)){ skipped.push({line,reason:'kartojasi sąraše'}); return; }
+        if(emailValid) seen.add(em);
+
+        const trukstama = [];
+        if(!name) trukstama.push('pavadinimo');
+        if(!em) trukstama.push('el. pašto');
+        else if(!emailValid) trukstama.push('galiojančio el. pašto');
+
+        const rec = {
+          recipient_name: name || null,
+          email: emailValid ? em : null,
+          rep_full_name: rep || null,
+          rep_phone: phone || null,
+          _incomplete: trukstama.length > 0,
+          _trukstama: trukstama,
+          _line: line
+        };
+        if(trukstama.length) incomplete.push(rec); else complete.push(rec);
       });
-      _importValid=valid;
-      let h=`<div style="margin-top:10px;"><div class="ok">✓ Bus pridėta: ${valid.length}</div>`;
-      if(invalid.length){ h+=`<div class="bad" style="margin-top:6px;">✗ Atmesta: ${invalid.length}</div><ul style="margin:6px 0 0 18px;">`+invalid.map(x=>`<li class="bad">${esc(x.line.slice(0,60))} — ${x.reason}</li>`).join('')+'</ul>'; }
+      _importValid = complete.concat(incomplete);  // visi keliami
+      let h=`<div style="margin-top:10px;"><div class="ok">✓ Bus pridėta iš viso: ${_importValid.length}</div>`;
+      if(complete.length) h+=`<div class="ok" style="margin-top:4px;">• Pilni (galės prisijungti): ${complete.length}</div>`;
+      if(incomplete.length){
+        h+=`<div style="margin-top:6px;color:#9A7B24;">⚠ Nepilni (bus sąraše, bet negalės prisijungti, kol nepapildysite): ${incomplete.length}</div><ul style="margin:6px 0 0 18px;">`+
+          incomplete.map(x=>`<li style="color:#9A7B24;">${esc((x._line||'').slice(0,55))} — trūksta: ${x._trukstama.join(', ')}</li>`).join('')+'</ul>';
+      }
+      if(skipped.length){ h+=`<div class="bad" style="margin-top:6px;">✗ Praleista (dublikatai): ${skipped.length}</div>`; }
       h+='</div>'; $('mImpReport').innerHTML=h;
-      $('mImpSave').disabled = valid.length===0;
+      $('mImpSave').disabled = _importValid.length===0;
     }
     async function confirmImport(){
       if(!_importValid.length)return;
-      const rows=_importValid.map(r=>({...r, case_id:currentCase.id}));
+      const rows=_importValid.map(r=>({
+        case_id: currentCase.id,
+        recipient_name: r.recipient_name,
+        email: r.email,
+        rep_full_name: r.rep_full_name,
+        rep_phone: r.rep_phone
+      }));
       const { error } = await supabase.from('document_recipients').insert(rows);
       if(error){ $('mImpAlert').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      closeModal(); await loadRecipients();
+    }
+
+    // Redaguoti / trinti gavėją
+    window.editRecipient = function(id){
+      const r=(window._recipients||[]).find(x=>x.id===id); if(!r)return;
+      $('modalRoot').innerHTML=`<div class="modal-bg"><div class="modal">
+        <h2>Gavėjo kortelė</h2>
+        ${(!r.email||!r.recipient_name)?'<div style="background:#FBF3DF;color:#9A7B24;border-radius:6px;padding:8px 12px;font-size:13px;margin-bottom:8px;">⚠ Šis gavėjas nepilnas — jis negali prisijungti, kol nebus įvestas pavadinimas ir galiojantis el. paštas.</div>':''}
+        <label class="label">Gavėjo pavadinimas</label><input id="eRName" class="input" value="${esc(r.recipient_name)}">
+        <label class="label">El. paštas</label><input id="eREmail" class="input" type="email" value="${esc(r.email)}">
+        <label class="label">Atstovo vardas ir pavardė</label><input id="eRRep" class="input" value="${esc(r.rep_full_name)}">
+        <label class="label">Atstovo telefonas</label><input id="eRPhone" class="input" value="${esc(r.rep_phone)}">
+        <div id="eRAlert"></div>
+        <div style="display:flex;gap:10px;margin-top:16px;justify-content:space-between;align-items:center;">
+          <button class="btn btn-sm btn-danger" id="eRDelete">🗑 Ištrinti gavėją</button>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-ghost" onclick="closeModal()">Atšaukti</button>
+            <button class="btn" id="eRSave">Išsaugoti</button>
+          </div>
+        </div></div></div>`;
+      $('eRSave').addEventListener('click', ()=>saveEditedRecipient(id));
+      $('eRDelete').addEventListener('click', ()=>deleteRecipient(id, r.recipient_name||r.email||'(nepilnas)'));
+    };
+    async function saveEditedRecipient(id){
+      const name=$('eRName').value.trim(), email=$('eREmail').value.trim().toLowerCase(),
+            rep=$('eRRep').value.trim(), phone=$('eRPhone').value.trim();
+      // El. paštas, jei įvestas, turi būti galiojantis (kitaip — leidžiam tuščią = nepilnas)
+      if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ $('eRAlert').innerHTML='<div class="error">Neteisingas el. pašto formatas. Palikite tuščią arba įveskite galiojantį.</div>'; return; }
+      const { error } = await supabase.from('document_recipients').update({
+        recipient_name: name||null, email: email||null, rep_full_name: rep||null, rep_phone: phone||null
+      }).eq('id', id);
+      if(error){ $('eRAlert').innerHTML='<div class="error">'+(error.code==='23505'?'Šis el. paštas byloje jau yra.':esc(error.message))+'</div>'; return; }
+      closeModal(); await loadRecipients();
+    }
+    async function deleteRecipient(id, label){
+      if(!confirm(`Ar tikrai ištrinti gavėją „${label}"?\n\nTai pašalins jį iš sąrašo ir panaikins jo prieigą. Veiksmo atšaukti negalima.`)) return;
+      const { error } = await supabase.from('document_recipients').delete().eq('id', id);
+      if(error){ alert('Klaida: '+error.message); return; }
       closeModal(); await loadRecipients();
     }
 
