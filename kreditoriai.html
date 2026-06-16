@@ -258,37 +258,34 @@
       });
     }
 
-    // ===== Peržiūra / atsisiuntimas per RPC (fiksuojama serveryje) =====
+    // ===== Peržiūra / atsisiuntimas per edge funkciją (service_role) =====
+    // Anon tiesiogiai neliečia privataus Storage — signed URL kuria serveris,
+    // kuris kartu patikrina prieigą (token+email) ir užfiksuoja įvykį.
     async function openDoc(documentId, action, fileName) {
       try {
-        const { data, error } = isCaseMode
-          ? await supabase.rpc('log_case_document_access', { p_case_token: caseToken, p_email: verifiedEmail, p_document_id: documentId, p_action: action })
-          : await supabase.rpc('log_document_access', { p_access_token: accessToken, p_email: verifiedEmail, p_document_id: documentId, p_action: action });
-        if (error) { alert('Klaida. Bandykite dar kartą. / Error, please try again.'); return; }
-        const row = Array.isArray(data) ? data[0] : data;
-        if (!row || !row.ok) { alert('Dokumentas nepasiekiamas. / Document unavailable.'); return; }
-
-        const ext = (row.original_name || fileName || '').split('.').pop().toLowerCase();
         const isDownload = action === 'doc_downloaded';
+        const body = {
+          email: verifiedEmail, document_id: documentId, action, download: isDownload
+        };
+        if (isCaseMode) body.case_token = caseToken; else body.access_token = accessToken;
 
-        // Sukuriam laikiną signed URL
-        const opts = isDownload ? { download: row.original_name } : {};
-        const { data: signed, error: sErr } = await supabase.storage
-          .from(STORAGE_BUCKET)
-          .createSignedUrl(row.storage_path, 300, opts);
-        if (sErr || !signed) { alert('Nepavyko sukurti nuorodos. / Could not create link.'); return; }
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/get-document-url`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify(body)
+        });
+        const r = await res.json();
+        if (!r.success || !r.url) { alert('Nepavyko atidaryti dokumento. / Could not open document.'); return; }
 
         if (isDownload) {
-          // Atsisiuntimas — patikimas būdas per <a download> (be popup blokavimo)
           const a = document.createElement('a');
-          a.href = signed.signedUrl;
-          a.download = row.original_name || '';
+          a.href = r.url;
+          a.download = r.original_name || '';
           document.body.appendChild(a); a.click(); a.remove();
           return;
         }
-
         // Peržiūra — tik PDF/JPG/PNG (peržiūros mygtukas kitiems nerodomas)
-        window.open(signed.signedUrl, '_blank');
+        window.open(r.url, '_blank');
       } catch (e) { alert('Ryšio klaida. / Connection error.'); }
     }
 
