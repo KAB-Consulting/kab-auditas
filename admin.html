@@ -370,6 +370,7 @@
           <button class="btn btn-ghost btn-small" onclick="filterBy('submitted_interim')">⏳ Tarpiniai</button>
           <button class="btn btn-ghost btn-small" onclick="filterBy('submitted_final')">✅ Galutiniai</button>
           <button class="btn btn-ghost btn-small" onclick="filterBy('reviewed')">✓ Peržiūrėti</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('archived')">🗄️ Archyvas</button>
           <button class="btn btn-ghost btn-small" onclick="loadSubmissions()" style="margin-left: auto;">🔄 Atnaujinti</button>
         </div>
 
@@ -923,6 +924,9 @@
     // Status filter
     if (currentFilter !== 'all') {
       filtered = filtered.filter(s => s.status === currentFilter);
+    } else {
+      // Numatytame rodinyje („Visi") archyvuoti PASLEPIAMI — juos matyti tik per Archyvo filtrą
+      filtered = filtered.filter(s => s.status !== 'archived');
     }
 
     if (filtered.length === 0) {
@@ -988,6 +992,10 @@
           <td class="actions-cell">
             <button class="btn btn-primary btn-small" onclick="viewDetail('${s.id}')">Peržiūrėti</button>
             ${s.status === 'draft' ? `<button class="btn btn-ghost btn-small" onclick="copyLinkForSubmission('${s.id}')" title="Kopijuoti nuorodą">🔗</button>` : ''}
+            ${s.status === 'archived'
+              ? `<button class="btn btn-ghost btn-small" onclick="unarchiveSubmission('${s.id}')" title="Grąžinti iš archyvo">↩️</button>`
+              : `<button class="btn btn-ghost btn-small" onclick="archiveSubmission('${s.id}')" title="Archyvuoti">🗄️</button>`}
+            <button class="btn btn-ghost btn-small" onclick="deleteSubmission('${s.id}', '${escapeHtml((s.client_name || '').replace(/'/g, ''))}')" title="Ištrinti visam laikui" style="color:#C00000;">🗑️</button>
           </td>
         </tr>
       `;
@@ -1251,6 +1259,10 @@
           ${statusSelectOptions}
         </select>
       </div>
+
+      ${renderTokenExpiryBlock(sub)}
+
+      ${renderAdminActionsBlock(sub)}
 
       <h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px;">📝 Atsakymai</h3>
       ${answersHtml}
@@ -1517,6 +1529,10 @@
           🔗 Kopijuoti kliento nuorodą
         </button>
       </div>
+
+      ${renderTokenExpiryBlock(sub)}
+
+      ${renderAdminActionsBlock(sub)}
 
       ${sub.notes ? `
         <div class="alert alert-info" style="margin-bottom: 20px;">
@@ -1885,6 +1901,137 @@
 
     // Atnaujinti pagrindinę lentelę
     await loadSubmissions();
+  }
+
+  // Pratęsti kliento nuorodos (token) galiojimą — veikia visiems moduliams.
+  // NEKEIČIA tokeno, todėl klientui jau išsiųsta nuoroda toliau galios.
+  async function extendToken(id, days = 90) {
+    if (!confirm(`Pratęsti kliento nuorodos galiojimą ${days} dienoms?\n\nSena nuoroda liks ta pati — klientas galės tęsti pildymą.`)) return;
+
+    const { data, error } = await supabase.rpc('admin_extend_token', {
+      p_submission_id: id,
+      p_days: days
+    });
+
+    if (error) {
+      alert('Klaida pratęsiant galiojimą: ' + error.message);
+      return;
+    }
+
+    const newDate = data ? new Date(data).toLocaleDateString('lt-LT') : '';
+    alert(`✓ Galiojimas pratęstas. Nuoroda galios iki ${newDate}.`);
+
+    // Perkrauti detalių langą su atnaujinta data
+    await viewDetail(id);
+    await loadSubmissions();
+  }
+
+  // ===== ARCHYVAVIMAS =====
+  async function archiveSubmission(id) {
+    if (!confirm('Archyvuoti šį klausimyną?\n\nJis bus paslėptas iš pagrindinio sąrašo, bet duomenys išliks. Galėsite jį rasti per „🗄️ Archyvas" filtrą ir bet kada grąžinti.')) return;
+    const { error } = await supabase
+      .from('questionnaire_submissions')
+      .update({ status: 'archived' })
+      .eq('id', id);
+    if (error) { alert('Klaida: ' + error.message); return; }
+    // Jei detalių langas atviras šiam įrašui — perkrauti
+    if (window._currentTemplateState && window._currentTemplateState.submission.id === id) closeModal();
+    await loadSubmissions();
+  }
+
+  async function unarchiveSubmission(id) {
+    // Grąžinama į „submitted_final" jei buvo pateikta, kitaip į „draft"
+    const s = allSubmissions.find(x => x.id === id);
+    const restoreStatus = (s && s.submitted_at) ? 'submitted_final' : 'draft';
+    const { error } = await supabase
+      .from('questionnaire_submissions')
+      .update({ status: restoreStatus })
+      .eq('id', id);
+    if (error) { alert('Klaida: ' + error.message); return; }
+    await loadSubmissions();
+  }
+
+  // ===== IŠTRYNIMAS (negrįžtama) =====
+  async function deleteSubmission(id, clientName) {
+    const name = clientName || 'šį klientą';
+    const confirmText = prompt(
+      `⚠️ DĖMESIO! Visiškas ištrynimas yra NEGRĮŽTAMAS.\n\n` +
+      `Bus ištrinti VISI „${name}" duomenys: atsakymai, įkelti dokumentai ir ataskaitos.\n\n` +
+      `Norėdami patvirtinti, įveskite: TRINTI`
+    );
+    if (confirmText === null) return;
+    if (confirmText.trim().toUpperCase() !== 'TRINTI') {
+      alert('Ištrynimas atšauktas (neteisingai įvestas patvirtinimas).');
+      return;
+    }
+
+    try {
+      // 1. Ištrinti DB įrašus (kaskadu) ir gauti Storage kelius
+      const { data, error } = await supabase.rpc('admin_delete_submission', { p_submission_id: id });
+      if (error) throw error;
+
+      // 2. Ištrinti pačius failus iš Storage
+      const docPaths = (data && data.document_paths) || [];
+      const reportPaths = (data && data.report_paths) || [];
+      if (docPaths.length > 0) {
+        await supabase.storage.from('client-documents').remove(docPaths);
+      }
+      if (reportPaths.length > 0) {
+        await supabase.storage.from('reports').remove(reportPaths);
+      }
+
+      if (window._currentTemplateState && window._currentTemplateState.submission.id === id) closeModal();
+      alert(`✓ Klausimynas ir visi „${data.client_name}" duomenys ištrinti.`);
+      await loadSubmissions();
+    } catch (err) {
+      alert('Klaida trinant: ' + err.message);
+    }
+  }
+
+  // Pagalbinė: token galiojimo statuso HTML (data + būsena + mygtukas)
+  function renderTokenExpiryBlock(sub) {
+    const exp = sub.token_expires_at ? new Date(sub.token_expires_at) : null;
+    const now = new Date();
+    const revoked = !!sub.token_revoked_at;
+    let statusHtml, color;
+    if (revoked) {
+      statusHtml = '⛔ Atšaukta'; color = '#C00000';
+    } else if (exp && exp < now) {
+      statusHtml = '⚠️ Pasibaigęs'; color = '#C00000';
+    } else if (exp) {
+      const days = Math.round((exp - now) / 86400000);
+      statusHtml = `✓ Galioja (liko ${days} d.)`; color = '#548235';
+    } else {
+      statusHtml = '—'; color = '#666';
+    }
+    const expStr = exp ? exp.toLocaleDateString('lt-LT') : '—';
+    return `
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:20px; padding:10px; background:#FFF8E8; border:1px solid var(--kab-gold); border-radius:5px;">
+        <span style="font-size:13px; color:#666;">Nuorodos galiojimas:</span>
+        <strong style="font-size:13px; color:${color};">${statusHtml}</strong>
+        <span style="font-size:12px; color:#999;">iki ${expStr}</span>
+        <button class="btn btn-navy btn-small" style="margin-left:auto;" onclick="extendToken('${sub.id}', 90)">
+          🔄 Pratęsti 90 d.
+        </button>
+      </div>
+    `;
+  }
+
+  // Pagalbinė: archyvavimo / ištrynimo veiksmų juosta detalių lange
+  function renderAdminActionsBlock(sub) {
+    const nameSafe = escapeHtml((sub.client_name || '').replace(/'/g, ''));
+    const archiveBtn = sub.status === 'archived'
+      ? `<button class="btn btn-ghost btn-small" onclick="unarchiveSubmission('${sub.id}')">↩️ Grąžinti iš archyvo</button>`
+      : `<button class="btn btn-ghost btn-small" onclick="archiveSubmission('${sub.id}')">🗄️ Archyvuoti</button>`;
+    return `
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:20px; padding:10px; background:#F9F9F9; border-radius:5px;">
+        <span style="font-size:13px; color:#666;">Veiksmai:</span>
+        ${archiveBtn}
+        <button class="btn btn-ghost btn-small" style="margin-left:auto; color:#C00000;" onclick="deleteSubmission('${sub.id}', '${nameSafe}')">
+          🗑️ Ištrinti visam laikui
+        </button>
+      </div>
+    `;
   }
 
   function closeModal() {
