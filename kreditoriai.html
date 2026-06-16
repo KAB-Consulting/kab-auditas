@@ -109,8 +109,11 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get('t');
-    const sessionKey = accessToken ? `kab_docs_ok_${accessToken}` : null;
+    const accessToken = params.get('t');   // asmenine gavejo nuoroda
+    const caseToken = params.get('c');      // bendra bylos nuoroda
+    const isCaseMode = !!caseToken && !accessToken;
+    const theToken = accessToken || caseToken;
+    const sessionKey = theToken ? `kab_docs_ok_${theToken}` : null;
     let pendingEmail = null;
     let verifiedEmail = null;
 
@@ -140,7 +143,7 @@
         const res = await fetch(`${SUPABASE_URL}/functions/v1/send-recipient-otp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
-          body: JSON.stringify({ access_token: accessToken, email })
+          body: JSON.stringify(isCaseMode ? { case_token: caseToken, email } : { access_token: accessToken, email })
         });
         const r = await res.json();
         if (btn) { btn.disabled = false; btn.textContent = 'Siųsti patvirtinimo kodą / Send code'; }
@@ -162,9 +165,9 @@
       if (!pendingEmail) { showErr('otpError', 'Sesija pasibaigė. Įveskite el. paštą iš naujo. / Session expired.'); hide('otpStep'); show('emailStep'); return; }
       const btn = $('otpBtn'); btn.disabled = true; btn.textContent = 'Tikrinama… / Verifying…';
       try {
-        const { data, error } = await supabase.rpc('verify_recipient_otp', {
-          p_access_token: accessToken, p_email: pendingEmail, p_code: code
-        });
+        const { data, error } = isCaseMode
+          ? await supabase.rpc('verify_recipient_otp_by_case', { p_case_token: caseToken, p_email: pendingEmail, p_code: code })
+          : await supabase.rpc('verify_recipient_otp', { p_access_token: accessToken, p_email: pendingEmail, p_code: code });
         btn.disabled = false; btn.textContent = 'Patvirtinti / Verify';
         if (error) { showErr('otpError', 'Klaida tikrinant kodą. / Verification error.'); return; }
         const row = Array.isArray(data) ? data[0] : data;
@@ -175,6 +178,7 @@
             too_many_attempts: 'Per daug klaidingų bandymų. Prašykite naujo kodo. / Too many attempts.',
             no_active_code: 'Aktyvaus kodo nėra. Prašykite naujo. / No active code.',
             email_mismatch: 'Tapatybės patvirtinti nepavyko. / Verification failed.',
+            not_a_recipient: 'Šis el. paštas nėra šios bylos gavėjų sąraše. / This email is not in the recipient list.',
             invalid_token: 'Nuoroda neteisinga arba nebegalioja. / Invalid or expired link.'
           };
           showErr('otpError', map[row && row.error_code] || 'Patvirtinimas nepavyko. / Verification failed.');
@@ -194,9 +198,9 @@
     async function loadDocuments() {
       show('loadingState');
       try {
-        const { data, error } = await supabase.rpc('list_recipient_documents', {
-          p_access_token: accessToken, p_email: verifiedEmail
-        });
+        const { data, error } = isCaseMode
+          ? await supabase.rpc('list_case_documents', { p_case_token: caseToken, p_email: verifiedEmail })
+          : await supabase.rpc('list_recipient_documents', { p_access_token: accessToken, p_email: verifiedEmail });
         hide('loadingState');
         if (error) { fatal('Nepavyko užkrauti dokumentų. / Failed to load documents.'); return; }
         renderDocuments(data || []);
@@ -257,10 +261,9 @@
     // ===== Peržiūra / atsisiuntimas per RPC (fiksuojama serveryje) =====
     async function openDoc(documentId, action, fileName) {
       try {
-        const { data, error } = await supabase.rpc('log_document_access', {
-          p_access_token: accessToken, p_email: verifiedEmail,
-          p_document_id: documentId, p_action: action
-        });
+        const { data, error } = isCaseMode
+          ? await supabase.rpc('log_case_document_access', { p_case_token: caseToken, p_email: verifiedEmail, p_document_id: documentId, p_action: action })
+          : await supabase.rpc('log_document_access', { p_access_token: accessToken, p_email: verifiedEmail, p_document_id: documentId, p_action: action });
         if (error) { alert('Klaida. Bandykite dar kartą. / Error, please try again.'); return; }
         const row = Array.isArray(data) ? data[0] : data;
         if (!row || !row.ok) { alert('Dokumentas nepasiekiamas. / Document unavailable.'); return; }
@@ -291,7 +294,7 @@
 
     // ===== Boot =====
     function boot() {
-      if (!accessToken) { fatal('Nuoroda neteisinga — trūksta prieigos kodo. / Invalid link — missing access code.'); return; }
+      if (!theToken) { fatal('Nuoroda neteisinga — trūksta prieigos kodo. / Invalid link — missing access code.'); return; }
       // jei jau patvirtinta šioje sesijoje
       try {
         const saved = sessionStorage.getItem(sessionKey);
