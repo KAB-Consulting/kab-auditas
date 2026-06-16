@@ -352,14 +352,48 @@
     };
     $('backToCases').addEventListener('click', ()=>{ hide('caseDetailView'); show('casesView'); loadCases(); });
 
-    // Bendra bylos nuoroda — kopijavimas (trumpa versija su kodu)
+    // Bendra bylos nuoroda — kopijavimas su pasirinkimu (trumpa / ilga)
     $('copyCaseLinkBtn').addEventListener('click', ()=>{
-      if(!currentCase || !currentCase.case_short_code){ alert('Šios bylos bendra nuoroda nepasiekiama. Atnaujinkite puslapį.'); return; }
-      const code = currentCase.case_short_code;
-      const url = `${CLIENT_BASE_URL}/${RECIPIENT_PAGE}?k=${code}`;
-      const msg = `✓ Bendra bylos nuoroda nukopijuota!\n\nTrumpa nuoroda:\n${url}\n\narba kreditorius gali eiti į ${CLIENT_BASE_URL}/${RECIPIENT_PAGE} ir įvesti kodą: ${code}`;
-      navigator.clipboard.writeText(url).then(()=>alert(msg)).catch(()=>prompt('Nukopijuokite bendrą nuorodą:', url));
+      if(!currentCase || !currentCase.case_access_token){ alert('Šios bylos bendra nuoroda nepasiekiama. Atnaujinkite puslapį.'); return; }
+      openCaseLinkModal();
     });
+    function copyToClipboard(url, label){
+      navigator.clipboard.writeText(url)
+        .then(()=>alert('✓ '+label+' nukopijuota!\n\n'+url))
+        .catch(()=>prompt('Nukopijuokite nuorodą:', url));
+    }
+    function openCaseLinkModal(){
+      const code = currentCase.case_short_code;
+      const shortUrl = code ? `${CLIENT_BASE_URL}/${RECIPIENT_PAGE}?k=${code}` : null;
+      const longUrl = `${CLIENT_BASE_URL}/${RECIPIENT_PAGE}?c=${currentCase.case_access_token}`;
+      $('modalRoot').innerHTML=`<div class="modal-bg"><div class="modal">
+        <h2>Bendra bylos nuoroda</h2>
+        <p class="muted" style="margin-bottom:14px;">Pasirinkite, kurią nuorodą kopijuoti į savo laišką kreditoriams. Abi veikia vienodai.</p>
+        ${shortUrl?`
+        <div style="border:1px solid var(--bd);border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              <strong style="color:var(--navy);">Trumpa nuoroda (rekomenduojama)</strong>
+              <div class="muted" style="font-size:12px;word-break:break-all;">${esc(shortUrl)}</div>
+              <div class="muted" style="font-size:12px;">Bylos kodas: <strong>${esc(code)}</strong> — kreditorius gali įvesti rankiniu būdu adresu ${CLIENT_BASE_URL}/${RECIPIENT_PAGE}</div>
+            </div>
+            <button class="btn btn-sm" id="copyShort">Kopijuoti</button>
+          </div>
+        </div>`:''}
+        <div style="border:1px solid var(--bd);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              <strong>Ilga nuoroda</strong>
+              <div class="muted" style="font-size:12px;word-break:break-all;">${esc(longUrl)}</div>
+            </div>
+            <button class="btn btn-sm btn-ghost" id="copyLong">Kopijuoti</button>
+          </div>
+        </div>
+        <div style="text-align:right;"><button class="btn btn-ghost" onclick="closeModal()">Uždaryti</button></div>
+      </div></div>`;
+      if(shortUrl) $('copyShort').addEventListener('click', ()=>copyToClipboard(shortUrl,'Trumpa nuoroda'));
+      $('copyLong').addEventListener('click', ()=>copyToClipboard(longUrl,'Ilga nuoroda'));
+    }
 
     document.querySelectorAll('.tab[data-pane]').forEach(t=>t.addEventListener('click',()=>switchPane(t.dataset.pane)));
     function switchPane(pane){
