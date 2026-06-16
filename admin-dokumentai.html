@@ -600,10 +600,23 @@
       lines.forEach((line,i)=>{
         // praleidžiam antraštės eilutę
         if(i===0 && /pavadinim|el.?\s*pa|email|gavejo_pavadinimas/i.test(line)) return;
-        const parts=line.split(/\t|,|;/).map(p=>p.trim());
-        const [name,email,rep,phone]=[parts[0],parts[1],parts[2],parts[3]];
+        const parts=line.split(/\t|,|;/).map(p=>p.trim()).filter(p=>p!=='');
+        // PROTINGAS atpažinimas — nepriklauso nuo stulpelių tvarkos:
+        //  1) el. paštas = pirmas laukas su @ (galiojantis)
+        //  2) telefonas = laukas, kuris atrodo kaip telefono nr. (skaičiai, +, tarpai, skliausteliai)
+        //  3) likę tekstiniai laukai: pirmas → pavadinimas, antras → atstovas
+        const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneRe = /^[+()\d][\d\s()\-]{5,}$/;  // bent 6 simboliai, daugiausia skaičiai
+        let email='', phone='', textFields=[];
+        parts.forEach(p=>{
+          if(!email && emailRe.test(p)) { email=p; }
+          else if(!phone && phoneRe.test(p) && !emailRe.test(p)) { phone=p; }
+          else { textFields.push(p); }
+        });
+        const name = textFields[0] || '';
+        const rep  = textFields[1] || '';
         const em=(email||'').toLowerCase();
-        const emailValid = em && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
+        const emailValid = em && emailRe.test(em);
 
         // Dublikatus (galiojantis el. paštas jau byloje arba kartojasi faile) — praleidžiam
         if(emailValid && existing.has(em)){ skipped.push({line,reason:'jau yra byloje'}); return; }
