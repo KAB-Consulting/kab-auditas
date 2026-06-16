@@ -109,11 +109,12 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get('t');   // asmenine gavejo nuoroda
-    const caseToken = params.get('c');      // bendra bylos nuoroda
-    const isCaseMode = !!caseToken && !accessToken;
-    const theToken = accessToken || caseToken;
-    const sessionKey = theToken ? `kab_docs_ok_${theToken}` : null;
+    const accessToken = params.get('t');     // asmenine gavejo nuoroda
+    let caseToken = params.get('c');          // bendra bylos nuoroda (ilgas token)
+    const shortCode = params.get('k');        // trumpas bylos kodas (pvz. ABC-1234)
+    let isCaseMode = (!!caseToken || !!shortCode) && !accessToken;
+    let theToken = accessToken || caseToken;  // gali buti nustatytas po short code resolve
+    let sessionKey = null;
     let pendingEmail = null;
     let verifiedEmail = null;
 
@@ -290,8 +291,19 @@
     }
 
     // ===== Boot =====
-    function boot() {
+    async function boot() {
+      // Jei pateiktas trumpas kodas (?k=) — paverciam ji i pilna bylos token
+      if (shortCode && !accessToken && !caseToken) {
+        try {
+          const { data, error } = await supabase.rpc('resolve_case_short_code', { p_short_code: shortCode });
+          if (error || !data) { fatal('Kodas neteisingas arba nebegalioja. / Invalid or expired code.'); return; }
+          caseToken = data;
+          theToken = data;
+          isCaseMode = true;
+        } catch(e) { fatal('Ryšio klaida. / Connection error.'); return; }
+      }
       if (!theToken) { fatal('Nuoroda neteisinga — trūksta prieigos kodo. / Invalid link — missing access code.'); return; }
+      sessionKey = `kab_docs_ok_${theToken}`;
       // jei jau patvirtinta šioje sesijoje
       try {
         const saved = sessionStorage.getItem(sessionKey);
