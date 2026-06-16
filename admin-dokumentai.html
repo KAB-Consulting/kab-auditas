@@ -346,17 +346,19 @@
       currentCase=c;
       hide('casesView'); show('caseDetailView');
       $('cdTitle').textContent=c.legal_entity_name;
-      $('cdSub').textContent=c.case_title+(c.case_description?' — '+c.case_description:'');
+      $('cdSub').innerHTML=esc(c.case_title)+(c.case_description?' — '+esc(c.case_description):'')+(c.case_short_code?` &nbsp;•&nbsp; <span style="color:var(--navy);font-weight:600;">Bylos kodas: ${esc(c.case_short_code)}</span>`:'');
       switchPane('recipients');
       await loadRecipients();
     };
     $('backToCases').addEventListener('click', ()=>{ hide('caseDetailView'); show('casesView'); loadCases(); });
 
-    // Bendra bylos nuoroda — kopijavimas
+    // Bendra bylos nuoroda — kopijavimas (trumpa versija su kodu)
     $('copyCaseLinkBtn').addEventListener('click', ()=>{
-      if(!currentCase || !currentCase.case_access_token){ alert('Šios bylos bendra nuoroda nepasiekiama. Atnaujinkite puslapį.'); return; }
-      const url = `${CLIENT_BASE_URL}/${RECIPIENT_PAGE}?c=${currentCase.case_access_token}`;
-      navigator.clipboard.writeText(url).then(()=>alert('✓ Bendra bylos nuoroda nukopijuota!\n\n'+url)).catch(()=>prompt('Nukopijuokite bendrą nuorodą:', url));
+      if(!currentCase || !currentCase.case_short_code){ alert('Šios bylos bendra nuoroda nepasiekiama. Atnaujinkite puslapį.'); return; }
+      const code = currentCase.case_short_code;
+      const url = `${CLIENT_BASE_URL}/${RECIPIENT_PAGE}?k=${code}`;
+      const msg = `✓ Bendra bylos nuoroda nukopijuota!\n\nTrumpa nuoroda:\n${url}\n\narba kreditorius gali eiti į ${CLIENT_BASE_URL}/${RECIPIENT_PAGE} ir įvesti kodą: ${code}`;
+      navigator.clipboard.writeText(url).then(()=>alert(msg)).catch(()=>prompt('Nukopijuokite bendrą nuorodą:', url));
     });
 
     document.querySelectorAll('.tab[data-pane]').forEach(t=>t.addEventListener('click',()=>switchPane(t.dataset.pane)));
