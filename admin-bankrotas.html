@@ -242,10 +242,16 @@
 
     // ---------- AUTH ----------
     async function boot(){
-      const { data:{ session } } = await supabase.auth.getSession();
-      if(!session){ views('loginView'); return; }
-      $('userEmail').textContent = session.user.email;
-      await loadAll();
+      try{
+        const { data:{ session } } = await supabase.auth.getSession();
+        if(!session){ views('loginView'); return; }
+        $('userEmail').textContent = session.user.email;
+        await loadAll();
+      }catch(err){
+        views('loginView');
+        $('loginError').textContent='Sesijos klaida: '+(err.message||String(err))+'. Prisijunkite iš naujo.';
+        show('loginError');
+      }
     }
     $('loginBtn').onclick = async () => {
       const email=$('loginEmail').value.trim(), pw=$('loginPassword').value;
@@ -264,6 +270,11 @@
         supabase.from('insolvency_administrators').select('*').order('name'),
         supabase.from('insolvency_templates').select('*').eq('is_active',true).order('sort_order')
       ]);
+      if(c.error||a.error||t.error){
+        const e=c.error||a.error||t.error;
+        $('casesTable').innerHTML='<div class="error">Nepavyko užkrauti duomenų: '+esc(e.message)+'</div>';
+        views('casesView'); return;
+      }
       CASES=c.data||[]; ADMINS=a.data||[]; TEMPLATES=t.data||[];
       renderCases();
       views('casesView');
