@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAB Admin — Bankroto dokumentų rengimas</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root { --navy:#0B1E3F; --navy2:#1A3660; --gold:#C9A961; --cream:#F7F4EC; --gray:#5A5A5A; --bd:#E5E5E5; --light:#F9F9F9; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; background:var(--cream); color:#333; line-height:1.55; }
+    .header { background:var(--navy); border-bottom:4px solid var(--gold); padding:14px 24px; display:flex; justify-content:space-between; align-items:center; }
+    .header h1 { color:#fff; font-size:18px; font-weight:600; }
+    .header .right { color:rgba(255,255,255,.85); font-size:13px; display:flex; gap:14px; align-items:center; }
+    .container { max-width:1100px; margin:0 auto; padding:24px 20px; }
+    .card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .btn { background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; }
+    .btn:hover { background:var(--navy2); } .btn:disabled { opacity:.55; cursor:not-allowed; }
+    .btn-ghost { background:#fff; color:var(--navy); border:1px solid var(--navy); }
+    .btn-gold { background:var(--gold); color:var(--navy); } .btn-danger { background:#C0392B; }
+    .btn-sm { padding:6px 12px; font-size:13px; }
+    .input,.textarea,.select { width:100%; padding:10px 12px; border:1px solid var(--bd); border-radius:6px; font-size:14px; font-family:inherit; }
+    .input:focus,.textarea:focus,.select:focus { outline:none; border-color:var(--gold); }
+    .textarea { min-height:80px; resize:vertical; }
+    .label { display:block; font-size:13px; color:var(--gray); margin-bottom:5px; font-weight:600; margin-top:12px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; } .row > * { flex:1; min-width:180px; }
+    .error { background:#FDECEA; color:#C0392B; border:1px solid #F5B7B1; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
+    .success { background:#E8F8F0; color:#1E8449; border:1px solid #ABEBC6; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
+    .hidden { display:none !important; } .center { text-align:center; } .muted { color:var(--gray); font-size:13px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th { text-align:left; background:var(--light); padding:10px 12px; border-bottom:2px solid var(--bd); font-size:12px; color:var(--gray); text-transform:uppercase; }
+    td { padding:10px 12px; border-bottom:1px solid #F0F0F0; }
+    tr:hover td { background:#FBFAF6; }
+    .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; }
+    .badge-green { background:#E8F8F0; color:#1E8449; } .badge-gray { background:#EEE; color:#777; } .badge-gold { background:#FBF3DF; color:#9A7B24; }
+    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; z-index:100; overflow:auto; }
+    .modal { background:#fff; border-radius:12px; max-width:720px; width:100%; padding:26px; }
+    .modal h2 { color:var(--navy); font-size:19px; margin-bottom:14px; }
+    .crumb { font-size:13px; color:var(--gray); margin-bottom:14px; cursor:pointer; }
+    .crumb:hover { color:var(--navy); text-decoration:underline; }
+    .tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .tab { padding:8px 16px; border:1px solid var(--bd); border-radius:20px; background:#fff; cursor:pointer; font-size:13px; font-weight:600; color:var(--gray); }
+    .tab.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+    .spinner { border:3px solid #eee; border-top:3px solid var(--gold); border-radius:50%; width:28px; height:28px; animation:spin 1s linear infinite; margin:20px auto; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .field-ai { border-color:var(--gold)!important; background:#FFFDF5; }
+    .hint { font-size:12px; color:var(--gray); margin-top:3px; }
+    .sec-title { color:var(--navy); font-size:15px; font-weight:700; margin:18px 0 4px; border-bottom:1px solid var(--bd); padding-bottom:5px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>KAB Admin — Bankroto dokumentų rengimas</h1>
+    <div class="right">
+      <a href="admin.html" style="color:#fff;text-decoration:underline;font-size:12px;">← Klausimynai</a>
+      <a href="admin-dokumentai.html" style="color:#fff;text-decoration:underline;font-size:12px;">Dokumentai kreditoriams</a>
+      <span id="userEmail"></span>
+      <button class="btn btn-sm btn-ghost" id="logoutBtn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4);">Atsijungti</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- LOGIN -->
+    <div id="loginView" class="card hidden" style="max-width:420px;margin:60px auto;">
+      <h2 style="color:var(--navy);font-size:20px;margin-bottom:12px;">Administratoriaus prisijungimas</h2>
+      <label class="label">El. paštas</label><input id="loginEmail" class="input" type="email">
+      <label class="label">Slaptažodis</label><input id="loginPassword" class="input" type="password">
+      <div id="loginError" class="error hidden"></div>
+      <button id="loginBtn" class="btn" style="width:100%;margin-top:16px;">Prisijungti</button>
+    </div>
+
+    <div id="loadingView" class="card center"><div class="spinner"></div><div class="muted">Kraunama…</div></div>
+
+    <!-- BYLŲ SĄRAŠAS -->
+    <div id="casesView" class="hidden">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <h2 style="color:var(--navy);font-size:18px;">Bankroto bylos</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost" id="manageAdminsBtn">⚙️ Administratoriai (blankai)</button>
+            <button class="btn" id="newCaseBtn">+ Nauja byla</button>
+          </div>
+        </div>
+        <input id="caseSearch" class="input" placeholder="Paieška pagal įmonę / bylos kodą…" style="margin-top:12px;">
+      </div>
+      <div class="card"><div id="casesTable"></div></div>
+    </div>
+
+    <!-- BYLOS VIDUS -->
+    <div id="caseDetailView" class="hidden">
+      <div class="crumb" id="backToCases">← Grįžti į bylų sąrašą</div>
+      <div class="card">
+        <h2 style="color:var(--navy);font-size:19px;" id="cdTitle"></h2>
+        <div class="muted" id="cdSub"></div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" data-pane="card">📋 Bylos kortelė</div>
+        <div class="tab" data-pane="recipients">👥 Darbuotojai / kreditoriai</div>
+        <div class="tab" data-pane="documents">📑 Dokumentai</div>
+      </div>
+
+      <!-- KORTELĖ -->
+      <div id="paneCard" class="card">
+        <!-- AI nuskaitymas iš nutarties -->
+        <div style="background:#FFFDF5;border:1px solid var(--gold);border-radius:8px;padding:14px;margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+              <strong style="color:var(--navy);">🤖 Užpildyti iš teismo nutarties (AI)</strong>
+              <div class="muted" style="font-size:12px;">Įkelkite nutartį (PDF). AI nuskaitys ir užpildys laukus. Geltonai pažymėti laukai = patikrinkite (žemas patikimumas). Bylą pirma išsaugokite.</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="file" id="rulingFile" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
+              <button class="btn btn-sm btn-gold" id="rulingBtn">⬆️ Įkelti nutartį</button>
+            </div>
+          </div>
+          <div id="aiMsg"></div>
+        </div>
+        <div id="cardForm"></div>
+        <div id="cardMsg"></div>
+        <button class="btn" id="saveCardBtn" style="margin-top:16px;">💾 Išsaugoti kortelę</button>
+      </div>
+
+      <!-- GAVĖJAI -->
+      <div id="paneRecipients" class="card hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <strong>Darbuotojų / kreditorių sąrašas</strong>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-ghost" id="addRecipientBtn">+ Pridėti</button>
+            <button class="btn btn-sm btn-ghost" id="importRecipientsBtn">📋 Importuoti (įklijuoti)</button>
+          </div>
+        </div>
+        <div id="recipientsTable"></div>
+      </div>
+
+      <!-- DOKUMENTAI -->
+      <div id="paneDocuments" class="card hidden">
+        <div style="background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+          <strong style="color:var(--navy);">Dokumentų generavimas</strong>
+          <div class="muted" style="font-size:12px;">Pasirinkite šabloną. Vardiniai (darbuotojams) generuojami atskirai kiekvienam gavėjui. Generavimo variklis (edge funkcija) jungiamas sekančiame etape — čia pasirinkimas ir sąrašas.</div>
+        </div>
+        <label class="label">Dokumento šablonas</label>
+        <select id="docTemplate" class="select"></select>
+        <div id="tplStatus" class="hint"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+          <button class="btn" id="generateDocsBtn">⚙️ Generuoti dokumentus</button>
+          <input type="file" id="tplFile" accept=".docx" class="hidden">
+          <button class="btn btn-ghost btn-sm" id="tplUploadBtn" type="button">⬆️ Įkelti/keisti šio šablono DOCX</button>
+        </div>
+        <div id="docsMsg"></div>
+        <div id="documentsTable" style="margin-top:16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMINISTRATORIŲ MODALĖ -->
+  <div id="adminsModal" class="modal-bg hidden">
+    <div class="modal">
+      <h2>Nemokumo administratoriai (blankai)</h2>
+      <div class="muted" style="margin-bottom:12px;">Kiekvienam administratoriui įkeliamas blankas (DOCX su header/footer ir žyme {{turinys}}). Kuriant bylą pasirenkamas administratorius — jo blankas naudojamas visiems tos bylos dokumentams.</div>
+      <div id="adminsList" style="margin-bottom:16px;"></div>
+      <div class="sec-title">Naujas / redaguoti</div>
+      <input type="hidden" id="admId">
+      <div class="row"><div><label class="label">Pavadinimas *</label><input id="admName" class="input"></div><div><label class="label">Įm. kodas</label><input id="admCode" class="input"></div></div>
+      <label class="label">Adresas</label><input id="admAddress" class="input">
+      <div class="row"><div><label class="label">Telefonas</label><input id="admPhone" class="input"></div><div><label class="label">El. paštas</label><input id="admEmail" class="input"></div></div>
+      <label class="label">Įgaliotas asmuo</label><input id="admPerson" class="input">
+      <label class="label">Blankas (DOCX su {{turinys}} žyme)</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="admBlank" class="input" placeholder="dar neįkeltas" readonly style="background:#f5f5f5;">
+        <input type="file" id="admBlankFile" accept=".docx" class="hidden">
+        <button class="btn btn-sm btn-gold" id="admBlankBtn" type="button">⬆️ Įkelti blanką</button>
+      </div>
+      <div class="hint">Blanke turi būti header (logo), footer (rekvizitai) ir korpuse žymė {{turinys}}.</div>
+      <div id="admMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="admCancel">Uždaryti</button>
+        <button class="btn" id="admSave">Išsaugoti administratorių</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAVĖJO MODALĖ -->
+  <div id="recipientModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:560px;">
+      <h2 id="recModalTitle">Pridėti gavėją</h2>
+      <input type="hidden" id="recId">
+      <label class="label">Tipas</label>
+      <select id="recType" class="select"><option value="employee">Darbuotojas</option><option value="creditor">Kreditorius</option></select>
+      <label class="label">Vardas, pavardė / pavadinimas *</label><input id="recName" class="input">
+      <div class="row"><div><label class="label">Pareigos</label><input id="recPosition" class="input"></div><div><label class="label">Asmens / įm. kodas</label><input id="recCode" class="input"></div></div>
+      <div class="row"><div><label class="label">El. paštas</label><input id="recEmail" class="input"></div><div><label class="label">Reikalavimo suma (€)</label><input id="recAmount" class="input" type="number" step="0.01"></div></div>
+      <label class="label">Adresas</label><input id="recAddress" class="input">
+      <div id="recMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="recCancel">Atšaukti</button>
+        <button class="btn" id="recSave">Išsaugoti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORTO MODALĖ -->
+  <div id="importModal" class="modal-bg hidden">
+    <div class="modal">
+      <h2>Importuoti gavėjus</h2>
+      <label class="label">Tipas</label>
+      <select id="impType" class="select"><option value="employee">Darbuotojai</option><option value="creditor">Kreditoriai</option></select>
+
+      <!-- AI nuskaitymas iš sąrašo failo -->
+      <div style="background:#FFFDF5;border:1px solid var(--gold);border-radius:8px;padding:12px;margin:14px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div><strong style="color:var(--navy);">🤖 Nuskaityti iš failo (AI)</strong>
+            <div class="muted" style="font-size:12px;">Įkelkite sąrašą (PDF / CSV / nuotrauka). AI atpažins eilutes — galėsite peržiūrėti prieš išsaugant.</div></div>
+          <div><input type="file" id="impFile" accept=".pdf,.csv,.txt,.png,.jpg,.jpeg" class="hidden">
+            <button class="btn btn-sm btn-gold" id="impFileBtn">⬆️ Įkelti sąrašą</button></div>
+        </div>
+        <div id="impAiMsg"></div>
+      </div>
+
+      <label class="label">Arba įklijuokite (po vieną eilutę: <b>Vardas Pavardė; Pareigos; Kodas; El.paštas</b>)</label>
+      <textarea id="impData" class="textarea" style="min-height:120px;font-family:monospace;" placeholder="Jonas Jonaitis; Vadybininkas; 38901011234; jonas@example.lt"></textarea>
+      <div id="impMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="impCancel">Atšaukti</button>
+        <button class="btn" id="impSave">Importuoti</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const $ = id => document.getElementById(id);
+    const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const show = id => $(id).classList.remove('hidden');
+    const hide = id => $(id).classList.add('hidden');
+    function views(v){ ['loginView','loadingView','casesView','caseDetailView'].forEach(x=>hide(x)); show(v); }
+
+    let CASES=[], ADMINS=[], TEMPLATES=[], CURRENT=null, RECIPIENTS=[], DOCUMENTS=[];
+
+    // ---------- AUTH ----------
+    async function boot(){
+      const { data:{ session } } = await supabase.auth.getSession();
+      if(!session){ views('loginView'); return; }
+      $('userEmail').textContent = session.user.email;
+      await loadAll();
+    }
+    $('loginBtn').onclick = async () => {
+      const email=$('loginEmail').value.trim(), pw=$('loginPassword').value;
+      hide('loginError');
+      const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
+      if(error){ $('loginError').textContent='Nepavyko prisijungti: '+error.message; show('loginError'); return; }
+      boot();
+    };
+    $('logoutBtn').onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+
+    // ---------- LOAD ----------
+    async function loadAll(){
+      views('loadingView');
+      const [c,a,t] = await Promise.all([
+        supabase.from('insolvency_cases').select('*').order('created_at',{ascending:false}),
+        supabase.from('insolvency_administrators').select('*').order('name'),
+        supabase.from('insolvency_templates').select('*').eq('is_active',true).order('sort_order')
+      ]);
+      CASES=c.data||[]; ADMINS=a.data||[]; TEMPLATES=t.data||[];
+      renderCases();
+      views('casesView');
+    }
+
+    // ---------- BYLŲ SĄRAŠAS ----------
+    function renderCases(){
+      const q=($('caseSearch').value||'').toLowerCase();
+      const rows=CASES.filter(c=>!q || (c.debtor_name||'').toLowerCase().includes(q) || (c.case_short_code||'').toLowerCase().includes(q));
+      if(!rows.length){ $('casesTable').innerHTML='<div class="muted center" style="padding:30px;">Bylų nėra. Sukurkite naują.</div>'; return; }
+      $('casesTable').innerHTML='<table><thead><tr><th>Įmonė</th><th>Bylos kodas</th><th>Administratorius</th><th>Statusas</th><th></th></tr></thead><tbody>'+
+        rows.map(c=>{
+          const adm=ADMINS.find(a=>a.id===c.administrator_id);
+          const st=c.status==='active'?'<span class="badge badge-green">Aktyvi</span>':c.status==='closed'?'<span class="badge badge-gray">Uždaryta</span>':'<span class="badge badge-gold">Juodraštis</span>';
+          return `<tr><td><b>${esc(c.debtor_name||'—')}</b><div class="muted">${esc(c.debtor_code||'')}</div></td><td>${esc(c.case_short_code)}</td><td>${esc(adm?adm.name:'—')}</td><td>${st}</td><td style="text-align:right;"><button class="btn btn-sm" onclick="openCase('${c.id}')">Atidaryti</button></td></tr>`;
+        }).join('')+'</tbody></table>';
+    }
+    $('caseSearch').oninput=renderCases;
+    $('newCaseBtn').onclick=()=>openCase(null);
+    $('backToCases').onclick=()=>{ views('casesView'); };
+
+    // ---------- BYLOS KORTELĖ ----------
+    const CARD_FIELDS=[
+      ['__sec','Nemokumo administratorius'],
+      ['administrator_id','Administratorius (blankas)','select'],
+      ['__sec','Bankrutuojanti įmonė'],
+      ['debtor_name','Įmonės pavadinimas'],
+      ['debtor_short_name','Trumpas pavadinimas (BUAB eilutei)'],
+      ['debtor_code','Įmonės kodas'],
+      ['debtor_address','Adresas'],
+      ['__sec','Bylos duomenys'],
+      ['court','Teismas'],
+      ['civil_case_no','Civilinės bylos Nr.'],
+      ['ruling_date','Nutarties data','date'],
+      ['effective_date','Įsiteisėjimo data','date'],
+      ['creditor_claim_deadline','Kreditorinių reikalavimų terminas','date'],
+      ['doc_no','Dokumento Nr. (jei naudojamas)'],
+    ];
+    function renderCard(c){
+      c=c||{};
+      $('cardForm').innerHTML=CARD_FIELDS.map(f=>{
+        if(f[0]==='__sec') return `<div class="sec-title">${esc(f[1])}</div>`;
+        const [key,lbl,type]=f; const v=c[key]||'';
+        if(type==='select'){
+          const opts=['<option value="">— pasirinkti —</option>'].concat(ADMINS.map(a=>`<option value="${a.id}" ${a.id===v?'selected':''}>${esc(a.name)}</option>`)).join('');
+          return `<label class="label">${esc(lbl)}</label><select class="select" data-f="${key}">${opts}</select>`;
+        }
+        return `<label class="label">${esc(lbl)}</label><input class="input" data-f="${key}" type="${type||'text'}" value="${esc(v)}">`;
+      }).join('');
+    }
+    window.openCase = async (id) => {
+      CURRENT = id ? CASES.find(c=>c.id===id) : { __new:true, status:'draft' };
+      $('cdTitle').textContent = id ? (CURRENT.debtor_name||'(be pavadinimo)') : 'Nauja byla';
+      $('cdSub').textContent = id ? ('Bylos kodas: '+CURRENT.case_short_code) : 'Užpildykite kortelę ir išsaugokite';
+      renderCard(CURRENT);
+      // tabs reset
+      document.querySelectorAll('#caseDetailView .tab').forEach(t=>t.classList.toggle('active',t.dataset.pane==='card'));
+      ['paneCard'].forEach(show); ['paneRecipients','paneDocuments'].forEach(hide);
+      $('cardMsg').innerHTML='';
+      views('caseDetailView');
+      if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); }
+      else { RECIPIENTS=[]; DOCUMENTS=[]; }
+    };
+    function collectCard(){
+      const o={};
+      document.querySelectorAll('#cardForm [data-f]').forEach(el=>{ o[el.dataset.f]=el.value; });
+      return o;
+    }
+    $('saveCardBtn').onclick = async () => {
+      const p=collectCard(); $('cardMsg').innerHTML='';
+      if(!p.debtor_name){ $('cardMsg').innerHTML='<div class="error">Įveskite įmonės pavadinimą.</div>'; return; }
+      let res;
+      if(CURRENT.__new){ res=await supabase.rpc('create_insolvency_case',{ p }); }
+      else { res=await supabase.rpc('update_insolvency_case',{ p_id:CURRENT.id, p }); }
+      if(res.error){ $('cardMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+      const r=res.data;
+      if(r && r.ok===false){ $('cardMsg').innerHTML='<div class="error">Klaida: '+esc(r.error_code)+'</div>'; return; }
+      $('cardMsg').innerHTML='<div class="success">Išsaugota.</div>';
+      const newId = CURRENT.__new ? r.id : CURRENT.id;
+      await loadAll(); openCase(newId);
+    };
+
+    // tab switching
+    document.querySelectorAll('#caseDetailView .tab').forEach(t=>{
+      t.onclick=()=>{
+        document.querySelectorAll('#caseDetailView .tab').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active');
+        const p=t.dataset.pane;
+        $('paneCard').classList.toggle('hidden',p!=='card');
+        $('paneRecipients').classList.toggle('hidden',p!=='recipients');
+        $('paneDocuments').classList.toggle('hidden',p!=='documents');
+      };
+    });
+
+    // ---------- GAVĖJAI ----------
+    async function loadRecipients(){
+      if(CURRENT.__new) return;
+      const { data } = await supabase.from('insolvency_recipients').select('*').eq('case_id',CURRENT.id).order('created_at');
+      RECIPIENTS=data||[]; renderRecipients();
+    }
+    function renderRecipients(){
+      if(!RECIPIENTS.length){ $('recipientsTable').innerHTML='<div class="muted center" style="padding:20px;">Gavėjų nėra.</div>'; return; }
+      $('recipientsTable').innerHTML='<table><thead><tr><th>Tipas</th><th>Vardas / pavadinimas</th><th>Pareigos / kodas</th><th>El. paštas</th><th></th></tr></thead><tbody>'+
+        RECIPIENTS.map(r=>`<tr><td>${r.recipient_type==='employee'?'Darbuotojas':'Kreditorius'}</td><td><b>${esc(r.full_name||'—')}</b></td><td>${esc(r.position||r.personal_code||'')}</td><td>${esc(r.email||'')}</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost" onclick="editRecipient('${r.id}')">✎</button> <button class="btn btn-sm btn-danger" onclick="delRecipient('${r.id}')">✕</button></td></tr>`).join('')+'</tbody></table>';
+    }
+    $('addRecipientBtn').onclick=()=>openRecModal(null);
+    window.editRecipient=id=>openRecModal(RECIPIENTS.find(r=>r.id===id));
+    function openRecModal(r){
+      r=r||{}; $('recId').value=r.id||''; $('recModalTitle').textContent=r.id?'Redaguoti gavėją':'Pridėti gavėją';
+      $('recType').value=r.recipient_type||'employee'; $('recName').value=r.full_name||''; $('recPosition').value=r.position||'';
+      $('recCode').value=r.personal_code||''; $('recEmail').value=r.email||''; $('recAmount').value=r.claim_amount||''; $('recAddress').value=r.address||'';
+      $('recMsg').innerHTML=''; show('recipientModal');
+    }
+    $('recCancel').onclick=()=>hide('recipientModal');
+    $('recSave').onclick=async()=>{
+      const id=$('recId').value;
+      const row={ case_id:CURRENT.id, recipient_type:$('recType').value, full_name:$('recName').value.trim(),
+        position:$('recPosition').value.trim()||null, personal_code:$('recCode').value.trim()||null,
+        email:$('recEmail').value.trim()||null, claim_amount:$('recAmount').value||null, address:$('recAddress').value.trim()||null };
+      if(!row.full_name){ $('recMsg').innerHTML='<div class="error">Įveskite vardą/pavadinimą.</div>'; return; }
+      let err;
+      if(id){ ({error:err}=await supabase.from('insolvency_recipients').update(row).eq('id',id)); }
+      else { ({error:err}=await supabase.from('insolvency_recipients').insert(row)); }
+      if(err){ $('recMsg').innerHTML='<div class="error">'+esc(err.message)+'</div>'; return; }
+      hide('recipientModal'); await loadRecipients();
+    };
+    window.delRecipient=async id=>{ if(!confirm('Pašalinti gavėją?'))return; await supabase.from('insolvency_recipients').delete().eq('id',id); await loadRecipients(); };
+
+    // ---------- IMPORTAS ----------
+    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; show('importModal'); };
+    $('impCancel').onclick=()=>hide('importModal');
+    $('impSave').onclick=async()=>{
+      const type=$('impType').value;
+      const lines=$('impData').value.split('\n').map(l=>l.trim()).filter(Boolean);
+      if(!lines.length){ $('impMsg').innerHTML='<div class="error">Nėra duomenų.</div>'; return; }
+      const rows=lines.map(l=>{ const p=l.split(/\t|;/).map(s=>s.trim());
+        return { recipient_type:type, full_name:p[0]||null, position:p[1]||null, personal_code:p[2]||null, email:p[3]||null }; });
+      const res=await supabase.rpc('add_insolvency_recipients',{ p_case_id:CURRENT.id, p_rows:rows });
+      if(res.error){ $('impMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+      hide('importModal'); await loadRecipients();
+    };
+
+    // ---------- DOKUMENTAI ----------
+    function renderDocTemplates(){
+      $('docTemplate').innerHTML=TEMPLATES.map(t=>`<option value="${t.code}">${esc(t.title)} ${t.scope==='per_recipient'?'(vardinis)':''}</option>`).join('');
+      updateTplStatus();
+    }
+    function updateTplStatus(){
+      const t=TEMPLATES.find(x=>x.code===$('docTemplate').value);
+      $('tplStatus').innerHTML = t&&t.storage_path ? '<span style="color:#1E8449;">✓ Šablono DOCX įkeltas</span>' : '<span style="color:#C0392B;">⚠ Šablono DOCX neįkeltas — įkelkite prieš generuojant</span>';
+    }
+    document.addEventListener('change',e=>{ if(e.target&&e.target.id==='docTemplate')updateTplStatus(); });
+    $('tplUploadBtn').onclick=()=>$('tplFile').click();
+    $('tplFile').onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file)return;
+      const code=$('docTemplate').value;
+      $('docsMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
+      try{
+        const path=`templates/${code}.docx`;
+        const { error }=await supabase.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+        if(error)throw error;
+        const { error:uErr }=await supabase.from('insolvency_templates').update({ storage_path:path }).eq('code',code);
+        if(uErr)throw uErr;
+        const t=TEMPLATES.find(x=>x.code===code); if(t)t.storage_path=path;
+        updateTplStatus(); $('docsMsg').innerHTML='<div class="success">Šablono DOCX įkeltas.</div>';
+      }catch(err){ $('docsMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    };
+    async function loadDocuments(){
+      if(CURRENT.__new) return;
+      const { data }=await supabase.from('insolvency_documents').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
+      DOCUMENTS=data||[]; renderDocuments();
+    }
+    function renderDocuments(){
+      if(!DOCUMENTS.length){ $('documentsTable').innerHTML='<div class="muted center" style="padding:16px;">Sugeneruotų dokumentų dar nėra.</div>'; return; }
+      $('documentsTable').innerHTML='<table><thead><tr><th>Failas</th><th>Šablonas</th><th>Statusas</th><th></th></tr></thead><tbody>'+
+        DOCUMENTS.map(d=>`<tr><td>${esc(d.file_name||'—')}</td><td>${esc(d.template_code||'')}</td><td>${esc(d.status)}</td><td style="text-align:right;">${d.docx_path?`<button class="btn btn-sm" onclick="downloadDoc('${esc(d.docx_path)}')">⬇️ Atsisiųsti</button>`:''}</td></tr>`).join('')+'</tbody></table>';
+    }
+    window.downloadDoc=async(path)=>{
+      const { data:{ session } } = await supabase.auth.getSession();
+      const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+        body:JSON.stringify({ path, download:true })});
+      const r=await res.json();
+      if(r.success&&r.url){ window.open(r.url,'_blank'); } else { alert('Nepavyko atsisiųsti: '+(r.error||'')); }
+    };
+    $('generateDocsBtn').onclick=async()=>{
+      if(CURRENT.__new){ $('docsMsg').innerHTML='<div class="error">Pirma išsaugokite bylą.</div>'; return; }
+      const code=$('docTemplate').value;
+      $('docsMsg').innerHTML='<div class="muted">⏳ Generuojama…</div>';
+      const { data:{ session } } = await supabase.auth.getSession();
+      const res=await fetch(`${SUPABASE_URL}/functions/v1/generate-insolvency-docx`,{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+        body:JSON.stringify({ case_id:CURRENT.id, template_code:code })});
+      const r=await res.json();
+      if(!r.success){
+        const hint = r.error==='no_administrator_blank' ? ' (administratoriui neįkeltas blankas — žr. ⚙️ Administratoriai)' :
+                     r.error==='no_template_file' ? ' (šablonui neįkeltas DOCX failas)' :
+                     r.error==='no_recipients' ? ' (nėra gavėjų šiam šablonui)' : '';
+        $('docsMsg').innerHTML='<div class="error">Klaida: '+esc(r.error||'')+hint+'</div>'; return;
+      }
+      $('docsMsg').innerHTML='<div class="success">Sugeneruota dokumentų: <b>'+r.count+'</b>.</div>';
+      await loadDocuments();
+    };
+
+    // ---------- ADMINISTRATORIAI ----------
+    $('manageAdminsBtn').onclick=()=>{ renderAdmins(); clearAdmForm(); show('adminsModal'); };
+    $('admCancel').onclick=()=>hide('adminsModal');
+    function renderAdmins(){
+      $('adminsList').innerHTML = ADMINS.length ? '<table><thead><tr><th>Pavadinimas</th><th>Blankas</th><th></th></tr></thead><tbody>'+
+        ADMINS.map(a=>`<tr><td><b>${esc(a.name)}</b><div class="muted">${esc(a.code||'')}</div></td><td>${a.blank_docx_path?'<span class="badge badge-green">įkeltas</span>':'<span class="badge badge-gray">nėra</span>'}</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost" onclick="editAdmin('${a.id}')">✎</button></td></tr>`).join('')+'</tbody></table>'
+        : '<div class="muted">Administratorių nėra.</div>';
+    }
+    function clearAdmForm(){ ['admId','admName','admCode','admAddress','admPhone','admEmail','admPerson','admBlank'].forEach(i=>$(i).value=''); $('admMsg').innerHTML=''; }
+    window.editAdmin=id=>{ const a=ADMINS.find(x=>x.id===id); $('admId').value=a.id; $('admName').value=a.name||''; $('admCode').value=a.code||''; $('admAddress').value=a.address||''; $('admPhone').value=a.phone||''; $('admEmail').value=a.email||''; $('admPerson').value=a.authorized_person||''; $('admBlank').value=a.blank_docx_path||''; };
+    $('admBlankBtn').onclick=()=>$('admBlankFile').click();
+    $('admBlankFile').onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file)return;
+      $('admMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
+      try{
+        const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
+        const path=`blanks/${Date.now()}_${safe}`;
+        const { error }=await supabase.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+        if(error)throw error;
+        $('admBlank').value=path; $('admMsg').innerHTML='<div class="success">Blankas įkeltas. Spauskite „Išsaugoti administratorių“.</div>';
+      }catch(err){ $('admMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    };
+    $('admSave').onclick=async()=>{
+      const p={ name:$('admName').value.trim(), code:$('admCode').value.trim(), address:$('admAddress').value.trim(),
+        phone:$('admPhone').value.trim(), email:$('admEmail').value.trim(), authorized_person:$('admPerson').value.trim(), blank_docx_path:$('admBlank').value.trim() };
+      if(!p.name){ $('admMsg').innerHTML='<div class="error">Įveskite pavadinimą.</div>'; return; }
+      const id=$('admId').value||null;
+      const res=await supabase.rpc('upsert_insolvency_administrator',{ p_id:id, p });
+      if(res.error){ $('admMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+      if(res.data && res.data.ok===false){ $('admMsg').innerHTML='<div class="error">'+esc(res.data.error_code)+'</div>'; return; }
+      const { data }=await supabase.from('insolvency_administrators').select('*').order('name');
+      ADMINS=data||[]; renderAdmins(); clearAdmForm(); $('admMsg').innerHTML='<div class="success">Išsaugota.</div>';
+    };
+
+    // ---------- AI NUSKAITYMAS ----------
+    async function callAiExtract(storagePath, kind){
+      const { data:{ session } } = await supabase.auth.getSession();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-extract-document`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+        body: JSON.stringify({ storage_path: storagePath, kind, case_id: CURRENT && !CURRENT.__new ? CURRENT.id : null })
+      });
+      return res.json();
+    }
+    async function uploadToStorage(file, subdir){
+      const code = (CURRENT && CURRENT.case_short_code) ? CURRENT.case_short_code : 'tmp';
+      const safe = file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
+      const path = `${code}/${subdir}/${Date.now()}_${safe}`;
+      const { error } = await supabase.storage.from('insolvency-docs').upload(path, file, { upsert:true });
+      if(error) throw error;
+      return path;
+    }
+
+    // nutartis → kortelės laukai
+    $('rulingBtn').onclick=()=>{
+      if(CURRENT.__new){ $('aiMsg').innerHTML='<div class="error">Pirma išsaugokite bylą (kad būtų bylos kodas failams).</div>'; return; }
+      $('rulingFile').click();
+    };
+    $('rulingFile').onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file)return;
+      $('aiMsg').innerHTML='<div class="muted">⏳ Įkeliama ir nuskaitoma… (gali užtrukti iki ~30 s)</div>';
+      try{
+        const path=await uploadToStorage(file,'source');
+        const r=await callAiExtract(path,'court_ruling');
+        if(!r.success){ $('aiMsg').innerHTML='<div class="error">AI klaida: '+esc(r.error||'')+(r.error==='ai_failed'?' (ar nustatytas ANTHROPIC_API_KEY?)':'')+'</div>'; return; }
+        applyRulingFields(r.fields);
+        $('aiMsg').innerHTML='<div class="success">Užpildyta iš nutarties. Geltoni laukai — patikrinkite. Nepamirškite išsaugoti.</div>';
+      }catch(err){ $('aiMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    };
+    function applyRulingFields(fields){
+      // map AI laukai → kortelės data-f
+      const map={ debtor_name:'debtor_name', debtor_code:'debtor_code', debtor_address:'debtor_address',
+        court:'court', civil_case_no:'civil_case_no', ruling_date:'ruling_date',
+        effective_date:'effective_date', creditor_claim_deadline:'creditor_claim_deadline' };
+      for(const k in map){
+        const cell=fields[k]; if(!cell)continue;
+        const el=document.querySelector(`#cardForm [data-f="${map[k]}"]`);
+        if(el && cell.value){ el.value=cell.value; el.classList.toggle('field-ai', (cell.confidence??1) < 0.75); }
+      }
+    }
+
+    // sąrašas → gavėjų peržiūra (užpildo textarea, kad admin galėtų peržiūrėti/redaguoti)
+    $('impFileBtn').onclick=()=>{ if(CURRENT.__new){ $('impAiMsg').innerHTML='<div class="error">Pirma išsaugokite bylą.</div>'; return; } $('impFile').click(); };
+    $('impFile').onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file)return;
+      const kind = $('impType').value==='creditor' ? 'creditor_list' : 'employee_list';
+      $('impAiMsg').innerHTML='<div class="muted">⏳ Nuskaitoma…</div>';
+      try{
+        const path=await uploadToStorage(file,'source');
+        const r=await callAiExtract(path,kind);
+        if(!r.success){ $('impAiMsg').innerHTML='<div class="error">AI klaida: '+esc(r.error||'')+'</div>'; return; }
+        const rows=r.rows||[];
+        $('impData').value=rows.map(x=>[x.full_name||'',x.position||'',x.personal_code||'',x.email||''].join('; ')).join('\n');
+        $('impAiMsg').innerHTML='<div class="success">Atpažinta eilučių: '+rows.length+'. Peržiūrėkite žemiau ir spauskite „Importuoti“.</div>';
+      }catch(err){ $('impAiMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    };
+
+    boot();
+  </script>
+</body>
+</html>
