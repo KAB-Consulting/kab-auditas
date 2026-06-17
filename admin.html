@@ -314,6 +314,15 @@
         <a href="admin-dokumentai.html" class="btn btn-gold" style="font-size:15px;padding:12px 24px;text-decoration:none;">Atidaryti modulį →</a>
       </div>
 
+      <!-- Pavieniai (spec.) klausimynai -->
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-left:4px solid var(--kab-navy);">
+        <div>
+          <h2 style="margin:0;">🗂️ Pavieniai klausimynai</h2>
+          <p style="color:#666;margin:4px 0 0;">Sukurti pavienį klausimyną pagal spec. šabloną (pvz. įmonių grupės duomenys) konkrečiam klientui — su pasirenkamu įmonių sąrašu</p>
+        </div>
+        <button class="btn btn-gold" style="font-size:15px;padding:12px 24px;" onclick="openSpecModal()">+ Kurti pavienį klausimyną</button>
+      </div>
+
       <!-- Statistikos -->
       <div class="stats-grid">
         <div class="stat-card">
@@ -358,6 +367,9 @@
           </button>
           <button class="template-tab" data-template="bankrotas_fizinis" onclick="filterByTemplate('bankrotas_fizinis')">
             ⚖️ Fizinių asmenų bankrotas <span class="tab-count" id="count-bankr">0</span>
+          </button>
+          <button class="template-tab" data-template="imoniu_grupes_duomenys" onclick="filterByTemplate('imoniu_grupes_duomenys')">
+            🗂️ Pavieniai <span class="tab-count" id="count-spec">0</span>
           </button>
         </div>
 
@@ -461,6 +473,70 @@
         <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
           <button class="btn btn-ghost" onclick="closeCreateModal()">Atšaukti</button>
           <button class="btn btn-gold" onclick="createSubmission()">Sukurti nuorodą</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Pavienio (spec.) klausimyno kūrimas -->
+  <div id="spec-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeSpecModal()">
+    <div class="modal" style="max-width: 640px;">
+      <button class="modal-close" onclick="closeSpecModal()">×</button>
+      <div class="modal-content">
+        <h2 style="margin-top: 0;">🗂️ Kurti pavienį klausimyną</h2>
+        <p style="color:#666;margin-top:-6px;">Spec. klausimynas konkrečiam klientui. Pasirinkite spec. šabloną ir nurodykite, kurioms įmonėms taikyti.</p>
+
+        <div id="spec-modal-alert"></div>
+
+        <!-- 1. SPEC. ŠABLONO PASIRINKIMAS -->
+        <div class="form-field" style="margin-bottom: 15px;">
+          <label style="font-weight: 700;">Spec. klausimyno šablonas *</label>
+          <select id="spec-template-id" onchange="onSpecTemplateChange()" style="width: 100%; padding: 10px; border: 2px solid var(--kab-border); border-radius: 4px; font-size: 14px; background: white;">
+            <option value="">-- Pasirinkite spec. šabloną --</option>
+          </select>
+          <div id="spec-template-description" style="margin-top: 8px; padding: 10px; background: var(--kab-cream); border-radius: 4px; font-size: 12px; color: #555; display: none;"></div>
+        </div>
+
+        <!-- 2. KLIENTO INFO -->
+        <div class="form-row">
+          <div class="form-field">
+            <label>Kliento / grupės pavadinimas *</label>
+            <input type="text" id="spec-client-name" placeholder="Pvz. UAB „Campers“ grupė">
+          </div>
+          <div class="form-field">
+            <label>Kontaktinis asmuo *</label>
+            <input type="text" id="spec-client-contact" placeholder="Vardas Pavardė">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>El. paštas *</label>
+            <input type="email" id="spec-client-email" placeholder="kontaktas@imone.lt">
+          </div>
+          <div class="form-field">
+            <label>Telefonas</label>
+            <input type="tel" id="spec-client-phone" placeholder="+370 ...">
+          </div>
+        </div>
+
+        <!-- 3. ĮMONIŲ SĄRAŠAS -->
+        <div class="form-field" style="margin-bottom: 8px;">
+          <label style="font-weight:700;">Įmonių sąrašas * <span style="font-weight:400;color:#888;">(po vieną eilutėje)</span></label>
+          <textarea id="spec-entities" rows="8" placeholder="UAB „Extreme Adventures“&#10;UAB „Campers 365“&#10;UAB „Campers 365 Global“&#10;..." style="width:100%;font-family:inherit;"></textarea>
+          <div style="font-size:12px;color:#888;margin-top:6px;">Kiekvienai įmonei bus sugeneruotas vienodas klausimų blokas. Klientas vienoje nuorodoje pildys visas įmones.</div>
+          <div id="spec-entity-count" style="font-size:12px;color:var(--kab-navy);font-weight:600;margin-top:4px;"></div>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 15px;">
+          <label>Vidinės pastabos (klientas nematys)</label>
+          <textarea id="spec-client-notes" rows="2" placeholder="Papildoma info apie klientą"></textarea>
+        </div>
+
+        <!-- 4. VEIKSMAI -->
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+          <button class="btn btn-ghost" onclick="closeSpecModal()">Atšaukti</button>
+          <button class="btn btn-gold" onclick="createSpecSubmission()">Sukurti nuorodą</button>
         </div>
       </div>
     </div>
@@ -677,6 +753,7 @@
     'restrukturizavimas': 'questionnaire.html',
     'auditas': 'questionnaire.html',
     'bankrotas_fizinis': 'questionnaire.html',
+    'imoniu_grupes_duomenys': 'questionnaire.html',  // spec. daugiaįmoninis
     // Fallback: senas audito klausimynas (be template_id)
     'audit_legacy': 'index.html',
   };
@@ -685,6 +762,7 @@
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let allSubmissions = [];
   let allTemplates = [];           // Visi aktyvūs šablonai (v4.0)
+  let specTemplates = [];          // Spec. (multi_entity) šablonai pavieniams klausimynams
   let currentFilter = 'all';       // Statuso filtras
   let currentTemplateFilter = 'all'; // Šablono filtras (naujas v4.0)
   let lastGeneratedLink = null;
@@ -697,6 +775,7 @@
     if (session) {
       showDashboard(session.user);
       await loadTemplates();     // Įkrauti šablonus (v4.0)
+      await loadSpecTemplates(); // Spec. (multi_entity) šablonai
       await loadSubmissions();
     } else {
       showLogin();
@@ -732,6 +811,154 @@
       opt.dataset.description = t.description || '';
       select.appendChild(opt);
     }
+  }
+
+  // Spec. (multi_entity) šablonai — atskirai, nes jie is_active=false,
+  // kad nesimaišytų įprastame klausimynų kūrimo dropdown'e.
+  async function loadSpecTemplates() {
+    const { data, error } = await supabase
+      .from('questionnaire_templates')
+      .select('*')
+      .eq('template_kind', 'multi_entity')
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('Klaida kraunant spec. šablonus:', error);
+      return;
+    }
+
+    specTemplates = data || [];
+
+    const select = document.getElementById('spec-template-id');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Pasirinkite spec. šabloną --</option>';
+    for (const t of specTemplates) {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.name;
+      opt.dataset.code = t.code;
+      opt.dataset.description = t.description || '';
+      select.appendChild(opt);
+    }
+  }
+
+  function onSpecTemplateChange() {
+    const select = document.getElementById('spec-template-id');
+    const opt = select.options[select.selectedIndex];
+    const description = opt ? opt.dataset.description : '';
+    const descEl = document.getElementById('spec-template-description');
+    if (description) {
+      descEl.innerHTML = '💡 ' + description;
+      descEl.style.display = 'block';
+    } else {
+      descEl.style.display = 'none';
+    }
+  }
+
+  function parseSpecEntities() {
+    const raw = document.getElementById('spec-entities').value || '';
+    return raw.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  }
+
+  function updateSpecEntityCount() {
+    const n = parseSpecEntities().length;
+    const el = document.getElementById('spec-entity-count');
+    if (el) el.textContent = n > 0 ? `Įmonių: ${n}` : '';
+  }
+
+  function openSpecModal() {
+    ['spec-client-name','spec-client-contact','spec-client-email','spec-client-phone','spec-client-notes','spec-entities'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('spec-template-id').value = '';
+    document.getElementById('spec-template-description').style.display = 'none';
+    document.getElementById('spec-modal-alert').innerHTML = '';
+    document.getElementById('spec-entity-count').textContent = '';
+
+    // Jei dar neįkrauti spec. šablonai — įkrauti dabar
+    if (!specTemplates.length) {
+      loadSpecTemplates();
+    } else {
+      // perpiešti dropdown'ą (jei modalas atidaromas pakartotinai)
+      onSpecTemplateChange();
+    }
+
+    // Gyvas įmonių skaičiavimas
+    const ta = document.getElementById('spec-entities');
+    ta.oninput = updateSpecEntityCount;
+
+    document.getElementById('spec-modal').classList.remove('hidden');
+  }
+
+  function closeSpecModal() {
+    document.getElementById('spec-modal').classList.add('hidden');
+  }
+
+  async function createSpecSubmission() {
+    const templateId = document.getElementById('spec-template-id').value;
+    const name = document.getElementById('spec-client-name').value.trim();
+    const contact = document.getElementById('spec-client-contact').value.trim();
+    const email = document.getElementById('spec-client-email').value.trim();
+    const phone = document.getElementById('spec-client-phone').value.trim();
+    const notes = document.getElementById('spec-client-notes').value.trim();
+    const entities = parseSpecEntities();
+
+    const alertEl = document.getElementById('spec-modal-alert');
+    alertEl.innerHTML = '';
+
+    if (!templateId) {
+      alertEl.innerHTML = '<div class="alert alert-error">Pasirinkite spec. šabloną</div>';
+      return;
+    }
+    if (!name || !contact || !email) {
+      alertEl.innerHTML = '<div class="alert alert-error">Užpildykite privalomus laukus (pažymėti *)</div>';
+      return;
+    }
+    if (!entities.length) {
+      alertEl.innerHTML = '<div class="alert alert-error">Įveskite bent vieną įmonę (po vieną eilutėje)</div>';
+      return;
+    }
+
+    const payload = {
+      client_name: name,
+      client_contact: contact,
+      client_email: email,
+      client_phone: phone || null,
+      notes: notes || null,
+      status: 'draft',
+      template_id: templateId,
+      submission_type: 'template',
+      period_config: {
+        entities: entities,
+        generated_at: new Date().toISOString()
+      }
+    };
+
+    const { data, error } = await supabase
+      .from('questionnaire_submissions')
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      alertEl.innerHTML = `<div class="alert alert-error">Klaida: ${error.message}</div>`;
+      return;
+    }
+
+    lastCreatedSubmission = data;
+    lastGeneratedLink = buildClientUrl(data);
+
+    closeSpecModal();
+    showLinkModal(lastGeneratedLink, email);
+
+    // Užtikrinti, kad spec. šablonas atpažįstamas sąraše (įtraukti į allTemplates lookup)
+    if (!allTemplates.find(t => t.id === templateId)) {
+      const tpl = specTemplates.find(t => t.id === templateId);
+      if (tpl) allTemplates.push(tpl);
+    }
+
+    await loadSubmissions();
   }
 
   function onTemplateChange() {
@@ -814,6 +1041,7 @@
 
     showDashboard(data.user);
     await loadTemplates();
+    await loadSpecTemplates();
     await loadSubmissions();
   }
 
@@ -868,6 +1096,7 @@
     let auditCount = 0;
     let restrCount = 0;
     let bankrCount = 0;
+    let specCount = 0;
 
     for (const s of allSubmissions) {
       const tplCode = getTemplateCode(s);
@@ -875,6 +1104,7 @@
       if (tplCode === 'auditas' || tplCode === null) auditCount++;
       else if (tplCode === 'restrukturizavimas') restrCount++;
       else if (tplCode === 'bankrotas_fizinis') bankrCount++;
+      else if (tplCode === 'imoniu_grupes_duomenys') specCount++;
     }
 
     document.getElementById('count-all').textContent = total;
@@ -882,11 +1112,14 @@
     document.getElementById('count-restr').textContent = restrCount;
     const bankrEl = document.getElementById('count-bankr');
     if (bankrEl) bankrEl.textContent = bankrCount;
+    const specEl = document.getElementById('count-spec');
+    if (specEl) specEl.textContent = specCount;
   }
 
   function getTemplateCode(submission) {
     if (!submission.template_id) return null; // Legacy / audit
-    const tpl = allTemplates.find(t => t.id === submission.template_id);
+    const tpl = allTemplates.find(t => t.id === submission.template_id)
+             || specTemplates.find(t => t.id === submission.template_id);
     return tpl ? tpl.code : null;
   }
 
@@ -1286,8 +1519,9 @@
   async function renderTemplateDetail(sub) {
     const content = document.getElementById('modal-content');
 
-    // Gauti šabloną
-    const template = allTemplates.find(t => t.id === sub.template_id);
+    // Gauti šabloną (įprastą arba spec.)
+    const template = allTemplates.find(t => t.id === sub.template_id)
+                  || specTemplates.find(t => t.id === sub.template_id);
     if (!template) {
       content.innerHTML = '<div class="alert alert-error">Šablonas nerastas</div>';
       return;
@@ -1363,7 +1597,37 @@
 
   function generateSectionsForAdmin(templateSections, periodConfig) {
     const result = [];
+    const entities = (periodConfig && Array.isArray(periodConfig.entities))
+      ? periodConfig.entities
+      : null;
+
+    // Daugiaįmoninis: grupuojame pagal įmonę (įmonė – išorinis ciklas).
+    const entitySections = templateSections.filter(s => s.is_dynamic_entity);
+    const hasEntityExpansion = entities && entities.length && entitySections.length;
+
+    if (hasEntityExpansion) {
+      entities.forEach((entity, ei) => {
+        const entityName = (typeof entity === 'string') ? entity : (entity.name || entity.title || `Įmonė ${ei + 1}`);
+        for (const section of entitySections) {
+          result.push({
+            ...section,
+            id: `e${ei + 1}__${section.id}`,
+            number: `${ei + 1}.${section.number}`,
+            _entity_index: ei + 1,
+            _entity_name: entityName,
+            items: (section.items || []).map(it => ({ ...it, id: `e${ei + 1}__${it.id}` }))
+          });
+        }
+      });
+    }
+
     for (const section of templateSections) {
+      if (section.is_dynamic_entity) {
+        if (hasEntityExpansion) continue;
+        result.push(section);
+        continue;
+      }
+
       if (!section.is_dynamic_period) {
         result.push(section);
         continue;
@@ -1442,7 +1706,16 @@
     const tplBadgeIcon = template.code === 'restrukturizavimas' ? '📊' : '🔍';
 
     let sectionsHtml = '';
+    let lastEntityIdx = null;
     for (const section of sections) {
+      if (section._entity_index && section._entity_index !== lastEntityIdx) {
+        sectionsHtml += `
+          <div style="display:flex;align-items:center;gap:10px;margin:22px 0 8px;padding:10px 14px;background:var(--kab-navy);color:#fff;border-radius:6px;border-left:5px solid var(--kab-gold);">
+            <span style="background:var(--kab-gold);color:var(--kab-navy);padding:3px 9px;border-radius:4px;font-weight:700;font-size:12px;white-space:nowrap;">Įmonė ${section._entity_index}</span>
+            <span style="font-size:15px;font-weight:700;">${escapeHtml(section._entity_name || '')}</span>
+          </div>`;
+        lastEntityIdx = section._entity_index;
+      }
       sectionsHtml += renderSectionAdmin(section, items, files, comments);
     }
 
