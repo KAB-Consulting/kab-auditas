@@ -106,7 +106,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
             <div>
               <strong style="color:var(--navy);">🤖 Užpildyti iš teismo nutarties (AI)</strong>
-              <div class="muted" style="font-size:12px;">Įkelkite nutartį (PDF). AI nuskaitys ir užpildys laukus. Geltonai pažymėti laukai = patikrinkite (žemas patikimumas). Bylą pirma išsaugokite.</div>
+              <div class="muted" style="font-size:12px;">Įkelkite nutartį (PDF). AI nuskaitys ir užpildys laukus. Geltonai pažymėti laukai = patikrinkite (žemas patikimumas). Po to spauskite „Išsaugoti kortelę“.</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;">
               <input type="file" id="rulingFile" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
@@ -525,20 +525,23 @@
       });
       return res.json();
     }
+    // laikinas ID naujai (dar neišsaugotai) bylai — failai kraunami į _tmp/{id}
+    let TMP_UPLOAD_ID = null;
+    function uploadFolder(){
+      if(CURRENT && CURRENT.case_short_code) return CURRENT.case_short_code;
+      if(!TMP_UPLOAD_ID) TMP_UPLOAD_ID = '_tmp/' + (crypto.randomUUID ? crypto.randomUUID() : Date.now()+'-'+Math.random().toString(36).slice(2));
+      return TMP_UPLOAD_ID;
+    }
     async function uploadToStorage(file, subdir){
-      const code = (CURRENT && CURRENT.case_short_code) ? CURRENT.case_short_code : 'tmp';
       const safe = file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
-      const path = `${code}/${subdir}/${Date.now()}_${safe}`;
+      const path = `${uploadFolder()}/${subdir}/${Date.now()}_${safe}`;
       const { error } = await sb.storage.from('insolvency-docs').upload(path, file, { upsert:true });
       if(error) throw error;
       return path;
     }
 
-    // nutartis → kortelės laukai
-    $('rulingBtn').onclick=()=>{
-      if(CURRENT.__new){ $('aiMsg').innerHTML='<div class="error">Pirma išsaugokite bylą (kad būtų bylos kodas failams).</div>'; return; }
-      $('rulingFile').click();
-    };
+    // nutartis → kortelės laukai (galima ir naujai bylai — AI užpildo, tada išsaugoma)
+    $('rulingBtn').onclick=()=>$('rulingFile').click();
     $('rulingFile').onchange=async(e)=>{
       const file=e.target.files[0]; if(!file)return;
       $('aiMsg').innerHTML='<div class="muted">⏳ Įkeliama ir nuskaitoma… (gali užtrukti iki ~30 s)</div>';
