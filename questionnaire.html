@@ -309,6 +309,34 @@
       letter-spacing: 0.2px;
     }
 
+    /* Daugiaįmoninio (spec.) klausimyno įmonės antraštė */
+    .entity-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 28px 0 10px;
+      padding: 14px 18px;
+      background: var(--kab-navy);
+      color: #fff;
+      border-radius: 8px;
+      border-left: 5px solid var(--kab-gold);
+    }
+    .entity-header:first-child { margin-top: 0; }
+    .entity-badge {
+      background: var(--kab-gold);
+      color: var(--kab-navy);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .entity-name {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
     .section-status-right {
       display: flex;
       align-items: center;
@@ -1268,7 +1296,47 @@
     function generateSections(templateSections, periodConfig) {
       const result = [];
 
+      // Daugiaįmoninis (spec.) klausimynas: jei period_config.entities pateiktas,
+      // VISOS is_dynamic_entity sekcijos kartojamos kiekvienai įmonei.
+      // Svarbu: sekcijos grupuojamos PAGAL ĮMONĘ (visas įmonės blokas vienoje vietoje),
+      // todėl įmonė yra išorinis ciklas, o sekcijos – vidinis.
+      const entities = (periodConfig && Array.isArray(periodConfig.entities))
+        ? periodConfig.entities
+        : null;
+
+      const entitySections = templateSections.filter(s => s.is_dynamic_entity);
+      const hasEntityExpansion = entities && entities.length && entitySections.length;
+
+      if (hasEntityExpansion) {
+        entities.forEach((entity, ei) => {
+          const entityName = (typeof entity === 'string') ? entity : (entity.name || entity.title || `Įmonė ${ei + 1}`);
+          for (const section of entitySections) {
+            result.push({
+              ...section,
+              id: `e${ei + 1}__${section.id}`,
+              number: `${ei + 1}.${section.number}`,
+              title: section.title,
+              _entity_index: ei + 1,
+              _entity_name: entityName,
+              items: (section.items || []).map(it => ({
+                ...it,
+                id: `e${ei + 1}__${it.id}`
+              }))
+            });
+          }
+        });
+        // Tęsiame su likusiomis (ne-entity) sekcijomis žemiau
+      }
+
       for (const section of templateSections) {
+        // Entity sekcijos jau apdorotos aukščiau
+        if (section.is_dynamic_entity) {
+          if (hasEntityExpansion) continue;
+          // Jei nėra įmonių sąrašo (klaida) — parodome blueprint'ą vieną kartą
+          result.push(section);
+          continue;
+        }
+
         if (!section.is_dynamic_period) {
           result.push(section);
           continue;
@@ -1446,7 +1514,13 @@
       }
 
       // Sections
+      let lastEntityIndex = null;
       for (const section of sections) {
+        // Daugiaįmoninis: prieš pirmą kiekvienos įmonės sekciją – įmonės antraštė
+        if (section._entity_index && section._entity_index !== lastEntityIndex) {
+          html += renderEntityHeader(section._entity_index, section._entity_name);
+          lastEntityIndex = section._entity_index;
+        }
         html += renderSection(section);
       }
 
@@ -1476,10 +1550,15 @@
 
     function renderClientInfo() {
       const d = submission;
+      const subtitle = (template && template.code === 'imoniu_grupes_duomenys')
+        ? 'Įmonių grupės duomenų klausimynas'
+        : (template && template.code === 'restrukturizavimas')
+        ? 'Restrukturizavimo procesą inicijuojanti įmonė'
+        : (template && template.name ? template.name : 'KAB Consulting klausimynas');
       return `
         <div class="client-card">
           <h2>${escapeHtml(d.client_name || 'Nenurodyta')}</h2>
-          <div class="subtitle">Restrukturizavimo procesą inicijuojanti įmonė</div>
+          <div class="subtitle">${escapeHtml(subtitle)}</div>
           <div class="client-meta">
             ${d.client_contact ? `<span><strong>Kontaktinis asmuo:</strong> ${escapeHtml(d.client_contact)}</span>` : ''}
             ${d.created_at ? `<span><strong>Pradėta:</strong> ${formatDate(d.created_at)}</span>` : ''}
@@ -1518,6 +1597,15 @@
             <strong>Galutinė ataskaita pateikta</strong>
             <p style="margin:0;font-size:12px;color:var(--kab-gray);">${formatDate(submission.submitted_at || submission.updated_at)} · Klausimynas užbaigtas. Duomenys matomi tik peržiūrai.</p>
           </div>
+        </div>
+      `;
+    }
+
+    function renderEntityHeader(index, name) {
+      return `
+        <div class="entity-header">
+          <span class="entity-badge">Įmonė ${index}</span>
+          <span class="entity-name">${escapeHtml(name || '')}</span>
         </div>
       `;
     }
@@ -1962,7 +2050,11 @@
           for (const item of section.items) {
             if (item.id === itemId) {
               sectionId = section.id;
-              itemTitle = item.title;
+              // Daugiaįmoniniame klausimyne įmonės pavadinimą įtraukiame į item_title,
+              // kad admin eksporte matytųsi, kuriai įmonei priklauso atsakymas.
+              itemTitle = section._entity_name
+                ? `[${section._entity_name}] ${item.title}`
+                : item.title;
               break;
             }
           }
@@ -2325,6 +2417,18 @@
           .eq('id', submission.id);
 
         if (error) throw error;
+
+        // Pranešimas KAB komandai (klausk@kab.lt), kad klausimynas užpildytas.
+        // Nestabdo pateikimo, jei laiško išsiųsti nepavyktų.
+        try {
+          await fetch(`${SUPABASE_URL}/functions/v1/notify-admin-submission`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+            body: JSON.stringify({ access_token: _initialAccessToken })
+          });
+        } catch (notifyErr) {
+          console.warn('Admin pranešimo nepavyko išsiųsti (pateikimas vis tiek sėkmingas):', notifyErr);
+        }
 
         alert('✅ Galutinė ataskaita pateikta sėkmingai! KAB Consulting specialistai susisieks su jumis per artimiausias darbo dienas.');
         location.reload();
