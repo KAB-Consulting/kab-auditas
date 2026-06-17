@@ -228,9 +228,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+    const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.sb.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const $ = id => document.getElementById(id);
     const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -243,7 +243,7 @@
     // ---------- AUTH ----------
     async function boot(){
       try{
-        const { data:{ session } } = await supabase.auth.getSession();
+        const { data:{ session } } = await sb.auth.getSession();
         if(!session){ views('loginView'); return; }
         $('userEmail').textContent = session.user.email;
         await loadAll();
@@ -256,19 +256,19 @@
     $('loginBtn').onclick = async () => {
       const email=$('loginEmail').value.trim(), pw=$('loginPassword').value;
       hide('loginError');
-      const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
+      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
       if(error){ $('loginError').textContent='Nepavyko prisijungti: '+error.message; show('loginError'); return; }
       boot();
     };
-    $('logoutBtn').onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+    $('logoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
     // ---------- LOAD ----------
     async function loadAll(){
       views('loadingView');
       const [c,a,t] = await Promise.all([
-        supabase.from('insolvency_cases').select('*').order('created_at',{ascending:false}),
-        supabase.from('insolvency_administrators').select('*').order('name'),
-        supabase.from('insolvency_templates').select('*').eq('is_active',true).order('sort_order')
+        sb.from('insolvency_cases').select('*').order('created_at',{ascending:false}),
+        sb.from('insolvency_administrators').select('*').order('name'),
+        sb.from('insolvency_templates').select('*').eq('is_active',true).order('sort_order')
       ]);
       if(c.error||a.error||t.error){
         const e=c.error||a.error||t.error;
@@ -347,8 +347,8 @@
       const p=collectCard(); $('cardMsg').innerHTML='';
       if(!p.debtor_name){ $('cardMsg').innerHTML='<div class="error">Įveskite įmonės pavadinimą.</div>'; return; }
       let res;
-      if(CURRENT.__new){ res=await supabase.rpc('create_insolvency_case',{ p }); }
-      else { res=await supabase.rpc('update_insolvency_case',{ p_id:CURRENT.id, p }); }
+      if(CURRENT.__new){ res=await sb.rpc('create_insolvency_case',{ p }); }
+      else { res=await sb.rpc('update_insolvency_case',{ p_id:CURRENT.id, p }); }
       if(res.error){ $('cardMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
       const r=res.data;
       if(r && r.ok===false){ $('cardMsg').innerHTML='<div class="error">Klaida: '+esc(r.error_code)+'</div>'; return; }
@@ -372,7 +372,7 @@
     // ---------- GAVĖJAI ----------
     async function loadRecipients(){
       if(CURRENT.__new) return;
-      const { data } = await supabase.from('insolvency_recipients').select('*').eq('case_id',CURRENT.id).order('created_at');
+      const { data } = await sb.from('insolvency_recipients').select('*').eq('case_id',CURRENT.id).order('created_at');
       RECIPIENTS=data||[]; renderRecipients();
     }
     function renderRecipients(){
@@ -396,12 +396,12 @@
         email:$('recEmail').value.trim()||null, claim_amount:$('recAmount').value||null, address:$('recAddress').value.trim()||null };
       if(!row.full_name){ $('recMsg').innerHTML='<div class="error">Įveskite vardą/pavadinimą.</div>'; return; }
       let err;
-      if(id){ ({error:err}=await supabase.from('insolvency_recipients').update(row).eq('id',id)); }
-      else { ({error:err}=await supabase.from('insolvency_recipients').insert(row)); }
+      if(id){ ({error:err}=await sb.from('insolvency_recipients').update(row).eq('id',id)); }
+      else { ({error:err}=await sb.from('insolvency_recipients').insert(row)); }
       if(err){ $('recMsg').innerHTML='<div class="error">'+esc(err.message)+'</div>'; return; }
       hide('recipientModal'); await loadRecipients();
     };
-    window.delRecipient=async id=>{ if(!confirm('Pašalinti gavėją?'))return; await supabase.from('insolvency_recipients').delete().eq('id',id); await loadRecipients(); };
+    window.delRecipient=async id=>{ if(!confirm('Pašalinti gavėją?'))return; await sb.from('insolvency_recipients').delete().eq('id',id); await loadRecipients(); };
 
     // ---------- IMPORTAS ----------
     $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; show('importModal'); };
@@ -412,7 +412,7 @@
       if(!lines.length){ $('impMsg').innerHTML='<div class="error">Nėra duomenų.</div>'; return; }
       const rows=lines.map(l=>{ const p=l.split(/\t|;/).map(s=>s.trim());
         return { recipient_type:type, full_name:p[0]||null, position:p[1]||null, personal_code:p[2]||null, email:p[3]||null }; });
-      const res=await supabase.rpc('add_insolvency_recipients',{ p_case_id:CURRENT.id, p_rows:rows });
+      const res=await sb.rpc('add_insolvency_recipients',{ p_case_id:CURRENT.id, p_rows:rows });
       if(res.error){ $('impMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
       hide('importModal'); await loadRecipients();
     };
@@ -434,9 +434,9 @@
       $('docsMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
       try{
         const path=`templates/${code}.docx`;
-        const { error }=await supabase.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+        const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
         if(error)throw error;
-        const { error:uErr }=await supabase.from('insolvency_templates').update({ storage_path:path }).eq('code',code);
+        const { error:uErr }=await sb.from('insolvency_templates').update({ storage_path:path }).eq('code',code);
         if(uErr)throw uErr;
         const t=TEMPLATES.find(x=>x.code===code); if(t)t.storage_path=path;
         updateTplStatus(); $('docsMsg').innerHTML='<div class="success">Šablono DOCX įkeltas.</div>';
@@ -445,7 +445,7 @@
     };
     async function loadDocuments(){
       if(CURRENT.__new) return;
-      const { data }=await supabase.from('insolvency_documents').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
+      const { data }=await sb.from('insolvency_documents').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
       DOCUMENTS=data||[]; renderDocuments();
     }
     function renderDocuments(){
@@ -454,7 +454,7 @@
         DOCUMENTS.map(d=>`<tr><td>${esc(d.file_name||'—')}</td><td>${esc(d.template_code||'')}</td><td>${esc(d.status)}</td><td style="text-align:right;">${d.docx_path?`<button class="btn btn-sm" onclick="downloadDoc('${esc(d.docx_path)}')">⬇️ Atsisiųsti</button>`:''}</td></tr>`).join('')+'</tbody></table>';
     }
     window.downloadDoc=async(path)=>{
-      const { data:{ session } } = await supabase.auth.getSession();
+      const { data:{ session } } = await sb.auth.getSession();
       const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{
         method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
         body:JSON.stringify({ path, download:true })});
@@ -465,7 +465,7 @@
       if(CURRENT.__new){ $('docsMsg').innerHTML='<div class="error">Pirma išsaugokite bylą.</div>'; return; }
       const code=$('docTemplate').value;
       $('docsMsg').innerHTML='<div class="muted">⏳ Generuojama…</div>';
-      const { data:{ session } } = await supabase.auth.getSession();
+      const { data:{ session } } = await sb.auth.getSession();
       const res=await fetch(`${SUPABASE_URL}/functions/v1/generate-insolvency-docx`,{
         method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
         body:JSON.stringify({ case_id:CURRENT.id, template_code:code })});
@@ -497,7 +497,7 @@
       try{
         const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
         const path=`blanks/${Date.now()}_${safe}`;
-        const { error }=await supabase.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+        const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
         if(error)throw error;
         $('admBlank').value=path; $('admMsg').innerHTML='<div class="success">Blankas įkeltas. Spauskite „Išsaugoti administratorių“.</div>';
       }catch(err){ $('admMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
@@ -508,16 +508,16 @@
         phone:$('admPhone').value.trim(), email:$('admEmail').value.trim(), authorized_person:$('admPerson').value.trim(), blank_docx_path:$('admBlank').value.trim() };
       if(!p.name){ $('admMsg').innerHTML='<div class="error">Įveskite pavadinimą.</div>'; return; }
       const id=$('admId').value||null;
-      const res=await supabase.rpc('upsert_insolvency_administrator',{ p_id:id, p });
+      const res=await sb.rpc('upsert_insolvency_administrator',{ p_id:id, p });
       if(res.error){ $('admMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
       if(res.data && res.data.ok===false){ $('admMsg').innerHTML='<div class="error">'+esc(res.data.error_code)+'</div>'; return; }
-      const { data }=await supabase.from('insolvency_administrators').select('*').order('name');
+      const { data }=await sb.from('insolvency_administrators').select('*').order('name');
       ADMINS=data||[]; renderAdmins(); clearAdmForm(); $('admMsg').innerHTML='<div class="success">Išsaugota.</div>';
     };
 
     // ---------- AI NUSKAITYMAS ----------
     async function callAiExtract(storagePath, kind){
-      const { data:{ session } } = await supabase.auth.getSession();
+      const { data:{ session } } = await sb.auth.getSession();
       const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-extract-document`, {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
@@ -529,7 +529,7 @@
       const code = (CURRENT && CURRENT.case_short_code) ? CURRENT.case_short_code : 'tmp';
       const safe = file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
       const path = `${code}/${subdir}/${Date.now()}_${safe}`;
-      const { error } = await supabase.storage.from('insolvency-docs').upload(path, file, { upsert:true });
+      const { error } = await sb.storage.from('insolvency-docs').upload(path, file, { upsert:true });
       if(error) throw error;
       return path;
     }
