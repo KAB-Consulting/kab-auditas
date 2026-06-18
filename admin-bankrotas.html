@@ -46,6 +46,9 @@
     .field-ai { border-color:var(--gold)!important; background:#FFFDF5; }
     .hint { font-size:12px; color:var(--gray); margin-top:3px; }
     .sec-title { color:var(--navy); font-size:15px; font-weight:700; margin:18px 0 4px; border-bottom:1px solid var(--bd); padding-bottom:5px; }
+    .adm-card { border:1px solid var(--bd); border-radius:10px; padding:18px; cursor:pointer; transition:.15s; }
+    .adm-card:hover { border-color:var(--gold); box-shadow:0 2px 8px rgba(0,0,0,.08); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
   </style>
 </head>
 <body>
@@ -71,13 +74,31 @@
 
     <div id="loadingView" class="card center"><div class="spinner"></div><div class="muted">Kraunama…</div></div>
 
-    <!-- BYLŲ SĄRAŠAS -->
-    <div id="casesView" class="hidden">
+    <!-- LYGIS 1: ADMINISTRATORIŲ PASIRINKIMAS -->
+    <div id="admListView" class="hidden">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-          <h2 style="color:var(--navy);font-size:18px;">Bankroto bylos</h2>
+          <div>
+            <h2 style="color:var(--navy);font-size:18px;">Nemokumo administratoriai</h2>
+            <div class="muted">Pasirinkite, kurio administratoriaus vardu dirbsite, arba sukurkite naują.</div>
+          </div>
+          <button class="btn" id="newAdmBtn">+ Naujas administratorius</button>
+        </div>
+      </div>
+      <div id="admGrid" class="grid"></div>
+    </div>
+
+    <!-- LYGIS 2: ADMINISTRATORIAUS APLINKA (jo bylos) -->
+    <div id="workspaceView" class="hidden">
+      <div class="crumb" id="backToAdmins">← Visi administratoriai</div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div>
+            <h2 style="color:var(--navy);font-size:18px;" id="wsAdmName"></h2>
+            <div class="muted" id="wsAdmSub"></div>
+          </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-ghost" id="manageAdminsBtn">⚙️ Administratoriai (blankai)</button>
+            <button class="btn btn-ghost" id="editAdmBtn">⚙️ Redaguoti administratorių</button>
             <button class="btn" id="newCaseBtn">+ Nauja byla</button>
           </div>
         </div>
@@ -86,7 +107,7 @@
       <div class="card"><div id="casesTable"></div></div>
     </div>
 
-    <!-- BYLOS VIDUS -->
+    <!-- LYGIS 3: BYLOS VIDUS -->
     <div id="caseDetailView" class="hidden">
       <div class="crumb" id="backToCases">← Grįžti į bylų sąrašą</div>
       <div class="card">
@@ -101,12 +122,11 @@
 
       <!-- KORTELĖ -->
       <div id="paneCard" class="card">
-        <!-- AI nuskaitymas iš nutarties -->
         <div style="background:#FFFDF5;border:1px solid var(--gold);border-radius:8px;padding:14px;margin-bottom:18px;">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
             <div>
               <strong style="color:var(--navy);">🤖 Užpildyti iš teismo nutarties (AI)</strong>
-              <div class="muted" style="font-size:12px;">Įkelkite nutartį (PDF). AI nuskaitys ir užpildys laukus. Geltonai pažymėti laukai = patikrinkite (žemas patikimumas). Po to spauskite „Išsaugoti kortelę“.</div>
+              <div class="muted" style="font-size:12px;">Įkelkite nutartį (PDF). AI nuskaitys ir užpildys laukus. Geltonai pažymėti laukai = patikrinkite. Po to spauskite „Išsaugoti kortelę“.</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;">
               <input type="file" id="rulingFile" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
@@ -126,7 +146,7 @@
           <strong>Darbuotojų / kreditorių sąrašas</strong>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-sm btn-ghost" id="addRecipientBtn">+ Pridėti</button>
-            <button class="btn btn-sm btn-ghost" id="importRecipientsBtn">📋 Importuoti (įklijuoti)</button>
+            <button class="btn btn-sm btn-ghost" id="importRecipientsBtn">📋 Importuoti</button>
           </div>
         </div>
         <div id="recipientsTable"></div>
@@ -136,41 +156,57 @@
       <div id="paneDocuments" class="card hidden">
         <div style="background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:12px 14px;margin-bottom:14px;">
           <strong style="color:var(--navy);">Dokumentų generavimas</strong>
-          <div class="muted" style="font-size:12px;">Pasirinkite šabloną ir spauskite „Generuoti“. Vardiniai (darbuotojams) generuojami atskirai kiekvienam gavėjui. Reikalinga: administratoriui įkeltas blankas ir šiam šablonui įkeltas DOCX failas.</div>
+          <div class="muted" style="font-size:12px;">Pasirinkite šabloną ir asmenį, kurio vardu rengiama. Vardiniai (darbuotojams) — atskiras failas kiekvienam.</div>
         </div>
-        <label class="label">Dokumento šablonas</label>
-        <select id="docTemplate" class="select"></select>
-        <div id="tplStatus" class="hint"></div>
+        <div class="row">
+          <div>
+            <label class="label">Dokumento šablonas</label>
+            <select id="docTemplate" class="select"></select>
+            <div id="tplStatus" class="hint"></div>
+          </div>
+          <div>
+            <label class="label">Įgaliotas asmuo (parašui)</label>
+            <select id="docPerson" class="select"></select>
+          </div>
+        </div>
         <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
           <button class="btn" id="generateDocsBtn">⚙️ Generuoti dokumentus</button>
           <input type="file" id="tplFile" accept=".docx" class="hidden">
           <button class="btn btn-ghost btn-sm" id="tplUploadBtn" type="button">⬆️ Įkelti/keisti šio šablono DOCX</button>
         </div>
         <div id="docsMsg"></div>
-        <div id="documentsTable" style="margin-top:16px;"></div>
+        <div class="sec-title" style="margin-top:22px;">📚 Sugeneruotų dokumentų biblioteka</div>
+        <div id="documentsTable" style="margin-top:10px;"></div>
       </div>
     </div>
   </div>
 
-  <!-- ADMINISTRATORIŲ MODALĖ -->
-  <div id="adminsModal" class="modal-bg hidden">
+  <!-- ADMINISTRATORIAUS MODALĖ -->
+  <div id="admModal" class="modal-bg hidden">
     <div class="modal">
-      <h2>Nemokumo administratoriai (blankai)</h2>
-      <div class="muted" style="margin-bottom:12px;">Kiekvienam administratoriui įkeliamas blankas (DOCX su header/footer ir žyme {{turinys}}). Kuriant bylą pasirenkamas administratorius — jo blankas naudojamas visiems tos bylos dokumentams.</div>
-      <div id="adminsList" style="margin-bottom:16px;"></div>
-      <div class="sec-title">Naujas / redaguoti</div>
+      <h2 id="admModalTitle">Naujas nemokumo administratorius</h2>
+      <div class="muted" style="margin-bottom:12px;">Juridinio asmens kortelė. Įveskite kodą/pavadinimą; kontaktinius duomenis galite suvesti ranka.</div>
       <input type="hidden" id="admId">
       <div class="row"><div><label class="label">Pavadinimas *</label><input id="admName" class="input"></div><div><label class="label">Įm. kodas</label><input id="admCode" class="input"></div></div>
       <label class="label">Adresas</label><input id="admAddress" class="input">
       <div class="row"><div><label class="label">Telefonas</label><input id="admPhone" class="input"></div><div><label class="label">El. paštas</label><input id="admEmail" class="input"></div></div>
-      <label class="label">Įgaliotas asmuo</label><input id="admPerson" class="input">
       <label class="label">Blankas (DOCX su {{turinys}} žyme)</label>
       <div style="display:flex;gap:8px;align-items:center;">
         <input id="admBlank" class="input" placeholder="dar neįkeltas" readonly style="background:#f5f5f5;">
         <input type="file" id="admBlankFile" accept=".docx" class="hidden">
         <button class="btn btn-sm btn-gold" id="admBlankBtn" type="button">⬆️ Įkelti blanką</button>
       </div>
-      <div class="hint">Blanke turi būti header (logo), footer (rekvizitai) ir korpuse žymė {{turinys}}.</div>
+      <div class="hint">Blanke header (logo), footer (rekvizitai), korpuse žymė {{turinys}}.</div>
+
+      <div class="sec-title" id="personsSection" style="margin-top:20px;">Įgalioti fiziniai asmenys</div>
+      <div id="personsList" class="hint" style="margin-bottom:8px;"></div>
+      <div class="row">
+        <div><input id="pName" class="input" placeholder="Vardas Pavardė"></div>
+        <div><input id="pEmail" class="input" placeholder="el. paštas"></div>
+        <div style="flex:0;min-width:auto;"><button class="btn btn-sm btn-ghost" id="addPersonBtn" type="button">+ Pridėti asmenį</button></div>
+      </div>
+      <div class="hint">Asmenys naudojami generuojant (pasirenkama, kurio vardu). Galima pridėti po administratoriaus išsaugojimo.</div>
+
       <div id="admMsg"></div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
         <button class="btn btn-ghost" id="admCancel">Uždaryti</button>
@@ -204,18 +240,15 @@
       <h2>Importuoti gavėjus</h2>
       <label class="label">Tipas</label>
       <select id="impType" class="select"><option value="employee">Darbuotojai</option><option value="creditor">Kreditoriai</option></select>
-
-      <!-- AI nuskaitymas iš sąrašo failo -->
       <div style="background:#FFFDF5;border:1px solid var(--gold);border-radius:8px;padding:12px;margin:14px 0;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
           <div><strong style="color:var(--navy);">🤖 Nuskaityti iš failo (AI)</strong>
-            <div class="muted" style="font-size:12px;">Įkelkite sąrašą (PDF / CSV / nuotrauka). AI atpažins eilutes — galėsite peržiūrėti prieš išsaugant.</div></div>
+            <div class="muted" style="font-size:12px;">Įkelkite sąrašą (PDF / CSV / nuotrauka). AI atpažins eilutes.</div></div>
           <div><input type="file" id="impFile" accept=".pdf,.csv,.txt,.png,.jpg,.jpeg" class="hidden">
             <button class="btn btn-sm btn-gold" id="impFileBtn">⬆️ Įkelti sąrašą</button></div>
         </div>
         <div id="impAiMsg"></div>
       </div>
-
       <label class="label">Arba įklijuokite (po vieną eilutę: <b>Vardas Pavardė; Pareigos; Kodas; El.paštas</b>)</label>
       <textarea id="impData" class="textarea" style="min-height:120px;font-family:monospace;" placeholder="Jonas Jonaitis; Vadybininkas; 38901011234; jonas@example.lt"></textarea>
       <div id="impMsg"></div>
@@ -236,9 +269,9 @@
     const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const show = id => $(id).classList.remove('hidden');
     const hide = id => $(id).classList.add('hidden');
-    function views(v){ ['loginView','loadingView','casesView','caseDetailView'].forEach(x=>hide(x)); show(v); }
+    function views(v){ ['loginView','loadingView','admListView','workspaceView','caseDetailView'].forEach(x=>hide(x)); show(v); }
 
-    let CASES=[], ADMINS=[], TEMPLATES=[], CURRENT=null, RECIPIENTS=[], DOCUMENTS=[];
+    let ADMINS=[], TEMPLATES=[], PERSONS=[], CASES=[], CURRENT_ADM=null, CURRENT=null, RECIPIENTS=[], DOCUMENTS=[];
 
     // ---------- AUTH ----------
     async function boot(){
@@ -246,60 +279,72 @@
         const { data:{ session } } = await sb.auth.getSession();
         if(!session){ views('loginView'); return; }
         $('userEmail').textContent = session.user.email;
-        await loadAll();
+        await loadAdmins();
       }catch(err){
         views('loginView');
-        $('loginError').textContent='Sesijos klaida: '+(err.message||String(err))+'. Prisijunkite iš naujo.';
-        show('loginError');
+        $('loginError').textContent='Sesijos klaida: '+(err.message||String(err)); show('loginError');
       }
     }
     $('loginBtn').onclick = async () => {
-      const email=$('loginEmail').value.trim(), pw=$('loginPassword').value;
       hide('loginError');
-      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+      const { error } = await sb.auth.signInWithPassword({ email:$('loginEmail').value.trim(), password:$('loginPassword').value });
       if(error){ $('loginError').textContent='Nepavyko prisijungti: '+error.message; show('loginError'); return; }
       boot();
     };
     $('logoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
-    // ---------- LOAD ----------
-    async function loadAll(){
+    // ---------- LYGIS 1: ADMINISTRATORIAI ----------
+    async function loadAdmins(){
       views('loadingView');
-      const [c,a,t] = await Promise.all([
-        sb.from('insolvency_cases').select('*').order('created_at',{ascending:false}),
+      const [a,t] = await Promise.all([
         sb.from('insolvency_administrators').select('*').order('name'),
         sb.from('insolvency_templates').select('*').eq('is_active',true).order('sort_order')
       ]);
-      if(c.error||a.error||t.error){
-        const e=c.error||a.error||t.error;
-        $('casesTable').innerHTML='<div class="error">Nepavyko užkrauti duomenų: '+esc(e.message)+'</div>';
-        views('casesView'); return;
-      }
-      CASES=c.data||[]; ADMINS=a.data||[]; TEMPLATES=t.data||[];
-      renderCases();
-      views('casesView');
+      if(a.error||t.error){ $('admGrid').innerHTML='<div class="error">Klaida: '+esc((a.error||t.error).message)+'</div>'; views('admListView'); return; }
+      ADMINS=a.data||[]; TEMPLATES=t.data||[];
+      renderAdmGrid(); views('admListView');
     }
+    function renderAdmGrid(){
+      if(!ADMINS.length){ $('admGrid').innerHTML='<div class="muted" style="padding:20px;">Administratorių nėra. Sukurkite naują.</div>'; return; }
+      $('admGrid').innerHTML=ADMINS.map(a=>`<div class="adm-card" onclick="openWorkspace('${a.id}')">
+        <div style="font-weight:700;color:var(--navy);">${esc(a.name)}</div>
+        <div class="muted">${esc(a.code||'')}</div>
+        <div style="margin-top:8px;">${a.blank_docx_path?'<span class="badge badge-green">blankas įkeltas</span>':'<span class="badge badge-gray">blanko nėra</span>'}</div>
+      </div>`).join('');
+    }
+    $('newAdmBtn').onclick=()=>openAdmModal(null);
+    $('backToAdmins').onclick=()=>{ CURRENT_ADM=null; loadAdmins(); };
 
-    // ---------- BYLŲ SĄRAŠAS ----------
+    // ---------- LYGIS 2: ADMINISTRATORIAUS APLINKA ----------
+    window.openWorkspace=async(admId)=>{
+      CURRENT_ADM=ADMINS.find(a=>a.id===admId);
+      $('wsAdmName').textContent=CURRENT_ADM.name;
+      $('wsAdmSub').textContent=(CURRENT_ADM.code?'Įm. kodas '+CURRENT_ADM.code+' · ':'')+(CURRENT_ADM.blank_docx_path?'blankas įkeltas':'⚠ blankas neįkeltas');
+      views('loadingView');
+      const [c,p]=await Promise.all([
+        sb.from('insolvency_cases').select('*').eq('administrator_id',admId).order('created_at',{ascending:false}),
+        sb.from('insolvency_admin_persons').select('*').eq('administrator_id',admId).order('full_name')
+      ]);
+      CASES=c.data||[]; PERSONS=p.data||[];
+      renderCases(); views('workspaceView');
+    };
     function renderCases(){
       const q=($('caseSearch').value||'').toLowerCase();
-      const rows=CASES.filter(c=>!q || (c.debtor_name||'').toLowerCase().includes(q) || (c.case_short_code||'').toLowerCase().includes(q));
+      const rows=CASES.filter(c=>!q||(c.debtor_name||'').toLowerCase().includes(q)||(c.case_short_code||'').toLowerCase().includes(q));
       if(!rows.length){ $('casesTable').innerHTML='<div class="muted center" style="padding:30px;">Bylų nėra. Sukurkite naują.</div>'; return; }
-      $('casesTable').innerHTML='<table><thead><tr><th>Įmonė</th><th>Bylos kodas</th><th>Administratorius</th><th>Statusas</th><th></th></tr></thead><tbody>'+
+      $('casesTable').innerHTML='<table><thead><tr><th>Įmonė</th><th>Bylos kodas</th><th>Statusas</th><th></th></tr></thead><tbody>'+
         rows.map(c=>{
-          const adm=ADMINS.find(a=>a.id===c.administrator_id);
           const st=c.status==='active'?'<span class="badge badge-green">Aktyvi</span>':c.status==='closed'?'<span class="badge badge-gray">Uždaryta</span>':'<span class="badge badge-gold">Juodraštis</span>';
-          return `<tr><td><b>${esc(c.debtor_name||'—')}</b><div class="muted">${esc(c.debtor_code||'')}</div></td><td>${esc(c.case_short_code)}</td><td>${esc(adm?adm.name:'—')}</td><td>${st}</td><td style="text-align:right;"><button class="btn btn-sm" onclick="openCase('${c.id}')">Atidaryti</button></td></tr>`;
+          return `<tr><td><b>${esc(c.debtor_name||'—')}</b><div class="muted">${esc(c.debtor_code||'')}</div></td><td>${esc(c.case_short_code)}</td><td>${st}</td><td style="text-align:right;"><button class="btn btn-sm" onclick="openCase('${c.id}')">Atidaryti</button></td></tr>`;
         }).join('')+'</tbody></table>';
     }
     $('caseSearch').oninput=renderCases;
     $('newCaseBtn').onclick=()=>openCase(null);
-    $('backToCases').onclick=()=>{ views('casesView'); };
+    $('editAdmBtn').onclick=()=>openAdmModal(CURRENT_ADM.id);
+    $('backToCases').onclick=()=>{ views('workspaceView'); };
 
-    // ---------- BYLOS KORTELĖ ----------
+    // ---------- LYGIS 3: BYLOS KORTELĖ ----------
     const CARD_FIELDS=[
-      ['__sec','Nemokumo administratorius'],
-      ['administrator_id','Administratorius (blankas)','select'],
       ['__sec','Bankrutuojanti įmonė'],
       ['debtor_name','Įmonės pavadinimas'],
       ['debtor_short_name','Trumpas pavadinimas (BUAB eilutei)'],
@@ -318,50 +363,37 @@
       $('cardForm').innerHTML=CARD_FIELDS.map(f=>{
         if(f[0]==='__sec') return `<div class="sec-title">${esc(f[1])}</div>`;
         const [key,lbl,type]=f; const v=c[key]||'';
-        if(type==='select'){
-          const opts=['<option value="">— pasirinkti —</option>'].concat(ADMINS.map(a=>`<option value="${a.id}" ${a.id===v?'selected':''}>${esc(a.name)}</option>`)).join('');
-          return `<label class="label">${esc(lbl)}</label><select class="select" data-f="${key}">${opts}</select>`;
-        }
         return `<label class="label">${esc(lbl)}</label><input class="input" data-f="${key}" type="${type||'text'}" value="${esc(v)}">`;
       }).join('');
     }
-    window.openCase = async (id) => {
-      CURRENT = id ? CASES.find(c=>c.id===id) : { __new:true, status:'draft' };
-      $('cdTitle').textContent = id ? (CURRENT.debtor_name||'(be pavadinimo)') : 'Nauja byla';
-      $('cdSub').textContent = id ? ('Bylos kodas: '+CURRENT.case_short_code) : 'Užpildykite kortelę ir išsaugokite';
+    window.openCase=async(id)=>{
+      CURRENT=id?CASES.find(c=>c.id===id):{ __new:true, status:'draft', administrator_id:CURRENT_ADM.id };
+      $('cdTitle').textContent=id?(CURRENT.debtor_name||'(be pavadinimo)'):'Nauja byla';
+      $('cdSub').textContent=(id?('Bylos kodas: '+CURRENT.case_short_code+' · '):'')+'Administratorius: '+CURRENT_ADM.name;
       renderCard(CURRENT);
-      // tabs reset
       document.querySelectorAll('#caseDetailView .tab').forEach(t=>t.classList.toggle('active',t.dataset.pane==='card'));
-      ['paneCard'].forEach(show); ['paneRecipients','paneDocuments'].forEach(hide);
-      $('cardMsg').innerHTML='';
+      show('paneCard'); hide('paneRecipients'); hide('paneDocuments');
+      $('cardMsg').innerHTML=''; $('aiMsg').innerHTML='';
       views('caseDetailView');
-      if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); }
+      if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); }
       else { RECIPIENTS=[]; DOCUMENTS=[]; }
     };
-    function collectCard(){
-      const o={};
-      document.querySelectorAll('#cardForm [data-f]').forEach(el=>{ o[el.dataset.f]=el.value; });
-      return o;
-    }
-    $('saveCardBtn').onclick = async () => {
+    function collectCard(){ const o={ administrator_id:CURRENT_ADM.id }; document.querySelectorAll('#cardForm [data-f]').forEach(el=>{ o[el.dataset.f]=el.value; }); return o; }
+    $('saveCardBtn').onclick=async()=>{
       const p=collectCard(); $('cardMsg').innerHTML='';
       if(!p.debtor_name){ $('cardMsg').innerHTML='<div class="error">Įveskite įmonės pavadinimą.</div>'; return; }
-      let res;
-      if(CURRENT.__new){ res=await sb.rpc('create_insolvency_case',{ p }); }
-      else { res=await sb.rpc('update_insolvency_case',{ p_id:CURRENT.id, p }); }
+      let res = CURRENT.__new ? await sb.rpc('create_insolvency_case',{ p }) : await sb.rpc('update_insolvency_case',{ p_id:CURRENT.id, p });
       if(res.error){ $('cardMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
-      const r=res.data;
-      if(r && r.ok===false){ $('cardMsg').innerHTML='<div class="error">Klaida: '+esc(r.error_code)+'</div>'; return; }
-      $('cardMsg').innerHTML='<div class="success">Išsaugota.</div>';
-      const newId = CURRENT.__new ? r.id : CURRENT.id;
-      await loadAll(); openCase(newId);
+      if(res.data&&res.data.ok===false){ $('cardMsg').innerHTML='<div class="error">Klaida: '+esc(res.data.error_code)+'</div>'; return; }
+      const newId=CURRENT.__new?res.data.id:CURRENT.id;
+      // perkraunam administratoriaus bylas
+      const { data }=await sb.from('insolvency_cases').select('*').eq('administrator_id',CURRENT_ADM.id).order('created_at',{ascending:false});
+      CASES=data||[]; openCase(newId);
     };
 
-    // tab switching
     document.querySelectorAll('#caseDetailView .tab').forEach(t=>{
       t.onclick=()=>{
-        document.querySelectorAll('#caseDetailView .tab').forEach(x=>x.classList.remove('active'));
-        t.classList.add('active');
+        document.querySelectorAll('#caseDetailView .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
         const p=t.dataset.pane;
         $('paneCard').classList.toggle('hidden',p!=='card');
         $('paneRecipients').classList.toggle('hidden',p!=='recipients');
@@ -371,8 +403,8 @@
 
     // ---------- GAVĖJAI ----------
     async function loadRecipients(){
-      if(CURRENT.__new) return;
-      const { data } = await sb.from('insolvency_recipients').select('*').eq('case_id',CURRENT.id).order('created_at');
+      if(CURRENT.__new)return;
+      const { data }=await sb.from('insolvency_recipients').select('*').eq('case_id',CURRENT.id).order('created_at');
       RECIPIENTS=data||[]; renderRecipients();
     }
     function renderRecipients(){
@@ -404,7 +436,7 @@
     window.delRecipient=async id=>{ if(!confirm('Pašalinti gavėją?'))return; await sb.from('insolvency_recipients').delete().eq('id',id); await loadRecipients(); };
 
     // ---------- IMPORTAS ----------
-    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; show('importModal'); };
+    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; $('impAiMsg').innerHTML=''; show('importModal'); };
     $('impCancel').onclick=()=>hide('importModal');
     $('impSave').onclick=async()=>{
       const type=$('impType').value;
@@ -422,9 +454,12 @@
       $('docTemplate').innerHTML=TEMPLATES.map(t=>`<option value="${t.code}">${esc(t.title)} ${t.scope==='per_recipient'?'(vardinis)':''}</option>`).join('');
       updateTplStatus();
     }
+    function renderDocPersons(){
+      $('docPerson').innerHTML='<option value="">— administratoriaus įgaliotas asmuo —</option>'+PERSONS.map(p=>`<option value="${p.id}">${esc(p.full_name)}</option>`).join('');
+    }
     function updateTplStatus(){
       const t=TEMPLATES.find(x=>x.code===$('docTemplate').value);
-      $('tplStatus').innerHTML = t&&t.storage_path ? '<span style="color:#1E8449;">✓ Šablono DOCX įkeltas</span>' : '<span style="color:#C0392B;">⚠ Šablono DOCX neįkeltas — įkelkite prieš generuojant</span>';
+      $('tplStatus').innerHTML = t&&t.storage_path ? '<span style="color:#1E8449;">✓ Šablono DOCX įkeltas</span>' : '<span style="color:#C0392B;">⚠ Šablono DOCX neįkeltas</span>';
     }
     document.addEventListener('change',e=>{ if(e.target&&e.target.id==='docTemplate')updateTplStatus(); });
     $('tplUploadBtn').onclick=()=>$('tplFile').click();
@@ -444,14 +479,15 @@
       finally{ e.target.value=''; }
     };
     async function loadDocuments(){
-      if(CURRENT.__new) return;
+      if(CURRENT.__new)return;
       const { data }=await sb.from('insolvency_documents').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
       DOCUMENTS=data||[]; renderDocuments();
     }
+    function fmtDate(s){ if(!s)return''; const d=new Date(s); return d.toLocaleString('lt-LT',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
     function renderDocuments(){
       if(!DOCUMENTS.length){ $('documentsTable').innerHTML='<div class="muted center" style="padding:16px;">Sugeneruotų dokumentų dar nėra.</div>'; return; }
-      $('documentsTable').innerHTML='<table><thead><tr><th>Failas</th><th>Šablonas</th><th>Statusas</th><th></th></tr></thead><tbody>'+
-        DOCUMENTS.map(d=>`<tr><td>${esc(d.file_name||'—')}</td><td>${esc(d.template_code||'')}</td><td>${esc(d.status)}</td><td style="text-align:right;">${d.docx_path?`<button class="btn btn-sm" onclick="downloadDoc('${esc(d.docx_path)}')">⬇️ Atsisiųsti</button>`:''}</td></tr>`).join('')+'</tbody></table>';
+      $('documentsTable').innerHTML='<table><thead><tr><th>Data</th><th>Dokumentas</th><th>Šablonas</th><th>Statusas</th><th></th></tr></thead><tbody>'+
+        DOCUMENTS.map(d=>`<tr><td class="muted">${fmtDate(d.created_at)}</td><td><b>${esc(d.file_name||'—')}</b></td><td>${esc(d.template_code||'')}</td><td>${esc(d.status)}</td><td style="text-align:right;">${d.docx_path?`<button class="btn btn-sm" onclick="downloadDoc('${esc(d.docx_path)}')">⬇️ Atsisiųsti</button>`:''}</td></tr>`).join('')+'</tbody></table>';
     }
     window.downloadDoc=async(path)=>{
       const { data:{ session } } = await sb.auth.getSession();
@@ -463,33 +499,47 @@
     };
     $('generateDocsBtn').onclick=async()=>{
       if(CURRENT.__new){ $('docsMsg').innerHTML='<div class="error">Pirma išsaugokite bylą.</div>'; return; }
-      const code=$('docTemplate').value;
+      const code=$('docTemplate').value, personId=$('docPerson').value||null;
       $('docsMsg').innerHTML='<div class="muted">⏳ Generuojama…</div>';
       const { data:{ session } } = await sb.auth.getSession();
       const res=await fetch(`${SUPABASE_URL}/functions/v1/generate-insolvency-docx`,{
         method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
-        body:JSON.stringify({ case_id:CURRENT.id, template_code:code })});
+        body:JSON.stringify({ case_id:CURRENT.id, template_code:code, person_id:personId })});
       const r=await res.json();
       if(!r.success){
-        const hint = r.error==='no_administrator_blank' ? ' (administratoriui neįkeltas blankas — žr. ⚙️ Administratoriai)' :
-                     r.error==='no_template_file' ? ' (šablonui neįkeltas DOCX failas)' :
-                     r.error==='no_recipients' ? ' (nėra gavėjų šiam šablonui)' : '';
+        const hint = r.error==='no_administrator_blank'?' (administratoriui neįkeltas blankas)':r.error==='no_template_file'?' (šablonui neįkeltas DOCX)':r.error==='no_recipients'?' (nėra gavėjų)':'';
         $('docsMsg').innerHTML='<div class="error">Klaida: '+esc(r.error||'')+hint+'</div>'; return;
       }
       $('docsMsg').innerHTML='<div class="success">Sugeneruota dokumentų: <b>'+r.count+'</b>.</div>';
       await loadDocuments();
     };
 
-    // ---------- ADMINISTRATORIAI ----------
-    $('manageAdminsBtn').onclick=()=>{ renderAdmins(); clearAdmForm(); show('adminsModal'); };
-    $('admCancel').onclick=()=>hide('adminsModal');
-    function renderAdmins(){
-      $('adminsList').innerHTML = ADMINS.length ? '<table><thead><tr><th>Pavadinimas</th><th>Blankas</th><th></th></tr></thead><tbody>'+
-        ADMINS.map(a=>`<tr><td><b>${esc(a.name)}</b><div class="muted">${esc(a.code||'')}</div></td><td>${a.blank_docx_path?'<span class="badge badge-green">įkeltas</span>':'<span class="badge badge-gray">nėra</span>'}</td><td style="text-align:right;"><button class="btn btn-sm btn-ghost" onclick="editAdmin('${a.id}')">✎</button></td></tr>`).join('')+'</tbody></table>'
-        : '<div class="muted">Administratorių nėra.</div>';
+    // ---------- ADMINISTRATORIAUS MODALĖ ----------
+    function openAdmModal(id){
+      const a = id ? ADMINS.find(x=>x.id===id) : {};
+      $('admModalTitle').textContent = id ? 'Redaguoti administratorių' : 'Naujas nemokumo administratorius';
+      $('admId').value=a.id||''; $('admName').value=a.name||''; $('admCode').value=a.code||'';
+      $('admAddress').value=a.address||''; $('admPhone').value=a.phone||''; $('admEmail').value=a.email||'';
+      $('admBlank').value=a.blank_docx_path||''; $('admMsg').innerHTML='';
+      $('pName').value=''; $('pEmail').value='';
+      if(id){ show('personsSection'); loadPersons(id); } else { $('personsList').innerHTML='<span class="muted">Asmenis galėsite pridėti išsaugoję administratorių.</span>'; }
+      show('admModal');
     }
-    function clearAdmForm(){ ['admId','admName','admCode','admAddress','admPhone','admEmail','admPerson','admBlank'].forEach(i=>$(i).value=''); $('admMsg').innerHTML=''; }
-    window.editAdmin=id=>{ const a=ADMINS.find(x=>x.id===id); $('admId').value=a.id; $('admName').value=a.name||''; $('admCode').value=a.code||''; $('admAddress').value=a.address||''; $('admPhone').value=a.phone||''; $('admEmail').value=a.email||''; $('admPerson').value=a.authorized_person||''; $('admBlank').value=a.blank_docx_path||''; };
+    $('admCancel').onclick=()=>hide('admModal');
+    async function loadPersons(admId){
+      const { data }=await sb.from('insolvency_admin_persons').select('*').eq('administrator_id',admId).order('full_name');
+      PERSONS=data||[];
+      $('personsList').innerHTML = PERSONS.length ? PERSONS.map(p=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;"><span>${esc(p.full_name)} <span class="muted">${esc(p.email||'')}</span></span><span style="cursor:pointer;color:#C0392B;" onclick="delPerson('${p.id}')">✕</span></div>`).join('') : '<span class="muted">Asmenų dar nėra.</span>';
+    }
+    window.delPerson=async id=>{ if(!confirm('Pašalinti asmenį?'))return; await sb.from('insolvency_admin_persons').delete().eq('id',id); loadPersons($('admId').value); };
+    $('addPersonBtn').onclick=async()=>{
+      const admId=$('admId').value;
+      if(!admId){ $('admMsg').innerHTML='<div class="error">Pirma išsaugokite administratorių, tada pridėkite asmenis.</div>'; return; }
+      const name=$('pName').value.trim(); if(!name){ $('admMsg').innerHTML='<div class="error">Įveskite asmens vardą.</div>'; return; }
+      const res=await sb.rpc('upsert_insolvency_admin_person',{ p_id:null, p:{ administrator_id:admId, full_name:name, email:$('pEmail').value.trim() } });
+      if(res.error){ $('admMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+      $('pName').value=''; $('pEmail').value=''; loadPersons(admId);
+    };
     $('admBlankBtn').onclick=()=>$('admBlankFile').click();
     $('admBlankFile').onchange=async(e)=>{
       const file=e.target.files[0]; if(!file)return;
@@ -505,46 +555,45 @@
     };
     $('admSave').onclick=async()=>{
       const p={ name:$('admName').value.trim(), code:$('admCode').value.trim(), address:$('admAddress').value.trim(),
-        phone:$('admPhone').value.trim(), email:$('admEmail').value.trim(), authorized_person:$('admPerson').value.trim(), blank_docx_path:$('admBlank').value.trim() };
+        phone:$('admPhone').value.trim(), email:$('admEmail').value.trim(), blank_docx_path:$('admBlank').value.trim() };
       if(!p.name){ $('admMsg').innerHTML='<div class="error">Įveskite pavadinimą.</div>'; return; }
       const id=$('admId').value||null;
       const res=await sb.rpc('upsert_insolvency_administrator',{ p_id:id, p });
       if(res.error){ $('admMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
-      if(res.data && res.data.ok===false){ $('admMsg').innerHTML='<div class="error">'+esc(res.data.error_code)+'</div>'; return; }
+      if(res.data&&res.data.ok===false){ $('admMsg').innerHTML='<div class="error">'+esc(res.data.error_code)+'</div>'; return; }
+      const newId=id||res.data.id;
       const { data }=await sb.from('insolvency_administrators').select('*').order('name');
-      ADMINS=data||[]; renderAdmins(); clearAdmForm(); $('admMsg').innerHTML='<div class="success">Išsaugota.</div>';
+      ADMINS=data||[];
+      if(!id){ $('admId').value=newId; show('personsSection'); loadPersons(newId); $('admMsg').innerHTML='<div class="success">Išsaugota. Dabar galite pridėti įgaliotus asmenis arba uždaryti.</div>'; }
+      else { $('admMsg').innerHTML='<div class="success">Išsaugota.</div>'; if(CURRENT_ADM&&CURRENT_ADM.id===newId){ CURRENT_ADM=ADMINS.find(a=>a.id===newId); } }
+      renderAdmGrid();
     };
 
     // ---------- AI NUSKAITYMAS ----------
-    async function callAiExtract(storagePath, kind){
-      const { data:{ session } } = await sb.auth.getSession();
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-extract-document`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
-        body: JSON.stringify({ storage_path: storagePath, kind, case_id: CURRENT && !CURRENT.__new ? CURRENT.id : null })
-      });
-      return res.json();
-    }
-    // laikinas ID naujai (dar neišsaugotai) bylai — failai kraunami į _tmp/{id}
-    let TMP_UPLOAD_ID = null;
+    let TMP_UPLOAD_ID=null;
     function uploadFolder(){
-      if(CURRENT && CURRENT.case_short_code) return CURRENT.case_short_code;
-      if(!TMP_UPLOAD_ID) TMP_UPLOAD_ID = '_tmp/' + (crypto.randomUUID ? crypto.randomUUID() : Date.now()+'-'+Math.random().toString(36).slice(2));
+      if(CURRENT&&CURRENT.case_short_code)return CURRENT.case_short_code;
+      if(!TMP_UPLOAD_ID)TMP_UPLOAD_ID='_tmp/'+(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2));
       return TMP_UPLOAD_ID;
     }
     async function uploadToStorage(file, subdir){
-      const safe = file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
-      const path = `${uploadFolder()}/${subdir}/${Date.now()}_${safe}`;
-      const { error } = await sb.storage.from('insolvency-docs').upload(path, file, { upsert:true });
-      if(error) throw error;
+      const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
+      const path=`${uploadFolder()}/${subdir}/${Date.now()}_${safe}`;
+      const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+      if(error)throw error;
       return path;
     }
-
-    // nutartis → kortelės laukai (galima ir naujai bylai — AI užpildo, tada išsaugoma)
+    async function callAiExtract(storagePath, kind){
+      const { data:{ session } } = await sb.auth.getSession();
+      const res=await fetch(`${SUPABASE_URL}/functions/v1/ai-extract-document`,{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+        body:JSON.stringify({ storage_path:storagePath, kind, case_id:CURRENT&&!CURRENT.__new?CURRENT.id:null })});
+      return res.json();
+    }
     $('rulingBtn').onclick=()=>$('rulingFile').click();
     $('rulingFile').onchange=async(e)=>{
       const file=e.target.files[0]; if(!file)return;
-      $('aiMsg').innerHTML='<div class="muted">⏳ Įkeliama ir nuskaitoma… (gali užtrukti iki ~30 s)</div>';
+      $('aiMsg').innerHTML='<div class="muted">⏳ Įkeliama ir nuskaitoma… (iki ~30 s)</div>';
       try{
         const path=await uploadToStorage(file,'source');
         const r=await callAiExtract(path,'court_ruling');
@@ -555,22 +604,17 @@
       finally{ e.target.value=''; }
     };
     function applyRulingFields(fields){
-      // map AI laukai → kortelės data-f
-      const map={ debtor_name:'debtor_name', debtor_code:'debtor_code', debtor_address:'debtor_address',
-        court:'court', civil_case_no:'civil_case_no', ruling_date:'ruling_date',
-        effective_date:'effective_date', creditor_claim_deadline:'creditor_claim_deadline' };
-      for(const k in map){
+      const keys=['debtor_name','debtor_code','debtor_address','court','civil_case_no','ruling_date','effective_date','creditor_claim_deadline'];
+      for(const k of keys){
         const cell=fields[k]; if(!cell)continue;
-        const el=document.querySelector(`#cardForm [data-f="${map[k]}"]`);
-        if(el && cell.value){ el.value=cell.value; el.classList.toggle('field-ai', (cell.confidence??1) < 0.75); }
+        const el=document.querySelector(`#cardForm [data-f="${k}"]`);
+        if(el&&cell.value){ el.value=cell.value; el.classList.toggle('field-ai',(cell.confidence??1)<0.75); }
       }
     }
-
-    // sąrašas → gavėjų peržiūra (užpildo textarea, kad admin galėtų peržiūrėti/redaguoti)
-    $('impFileBtn').onclick=()=>{ if(CURRENT.__new){ $('impAiMsg').innerHTML='<div class="error">Pirma išsaugokite bylą.</div>'; return; } $('impFile').click(); };
+    $('impFileBtn').onclick=()=>{ if(!CURRENT||CURRENT.__new){ $('impAiMsg').innerHTML='<div class="error">Pirma išsaugokite bylą.</div>'; return; } $('impFile').click(); };
     $('impFile').onchange=async(e)=>{
       const file=e.target.files[0]; if(!file)return;
-      const kind = $('impType').value==='creditor' ? 'creditor_list' : 'employee_list';
+      const kind=$('impType').value==='creditor'?'creditor_list':'employee_list';
       $('impAiMsg').innerHTML='<div class="muted">⏳ Nuskaitoma…</div>';
       try{
         const path=await uploadToStorage(file,'source');
@@ -578,7 +622,7 @@
         if(!r.success){ $('impAiMsg').innerHTML='<div class="error">AI klaida: '+esc(r.error||'')+'</div>'; return; }
         const rows=r.rows||[];
         $('impData').value=rows.map(x=>[x.full_name||'',x.position||'',x.personal_code||'',x.email||''].join('; ')).join('\n');
-        $('impAiMsg').innerHTML='<div class="success">Atpažinta eilučių: '+rows.length+'. Peržiūrėkite žemiau ir spauskite „Importuoti“.</div>';
+        $('impAiMsg').innerHTML='<div class="success">Atpažinta eilučių: '+rows.length+'. Peržiūrėkite ir spauskite „Importuoti“.</div>';
       }catch(err){ $('impAiMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
       finally{ e.target.value=''; }
     };
