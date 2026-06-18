@@ -82,10 +82,35 @@
             <h2 style="color:var(--navy);font-size:18px;">Nemokumo administratoriai</h2>
             <div class="muted">Pasirinkite, kurio administratoriaus vardu dirbsite, arba sukurkite naują.</div>
           </div>
-          <button class="btn" id="newAdmBtn">+ Naujas administratorius</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost" id="settingsBtn">⚙️ Nustatymai</button>
+            <button class="btn" id="newAdmBtn">+ Naujas administratorius</button>
+          </div>
         </div>
       </div>
       <div id="admGrid" class="grid"></div>
+    </div>
+
+    <!-- NUSTATYMAI (trynimas / šablonų tvarkymas) -->
+    <div id="settingsView" class="hidden">
+      <div class="crumb" id="backFromSettings">← Visi administratoriai</div>
+      <div class="card" style="border-left:4px solid #C0392B;">
+        <h2 style="color:var(--navy);font-size:18px;">⚙️ Nustatymai ir duomenų tvarkymas</h2>
+        <div class="muted">Atsargiai: trynimas negrįžtamas. Administratoriaus trynimas pašalina ir visas jo bylas, gavėjus bei dokumentus.</div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" data-set="admins">🏢 Administratoriai</div>
+        <div class="tab" data-set="cases">📁 Bylos</div>
+        <div class="tab" data-set="templates">📄 Šablonai</div>
+      </div>
+      <div class="card" id="setAdmins"><div id="setAdminsList"></div></div>
+      <div class="card hidden" id="setCases">
+        <label class="label">Administratorius</label>
+        <select id="setCaseAdm" class="select" style="margin-bottom:10px;"></select>
+        <div id="setCasesList"></div>
+      </div>
+      <div class="card hidden" id="setTemplates"><div id="setTemplatesList"></div></div>
+      <div id="settingsMsg"></div>
     </div>
 
     <!-- LYGIS 2: ADMINISTRATORIAUS APLINKA (jo bylos) -->
@@ -288,7 +313,7 @@
     const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const show = id => $(id).classList.remove('hidden');
     const hide = id => $(id).classList.add('hidden');
-    function views(v){ ['loginView','loadingView','admListView','workspaceView','caseDetailView'].forEach(x=>hide(x)); show(v); }
+    function views(v){ ['loginView','loadingView','admListView','workspaceView','caseDetailView','settingsView'].forEach(x=>hide(x)); show(v); }
 
     let ADMINS=[], TEMPLATES=[], PERSONS=[], CASES=[], CURRENT_ADM=null, CURRENT=null, RECIPIENTS=[], DOCUMENTS=[];
 
@@ -759,6 +784,100 @@
       }catch(err){ $('impAiMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
       finally{ e.target.value=''; }
     };
+
+    // ---------- NUSTATYMAI ----------
+    $('settingsBtn').onclick=()=>openSettings();
+    $('backFromSettings').onclick=()=>{ loadAdmins(); };
+    async function openSettings(){
+      views('settingsView'); $('settingsMsg').innerHTML='';
+      document.querySelectorAll('#settingsView .tab').forEach(t=>t.classList.toggle('active',t.dataset.set==='admins'));
+      ['setAdmins'].forEach(show); ['setCases','setTemplates'].forEach(hide);
+      await renderSetAdmins();
+    }
+    document.querySelectorAll('#settingsView .tab').forEach(t=>{
+      t.onclick=async()=>{
+        document.querySelectorAll('#settingsView .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+        const s=t.dataset.set; $('settingsMsg').innerHTML='';
+        $('setAdmins').classList.toggle('hidden',s!=='admins');
+        $('setCases').classList.toggle('hidden',s!=='cases');
+        $('setTemplates').classList.toggle('hidden',s!=='templates');
+        if(s==='admins')await renderSetAdmins();
+        if(s==='cases')await renderSetCases();
+        if(s==='templates')await renderSetTemplates();
+      };
+    });
+    // --- administratoriai ---
+    async function renderSetAdmins(){
+      const { data }=await sb.from('insolvency_administrators').select('*').order('name');
+      ADMINS=data||[];
+      // suskaičiuojam bylas kiekvienam
+      const { data:cs }=await sb.from('insolvency_cases').select('id,administrator_id');
+      const cnt={}; (cs||[]).forEach(c=>{ cnt[c.administrator_id]=(cnt[c.administrator_id]||0)+1; });
+      $('setAdminsList').innerHTML = ADMINS.length ? '<table><thead><tr><th>Pavadinimas</th><th>Kodas</th><th>Bylų</th><th></th></tr></thead><tbody>'+
+        ADMINS.map(a=>`<tr><td><b>${esc(a.name)}</b></td><td>${esc(a.code||'')}</td><td>${cnt[a.id]||0}</td><td style="text-align:right;"><button class="btn btn-sm btn-danger" onclick="delAdmin('${a.id}')">🗑 Trinti</button></td></tr>`).join('')+'</tbody></table>'
+        : '<div class="muted">Administratorių nėra.</div>';
+    }
+    window.delAdmin=async id=>{
+      const a=ADMINS.find(x=>x.id===id); if(!a)return;
+      const typed=prompt('PAVOJINGA: bus ištrintas administratorius IR visos jo bylos, gavėjai, dokumentai.\n\nPatvirtinkite įvesdami tikslų pavadinimą:\n'+a.name);
+      if(typed===null)return;
+      if(typed.trim()!==a.name){ $('settingsMsg').innerHTML='<div class="error">Pavadinimas nesutampa — trynimas atšauktas.</div>'; return; }
+      const res=await sb.rpc('delete_insolvency_administrator',{ p_id:id });
+      if(res.error||(res.data&&res.data.ok===false)){ $('settingsMsg').innerHTML='<div class="error">Klaida: '+esc(res.error?res.error.message:res.data.error_code)+'</div>'; return; }
+      $('settingsMsg').innerHTML='<div class="success">Administratorius ištrintas.</div>'; await renderSetAdmins();
+    };
+    // --- bylos ---
+    async function renderSetCases(){
+      const { data:adm }=await sb.from('insolvency_administrators').select('*').order('name');
+      ADMINS=adm||[];
+      $('setCaseAdm').innerHTML='<option value="">— visi administratoriai —</option>'+ADMINS.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+      await loadSetCases();
+    }
+    $('setCaseAdm').onchange=loadSetCases;
+    async function loadSetCases(){
+      let q=sb.from('insolvency_cases').select('*').order('created_at',{ascending:false});
+      const admId=$('setCaseAdm').value; if(admId)q=q.eq('administrator_id',admId);
+      const { data }=await q;
+      const rows=data||[];
+      $('setCasesList').innerHTML = rows.length ? '<table><thead><tr><th>Įmonė</th><th>Kodas</th><th>Bylos kodas</th><th></th></tr></thead><tbody>'+
+        rows.map(c=>`<tr><td><b>${esc(c.debtor_name||'—')}</b></td><td>${esc(c.debtor_code||'')}</td><td>${esc(c.case_short_code)}</td><td style="text-align:right;"><button class="btn btn-sm btn-danger" onclick="delCase('${c.id}','${esc(c.case_short_code)}')">🗑 Trinti</button></td></tr>`).join('')+'</tbody></table>'
+        : '<div class="muted">Bylų nėra.</div>';
+    }
+    window.delCase=async(id,code)=>{
+      const typed=prompt('Bus ištrinta byla IR visi jos gavėjai bei dokumentai.\n\nPatvirtinkite įvesdami bylos kodą:\n'+code);
+      if(typed===null)return;
+      if(typed.trim()!==code){ $('settingsMsg').innerHTML='<div class="error">Bylos kodas nesutampa — trynimas atšauktas.</div>'; return; }
+      const res=await sb.rpc('delete_insolvency_case',{ p_id:id });
+      if(res.error||(res.data&&res.data.ok===false)){ $('settingsMsg').innerHTML='<div class="error">Klaida: '+esc(res.error?res.error.message:res.data.error_code)+'</div>'; return; }
+      $('settingsMsg').innerHTML='<div class="success">Byla ištrinta.</div>'; await loadSetCases();
+    };
+    // --- šablonai ---
+    async function renderSetTemplates(){
+      const { data }=await sb.from('insolvency_templates').select('*').order('sort_order');
+      const rows=data||[];
+      $('setTemplatesList').innerHTML='<table><thead><tr><th>Kodas</th><th>Pavadinimas</th><th>DOCX</th><th>Aktyvus</th><th></th></tr></thead><tbody>'+
+        rows.map(t=>`<tr><td><code>${esc(t.code)}</code></td><td>${esc(t.title)}</td><td>${t.storage_path?'<span class="badge badge-green">įkeltas</span>':'<span class="badge badge-gray">nėra</span>'}</td><td>${t.is_active?'taip':'ne'}</td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="renameTpl('${t.code}','${esc(t.title)}')">✎ Pavadinimas</button> <input type="file" accept=".docx" class="hidden" id="setTplFile_${t.code}"><button class="btn btn-sm btn-ghost" onclick="document.getElementById('setTplFile_${t.code}').click()">⬆️ DOCX</button></td></tr>`).join('')+'</tbody></table>';
+      // prikabinam DOCX įkėlimo handlerius
+      rows.forEach(t=>{ const inp=$('setTplFile_'+t.code); if(inp)inp.onchange=e=>uploadSetTpl(e,t.code); });
+    }
+    window.renameTpl=async(code,cur)=>{
+      const title=prompt('Naujas šablono pavadinimas:',cur); if(title===null||!title.trim())return;
+      const res=await sb.rpc('update_insolvency_template',{ p_code:code, p:{ title:title.trim() } });
+      if(res.error){ $('settingsMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+      $('settingsMsg').innerHTML='<div class="success">Pavadinimas atnaujintas.</div>'; await renderSetTemplates();
+    };
+    async function uploadSetTpl(e,code){
+      const file=e.target.files[0]; if(!file)return;
+      $('settingsMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
+      try{
+        const path=`templates/${code}.docx`;
+        const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+        if(error)throw error;
+        await sb.from('insolvency_templates').update({ storage_path:path }).eq('code',code);
+        $('settingsMsg').innerHTML='<div class="success">Šablono DOCX atnaujintas.</div>'; await renderSetTemplates();
+      }catch(err){ $('settingsMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    }
 
     boot();
   </script>
