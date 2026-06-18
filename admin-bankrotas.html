@@ -152,6 +152,7 @@
             <button class="btn btn-sm btn-ghost" id="addRecipientBtn">+ Pridėti</button>
             <button class="btn btn-sm btn-ghost" id="importRecipientsBtn">📋 Importuoti</button>
             <button class="btn btn-sm btn-gold" id="enrichBtn">🌐 Surinkti kontaktus (AI)</button>
+            <button class="btn btn-sm btn-danger" id="delSelectedBtn">🗑 Ištrinti pažymėtus</button>
           </div>
         </div>
         <div class="hint" style="margin-bottom:6px;">Pažymėkite įrašus ir spauskite „Surinkti kontaktus (AI)“ — bus tikslinami tik pažymėti. Jei nieko nepažymėta, tikslinami visi be kontaktų (tik šio skirtuko). AI atnaujinti laukai paryškinami 🆕 sutikrinimui; netikslumus koreguokite ✎.</div>
@@ -259,9 +260,20 @@
       <label class="label">Arba įklijuokite (po vieną eilutę: <b>Vardas Pavardė; Pareigos; Kodas; El.paštas</b>)</label>
       <textarea id="impData" class="textarea" style="min-height:120px;font-family:monospace;" placeholder="Jonas Jonaitis; Vadybininkas; 38901011234; jonas@example.lt"></textarea>
       <div id="impMsg"></div>
+      <!-- DUBLIŲ blokas (rodomas po patikros) -->
+      <div id="impDupBlock" class="hidden" style="margin-top:14px;background:#FFF7E0;border:1px solid var(--gold);border-radius:8px;padding:12px;">
+        <strong style="color:#8A6D00;">Rasta dublių (jau yra sąraše)</strong>
+        <div id="impDupList" class="hint" style="margin:6px 0;max-height:160px;overflow:auto;"></div>
+        <div class="hint" style="margin-bottom:8px;">Ką daryti su dubliais?</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-sm" id="dupFill">✓ Papildyti trūkstamus laukus</button>
+          <button class="btn btn-sm btn-ghost" id="dupSkip">⊘ Praleisti dublius</button>
+          <button class="btn btn-sm btn-ghost" id="dupNew">+ Importuoti kaip naujus</button>
+        </div>
+      </div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
         <button class="btn btn-ghost" id="impCancel">Atšaukti</button>
-        <button class="btn" id="impSave">Importuoti</button>
+        <button class="btn" id="impSave">Tikrinti ir importuoti</button>
       </div>
     </div>
   </div>
@@ -471,6 +483,15 @@
       hide('recipientModal'); await loadRecipients();
     };
     window.delRecipient=async id=>{ if(!confirm('Pašalinti gavėją?'))return; await sb.from('insolvency_recipients').delete().eq('id',id); await loadRecipients(); };
+    $('delSelectedBtn').onclick=async()=>{
+      const ids=selectedRecipientIds();
+      if(!ids.length){ $('enrichMsg').innerHTML='<div class="error">Pažymėkite bent vieną įrašą.</div>'; return; }
+      if(!confirm('Ištrinti pažymėtus įrašus ('+ids.length+')? Veiksmo atšaukti negalėsite.'))return;
+      const { error }=await sb.from('insolvency_recipients').delete().in('id',ids);
+      if(error){ $('enrichMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      $('enrichMsg').innerHTML='<div class="success">Ištrinta: '+ids.length+'.</div>';
+      await loadRecipients();
+    };
     $('enrichBtn').onclick=async()=>{
       if(!CURRENT||CURRENT.__new){ $('enrichMsg').innerHTML='<div class="error">Pirma išsaugokite bylą.</div>'; return; }
       const sel=selectedRecipientIds();
@@ -501,17 +522,64 @@
     };
 
     // ---------- IMPORTAS ----------
-    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; $('impAiMsg').innerHTML=''; $('impType').value=REC_TYPE; show('importModal'); };
+    let DUP_PENDING=null; // { type, news:[...], dups:[{row, existing}] }
+    function resetImportModal(){ $('impDupBlock').classList.add('hidden'); $('impDupList').innerHTML=''; DUP_PENDING=null; }
+    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; $('impAiMsg').innerHTML=''; $('impType').value=REC_TYPE; resetImportModal(); show('importModal'); };
     $('impCancel').onclick=()=>hide('importModal');
+    const norm=s=>(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+    // dublio paieška tarp esamų to paties tipo: pagal kodą (jei yra), kitaip pagal vardą
+    function findExisting(row, type){
+      const pool=RECIPIENTS.filter(r=>r.recipient_type===type);
+      if(row.personal_code){ const byCode=pool.find(r=>r.personal_code && norm(r.personal_code)===norm(row.personal_code)); if(byCode)return byCode; }
+      return pool.find(r=>r.full_name && norm(r.full_name)===norm(row.full_name));
+    }
     $('impSave').onclick=async()=>{
       const type=$('impType').value;
       const lines=$('impData').value.split('\n').map(l=>l.trim()).filter(Boolean);
       if(!lines.length){ $('impMsg').innerHTML='<div class="error">Nėra duomenų.</div>'; return; }
-      const rows=lines.map(l=>{ const p=l.split(/\t|;/).map(s=>s.trim());
-        return { recipient_type:type, full_name:p[0]||null, position:p[1]||null, personal_code:p[2]||null, email:p[3]||null }; });
+      const parsed=lines.map(l=>{ const p=l.split(/\t|;/).map(s=>s.trim());
+        return { recipient_type:type, full_name:p[0]||null, position:p[1]||null, personal_code:p[2]||null, email:p[3]||null }; })
+        .filter(r=>r.full_name);
+      // atskiriam naujus nuo dublių
+      const news=[], dups=[];
+      parsed.forEach(row=>{ const ex=findExisting(row,type); if(ex)dups.push({row,existing:ex}); else news.push(row); });
+      // naujus importuojam iškart
+      let added=0;
+      if(news.length){
+        const res=await sb.rpc('add_insolvency_recipients',{ p_case_id:CURRENT.id, p_rows:news });
+        if(res.error){ $('impMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+        added=news.length;
+      }
+      if(!dups.length){
+        hide('importModal'); await loadRecipients();
+        $('enrichMsg').innerHTML='<div class="success">Importuota naujų: '+added+'.</div>'; return;
+      }
+      // yra dublių — rodom bloką su pasirinkimu
+      DUP_PENDING={ type, dups, added };
+      $('impMsg').innerHTML='<div class="success">Naujų importuota: '+added+'. Rasta dublių: '+dups.length+'.</div>';
+      $('impDupList').innerHTML=dups.map(d=>`• <b>${esc(d.row.full_name)}</b>${d.row.personal_code?(' ('+esc(d.row.personal_code)+')'):''} — jau sąraše`).join('<br>');
+      $('impDupBlock').classList.remove('hidden');
+    };
+    // dublių veiksmai
+    $('dupSkip').onclick=async()=>{ hide('importModal'); await loadRecipients(); $('enrichMsg').innerHTML='<div class="success">Dubliai praleisti. Naujų importuota: '+(DUP_PENDING?DUP_PENDING.added:0)+'.</div>'; resetImportModal(); };
+    $('dupNew').onclick=async()=>{
+      if(!DUP_PENDING)return;
+      const rows=DUP_PENDING.dups.map(d=>d.row);
       const res=await sb.rpc('add_insolvency_recipients',{ p_case_id:CURRENT.id, p_rows:rows });
       if(res.error){ $('impMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
       hide('importModal'); await loadRecipients();
+      $('enrichMsg').innerHTML='<div class="success">Importuota: '+(DUP_PENDING.added+rows.length)+' (įsk. dublius kaip naujus).</div>'; resetImportModal();
+    };
+    $('dupFill').onclick=async()=>{
+      if(!DUP_PENDING)return;
+      let filled=0;
+      for(const d of DUP_PENDING.dups){
+        const patch={};
+        ['full_name','position','personal_code','email'].forEach(f=>{ if(!d.existing[f] && d.row[f]) patch[f]=d.row[f]; });
+        if(Object.keys(patch).length){ const { error }=await sb.from('insolvency_recipients').update(patch).eq('id',d.existing.id); if(!error)filled++; }
+      }
+      hide('importModal'); await loadRecipients();
+      $('enrichMsg').innerHTML='<div class="success">Naujų: '+DUP_PENDING.added+' · papildyta esamų: '+filled+'.</div>'; resetImportModal();
     };
 
     // ---------- DOKUMENTAI ----------
