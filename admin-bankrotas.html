@@ -142,15 +142,19 @@
 
       <!-- GAVĖJAI -->
       <div id="paneRecipients" class="card hidden">
+        <div class="tabs" style="margin-bottom:14px;">
+          <div class="tab active" data-rtype="employee">👷 Darbuotojai (<span id="cntEmp">0</span>)</div>
+          <div class="tab" data-rtype="creditor">💼 Kreditoriai (<span id="cntCred">0</span>)</div>
+        </div>
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
-          <strong>Darbuotojų / kreditorių sąrašas</strong>
+          <strong id="recListTitle">Darbuotojų sąrašas</strong>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-sm btn-ghost" id="addRecipientBtn">+ Pridėti</button>
             <button class="btn btn-sm btn-ghost" id="importRecipientsBtn">📋 Importuoti</button>
             <button class="btn btn-sm btn-gold" id="enrichBtn">🌐 Surinkti kontaktus (AI)</button>
           </div>
         </div>
-        <div class="hint" style="margin-bottom:6px;">Pažymėkite įrašus ir spauskite „Surinkti kontaktus (AI)“ — bus tikslinami tik pažymėti. Jei nieko nepažymėta, tikslinami visi be kontaktų. AI atnaujinti laukai paryškinami 🆕 sutikrinimui; netikslumus koreguokite ✎.</div>
+        <div class="hint" style="margin-bottom:6px;">Pažymėkite įrašus ir spauskite „Surinkti kontaktus (AI)“ — bus tikslinami tik pažymėti. Jei nieko nepažymėta, tikslinami visi be kontaktų (tik šio skirtuko). AI atnaujinti laukai paryškinami 🆕 sutikrinimui; netikslumus koreguokite ✎.</div>
         <div id="enrichMsg"></div>
         <div id="recipientsTable"></div>
       </div>
@@ -374,7 +378,9 @@
       $('cdTitle').textContent=id?(CURRENT.debtor_name||'(be pavadinimo)'):'Nauja byla';
       $('cdSub').textContent=(id?('Bylos kodas: '+CURRENT.case_short_code+' · '):'')+'Administratorius: '+CURRENT_ADM.name;
       renderCard(CURRENT);
-      document.querySelectorAll('#caseDetailView .tab').forEach(t=>t.classList.toggle('active',t.dataset.pane==='card'));
+      REC_TYPE='employee'; ENRICHED={};
+      document.querySelectorAll('#paneRecipients .tab').forEach(t=>t.classList.toggle('active',t.dataset.rtype==='employee'));
+      document.querySelectorAll('#caseDetailView > .tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.pane==='card'));
       show('paneCard'); hide('paneRecipients'); hide('paneDocuments');
       $('cardMsg').innerHTML=''; $('aiMsg').innerHTML='';
       views('caseDetailView');
@@ -411,23 +417,42 @@
       RECIPIENTS=data||[]; renderRecipients();
     }
     let ENRICHED={}; // { recipientId: ['email','phone'] } — AI ką tik pakeisti laukai (paryškinimui)
+    let REC_TYPE='employee'; // aktyvus sub-tab: employee / creditor
+    function curRecs(){ return RECIPIENTS.filter(r=>r.recipient_type===REC_TYPE); }
     function renderRecipients(){
-      if(!RECIPIENTS.length){ $('recipientsTable').innerHTML='<div class="muted center" style="padding:20px;">Gavėjų nėra.</div>'; return; }
+      // skaitliukai abiem tipams
+      $('cntEmp').textContent=RECIPIENTS.filter(r=>r.recipient_type==='employee').length;
+      $('cntCred').textContent=RECIPIENTS.filter(r=>r.recipient_type==='creditor').length;
+      $('recListTitle').textContent = REC_TYPE==='employee' ? 'Darbuotojų sąrašas' : 'Kreditorių sąrašas';
+      const rows=curRecs();
+      const isCred=REC_TYPE==='creditor';
+      if(!rows.length){ $('recipientsTable').innerHTML='<div class="muted center" style="padding:20px;">'+(isCred?'Kreditorių':'Darbuotojų')+' sąrašas tuščias.</div>'; return; }
       const dash=v=>v?esc(v):'<span style="color:#C0392B;">—</span>';
       const cell=(r,f)=>{ const hl=(ENRICHED[r.id]||[]).includes(f); return `<td${hl?' style="background:#FFF2B8;font-weight:600;"':''}>${dash(r[f])}${hl?' <span title="AI atnaujino" style="font-size:11px;">🆕</span>':''}</td>`; };
-      $('recipientsTable').innerHTML='<table><thead><tr><th style="width:28px;"><input type="checkbox" id="recAll"></th><th>Tipas</th><th>Vardas / pavadinimas</th><th>Kodas</th><th>El. paštas</th><th>Telefonas</th><th>Adresas</th><th></th></tr></thead><tbody>'+
-        RECIPIENTS.map(r=>{
+      const extraHead = isCred ? '<th>Reikalavimo suma</th>' : '<th>Pareigos</th>';
+      $('recipientsTable').innerHTML='<table><thead><tr><th style="width:28px;"><input type="checkbox" id="recAll"></th><th>Vardas / pavadinimas</th><th>Kodas</th>'+extraHead+'<th>El. paštas</th><th>Telefonas</th><th>Adresas</th><th></th></tr></thead><tbody>'+
+        rows.map(r=>{
           const miss=!(r.email&&r.address&&r.phone);
-          return `<tr${miss?' style="background:#FFFDF5;"':''}><td><input type="checkbox" class="rec-cb" value="${r.id}"></td><td>${r.recipient_type==='employee'?'Darbuotojas':'Kreditorius'}</td><td><b>${esc(r.full_name||'—')}</b></td><td>${esc(r.personal_code||'')}</td>${cell(r,'email')}${cell(r,'phone')}${cell(r,'address')}<td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="editRecipient('${r.id}')">✎</button> <button class="btn btn-sm btn-danger" onclick="delRecipient('${r.id}')">✕</button></td></tr>`;
+          const extra = isCred ? `<td>${r.claim_amount?esc(r.claim_amount)+' €':''}</td>` : `<td>${esc(r.position||'')}</td>`;
+          return `<tr${miss?' style="background:#FFFDF5;"':''}><td><input type="checkbox" class="rec-cb" value="${r.id}"></td><td><b>${esc(r.full_name||'—')}</b></td><td>${esc(r.personal_code||'')}</td>${extra}${cell(r,'email')}${cell(r,'phone')}${cell(r,'address')}<td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="editRecipient('${r.id}')">✎</button> <button class="btn btn-sm btn-danger" onclick="delRecipient('${r.id}')">✕</button></td></tr>`;
         }).join('')+'</tbody></table>';
       const all=$('recAll'); if(all) all.onclick=()=>document.querySelectorAll('.rec-cb').forEach(cb=>cb.checked=all.checked);
     }
+    // sub-tab perjungimas
+    document.querySelectorAll('#paneRecipients .tab').forEach(t=>{
+      t.onclick=()=>{
+        document.querySelectorAll('#paneRecipients .tab').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active'); REC_TYPE=t.dataset.rtype; $('enrichMsg').innerHTML=''; renderRecipients();
+      };
+    });
     function selectedRecipientIds(){ return Array.from(document.querySelectorAll('.rec-cb:checked')).map(cb=>cb.value); }
     $('addRecipientBtn').onclick=()=>openRecModal(null);
     window.editRecipient=id=>openRecModal(RECIPIENTS.find(r=>r.id===id));
     function openRecModal(r){
-      r=r||{}; $('recId').value=r.id||''; $('recModalTitle').textContent=r.id?'Redaguoti gavėją':'Pridėti gavėją';
-      $('recType').value=r.recipient_type||'employee'; $('recName').value=r.full_name||''; $('recPosition').value=r.position||'';
+      r=r||{}; $('recId').value=r.id||'';
+      const t=r.recipient_type||REC_TYPE; // naujas įrašas — aktyvaus skirtuko tipas
+      $('recModalTitle').textContent=(r.id?'Redaguoti ':'Pridėti ')+(t==='creditor'?'kreditorių':'darbuotoją');
+      $('recType').value=t; $('recName').value=r.full_name||''; $('recPosition').value=r.position||'';
       $('recCode').value=r.personal_code||''; $('recEmail').value=r.email||''; $('recAmount').value=r.claim_amount||''; $('recAddress').value=r.address||'';
       $('recMsg').innerHTML=''; show('recipientModal');
     }
@@ -449,10 +474,11 @@
     $('enrichBtn').onclick=async()=>{
       if(!CURRENT||CURRENT.__new){ $('enrichMsg').innerHTML='<div class="error">Pirma išsaugokite bylą.</div>'; return; }
       const sel=selectedRecipientIds();
-      // jei pažymėti — tik juos; jei nepažymėta — visus su trūkstamais kontaktais
-      const targets = sel.length ? RECIPIENTS.filter(r=>sel.includes(r.id))
-                                  : RECIPIENTS.filter(r=>!(r.email&&r.address&&r.phone));
-      if(!targets.length){ $('enrichMsg').innerHTML='<div class="error">Pažymėkite įrašus arba palikite nepažymėtus (bus tikslinami visi be kontaktų).</div>'; return; }
+      // tik aktyvaus skirtuko tipo gavėjai; jei pažymėti — tik juos; jei ne — visi to tipo be kontaktų
+      const pool=curRecs();
+      const targets = sel.length ? pool.filter(r=>sel.includes(r.id))
+                                  : pool.filter(r=>!(r.email&&r.address&&r.phone));
+      if(!targets.length){ $('enrichMsg').innerHTML='<div class="error">Šiame skirtuke nėra ką tikslinti (visi turi kontaktus arba sąrašas tuščias).</div>'; return; }
       const scope = sel.length ? ('pažymėtiems ('+targets.length+')') : ('visiems be kontaktų ('+targets.length+')');
       if(!confirm('AI ieškos kontaktų internete '+scope+'. Tai gali užtrukti ~'+Math.ceil(targets.length*8/60)+' min. Tęsti?'))return;
       $('enrichBtn').disabled=true;
@@ -475,7 +501,7 @@
     };
 
     // ---------- IMPORTAS ----------
-    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; $('impAiMsg').innerHTML=''; show('importModal'); };
+    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; $('impAiMsg').innerHTML=''; $('impType').value=REC_TYPE; show('importModal'); };
     $('impCancel').onclick=()=>hide('importModal');
     $('impSave').onclick=async()=>{
       const type=$('impType').value;
