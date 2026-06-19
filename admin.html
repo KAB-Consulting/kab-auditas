@@ -2313,7 +2313,166 @@
           🗑️ Ištrinti visam laikui
         </button>
       </div>
+      <div id="collaborators-block-${sub.id}" data-submission-id="${sub.id}">
+        ${renderCollaboratorsPlaceholder(sub.id)}
+      </div>
     `;
+  }
+
+  // ============================================================
+  // V5.1 COLLABORATORS (daugiavartotojų prisijungimas)
+  // ============================================================
+
+  function renderCollaboratorsPlaceholder(submissionId) {
+    // Asynchroniškai įkelti — kviečiamas po renderAdminActionsBlock atvaizdavimo
+    setTimeout(() => loadCollaborators(submissionId), 50);
+    return `
+      <div style="margin-bottom: 20px; padding: 12px 15px; background: #FFFEF7; border: 1px solid var(--kab-gold); border-radius: 5px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+          <strong style="color: var(--kab-navy); font-size: 14px;">👥 Klausimyno vartotojai (prisijungimo el. paštai)</strong>
+          <button class="btn btn-navy btn-small" onclick="openAddCollaboratorDialog('${submissionId}')">
+            ➕ Pridėti vartotoją
+          </button>
+        </div>
+        <div id="collaborators-list-${submissionId}" style="font-size: 13px; color: #666;">
+          Kraunama...
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadCollaborators(submissionId) {
+    const container = document.getElementById('collaborators-list-' + submissionId);
+    if (!container) return;
+    try {
+      const { data, error } = await supabase.rpc('admin_list_collaborators', { p_submission_id: submissionId });
+      if (error) throw error;
+      renderCollaboratorsList(submissionId, data || []);
+    } catch (e) {
+      console.error('loadCollaborators error', e);
+      container.innerHTML = `<span style="color:#C00000;">Klaida: ${escapeHtml(e.message || e)}</span>`;
+    }
+  }
+
+  function renderCollaboratorsList(submissionId, rows) {
+    const container = document.getElementById('collaborators-list-' + submissionId);
+    if (!container) return;
+    if (rows.length === 0) {
+      container.innerHTML = '<em style="color:#999;">Nėra pridėtų vartotojų</em>';
+      return;
+    }
+    let html = '<table style="width:100%; border-collapse: collapse; font-size: 12px;">';
+    html += `<thead><tr style="border-bottom: 1px solid #E0E0E0;">
+      <th style="text-align:left; padding: 6px 4px; color:#666;">El. paštas</th>
+      <th style="text-align:left; padding: 6px 4px; color:#666;">Asmuo</th>
+      <th style="text-align:left; padding: 6px 4px; color:#666;">Telefonas</th>
+      <th style="text-align:left; padding: 6px 4px; color:#666;">Rolė</th>
+      <th style="text-align:left; padding: 6px 4px; color:#666;">Prisijungimų</th>
+      <th style="text-align:left; padding: 6px 4px; color:#666;">Paskutinis</th>
+      <th style="text-align:center; padding: 6px 4px; color:#666;">Veiksmai</th>
+    </tr></thead><tbody>`;
+    for (const c of rows) {
+      const lastLogin = c.last_login_at ? new Date(c.last_login_at).toLocaleString('lt-LT') : '—';
+      html += `<tr style="border-bottom: 1px solid #F0F0F0;">
+        <td style="padding: 6px 4px;"><strong>${escapeHtml(c.email)}</strong></td>
+        <td style="padding: 6px 4px;">${escapeHtml(c.full_name || '—')}</td>
+        <td style="padding: 6px 4px;">${escapeHtml(c.phone || '—')}</td>
+        <td style="padding: 6px 4px;">
+          ${c.is_owner
+              ? '<span style="background:var(--kab-gold); color:white; padding:2px 6px; border-radius:3px; font-size:11px;">SAVININKAS</span>'
+              : '<span style="background:#E8F4FB; color:var(--kab-navy); padding:2px 6px; border-radius:3px; font-size:11px;">vartotojas</span>'}
+        </td>
+        <td style="padding: 6px 4px;">${c.login_count || 0}</td>
+        <td style="padding: 6px 4px; font-size:11px; color:#666;">${lastLogin}</td>
+        <td style="padding: 6px 4px; text-align:center; white-space:nowrap;">
+          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px;" onclick="sendCollaboratorInvite('${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')">📧 Siųsti nuorodą</button>
+          ${c.is_owner
+              ? ''
+              : `<button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px; color:#C00000;" onclick="removeCollaborator('${c.id}','${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')">🗑️</button>`}
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    html += '<p style="font-size:11px; color:#999; margin-top:6px;">Visi vartotojai turi vienodas teises pildyti klausimyną. Savininko (pirmojo) negalima pašalinti.</p>';
+    container.innerHTML = html;
+  }
+
+  function openAddCollaboratorDialog(submissionId) {
+    const email = prompt('Naujo vartotojo el. paštas:');
+    if (!email || !email.trim()) return;
+    const fullName = prompt('Vardas, pavardė (neprivaloma):') || '';
+    const phone = prompt('Telefonas (neprivaloma):') || '';
+    const sendNow = confirm('Ar iškart siųsti kvietimo laišką su prisijungimo nuoroda?\n\nOK = siųsti dabar\nCancel = tik pridėti į sąrašą (siųsti vėliau rankiniu būdu)');
+    addCollaborator(submissionId, email.trim(), fullName.trim(), phone.trim(), sendNow);
+  }
+
+  async function addCollaborator(submissionId, email, fullName, phone, sendInvite) {
+    try {
+      const { data, error } = await supabase.rpc('admin_add_collaborator', {
+        p_submission_id: submissionId,
+        p_email: email,
+        p_full_name: fullName || null,
+        p_phone: phone || null,
+        p_notes: null
+      });
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+      if (!result?.ok) {
+        const errMap = {
+          empty_email: 'El. paštas tuščias',
+          invalid_email: 'Netinkamas el. pašto formatas',
+          submission_not_found: 'Klausimynas nerastas',
+          already_exists: 'Šis el. paštas jau pridėtas'
+        };
+        alert('Nepavyko pridėti: ' + (errMap[result?.error_code] || result?.error_code || 'nežinoma klaida'));
+        return;
+      }
+      await loadCollaborators(submissionId);
+      if (sendInvite) {
+        await sendCollaboratorInvite(submissionId, email);
+      } else {
+        alert('Vartotojas pridėtas. Kad jis galėtų prisijungti, paspauskite „📧 Siųsti nuorodą".');
+      }
+    } catch (e) {
+      console.error('addCollaborator error', e);
+      alert('Klaida: ' + (e.message || e));
+    }
+  }
+
+  async function removeCollaborator(collaboratorId, submissionId, email) {
+    if (!confirm(`Tikrai pašalinti vartotoją „${email}"?\n\nJis nebegalės prisijungti prie šio klausimyno.`)) return;
+    try {
+      const { data, error } = await supabase.rpc('admin_remove_collaborator', { p_collaborator_id: collaboratorId });
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+      if (!result?.ok) {
+        const errMap = {
+          not_found: 'Vartotojas nerastas',
+          cannot_remove_owner: 'Savininko pašalinti negalima'
+        };
+        alert('Nepavyko pašalinti: ' + (errMap[result?.error_code] || result?.error_code));
+        return;
+      }
+      await loadCollaborators(submissionId);
+    } catch (e) {
+      console.error('removeCollaborator error', e);
+      alert('Klaida: ' + (e.message || e));
+    }
+  }
+
+  async function sendCollaboratorInvite(submissionId, email) {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-client-link', {
+        body: { submission_id: submissionId, recipient_email: email }
+      });
+      if (error) throw error;
+      const result = data || {};
+      if (result.success === false) throw new Error(result.error || 'siuntimo klaida');
+      alert(`✅ Kvietimas išsiųstas į ${email}`);
+    } catch (e) {
+      console.error('sendCollaboratorInvite error', e);
+      alert(`Nepavyko išsiųsti kvietimo: ${e.message || e}\n\nGalite nukopijuoti nuorodą rankiniu būdu paspaudę „🔗 Kopijuoti kliento nuorodą".`);
+    }
   }
 
   function closeModal() {
