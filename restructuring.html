@@ -1791,7 +1791,18 @@
       const hasInterim = submission.status === 'submitted_interim';
       return `
         <div class="submit-section">
-          <h2>📤 Pateikimas</h2>
+          <div style="background: linear-gradient(135deg, #FFF9E6, #FFFEF7); border: 1px solid var(--kab-gold); border-radius: 6px; padding: 18px 20px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 8px 0; color: var(--kab-navy); font-size: 16px;">📩 Pranešti administratoriui</h3>
+            <p style="margin: 0 0 12px 0; font-size: 13px; color: #555;">
+              Užpildę dalį informacijos, galite pranešti KAB Consulting administratoriui, kad atnaujinote duomenis ir norite, kad jis peržiūrėtų. <strong>Klausimynas lieka atviras tolimesniam pildymui.</strong>
+            </p>
+            <textarea id="notifyAdminMessage" placeholder="Žinutė administratoriui (neprivaloma)..." rows="2" style="width:100%; padding:8px; font-size:13px; border:1px solid #DDD; border-radius:4px; margin-bottom:10px;"></textarea>
+            <button class="btn btn-navy" onclick="notifyAdminReview()" style="font-size:13px;">
+              📨 Informuoti administratorių apie naują medžiagą
+            </button>
+          </div>
+
+          <h2>📤 Galutinis pateikimas</h2>
           <p>Galite išsaugoti kaip tarpinį pateikimą ir grįžti vėliau, arba pateikti galutinę ataskaitą, kai visi duomenys paruošti.</p>
           <div class="consent-row">
             <input type="checkbox" id="consentCheckbox">
@@ -1803,6 +1814,30 @@
           </div>
         </div>
       `;
+    }
+
+    async function notifyAdminReview() {
+      const btn = event?.target;
+      const originalText = btn?.textContent;
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Siunčiama...'; }
+      try {
+        const msg = (document.getElementById('notifyAdminMessage')?.value || '').trim();
+        const email = sessionStorage.getItem('client_otp_email') || '';
+        if (!email) { alert('Klaida: nepavyko nustatyti jūsų el. pašto. Prisijunkite iš naujo.'); return; }
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/notify-admin-review`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify({ access_token: ACCESS_TOKEN, email: email, message: msg || null })
+        });
+        const result = await resp.json();
+        if (!result.success) throw new Error(result.error || 'siuntimo klaida');
+        alert(`✅ Administratoriui pranešta!\n\nGavėjų skaičius: ${result.recipient_count || 0}\n\nTęskite pildymą.`);
+        document.getElementById('notifyAdminMessage').value = '';
+      } catch (e) {
+        alert('Nepavyko pranešti: ' + (e.message || e));
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
+      }
     }
 
     // ============================================================
@@ -2495,6 +2530,7 @@
           return;
         }
         sessionStorage.setItem(_gateSessionKey, 'verified');
+        sessionStorage.setItem('client_otp_email', email);
         _gateHideOverlay();
         document.getElementById('loadingState').style.display = 'flex';
         init();

@@ -194,14 +194,73 @@
     .modal {
       background: white;
       border-radius: 6px;
-      max-width: 700px;
+      max-width: 1200px;
       width: 100%;
-      max-height: 90vh;
+      max-height: 92vh;
       overflow-y: auto;
       padding: 25px;
     }
 
     .modal h2 { margin-top: 0; }
+
+    /* V5.2 — suskleidžiami skyriai */
+    .collapsible-section {
+      border: 1px solid #E5E5E5;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      background: #FFF;
+      overflow: hidden;
+    }
+    .collapsible-section.collapsed .collapsible-body {
+      display: none;
+    }
+    .collapsible-header {
+      background: linear-gradient(135deg, var(--kab-navy), #1a3258);
+      color: #FFF;
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    .collapsible-header:hover { background: linear-gradient(135deg, #112a55, #234070); }
+    .collapsible-header .toggle-icon {
+      font-size: 14px;
+      transition: transform 0.2s;
+    }
+    .collapsible-section.collapsed .collapsible-header .toggle-icon {
+      transform: rotate(-90deg);
+    }
+    .collapsible-header .section-title {
+      font-weight: 600;
+      font-size: 14px;
+      flex: 1;
+    }
+    .collapsible-header .section-meta {
+      font-size: 11px;
+      opacity: 0.85;
+      margin-left: 10px;
+    }
+    .collapsible-body {
+      padding: 15px 18px;
+    }
+    .pending-star {
+      color: #C62828;
+      font-size: 14px;
+      font-weight: bold;
+      margin-left: 4px;
+    }
+    .pending-badge {
+      background: #FFEBEE;
+      color: #C62828;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
 
     .copy-link-box {
       background: var(--kab-cream);
@@ -1759,6 +1818,7 @@
           <div style="color: #666; font-size: 13px;">
             Kontaktinis asmuo: <strong>${escapeHtml(sub.client_contact || '-')}</strong>
             · ${escapeHtml(sub.client_email || '-')}
+            · <button class="btn btn-ghost btn-small" style="font-size:11px; padding:2px 8px;" onclick="openEditClientCard('${sub.id}')">✏️ Redaguoti</button>
           </div>
         </div>
         <button class="btn btn-ghost btn-small" onclick="closeModal()">✕ Uždaryti</button>
@@ -1832,7 +1892,10 @@
 
   function renderSectionAdmin(section, items, files, comments) {
     let itemsHtml = '';
+    let pendingCount = 0;
     for (const item of section.items) {
+      const state = items[item.id];
+      if (state?.pending_review) pendingCount++;
       itemsHtml += renderItemAdmin(item, section, items, files, comments);
     }
 
@@ -1849,18 +1912,29 @@
     }
     const sectionStatus = answered === section.items.length
       ? '<span style="color: var(--kab-success); font-size: 11px; font-weight: 700;">✓ ATLIKTA</span>'
-      : `<span style="color: #E65100; font-size: 11px; font-weight: 700;">⏳ ${answered}/${section.items.length}</span>`;
+      : `<span style="color: #FFE0B2; font-size: 11px; font-weight: 700;">⏳ ${answered}/${section.items.length}</span>`;
+
+    const pendingBadge = pendingCount > 0
+      ? `<span class="pending-badge">⚠ ${pendingCount} nauja</span>`
+      : '';
+
+    // Skyriai sukleidiami pagal nutylėjimą, IŠSKYRUS tuos kur yra pending review
+    const collapsedClass = pendingCount > 0 ? '' : 'collapsed';
 
     return `
-      <div class="admin-section">
-        <div class="admin-section-header">
-          <div>
-            <span class="section-num-badge">${section.number}</span>
-            <strong>${escapeHtml(section.title)}</strong>
-          </div>
-          <div>${sectionStatus}</div>
+      <div class="collapsible-section ${collapsedClass}">
+        <div class="collapsible-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span class="toggle-icon">▼</span>
+          <span class="section-title">
+            <span style="background:var(--kab-gold);color:var(--kab-navy);padding:2px 7px;border-radius:3px;font-weight:700;font-size:11px;margin-right:8px;">${section.number}</span>
+            ${escapeHtml(section.title)}
+            ${pendingBadge}
+          </span>
+          <span class="section-meta">${sectionStatus}</span>
         </div>
-        ${itemsHtml}
+        <div class="collapsible-body">
+          ${itemsHtml}
+        </div>
       </div>
     `;
   }
@@ -1950,11 +2024,20 @@
       `;
     }
 
+    const pendingStar = itemState?.pending_review
+      ? `<span class="pending-star" title="Klientas atnaujino informaciją${itemState.last_updated_by_email ? ' (' + escapeHtml(itemState.last_updated_by_email) + ')' : ''}">★</span>`
+      : '';
+
+    const itemHighlight = itemState?.pending_review
+      ? 'background: #FFFAF0; border-left: 4px solid #C62828;'
+      : '';
+
     return `
-      <div class="admin-item">
+      <div class="admin-item" style="${itemHighlight}">
         <div class="admin-item-header">
           <div>
             <span class="item-num">${numberLabel}.</span>
+            ${pendingStar}
             <strong>${escapeHtml(itemDef.title)}</strong>
           </div>
           ${statusBadge}
@@ -2316,7 +2399,201 @@
       <div id="collaborators-block-${sub.id}" data-submission-id="${sub.id}">
         ${renderCollaboratorsPlaceholder(sub.id)}
       </div>
+      <div id="observers-block-${sub.id}" data-submission-id="${sub.id}">
+        ${renderObserversPlaceholder(sub.id)}
+      </div>
+      <div style="margin-bottom: 16px;">
+        <button class="btn btn-ghost btn-small" onclick="clearPendingReview('${sub.id}')">
+          ✓ Pažymėti naują medžiagą kaip peržiūrėtą (nuvalyti raudonas žvaigždutes)
+        </button>
+      </div>
     `;
+  }
+
+  // ============================================================
+  // V5.2 OBSERVERS (KAB stebėtojai — kompanijos lygmens admin'ai)
+  // ============================================================
+
+  function renderObserversPlaceholder(submissionId) {
+    setTimeout(() => loadObservers(submissionId), 50);
+    return `
+      <div style="margin-bottom: 20px; padding: 12px 15px; background: #F0F7FF; border: 1px solid #5B7CB5; border-radius: 5px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+          <strong style="color: var(--kab-navy); font-size: 14px;">🏢 KAB stebėtojai (peržiūrai, gaus pranešimus)</strong>
+          <button class="btn btn-navy btn-small" onclick="openAddObserverDialog('${submissionId}')">
+            ➕ Pridėti stebėtoją
+          </button>
+        </div>
+        <div id="observers-list-${submissionId}" style="font-size: 13px; color: #666;">
+          Kraunama...
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadObservers(submissionId) {
+    const container = document.getElementById('observers-list-' + submissionId);
+    if (!container) return;
+    try {
+      const { data, error } = await supabase.rpc('admin_list_observers', { p_submission_id: submissionId });
+      if (error) throw error;
+      renderObserversList(submissionId, data || []);
+    } catch (e) {
+      console.error('loadObservers error', e);
+      container.innerHTML = `<span style="color:#C00000;">Klaida: ${escapeHtml(e.message || e)}</span>`;
+    }
+  }
+
+  function renderObserversList(submissionId, rows) {
+    const container = document.getElementById('observers-list-' + submissionId);
+    if (!container) return;
+    if (rows.length === 0) {
+      container.innerHTML = '<em style="color:#999;">Nėra priskirtų stebėtojų. Pridėkite KAB kolegas, kurie matys šitą klausimyną ir gaus pranešimus.</em>';
+      return;
+    }
+    let html = '<table style="width:100%; border-collapse: collapse; font-size: 12px;">';
+    html += `<thead><tr style="border-bottom: 1px solid #E0E0E0;">
+      <th style="text-align:left; padding: 6px 4px; color:#666;">El. paštas</th>
+      <th style="text-align:left; padding: 6px 4px; color:#666;">Asmuo</th>
+      <th style="text-align:center; padding: 6px 4px; color:#666;">Gauna pranešimus</th>
+      <th style="text-align:left; padding: 6px 4px; color:#666;">Paskutinis pranešimas</th>
+      <th style="text-align:center; padding: 6px 4px; color:#666;">Veiksmai</th>
+    </tr></thead><tbody>`;
+    for (const o of rows) {
+      const lastNotif = o.last_notified_at ? new Date(o.last_notified_at).toLocaleString('lt-LT') : '—';
+      html += `<tr style="border-bottom: 1px solid #F0F0F0;">
+        <td style="padding: 6px 4px;"><strong>${escapeHtml(o.email)}</strong></td>
+        <td style="padding: 6px 4px;">${escapeHtml(o.full_name || '—')}</td>
+        <td style="padding: 6px 4px; text-align:center;">${o.notify ? '✅' : '⏸️'}</td>
+        <td style="padding: 6px 4px; font-size:11px; color:#666;">${lastNotif}</td>
+        <td style="padding: 6px 4px; text-align:center;">
+          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px; color:#C00000;" onclick="removeObserver('${o.id}','${submissionId}','${escapeHtml(o.email).replace(/'/g, '&#39;')}')">🗑️</button>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  function openAddObserverDialog(submissionId) {
+    const email = prompt('KAB stebėtojo el. paštas (pvz., kolega@kab.lt):');
+    if (!email || !email.trim()) return;
+    const fullName = prompt('Vardas, pavardė (neprivaloma):') || '';
+    addObserver(submissionId, email.trim(), fullName.trim());
+  }
+
+  async function addObserver(submissionId, email, fullName) {
+    try {
+      const { data, error } = await supabase.rpc('admin_add_observer', {
+        p_submission_id: submissionId,
+        p_email: email,
+        p_full_name: fullName || null,
+        p_notify: true
+      });
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+      if (!result?.ok) {
+        const errMap = {
+          invalid_email: 'Netinkamas el. pašto formatas',
+          submission_not_found: 'Klausimynas nerastas',
+          already_exists: 'Šis stebėtojas jau pridėtas'
+        };
+        alert('Nepavyko pridėti: ' + (errMap[result?.error_code] || result?.error_code));
+        return;
+      }
+      await loadObservers(submissionId);
+      alert('✅ Stebėtojas pridėtas. Jis gaus pranešimus, kai klientas paspaus „Informuoti administratorių".');
+    } catch (e) {
+      console.error('addObserver error', e);
+      alert('Klaida: ' + (e.message || e));
+    }
+  }
+
+  async function removeObserver(observerId, submissionId, email) {
+    if (!confirm(`Tikrai pašalinti stebėtoją „${email}"?`)) return;
+    try {
+      const { data, error } = await supabase.rpc('admin_remove_observer', { p_observer_id: observerId });
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+      if (!result?.ok) { alert('Nepavyko: ' + result?.error_code); return; }
+      await loadObservers(submissionId);
+    } catch (e) {
+      alert('Klaida: ' + (e.message || e));
+    }
+  }
+
+  // ============================================================
+  // V5.2 — Kliento kortelės redagavimas
+  // ============================================================
+
+  async function openEditClientCard(submissionId) {
+    const sub = allSubmissions.find(s => s.id === submissionId);
+    if (!sub) { alert('Klientas nerastas'); return; }
+
+    const name = prompt('Įmonės / kliento pavadinimas:', sub.client_name || '');
+    if (name === null) return;
+    if (!name.trim()) { alert('Pavadinimas privalomas'); return; }
+
+    const contact = prompt('Kontaktinis asmuo:', sub.client_contact || '');
+    if (contact === null) return;
+    const email = prompt('El. paštas (kontaktinis savininkas):', sub.client_email || '');
+    if (email === null) return;
+    const phone = prompt('Telefonas:', sub.client_phone || '');
+    if (phone === null) return;
+    const notes = prompt('Vidinės pastabos:', sub.notes || '');
+    if (notes === null) return;
+
+    try {
+      const { data, error } = await supabase.rpc('admin_update_submission_card', {
+        p_submission_id: submissionId,
+        p_client_name: name.trim(),
+        p_client_contact: contact.trim() || null,
+        p_client_email: email.trim() || null,
+        p_client_phone: phone.trim() || null,
+        p_notes: notes.trim() || null
+      });
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+      if (!result?.ok) {
+        const errMap = { name_required: 'Pavadinimas privalomas', submission_not_found: 'Klausimynas nerastas' };
+        alert('Nepavyko: ' + (errMap[result?.error_code] || result?.error_code));
+        return;
+      }
+      // Atnaujinti lokalius duomenis ir perkrauti modal
+      Object.assign(sub, {
+        client_name: name.trim(),
+        client_contact: contact.trim() || null,
+        client_email: email.trim() || null,
+        client_phone: phone.trim() || null,
+        notes: notes.trim() || null
+      });
+      alert('✅ Kortelė atnaujinta');
+      closeModal();
+      openDetail(submissionId);
+      // Atnaujinti sąrašą
+      loadSubmissions();
+    } catch (e) {
+      console.error('openEditClientCard error', e);
+      alert('Klaida: ' + (e.message || e));
+    }
+  }
+
+  async function clearPendingReview(submissionId) {
+    try {
+      const { data, error } = await supabase.rpc('admin_clear_pending_review', { p_submission_id: submissionId });
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+      const cleared = result?.cleared || 0;
+      alert(`✓ Pažymėta ${cleared} laukų kaip peržiūrėti.`);
+      // Atnaujinti rodinį
+      const sub = allSubmissions.find(s => s.id === submissionId) || (window._currentTemplateState?.submission);
+      if (sub) {
+        closeModal();
+        openDetail(sub.id);
+      }
+    } catch (e) {
+      alert('Klaida: ' + (e.message || e));
+    }
   }
 
   // ============================================================
