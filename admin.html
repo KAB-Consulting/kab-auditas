@@ -37,35 +37,261 @@
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-      background: #F5F5F5;
-      color: #333;
+      background: #F4F6FA;
+      color: #1F2937;
     }
 
-    header {
+    /* ========================================
+       V6.0 — SIDEBAR LAYOUT (eventcast-inspired)
+       ======================================== */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
       background: var(--kab-navy);
       color: white;
-      padding: 20px 30px;
-      border-bottom: 4px solid var(--kab-gold);
+      padding: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-brand {
+      padding: 22px 22px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-brand-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--kab-gold);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--kab-navy);
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .sidebar-brand-name {
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.3px;
+    }
+
+    .sidebar-brand-sub {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-top: 2px;
+    }
+
+    .sidebar-section {
+      padding: 18px 16px 6px;
+    }
+
+    .sidebar-section-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      opacity: 0.5;
+      padding: 0 8px 8px;
+      font-weight: 600;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 8px 12px 12px;
+    }
+
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.78);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: 2px;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar-nav-item:hover {
+      background: rgba(255,255,255,0.07);
+      color: #FFF;
+    }
+    .sidebar-nav-item.active {
+      background: rgba(201,169,97,0.18);
+      color: var(--kab-gold);
+      font-weight: 600;
+    }
+    .sidebar-nav-item.active::before {
+      content: '';
+      width: 3px;
+      height: 18px;
+      background: var(--kab-gold);
+      border-radius: 2px;
+      margin-right: -5px;
+      margin-left: -12px;
+    }
+    .sidebar-nav-icon {
+      width: 20px;
+      text-align: center;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    .sidebar-nav-badge {
+      margin-left: auto;
+      background: var(--kab-gold);
+      color: var(--kab-navy);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      min-width: 22px;
+      text-align: center;
+    }
+
+    .sidebar-user {
+      padding: 16px 18px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+    .sidebar-user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--kab-gold), #A88B4D);
+      color: var(--kab-navy);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .sidebar-user-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .sidebar-user-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-user-email {
+      font-size: 11px;
+      opacity: 0.6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-logout {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.9);
+      border: 1px solid rgba(255,255,255,0.12);
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .sidebar-logout:hover { background: rgba(255,255,255,0.15); }
+
+    /* Content area */
+    .content-area {
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    .topbar {
+      background: white;
+      border-bottom: 1px solid #E5E7EB;
+      padding: 14px 30px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
-
-    header h1 { margin: 0; font-size: 20px; }
-
-    .logout-btn {
-      background: rgba(255,255,255,0.1);
-      color: white;
-      border: 1px solid rgba(255,255,255,0.3);
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
+    .topbar-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--kab-navy);
+      margin: 0;
+    }
+    .topbar-subtitle {
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 2px;
+    }
+    .topbar-search {
+      flex: 1;
+      max-width: 380px;
+      margin: 0 30px;
+      position: relative;
+    }
+    .topbar-search input {
+      width: 100%;
+      padding: 9px 14px 9px 36px;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      background: #F9FAFB;
       font-size: 13px;
+      transition: all 0.15s;
+    }
+    .topbar-search input:focus {
+      outline: none;
+      border-color: var(--kab-gold);
+      background: #FFF;
+      box-shadow: 0 0 0 3px rgba(201,169,97,0.1);
+    }
+    .topbar-search::before {
+      content: '🔍';
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      opacity: 0.5;
     }
 
-    .logout-btn:hover { background: rgba(255,255,255,0.2); }
+    main { max-width: 1320px; margin: 0 auto; padding: 24px 30px 60px; }
 
-    main { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+    /* Toggle button for mobile */
+    .sidebar-toggle {
+      display: none;
+      background: var(--kab-navy);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 18px;
+      cursor: pointer;
+    }
 
     .card {
       background: white;
@@ -319,11 +545,97 @@
 
     .actions-cell { display: flex; gap: 5px; flex-wrap: wrap; }
 
+    @media (max-width: 900px) {
+      .app-layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed;
+        left: -240px;
+        top: 0;
+        width: 240px;
+        z-index: 200;
+        transition: left 0.25s ease;
+      }
+      .sidebar.open { left: 0; box-shadow: 4px 0 20px rgba(0,0,0,0.3); }
+      .sidebar-toggle { display: block; }
+      .topbar-search { display: none; }
+      main { padding: 16px; }
+    }
     @media (max-width: 768px) {
       .form-row { grid-template-columns: 1fr; }
-      header { padding: 15px 20px; flex-direction: column; gap: 10px; }
       table { font-size: 12px; }
       th, td { padding: 8px 6px; }
+    }
+
+    /* V6.0 — atnaujintos statistikų kortelės */
+    .stat-card-v2 {
+      background: white;
+      padding: 18px 20px;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #F3F4F6;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.15s;
+    }
+    .stat-card-v2:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-color: #E5E7EB;
+    }
+    .stat-card-v2-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .stat-card-v2-icon.gold { background: #FEF3C7; color: #D97706; }
+    .stat-card-v2-icon.blue { background: #DBEAFE; color: #2563EB; }
+    .stat-card-v2-icon.green { background: #D1FAE5; color: #059669; }
+    .stat-card-v2-icon.purple { background: #EDE9FE; color: #7C3AED; }
+    .stat-card-v2-icon.red { background: #FEE2E2; color: #DC2626; }
+    .stat-card-v2-icon.gray { background: #F3F4F6; color: #6B7280; }
+
+    .stat-card-v2-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--kab-navy);
+      line-height: 1;
+    }
+    .stat-card-v2-label {
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 4px;
+    }
+
+    /* V6.0 — page section */
+    .page-section {
+      background: white;
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid #F3F4F6;
+    }
+    .page-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .page-section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--kab-navy);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
   </style>
 </head>
@@ -354,73 +666,163 @@
   <!-- DASHBOARD -->
   <div id="dashboard-view" class="hidden">
 
-    <header>
-      <h1>KAB Consulting — Klausimynų valdymas</h1>
-      <div>
-        <span id="user-email" style="font-size: 13px; margin-right: 15px; opacity: 0.8;"></span>
-        <button class="logout-btn" onclick="doLogout()">Atsijungti</button>
-      </div>
-    </header>
+    <div class="app-layout">
+      <!-- SIDEBAR -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-logo">KAB</div>
+          <div>
+            <div class="sidebar-brand-name">KAB Consulting</div>
+            <div class="sidebar-brand-sub">Valdymo sistema</div>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <div class="sidebar-section-label">Pagrindinis</div>
+          <button class="sidebar-nav-item active" data-view="dashboard" onclick="navigateTo('dashboard')">
+            <span class="sidebar-nav-icon">⊞</span>
+            <span>Apžvalga</span>
+          </button>
+          <button class="sidebar-nav-item" data-view="submissions" onclick="navigateTo('submissions')">
+            <span class="sidebar-nav-icon">📋</span>
+            <span>Klausimynai</span>
+            <span class="sidebar-nav-badge" id="sidebar-badge-submissions">—</span>
+          </button>
+          <button class="sidebar-nav-item" data-view="credit" onclick="navigateTo('credit')">
+            <span class="sidebar-nav-icon">📑</span>
+            <span>Dokumentai kreditoriams</span>
+          </button>
+
+          <div class="sidebar-section-label" style="margin-top: 16px;">Konfigūracija</div>
+          <button class="sidebar-nav-item" data-view="templates" onclick="navigateTo('templates')">
+            <span class="sidebar-nav-icon">📐</span>
+            <span>Klausimynų šablonai</span>
+          </button>
+          <button class="sidebar-nav-item" data-view="users" onclick="navigateTo('users')">
+            <span class="sidebar-nav-icon">👥</span>
+            <span>Vartotojai</span>
+          </button>
+
+          <div class="sidebar-section-label" style="margin-top: 16px;">Pagalba</div>
+          <button class="sidebar-nav-item" data-view="help" onclick="navigateTo('help')">
+            <span class="sidebar-nav-icon">📖</span>
+            <span>Instrukcijos</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar" id="user-avatar">T</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+            <div class="sidebar-user-email" id="user-email">—</div>
+          </div>
+          <button class="sidebar-logout" onclick="doLogout()" title="Atsijungti">⎋</button>
+        </div>
+      </aside>
+
+      <!-- CONTENT -->
+      <div class="content-area">
+        <div class="topbar">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+            <div>
+              <h1 class="topbar-title" id="topbar-title">Apžvalga</h1>
+              <div class="topbar-subtitle" id="topbar-subtitle">Visų klausimynų ir bylų santrauka</div>
+            </div>
+          </div>
+          <div class="topbar-search">
+            <input type="text" placeholder="Ieškoti kliento, įmonės..." id="topbar-search-input" oninput="onTopbarSearch(this.value)">
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-gold btn-small" onclick="openCreateModal()">+ Naujas klausimynas</button>
+          </div>
+        </div>
 
     <main>
 
-      <!-- Dokumentų pateikimo kreditoriams modulis -->
-      <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-left:4px solid var(--kab-gold);">
-        <div>
-          <h2 style="margin:0;">📂 Dokumentų pateikimas kreditoriams</h2>
-          <p style="color:#666;margin:4px 0 0;">Bylos, gavėjai, dokumentų įkėlimas ir prisijungimų/peržiūrų istorija</p>
+      <!-- =============== DASHBOARD APŽVALGA =============== -->
+      <section id="dashboard-stats-section">
+        <!-- Statistikos kortelės — modernios -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 22px;">
+          <div class="stat-card-v2">
+            <div class="stat-card-v2-icon gold">📝</div>
+            <div>
+              <div class="stat-card-v2-value" id="stat-draft">—</div>
+              <div class="stat-card-v2-label">Laukia užpildymo</div>
+            </div>
+          </div>
+          <div class="stat-card-v2">
+            <div class="stat-card-v2-icon blue">📬</div>
+            <div>
+              <div class="stat-card-v2-value" id="stat-submitted">—</div>
+              <div class="stat-card-v2-label">Nauji pateikti</div>
+            </div>
+          </div>
+          <div class="stat-card-v2">
+            <div class="stat-card-v2-icon green">✓</div>
+            <div>
+              <div class="stat-card-v2-value" id="stat-reviewed">—</div>
+              <div class="stat-card-v2-label">Peržiūrėti</div>
+            </div>
+          </div>
+          <div class="stat-card-v2">
+            <div class="stat-card-v2-icon purple">📊</div>
+            <div>
+              <div class="stat-card-v2-value" id="stat-total">—</div>
+              <div class="stat-card-v2-label">Iš viso</div>
+            </div>
+          </div>
         </div>
-        <a href="admin-dokumentai.html" class="btn btn-gold" style="font-size:15px;padding:12px 24px;text-decoration:none;">Atidaryti modulį →</a>
-      </div>
 
-      <!-- Bankroto dokumentų rengimo modulis -->
-      <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-left:4px solid var(--kab-gold);">
-        <div>
-          <h2 style="margin:0;">⚖️ Bankroto dokumentų rengimas</h2>
-          <p style="color:#666;margin:4px 0 0;">Pirminiai raštai iškėlus nemokumo bylą: pranešimai įmonei, darbuotojams, kreditoriams. Bylos kortelė, administratorių blankai, generavimas.</p>
+        <!-- Greitos prieigos kortelės moduliams -->
+        <div class="page-section">
+          <div class="page-section-header">
+            <h2 class="page-section-title">🚀 Moduliai</h2>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+            <a href="admin-dokumentai.html" style="text-decoration:none; color: inherit; display: block;">
+              <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
+                  <div style="width:42px; height:42px; background:#FEF3C7; color:#D97706; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📂</div>
+                  <strong style="color: var(--kab-navy); font-size: 14px;">Dokumentai kreditoriams</strong>
+                </div>
+                <p style="font-size: 12px; color: #6B7280; margin: 0;">Bylos, gavėjai, dokumentų įkėlimas, prisijungimų istorija</p>
+              </div>
+            </a>
+            <a href="admin-bankrotas.html" style="text-decoration:none; color: inherit; display: block;">
+              <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
+                  <div style="width:42px; height:42px; background:#FEE2E2; color:#DC2626; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">⚖️</div>
+                  <strong style="color: var(--kab-navy); font-size: 14px;">Bankroto dokumentai</strong>
+                </div>
+                <p style="font-size: 12px; color: #6B7280; margin: 0;">Pirminiai raštai, blankai, generavimas</p>
+              </div>
+            </a>
+            <div onclick="openSpecModal()" style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
+                <div style="width:42px; height:42px; background:#DBEAFE; color:#2563EB; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🗂️</div>
+                <strong style="color: var(--kab-navy); font-size: 14px;">Pavieniai klausimynai</strong>
+              </div>
+              <p style="font-size: 12px; color: #6B7280; margin: 0;">Spec. šablonai konkretiems klientams (multi-entity)</p>
+            </div>
+            <div onclick="openCreateModal()" style="border: 1px solid var(--kab-gold); border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: linear-gradient(135deg, #FFFEF7, #FFF9E6);" onmouseover="this.style.boxShadow='0 4px 12px rgba(201,169,97,0.2)';" onmouseout="this.style.boxShadow='none';">
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
+                <div style="width:42px; height:42px; background: var(--kab-gold); color: var(--kab-navy); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight: 700;">+</div>
+                <strong style="color: var(--kab-navy); font-size: 14px;">Naujas klausimynas</strong>
+              </div>
+              <p style="font-size: 12px; color: #6B7280; margin: 0;">Auditas, restrukturizavimas arba bankrotas</p>
+            </div>
+          </div>
         </div>
-        <a href="admin-bankrotas.html" class="btn btn-gold" style="font-size:15px;padding:12px 24px;text-decoration:none;">Atidaryti modulį →</a>
-      </div>
+      </section>
 
-      <!-- Pavieniai (spec.) klausimynai -->
-      <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-left:4px solid var(--kab-navy);">
-        <div>
-          <h2 style="margin:0;">🗂️ Pavieniai klausimynai</h2>
-          <p style="color:#666;margin:4px 0 0;">Sukurti pavienį klausimyną pagal spec. šabloną (pvz. įmonių grupės duomenys) konkrečiam klientui — su pasirenkamu įmonių sąrašu</p>
+      <!-- =============== KLAUSIMYNŲ SĄRAŠAS =============== -->
+      <section id="submissions-section">
+      <div class="page-section">
+        <div class="page-section-header">
+          <h2 class="page-section-title">📋 Klausimynų sąrašas</h2>
+          <button class="btn btn-ghost btn-small" onclick="loadSubmissions()">🔄 Atnaujinti</button>
         </div>
-        <button class="btn btn-gold" style="font-size:15px;padding:12px 24px;" onclick="openSpecModal()">+ Kurti pavienį klausimyną</button>
-      </div>
-
-      <!-- Statistikos -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-value" id="stat-draft">-</div>
-          <div class="stat-label">📝 Laukia užpildymo</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-submitted">-</div>
-          <div class="stat-label">📬 Nauji pateikti</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-reviewed">-</div>
-          <div class="stat-label">✓ Peržiūrėti</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-total">-</div>
-          <div class="stat-label">Iš viso</div>
-        </div>
-      </div>
-
-      <!-- Naujo kliento kūrimas - mygtukas, kuris atidaro modal'ą -->
-      <div class="card" style="text-align: center; padding: 25px;">
-        <h2 style="margin-top: 0;">➕ Sukurti naują klausimyno nuorodą</h2>
-        <p style="color: #666; margin-bottom: 15px;">Pasirinkite klausimyno tipą (šabloną) ir užpildykite kliento informaciją</p>
-        <button class="btn btn-gold" style="font-size: 15px; padding: 12px 30px;" onclick="openCreateModal()">+ Kurti naują klausimyną</button>
-      </div>
-
-      <!-- Lentelė -->
-      <div class="card">
-        <h2>📋 Klausimynų sąrašas</h2>
 
         <!-- TABS pagal šabloną -->
         <div style="border-bottom: 2px solid var(--kab-border); margin-bottom: 15px; display: flex; gap: 0; flex-wrap: wrap;">
@@ -441,8 +843,8 @@
           </button>
         </div>
 
-        <!-- Statuso filter + refresh -->
-        <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <!-- Statuso filter -->
+        <div style="margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
           <span style="font-size: 12px; color: #666; margin-right: 5px;">Statusas:</span>
           <button class="btn btn-ghost btn-small" onclick="filterBy('all')">Visi</button>
           <button class="btn btn-ghost btn-small" onclick="filterBy('draft')">📝 Laukiantys</button>
@@ -451,15 +853,76 @@
           <button class="btn btn-ghost btn-small" onclick="filterBy('submitted_final')">✅ Galutiniai</button>
           <button class="btn btn-ghost btn-small" onclick="filterBy('reviewed')">✓ Peržiūrėti</button>
           <button class="btn btn-ghost btn-small" onclick="filterBy('archived')">🗄️ Archyvas</button>
-          <button class="btn btn-ghost btn-small" onclick="loadSubmissions()" style="margin-left: auto;">🔄 Atnaujinti</button>
         </div>
 
         <div id="submissions-table-container">
           <div class="empty-state">Kraunasi...</div>
         </div>
       </div>
+      </section>
+
+      <!-- =============== KREDITORIAMS =============== -->
+      <section id="credit-section" class="page-section" style="text-align:center;">
+        <div class="page-section-header">
+          <h2 class="page-section-title">📑 Dokumentų pateikimas kreditoriams</h2>
+        </div>
+        <p style="color:#6B7280; margin-bottom: 18px;">Atskiras modulis: bylos, gavėjai, dokumentų įkėlimas ir prisijungimų istorija</p>
+        <a href="admin-dokumentai.html" class="btn btn-gold" style="text-decoration:none; padding: 12px 28px;">Atidaryti modulį →</a>
+      </section>
+
+      <!-- =============== ŠABLONAI =============== -->
+      <section id="templates-section" class="page-section">
+        <div class="page-section-header">
+          <h2 class="page-section-title">📐 Klausimynų šablonai</h2>
+        </div>
+        <p style="color:#6B7280; margin: 0 0 12px;">Sistemoje veikiantys šablonai. Naujus šablonus pridėti per Supabase SQL Editor (lentelė <code>questionnaire_templates</code>).</p>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+          <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
+            <div style="font-weight: 600; color: var(--kab-navy);">🔍 Auditas</div>
+            <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">Standartinis audito klausimynas</div>
+          </div>
+          <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
+            <div style="font-weight: 600; color: var(--kab-navy);">📊 Restrukturizavimas</div>
+            <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">RSP-1 plėtros klausimynas</div>
+          </div>
+          <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
+            <div style="font-weight: 600; color: var(--kab-navy);">⚖️ Fizinių asmenų bankrotas</div>
+            <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">FAB klausimynas</div>
+          </div>
+          <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
+            <div style="font-weight: 600; color: var(--kab-navy);">🗂️ Įmonių grupės duomenys (spec.)</div>
+            <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">Multi-entity pavienis šablonas</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============== VARTOTOJAI =============== -->
+      <section id="users-section" class="page-section">
+        <div class="page-section-header">
+          <h2 class="page-section-title">👥 KAB administratoriai</h2>
+        </div>
+        <p style="color:#6B7280; margin: 0 0 12px;">Šios sistemos administratoriai (lentelė <code>admin_users</code>). Naujų pridėjimui — žr. operacinį manualą (5.2 skyrius).</p>
+        <div id="admin-users-list" style="font-size: 13px; color: #6B7280;">Kraunama...</div>
+      </section>
+
+      <!-- =============== INSTRUKCIJOS =============== -->
+      <section id="help-section" class="page-section">
+        <div class="page-section-header">
+          <h2 class="page-section-title">📖 Instrukcijos ir pagalba</h2>
+        </div>
+        <ul style="line-height: 1.8; color: #4B5563; font-size: 13px;">
+          <li><strong>Pirmas žingsnis:</strong> sukurkite naują klausimyną viršuje (➕ mygtukas) — pasirinkite šabloną ir įveskite kliento duomenis</li>
+          <li><strong>Nuoroda klientui:</strong> sukūrus, gausite unikalią nuorodą — siųskite ją el. paštu</li>
+          <li><strong>Prisijungimo apsauga:</strong> klientas atidaręs nuorodą įvedęs el. paštą gauna 6 skaitm. OTP kodą</li>
+          <li><strong>Daugiavartotojų klausimynai:</strong> klausimyno kortelėje galite pridėti papildomus vartotojus (collaborators)</li>
+          <li><strong>KAB stebėtojai:</strong> kortelėje galite pridėti kolegas iš KAB, kurie gaus pranešimus, kai klientas atnaujins duomenis</li>
+          <li><strong>Pilnas manualas:</strong> KAB_System_Manual.docx (žr. archyvo katalogą)</li>
+        </ul>
+      </section>
 
     </main>
+      </div><!-- /content-area -->
+    </div><!-- /app-layout -->
 
   </div>
 
@@ -1090,6 +1553,41 @@
     document.getElementById('login-view').classList.add('hidden');
     document.getElementById('dashboard-view').classList.remove('hidden');
     document.getElementById('user-email').textContent = user.email;
+    // Avatar pirmas raides
+    const initials = (user.email || '?').split('@')[0].slice(0, 2).toUpperCase();
+    const avatar = document.getElementById('user-avatar');
+    if (avatar) avatar.textContent = initials;
+    // Sidebar user name
+    const name = document.getElementById('sidebar-user-name');
+    if (name) name.textContent = user.email.split('@')[0];
+    // Užkrauti admin'us users sekcijai
+    loadAdminUsersList();
+  }
+
+  async function loadAdminUsersList() {
+    try {
+      const { data, error } = await supabase.from('admin_users').select('*').order('full_name');
+      if (error) throw error;
+      const el = document.getElementById('admin-users-list');
+      if (!el) return;
+      if (!data || data.length === 0) {
+        el.innerHTML = '<em>Nėra adminų</em>';
+        return;
+      }
+      let html = '<table style="width:100%; font-size: 13px; border-collapse: collapse;"><thead><tr style="border-bottom: 1px solid #E5E7EB;"><th style="text-align:left; padding: 8px;">El. paštas</th><th style="text-align:left; padding: 8px;">Asmuo</th><th style="text-align:left; padding: 8px;">Rolė</th><th style="text-align:center; padding: 8px;">Aktyvus</th></tr></thead><tbody>';
+      for (const u of data) {
+        html += `<tr style="border-bottom: 1px solid #F3F4F6;">
+          <td style="padding: 8px;"><strong>${escapeHtml(u.email)}</strong></td>
+          <td style="padding: 8px;">${escapeHtml(u.full_name || '—')}</td>
+          <td style="padding: 8px;">${u.role === 'superadmin' ? '<span style="background:#FEF3C7; color:#D97706; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">SUPERADMIN</span>' : '<span style="background:#DBEAFE; color:#2563EB; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">admin</span>'}</td>
+          <td style="padding: 8px; text-align:center;">${u.is_active ? '✅' : '❌'}</td>
+        </tr>`;
+      }
+      html += '</tbody></table>';
+      el.innerHTML = html;
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   async function doLogin() {
@@ -1116,6 +1614,66 @@
   async function doLogout() {
     await supabase.auth.signOut();
     showLogin();
+  }
+
+  // ============================================================
+  // V6.0 — Side menu navigacija
+  // ============================================================
+
+  function navigateTo(view) {
+    // Atnaujinti active item
+    document.querySelectorAll('.sidebar-nav-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.view === view);
+    });
+    // Topbar antraštė + scroll'inti į atitinkamą sekciją
+    const titles = {
+      dashboard: { t: 'Apžvalga', s: 'Visų klausimynų ir bylų santrauka' },
+      submissions: { t: 'Klausimynai', s: 'Audito, restrukturizavimo ir bankroto klausimynų valdymas' },
+      credit: { t: 'Dokumentai kreditoriams', s: 'Bylos kreditoriams su prieigos kontrole' },
+      templates: { t: 'Klausimynų šablonai', s: 'Standartiniai ir pavieniai šablonai (multi-entity)' },
+      users: { t: 'Vartotojai', s: 'KAB administratoriai ir collaborators' },
+      help: { t: 'Instrukcijos', s: 'Sistemos pagalbos centras' }
+    };
+    const meta = titles[view] || titles.dashboard;
+    document.getElementById('topbar-title').textContent = meta.t;
+    document.getElementById('topbar-subtitle').textContent = meta.s;
+
+    // Scroll'inti į atitinkamą sekciją
+    const targets = {
+      dashboard: 'dashboard-stats-section',
+      submissions: 'submissions-section',
+      credit: 'credit-section',
+      templates: 'templates-section',
+      users: 'users-section',
+      help: 'help-section'
+    };
+    const el = document.getElementById(targets[view]);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.scrollBy(0, -80); // kompensuoti topbar
+    }
+
+    // Mobile uždaryti
+    document.getElementById('sidebar').classList.remove('open');
+  }
+
+  function onTopbarSearch(value) {
+    const q = (value || '').trim().toLowerCase();
+    // Filtruoti klausimynų lentelę
+    const rows = document.querySelectorAll('#submissions-table-container tbody tr');
+    let visible = 0;
+    rows.forEach(r => {
+      const text = (r.textContent || '').toLowerCase();
+      const match = !q || text.includes(q);
+      r.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    // Toks pat filter kreditoriams
+    const cRows = document.querySelectorAll('#credit-cases-table tbody tr, .credit-row');
+    cRows.forEach(r => {
+      const text = (r.textContent || '').toLowerCase();
+      r.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
   }
 
   // ===== SUBMISSIONS =====
@@ -1154,6 +1712,9 @@
     document.getElementById('stat-submitted').textContent = counts.submitted + counts.submitted_interim + counts.submitted_final;
     document.getElementById('stat-reviewed').textContent = counts.reviewed;
     document.getElementById('stat-total').textContent = allSubmissions.length;
+    // V6.0 — sidebar badge
+    const badge = document.getElementById('sidebar-badge-submissions');
+    if (badge) badge.textContent = allSubmissions.length;
 
     // Template tab counts (v4.0)
     updateTemplateTabCounts();
