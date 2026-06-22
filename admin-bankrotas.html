@@ -141,8 +141,10 @@
       </div>
       <div class="tabs">
         <div class="tab active" data-pane="card">📋 Bylos kortelė</div>
-        <div class="tab" data-pane="recipients">👥 Darbuotojai / kreditoriai</div>
+        <div class="tab" data-pane="recipients">👥 Gavėjai</div>
         <div class="tab" data-pane="documents">📑 Dokumentai</div>
+        <div class="tab" data-pane="dispatch">📤 Siuntimas ir sąrašai</div>
+        <div class="tab" data-pane="log">🕓 Žurnalas</div>
       </div>
 
       <!-- KORTELĖ -->
@@ -170,6 +172,7 @@
         <div class="tabs" style="margin-bottom:14px;">
           <div class="tab active" data-rtype="employee">👷 Darbuotojai (<span id="cntEmp">0</span>)</div>
           <div class="tab" data-rtype="creditor">💼 Kreditoriai (<span id="cntCred">0</span>)</div>
+          <div class="tab" data-rtype="interested">📨 Suinteresuoti asmenys (<span id="cntInt">0</span>)</div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
           <strong id="recListTitle">Darbuotojų sąrašas</strong>
@@ -210,6 +213,37 @@
         <div id="docsMsg"></div>
         <div class="sec-title" style="margin-top:22px;">📚 Sugeneruotų dokumentų biblioteka</div>
         <div id="documentsTable" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- SIUNTIMAS IR SĄRAŠAI -->
+      <div id="paneDispatch" class="card hidden">
+        <div style="background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+          <strong style="color:var(--navy);">Siuntimas ir sąrašai</strong>
+          <div class="muted" style="font-size:12px;">Pasirinkite adresatus ir veiksmą: el. paštas (kreditoriams/suinteresuotiems su el. paštu) arba kurjerio sąrašas (paštui vokuose pagal adresus).</div>
+        </div>
+        <label class="label">Adresatų grupė</label>
+        <select id="dispGroup" class="select">
+          <option value="creditor">Kreditoriai</option>
+          <option value="interested">Suinteresuoti asmenys</option>
+          <option value="employee">Darbuotojai</option>
+        </select>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="dispScope" value="all" checked> Visiems grupėje</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="dispScope" value="selected"> Tik pažymėtiems</label>
+        </div>
+        <div id="dispList" style="margin-top:12px;"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+          <button class="btn btn-gold" id="courierXlsxBtn">📦 Generuoti kurjerio sąrašą (XLSX)</button>
+          <button class="btn btn-ghost" id="addrCsvBtn">📄 Adresų sąrašas (CSV)</button>
+        </div>
+        <div id="dispMsg"></div>
+      </div>
+
+      <!-- ŽURNALAS -->
+      <div id="paneLog" class="card hidden">
+        <div class="sec-title" style="margin-top:0;">🕓 Bylos žurnalas</div>
+        <div class="muted" style="font-size:12px;margin-bottom:10px;">Generavimo, sąrašų eksporto ir siuntimo įvykiai.</div>
+        <div id="logTable"></div>
       </div>
     </div>
   </div>
@@ -254,7 +288,7 @@
       <h2 id="recModalTitle">Pridėti gavėją</h2>
       <input type="hidden" id="recId">
       <label class="label">Tipas</label>
-      <select id="recType" class="select"><option value="employee">Darbuotojas</option><option value="creditor">Kreditorius</option></select>
+      <select id="recType" class="select"><option value="employee">Darbuotojas</option><option value="creditor">Kreditorius</option><option value="interested">Suinteresuotas asmuo</option></select>
       <label class="label">Vardas, pavardė / pavadinimas *</label><input id="recName" class="input">
       <div class="row"><div><label class="label">Pareigos</label><input id="recPosition" class="input"></div><div><label class="label">Asmens / įm. kodas</label><input id="recCode" class="input"></div></div>
       <div class="row"><div><label class="label">El. paštas</label><input id="recEmail" class="input"></div><div><label class="label">Reikalavimo suma (€)</label><input id="recAmount" class="input" type="number" step="0.01"></div></div>
@@ -272,18 +306,28 @@
     <div class="modal">
       <h2>Importuoti gavėjus</h2>
       <label class="label">Tipas</label>
-      <select id="impType" class="select"><option value="employee">Darbuotojai</option><option value="creditor">Kreditoriai</option></select>
+      <select id="impType" class="select"><option value="employee">Darbuotojai</option><option value="creditor">Kreditoriai</option><option value="interested">Suinteresuoti asmenys</option></select>
+      <!-- CSV/XLSX tiesioginis įkėlimas (tikslus, su antraštėmis) -->
+      <div style="background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:12px;margin:14px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div><strong style="color:var(--navy);">📊 Įkelti CSV / Excel failą</strong>
+            <div class="muted" style="font-size:12px;">Stulpeliai atpažįstami pagal antraštę: Vardas/Pavadinimas, Kodas, Reikalavimo suma, El. paštas, Telefonas, Adresas.</div></div>
+          <div><input type="file" id="impSheet" accept=".csv,.xlsx,.xls" class="hidden">
+            <button class="btn btn-sm" id="impSheetBtn">⬆️ Įkelti CSV/Excel</button></div>
+        </div>
+        <div id="impSheetMsg"></div>
+      </div>
       <div style="background:#FFFDF5;border:1px solid var(--gold);border-radius:8px;padding:12px;margin:14px 0;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
           <div><strong style="color:var(--navy);">🤖 Nuskaityti iš failo (AI)</strong>
-            <div class="muted" style="font-size:12px;">Įkelkite sąrašą (PDF / CSV / nuotrauka). AI atpažins eilutes.</div></div>
+            <div class="muted" style="font-size:12px;">PDF / nuotrauka / nestruktūrizuotas tekstas. AI atpažins eilutes.</div></div>
           <div><input type="file" id="impFile" accept=".pdf,.csv,.txt,.png,.jpg,.jpeg" class="hidden">
-            <button class="btn btn-sm btn-gold" id="impFileBtn">⬆️ Įkelti sąrašą</button></div>
+            <button class="btn btn-sm btn-gold" id="impFileBtn">⬆️ Nuskaityti AI</button></div>
         </div>
         <div id="impAiMsg"></div>
       </div>
-      <label class="label">Arba įklijuokite (po vieną eilutę: <b>Vardas Pavardė; Pareigos; Kodas; El.paštas</b>)</label>
-      <textarea id="impData" class="textarea" style="min-height:120px;font-family:monospace;" placeholder="Jonas Jonaitis; Vadybininkas; 38901011234; jonas@example.lt"></textarea>
+      <label class="label">Arba įklijuokite (stulpeliai: <b>Vardas; Kodas; Reikalavimo suma; El.paštas; Telefonas; Adresas</b>)</label>
+      <textarea id="impData" class="textarea" style="min-height:120px;font-family:monospace;" placeholder="UAB Pavyzdys; 123456789; 1000.00; info@pvz.lt; +37060000000; Gatvė 1, Vilnius"></textarea>
       <div id="impMsg"></div>
       <!-- DUBLIŲ blokas (rodomas po patikros) -->
       <div id="impDupBlock" class="hidden" style="margin-top:14px;background:#FFF7E0;border:1px solid var(--gold);border-radius:8px;padding:12px;">
@@ -304,6 +348,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
@@ -418,7 +463,7 @@
       REC_TYPE='employee'; ENRICHED={};
       document.querySelectorAll('#paneRecipients .tab').forEach(t=>t.classList.toggle('active',t.dataset.rtype==='employee'));
       document.querySelectorAll('#caseDetailView > .tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.pane==='card'));
-      show('paneCard'); hide('paneRecipients'); hide('paneDocuments');
+      show('paneCard'); hide('paneRecipients'); hide('paneDocuments'); hide('paneDispatch'); hide('paneLog');
       $('cardMsg').innerHTML=''; $('aiMsg').innerHTML='';
       views('caseDetailView');
       if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); }
@@ -437,13 +482,17 @@
       CASES=data||[]; openCase(newId);
     };
 
-    document.querySelectorAll('#caseDetailView .tab').forEach(t=>{
+    document.querySelectorAll('#caseDetailView > .tabs .tab').forEach(t=>{
       t.onclick=()=>{
-        document.querySelectorAll('#caseDetailView .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+        document.querySelectorAll('#caseDetailView > .tabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
         const p=t.dataset.pane;
         $('paneCard').classList.toggle('hidden',p!=='card');
         $('paneRecipients').classList.toggle('hidden',p!=='recipients');
         $('paneDocuments').classList.toggle('hidden',p!=='documents');
+        $('paneDispatch').classList.toggle('hidden',p!=='dispatch');
+        $('paneLog').classList.toggle('hidden',p!=='log');
+        if(p==='dispatch')renderDispatch();
+        if(p==='log')loadLog();
       };
     });
 
@@ -457,13 +506,15 @@
     let REC_TYPE='employee'; // aktyvus sub-tab: employee / creditor
     function curRecs(){ return RECIPIENTS.filter(r=>r.recipient_type===REC_TYPE); }
     function renderRecipients(){
-      // skaitliukai abiem tipams
+      // skaitliukai visiems tipams
       $('cntEmp').textContent=RECIPIENTS.filter(r=>r.recipient_type==='employee').length;
       $('cntCred').textContent=RECIPIENTS.filter(r=>r.recipient_type==='creditor').length;
-      $('recListTitle').textContent = REC_TYPE==='employee' ? 'Darbuotojų sąrašas' : 'Kreditorių sąrašas';
+      const intEl=$('cntInt'); if(intEl)intEl.textContent=RECIPIENTS.filter(r=>r.recipient_type==='interested').length;
+      const tName = REC_TYPE==='employee'?'Darbuotojų':REC_TYPE==='creditor'?'Kreditorių':'Suinteresuotų asmenų';
+      $('recListTitle').textContent = tName+' sąrašas';
       const rows=curRecs();
       const isCred=REC_TYPE==='creditor';
-      if(!rows.length){ $('recipientsTable').innerHTML='<div class="muted center" style="padding:20px;">'+(isCred?'Kreditorių':'Darbuotojų')+' sąrašas tuščias.</div>'; return; }
+      if(!rows.length){ $('recipientsTable').innerHTML='<div class="muted center" style="padding:20px;">'+tName+' sąrašas tuščias.</div>'; return; }
       const dash=v=>v?esc(v):'<span style="color:#C0392B;">—</span>';
       const cell=(r,f)=>{ const hl=(ENRICHED[r.id]||[]).includes(f); return `<td${hl?' style="background:#FFF2B8;font-weight:600;"':''}>${dash(r[f])}${hl?' <span title="AI atnaujino" style="font-size:11px;">🆕</span>':''}</td>`; };
       const extraHead = isCred ? '<th>Reikalavimo suma</th>' : '<th>Pareigos</th>';
@@ -488,7 +539,8 @@
     function openRecModal(r){
       r=r||{}; $('recId').value=r.id||'';
       const t=r.recipient_type||REC_TYPE; // naujas įrašas — aktyvaus skirtuko tipas
-      $('recModalTitle').textContent=(r.id?'Redaguoti ':'Pridėti ')+(t==='creditor'?'kreditorių':'darbuotoją');
+      const tn=t==='creditor'?'kreditorių':t==='interested'?'suinteresuotą asmenį':'darbuotoją';
+      $('recModalTitle').textContent=(r.id?'Redaguoti ':'Pridėti ')+tn;
       $('recType').value=t; $('recName').value=r.full_name||''; $('recPosition').value=r.position||'';
       $('recCode').value=r.personal_code||''; $('recEmail').value=r.email||''; $('recAmount').value=r.claim_amount||''; $('recAddress').value=r.address||'';
       $('recMsg').innerHTML=''; show('recipientModal');
@@ -548,8 +600,64 @@
 
     // ---------- IMPORTAS ----------
     let DUP_PENDING=null; // { type, news:[...], dups:[{row, existing}] }
+    let IMPORT_ROWS=[]; // parsinti įrašai (iš CSV/XLSX/AI/įklijavimo), naudojami importui
+
+    // antraštės stulpelių atpažinimas pagal raktažodžius
+    function mapHeader(headers){
+      const norm=h=>(h||'').toString().toLowerCase().replace(/[^a-ząčęėįšųūž]/g,'');
+      const idx={};
+      headers.forEach((h,i)=>{ const n=norm(h);
+        if(idx.full_name===undefined && (n.includes('vardas')||n.includes('pavadinimas')||n.includes('gavėjas')||n.includes('gaveja'))) idx.full_name=i;
+        else if(idx.personal_code===undefined && (n.includes('kodas')||n.includes('įmkodas')||n.includes('imkodas'))) idx.personal_code=i;
+        else if(idx.claim_amount===undefined && (n.includes('suma')||n.includes('reikalav'))) idx.claim_amount=i;
+        else if(idx.email===undefined && (n.includes('paštas')||n.includes('pastas')||n.includes('email')||n.includes('elpaštas'))) idx.email=i;
+        else if(idx.phone===undefined && (n.includes('telefon')||n.includes('tel')||n.includes('numeris'))) idx.phone=i;
+        else if(idx.address===undefined && (n.includes('adresas')||n.includes('vietovė')||n.includes('vietove'))) idx.address=i;
+        else if(idx.position===undefined && (n.includes('pareigos'))) idx.position=i;
+      });
+      return idx;
+    }
+    function rowsToRecipients(matrix, type){
+      if(!matrix.length)return [];
+      const headers=matrix[0].map(c=>(c==null?'':String(c)));
+      const idx=mapHeader(headers);
+      // jei antraštės neatpažintos (nėra vardo stulpelio) — laikom kad pirmoj eilutėj jau duomenys, tvarka fiksuota
+      const hasHeader = idx.full_name!==undefined;
+      const start = hasHeader ? 1 : 0;
+      const fixed = { full_name:0, personal_code:1, claim_amount:2, email:3, phone:4, address:5 };
+      const map = hasHeader ? idx : fixed;
+      const out=[];
+      for(let i=start;i<matrix.length;i++){
+        const r=matrix[i]; if(!r||!r.length)continue;
+        const get=k=> map[k]!==undefined && r[map[k]]!=null ? String(r[map[k]]).trim() : '';
+        const name=get('full_name'); if(!name)continue;
+        out.push({ recipient_type:type, full_name:name, personal_code:get('personal_code')||null,
+          claim_amount: get('claim_amount') ? parseFloat(String(get('claim_amount')).replace(',','.').replace(/[^0-9.]/g,''))||null : null,
+          email:get('email')||null, phone:get('phone')||null, address:get('address')||null, position:get('position')||null });
+      }
+      return out;
+    }
+    // CSV → matrica (su kabučių palaikymu per SheetJS)
+    $('impSheetBtn').onclick=()=>$('impSheet').click();
+    $('impSheet').onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file)return;
+      $('impSheetMsg').innerHTML='<div class="muted">⏳ Skaitoma…</div>';
+      try{
+        const buf=await file.arrayBuffer();
+        const wb=XLSX.read(buf,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        const recs=rowsToRecipients(matrix.filter(r=>r.some(c=>String(c).trim())), $('impType').value);
+        if(!recs.length){ $('impSheetMsg').innerHTML='<div class="error">Nepavyko atpažinti eilučių. Patikrinkite, ar yra antraštė su „Vardas/Pavadinimas“.</div>'; return; }
+        IMPORT_ROWS=recs;
+        // parodom textarea peržiūrai (kad matytų ką importuos)
+        $('impData').value=recs.map(r=>[r.full_name,r.personal_code||'',r.claim_amount||'',r.email||'',r.phone||'',r.address||''].join('; ')).join('\n');
+        $('impSheetMsg').innerHTML='<div class="success">Atpažinta eilučių: '+recs.length+'. Peržiūrėkite žemiau ir spauskite „Tikrinti ir importuoti“.</div>';
+      }catch(err){ $('impSheetMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    };
     function resetImportModal(){ $('impDupBlock').classList.add('hidden'); $('impDupList').innerHTML=''; DUP_PENDING=null; }
-    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; $('impAiMsg').innerHTML=''; $('impType').value=REC_TYPE; resetImportModal(); show('importModal'); };
+    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; $('impAiMsg').innerHTML=''; $('impSheetMsg').innerHTML=''; IMPORT_ROWS=[]; $('impType').value=REC_TYPE; resetImportModal(); show('importModal'); };
     $('impCancel').onclick=()=>hide('importModal');
     const norm=s=>(s||'').trim().toLowerCase().replace(/\s+/g,' ');
     // dublio paieška tarp esamų to paties tipo: pagal kodą (jei yra), kitaip pagal vardą
@@ -560,10 +668,13 @@
     }
     $('impSave').onclick=async()=>{
       const type=$('impType').value;
+      // textarea visada nugali (vartotojas galėjo redaguoti); tvarka: Vardas; Kodas; Suma; El.paštas; Tel; Adresas
       const lines=$('impData').value.split('\n').map(l=>l.trim()).filter(Boolean);
       if(!lines.length){ $('impMsg').innerHTML='<div class="error">Nėra duomenų.</div>'; return; }
       const parsed=lines.map(l=>{ const p=l.split(/\t|;/).map(s=>s.trim());
-        return { recipient_type:type, full_name:p[0]||null, position:p[1]||null, personal_code:p[2]||null, email:p[3]||null }; })
+        return { recipient_type:type, full_name:p[0]||null, personal_code:p[1]||null,
+          claim_amount: p[2] ? parseFloat(String(p[2]).replace(',','.').replace(/[^0-9.]/g,''))||null : null,
+          email:p[3]||null, phone:p[4]||null, address:p[5]||null }; })
         .filter(r=>r.full_name);
       // atskiriam naujus nuo dublių
       const news=[], dups=[];
@@ -669,6 +780,7 @@
         $('docsMsg').innerHTML='<div class="error">Klaida: '+esc(r.error||'')+hint+'</div>'; return;
       }
       $('docsMsg').innerHTML='<div class="success">Sugeneruota dokumentų: <b>'+r.count+'</b>.</div>';
+      try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:'docs_generated', p_details:{ template:code, count:r.count } }); }catch(_){}
       await loadDocuments();
     };
 
@@ -779,7 +891,7 @@
         const r=await callAiExtract(path,kind);
         if(!r.success){ $('impAiMsg').innerHTML='<div class="error">AI klaida: '+esc(r.error||'')+'</div>'; return; }
         const rows=r.rows||[];
-        $('impData').value=rows.map(x=>[x.full_name||'',x.position||'',x.personal_code||'',x.email||''].join('; ')).join('\n');
+        $('impData').value=rows.map(x=>[x.full_name||'',x.personal_code||'',x.claim_amount||'',x.email||'',x.phone||'',x.address||''].join('; ')).join('\n');
         $('impAiMsg').innerHTML='<div class="success">Atpažinta eilučių: '+rows.length+'. Peržiūrėkite ir spauskite „Importuoti“.</div>';
       }catch(err){ $('impAiMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
       finally{ e.target.value=''; }
@@ -877,6 +989,77 @@
         $('settingsMsg').innerHTML='<div class="success">Šablono DOCX atnaujintas.</div>'; await renderSetTemplates();
       }catch(err){ $('settingsMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
       finally{ e.target.value=''; }
+    }
+
+    // ---------- SIUNTIMAS IR SĄRAŠAI ----------
+    function dispScope(){ return document.querySelector('input[name="dispScope"]:checked').value; }
+    function dispTargets(){
+      const g=$('dispGroup').value;
+      let pool=RECIPIENTS.filter(r=>r.recipient_type===g);
+      if(dispScope()==='selected'){ const sel=Array.from(document.querySelectorAll('.disp-cb:checked')).map(cb=>cb.value); pool=pool.filter(r=>sel.includes(r.id)); }
+      return pool;
+    }
+    function renderDispatch(){
+      const g=$('dispGroup').value;
+      const pool=RECIPIENTS.filter(r=>r.recipient_type===g);
+      if(!pool.length){ $('dispList').innerHTML='<div class="muted center" style="padding:16px;">Šioje grupėje gavėjų nėra.</div>'; return; }
+      const withEmail=pool.filter(r=>r.email).length, withAddr=pool.filter(r=>r.address).length;
+      $('dispList').innerHTML='<div class="hint" style="margin-bottom:8px;">Iš viso: '+pool.length+' · su el. paštu: '+withEmail+' · su adresu: '+withAddr+'</div>'+
+        '<table><thead><tr><th style="width:28px;"><input type="checkbox" id="dispAll"></th><th>Vardas / pavadinimas</th><th>El. paštas</th><th>Adresas</th></tr></thead><tbody>'+
+        pool.map(r=>`<tr><td><input type="checkbox" class="disp-cb" value="${r.id}"></td><td><b>${esc(r.full_name||'—')}</b></td><td>${r.email?esc(r.email):'<span style="color:#C0392B;">—</span>'}</td><td>${r.address?esc(r.address):'<span style="color:#C0392B;">—</span>'}</td></tr>`).join('')+'</tbody></table>';
+      const all=$('dispAll'); if(all)all.onclick=()=>document.querySelectorAll('.disp-cb').forEach(cb=>cb.checked=all.checked);
+    }
+    $('dispGroup').onchange=renderDispatch;
+    document.querySelectorAll('input[name="dispScope"]').forEach(r=>r.onchange=renderDispatch);
+
+    // kurjerio XLSX (Samus formatas: Gavėjas, Adresas, Pašto kodas, Tel., El.paštas, Kontaktinis asmuo, Pastabos, C.O.D., Bylos nr., Su lydinčiu, Barkodas)
+    function splitAddress(addr){
+      // bandom išskirti pašto kodą (LT-XXXXX arba XXXXX) iš adreso
+      const m=(addr||'').match(/(LT-?\d{5}|\b\d{5}\b)/);
+      const code=m?m[0]:''; const rest=(addr||'').replace(code,'').replace(/,\s*$/,'').trim().replace(/,\s*,/g,',');
+      return { addr:rest||addr||'', code };
+    }
+    $('courierXlsxBtn').onclick=async()=>{
+      const targets=dispTargets().filter(r=>r.address);
+      if(!targets.length){ $('dispMsg').innerHTML='<div class="error">Nėra adresatų su adresu. Pažymėkite arba surinkite kontaktus.</div>'; return; }
+      const header=['Gavėjas*','Adresas*','Pašto kodas*','Tel. numeris','El. paštas','Kontaktinis asmuo','Pastabos','C.O.D. suma','Bylos numeris','Su lydinčiu dokumentu','Barkodas'];
+      const rows=targets.map(r=>{ const a=splitAddress(r.address);
+        return [r.full_name||'', a.addr, a.code, r.phone||'', r.email||'', '', '', '', CURRENT.case_short_code||'', '', '']; });
+      const ws=XLSX.utils.aoa_to_sheet([header,...rows]);
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Importas LT');
+      const fname='kurjeris_'+(CURRENT.case_short_code||'byla')+'_'+$('dispGroup').value+'.xlsx';
+      XLSX.writeFile(wb,fname);
+      $('dispMsg').innerHTML='<div class="success">Sugeneruotas kurjerio sąrašas: '+targets.length+' adresatų ('+esc(fname)+').</div>';
+      await logEvent('courier_list',{ group:$('dispGroup').value, count:targets.length, file:fname });
+    };
+    $('addrCsvBtn').onclick=async()=>{
+      const targets=dispTargets();
+      if(!targets.length){ $('dispMsg').innerHTML='<div class="error">Nėra adresatų.</div>'; return; }
+      const header=['Vardas/Pavadinimas','Kodas','El. paštas','Telefonas','Adresas'];
+      const rows=targets.map(r=>[r.full_name||'',r.personal_code||'',r.email||'',r.phone||'',r.address||'']);
+      const ws=XLSX.utils.aoa_to_sheet([header,...rows]);
+      const csv=XLSX.utils.sheet_to_csv(ws);
+      const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+      const url=URL.createObjectURL(blob); const a=document.createElement('a');
+      a.href=url; a.download='adresai_'+(CURRENT.case_short_code||'byla')+'_'+$('dispGroup').value+'.csv'; a.click(); URL.revokeObjectURL(url);
+      $('dispMsg').innerHTML='<div class="success">Adresų sąrašas (CSV): '+targets.length+' įrašų.</div>';
+      await logEvent('list_exported',{ group:$('dispGroup').value, count:targets.length });
+    };
+
+    // ---------- ŽURNALAS ----------
+    async function logEvent(action, details){
+      try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:action, p_details:details }); }catch(_){}
+    }
+    async function loadLog(){
+      const { data }=await sb.from('insolvency_activity_log').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
+      const rows=data||[];
+      if(!rows.length){ $('logTable').innerHTML='<div class="muted center" style="padding:16px;">Žurnalas tuščias.</div>'; return; }
+      const lbl={ docs_generated:'Dokumentai sugeneruoti', list_exported:'Sąrašas eksportuotas', courier_list:'Kurjerio sąrašas', docs_sent:'Išsiųsta el. paštu' };
+      $('logTable').innerHTML='<table><thead><tr><th>Data</th><th>Įvykis</th><th>Detalės</th></tr></thead><tbody>'+
+        rows.map(r=>{ const d=r.details||{};
+          const det=Object.entries(d).map(([k,v])=>k+': '+v).join(', ');
+          return `<tr><td class="muted">${fmtDate(r.created_at)}</td><td><b>${esc(lbl[r.action]||r.action)}</b></td><td class="muted">${esc(det)}</td></tr>`;
+        }).join('')+'</tbody></table>';
     }
 
     boot();
