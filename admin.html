@@ -3223,7 +3223,8 @@
         <td style="padding: 6px 4px;">${c.login_count || 0}</td>
         <td style="padding: 6px 4px; font-size:11px; color:#666;">${lastLogin}</td>
         <td style="padding: 6px 4px; text-align:center; white-space:nowrap;">
-          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px;" onclick="sendCollaboratorInvite('${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')">📧 Siųsti nuorodą</button>
+          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px;" onclick="sendCollaboratorInvite('${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')" title="Siųsti laišką su nuoroda">📧 Siųsti</button>
+          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px;" onclick="copyCollaboratorLink('${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')" title="Kopijuoti nuorodą rankiniam pasiuntimui">🔗 Kopijuoti</button>
           ${c.is_owner
               ? ''
               : `<button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px; color:#C00000;" onclick="removeCollaborator('${c.id}','${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')">🗑️</button>`}
@@ -3296,6 +3297,91 @@
       console.error('removeCollaborator error', e);
       alert('Klaida: ' + (e.message || e));
     }
+  }
+
+  async function copyCollaboratorLink(submissionId, email) {
+    try {
+      const { data: sub, error } = await supabase
+        .from('questionnaire_submissions')
+        .select('access_token, client_name, template_id, questionnaire_templates(code)')
+        .eq('id', submissionId)
+        .single();
+      if (error) throw error;
+      // Pasirenkam atitinkamą HTML puslapį pagal template
+      const code = sub.questionnaire_templates?.code;
+      let pagePath = '/questionnaire.html';
+      if (code === 'restrukturizavimas') pagePath = '/restructuring.html';
+      const url = 'https://help.vvc.lt' + pagePath + '?t=' + encodeURIComponent(sub.access_token) + '&welcome=1';
+
+      const emailTemplate = [
+        'Sveiki,',
+        '',
+        'KAB Consulting (UAB „Klaipėdos administratorių biuras") paruošė klausimyną ' + (sub.client_name || '') + '.',
+        '',
+        'Prašome atidaryti šią nuorodą ir užpildyti klausimyną:',
+        url,
+        '',
+        'KAIP PRISIJUNGTI:',
+        '1. Atidarykite nuorodą naršyklėje',
+        '2. Įveskite šį el. paštą: ' + email,
+        '3. Spauskite „Gauti kodą" — gausite 6 skaitm. OTP kodą atskiru laišku',
+        '4. SVARBU: kodo laiškas gali atsidurti Spam / Junk aplanke — patikrinkite ten, jei per 1 min. negaunate',
+        '5. Įveskite gautą kodą',
+        '6. Atsidaro klausimynas — galite pildyti',
+        '',
+        'Klausimai: klausk@kab.lt',
+        '',
+        'KAB Consulting',
+        'UAB „Klaipėdos administratorių biuras"'
+      ].join('\n');
+
+      const modal = document.createElement('div');
+      modal.className = 'modal-backdrop';
+      modal.style.zIndex = '300';
+      const safeUrl = escapeHtml(url);
+      const safeEmail = escapeHtml(email);
+      const safeTemplate = escapeHtml(emailTemplate);
+      modal.innerHTML = `
+        <div class="modal" style="max-width: 720px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+            <h2 style="margin:0;">🔗 Nuoroda klientui</h2>
+            <button class="btn btn-ghost btn-small" onclick="this.closest('.modal-backdrop').remove()">✕</button>
+          </div>
+          <p style="font-size: 13px; color: #5A5A5A;">Nuoroda vartotojui <strong>${safeEmail}</strong>. Galite nukopijuoti ir įklijuoti į savo el. paštą.</p>
+
+          <div style="margin: 15px 0;">
+            <label style="font-weight: 600; color: var(--kab-navy); font-size: 13px;">Tiesioginė nuoroda:</label>
+            <div id="copy-link-url-box" style="background: #F7F4EC; border: 1px solid var(--kab-gold); border-radius: 5px; padding: 10px 14px; margin-top: 6px; font-family: monospace; font-size: 12px; word-break: break-all; color: var(--kab-navy);">${safeUrl}</div>
+            <button class="btn btn-gold" style="margin-top: 8px;" onclick="copyToClipboard(this, document.getElementById('copy-link-url-box').textContent, '📋 Kopijuoti nuorodą')">📋 Kopijuoti nuorodą</button>
+          </div>
+
+          <div style="margin: 20px 0 8px 0;">
+            <label style="font-weight: 600; color: var(--kab-navy); font-size: 13px;">📧 Paruoštas laiško šablonas (su instrukcija):</label>
+            <textarea id="copy-email-template" readonly style="width:100%; min-height: 280px; margin-top: 6px; padding: 12px; font-size: 12px; font-family: monospace; border: 1px solid #E5E5E5; border-radius: 5px; background: #FAFAFA; color: #333; resize: vertical;">${safeTemplate}</textarea>
+            <button class="btn btn-navy" style="margin-top: 8px;" onclick="copyToClipboard(this, document.getElementById('copy-email-template').value, '📋 Kopijuoti laiško tekstą')">📋 Kopijuoti laiško tekstą</button>
+          </div>
+
+          <div style="margin-top: 16px; padding: 10px 14px; background: #E3F2FD; border-radius: 5px; font-size: 12px; color: #1565C0;">
+            💡 <strong>Patarimas:</strong> nukopijavę, įklijuokite į savo Outlook arba kitą el. pašto klientą ir nusiųskite vartotojui per savo paštą. Tai padidina laiško pasitikėjimo lygį (gavėjas pamato Jūsų vardą).
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    } catch (e) {
+      console.error('copyCollaboratorLink error', e);
+      alert('Klaida: ' + (e.message || e));
+    }
+  }
+
+  function copyToClipboard(btn, text, originalLabel) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Nukopijuota!';
+      setTimeout(() => { btn.textContent = originalLabel; }, 2000);
+    }).catch(err => {
+      alert('Nepavyko nukopijuoti: ' + err);
+    });
   }
 
   async function sendCollaboratorInvite(submissionId, email) {

@@ -1071,12 +1071,25 @@
 
     <!-- 1) Email gate -->
     <div id="gate-email-view" class="gate-box gate-hidden">
-      <div class="lang-toggle">LT - EN</div>
-      <h2>Patvirtinkite tapatybe</h2>
+      <div style="background: linear-gradient(135deg, #0B1E3F, #1A3660); color:#FFF; margin:-25px -25px 18px; padding:18px 25px; border-radius: 6px 6px 0 0;">
+        <div style="font-weight: 700; font-size: 16px; letter-spacing: 0.3px;">KAB Consulting</div>
+        <div style="font-size: 12px; opacity: 0.85; margin-top: 3px;">UAB „Klaipėdos administratorių biuras"</div>
+      </div>
+      <h2 style="margin-top: 5px;">Sveiki atvyke! / Welcome!</h2>
       <p class="gate-sub">
-        Saugumo sumetimais prie&#353; atidarant klausimyna pra&#353;ome ivesti el. pa&#353;to adresa, i kuri buvo siusta &#353;i nuoroda.<br>
-        <em>For security, please enter the email address this link was sent to.</em>
+        Atidarete saugia KAB Consulting klausimyno nuoroda.<br>
+        <em>You opened a secure KAB Consulting questionnaire link.</em>
       </p>
+      <div style="background:#FFF9E6; border:1px solid #C9A961; border-radius:6px; padding:12px 14px; margin: 12px 0 14px; font-size: 12.5px; line-height: 1.55; color:#333;">
+        <strong style="color:#0B1E3F;">📋 Kaip prisijungti / How to log in:</strong>
+        <ol style="margin:6px 0 0; padding-left: 18px;">
+          <li>Iveskite el. pa&#353;to adresa, i kuri gavote &#353;i nuoroda</li>
+          <li>Spauskite mygtuka &bdquo;Siusti patvirtinimo koda&ldquo;</li>
+          <li>Per kelias sekundes gausite atskira lai&#353;ka su 6 skaitmenu kodu</li>
+          <li><strong style="color:#C62828;">⚠️ SVARBU:</strong> kodas gali atsidurti <strong>SPAM / JUNK</strong> aplanke &mdash; patikrinkite ten, jei per 1 min. negaunate</li>
+          <li>Iveskite gauta koda &mdash; atsidarys klausimynas</li>
+        </ol>
+      </div>
       <label class="gate-field-label" for="gate-email-input">El. pa&#353;tas / Email</label>
       <input type="email" id="gate-email-input" placeholder="vardas@imones-pavadinimas.lt" autocomplete="email">
       <div id="gate-email-error" class="gate-error gate-hidden"></div>
@@ -1088,13 +1101,20 @@
 
     <!-- 2) OTP gate -->
     <div id="gate-otp-view" class="gate-box gate-hidden">
-      <div class="lang-toggle">LT - EN</div>
-      <h2>Iveskite koda</h2>
+      <div style="background: linear-gradient(135deg, #0B1E3F, #1A3660); color:#FFF; margin:-25px -25px 18px; padding:18px 25px; border-radius: 6px 6px 0 0;">
+        <div style="font-weight: 700; font-size: 16px;">KAB Consulting</div>
+        <div style="font-size: 12px; opacity: 0.85; margin-top: 3px;">UAB „Klaipėdos administratorių biuras"</div>
+      </div>
+      <h2 style="margin-top: 5px;">Iveskite koda / Enter code</h2>
       <p class="gate-sub">
-        I <strong id="gate-otp-email-display"></strong> i&#353;siuntem 6 skaitmenu koda. Iveskite ji &#382;emiau (kodas galioja 15 min.).<br>
-        <em>We sent a 6-digit code to the address above. Enter it below (valid 15 min).</em>
+        I <strong id="gate-otp-email-display"></strong> i&#353;siuntem 6 skaitmenu koda.<br>
+        <em>We sent a 6-digit code to the address above.</em>
       </p>
-      <label class="gate-field-label" for="gate-otp-input">Kodas / Code</label>
+      <div style="background:#FFEBEE; border-left: 3px solid #C62828; border-radius:5px; padding:10px 13px; margin: 10px 0; font-size: 12.5px; color:#333; line-height: 1.5;">
+        ⚠️ <strong>Negaunate lai&#353;ko per 1 min.?</strong> Patikrinkite <strong>SPAM / JUNK</strong> aplanka.<br>
+        <em>Don&#39;t see the email after 1 min? Check your Spam/Junk folder.</em>
+      </div>
+      <label class="gate-field-label" for="gate-otp-input">Kodas / Code (galioja 15 min.)</label>
       <input type="text" id="gate-otp-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" class="gate-otp-input" placeholder="------" autocomplete="one-time-code">
       <div id="gate-otp-error" class="gate-error gate-hidden"></div>
       <button id="gate-otp-btn" class="gate-btn">Patvirtinti / Verify</button>
