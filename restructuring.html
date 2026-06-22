@@ -2526,6 +2526,7 @@
       const btn = document.getElementById('gate-otp-btn');
       btn.disabled = true; btn.textContent = 'Tikrinama... / Verifying...';
       try {
+        // V5.3 — papildomas error logging
         const { data, error } = await supabase.rpc('verify_client_otp', {
           p_access_token: _gateAccessToken, p_email: _gatePendingEmail, p_code: code
         });
@@ -2550,13 +2551,14 @@
           return;
         }
         sessionStorage.setItem(_gateSessionKey, 'verified');
-        sessionStorage.setItem('client_otp_email', email);
+        sessionStorage.setItem('client_otp_email', _gatePendingEmail);
         _gateHideOverlay();
         document.getElementById('loadingState').style.display = 'flex';
         init();
       } catch (e) {
+        console.error('OTP verify error:', e);
         btn.disabled = false; btn.textContent = 'Patvirtinti / Verify';
-        errEl.textContent = 'Ryšio klaida. / Connection error.';
+        errEl.textContent = 'Ryšio klaida. / Connection error. (' + (e.message || e) + ')';
         errEl.classList.remove('gate-hidden');
       }
     }

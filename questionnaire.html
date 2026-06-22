@@ -2708,7 +2708,8 @@
         });
         btn.disabled = false; btn.textContent = 'Patvirtinti / Verify';
         if (error) {
-          errEl.textContent = 'Klaida tikrinant koda. / Verification error.';
+          console.error('verify_client_otp error:', error);
+          errEl.textContent = 'Klaida: ' + (error.message || error.details || JSON.stringify(error));
           errEl.classList.remove('gate-hidden');
           return;
         }
@@ -2727,13 +2728,14 @@
           return;
         }
         sessionStorage.setItem(_gateSessionKey, 'verified');
-        sessionStorage.setItem('client_otp_email', email);
+        sessionStorage.setItem('client_otp_email', _gatePendingEmail);
         _gateHideOverlay();
         document.getElementById('loadingState').style.display = 'flex';
         init();
       } catch (e) {
+        console.error('OTP verify error:', e);
         btn.disabled = false; btn.textContent = 'Patvirtinti / Verify';
-        errEl.textContent = 'Ryšio klaida. / Connection error.';
+        errEl.textContent = 'Ryšio klaida. / Connection error. (' + (e.message || e) + ')';
         errEl.classList.remove('gate-hidden');
       }
     }
