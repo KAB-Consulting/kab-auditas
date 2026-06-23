@@ -109,7 +109,13 @@
         <select id="setCaseAdm" class="select" style="margin-bottom:10px;"></select>
         <div id="setCasesList"></div>
       </div>
-      <div class="card hidden" id="setTemplates"><div id="setTemplatesList"></div></div>
+      <div class="card hidden" id="setTemplates">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <strong>Dokumentų šablonai (bendri visiems administratoriams)</strong>
+          <button class="btn btn-sm" id="newTplBtn">+ Naujas šablonas</button>
+        </div>
+        <div id="setTemplatesList"></div>
+      </div>
       <div id="settingsMsg"></div>
     </div>
 
@@ -343,6 +349,27 @@
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
         <button class="btn btn-ghost" id="impCancel">Atšaukti</button>
         <button class="btn" id="impSave">Tikrinti ir importuoti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAUJO ŠABLONO MODALĖ -->
+  <div id="newTplModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:520px;">
+      <h2>Naujas dokumento šablonas</h2>
+      <div class="muted" style="margin-bottom:12px;">Sukurkite šablono įrašą, tada įkelkite jo DOCX (su {{...}} žymėmis). Šablonas bus prieinamas visiems administratoriams.</div>
+      <label class="label">Kodas (be tarpų, pvz. pranesimas_debitoriui) *</label><input id="ntCode" class="input" placeholder="pranesimas_debitoriui">
+      <label class="label">Pavadinimas *</label><input id="ntTitle" class="input" placeholder="Pranešimas debitoriui">
+      <div class="row">
+        <div><label class="label">Tipas (scope)</label>
+          <select id="ntScope" class="select"><option value="single">Vienas bendras (single)</option><option value="per_recipient">Vardinis kiekvienam (per_recipient)</option></select></div>
+        <div><label class="label">Gavėjų tipas (jei vardinis)</label>
+          <select id="ntRtype" class="select"><option value="">—</option><option value="employee">Darbuotojai</option><option value="creditor">Kreditoriai</option><option value="interested">Suinteresuoti</option><option value="debtor">Debitoriai</option></select></div>
+      </div>
+      <div id="ntMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="ntCancel">Atšaukti</button>
+        <button class="btn" id="ntSave">Sukurti šabloną</button>
       </div>
     </div>
   </div>
@@ -968,10 +995,27 @@
       const { data }=await sb.from('insolvency_templates').select('*').order('sort_order');
       const rows=data||[];
       $('setTemplatesList').innerHTML='<table><thead><tr><th>Kodas</th><th>Pavadinimas</th><th>DOCX</th><th>Aktyvus</th><th></th></tr></thead><tbody>'+
-        rows.map(t=>`<tr><td><code>${esc(t.code)}</code></td><td>${esc(t.title)}</td><td>${t.storage_path?'<span class="badge badge-green">įkeltas</span>':'<span class="badge badge-gray">nėra</span>'}</td><td>${t.is_active?'taip':'ne'}</td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="renameTpl('${t.code}','${esc(t.title)}')">✎ Pavadinimas</button> <input type="file" accept=".docx" class="hidden" id="setTplFile_${t.code}"><button class="btn btn-sm btn-ghost" onclick="document.getElementById('setTplFile_${t.code}').click()">⬆️ DOCX</button></td></tr>`).join('')+'</tbody></table>';
+        rows.map(t=>`<tr><td><code>${esc(t.code)}</code></td><td>${esc(t.title)}<div class="muted" style="font-size:11px;">${t.scope==='per_recipient'?'vardinis · '+esc(t.recipient_type||''):'bendras'}</div></td><td>${t.storage_path?'<span class="badge badge-green">įkeltas</span>':'<span class="badge badge-gray">nėra</span>'}</td><td>${t.is_active?'taip':'ne'}</td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="renameTpl('${t.code}','${esc(t.title)}')">✎</button> <input type="file" accept=".docx" class="hidden" id="setTplFile_${t.code}"><button class="btn btn-sm btn-ghost" onclick="document.getElementById('setTplFile_${t.code}').click()">⬆️ DOCX</button> <button class="btn btn-sm btn-danger" onclick="delTpl('${t.code}','${esc(t.title)}')">🗑</button></td></tr>`).join('')+'</tbody></table>';
       // prikabinam DOCX įkėlimo handlerius
       rows.forEach(t=>{ const inp=$('setTplFile_'+t.code); if(inp)inp.onchange=e=>uploadSetTpl(e,t.code); });
     }
+    // naujas šablonas
+    $('newTplBtn').onclick=()=>{ ['ntCode','ntTitle'].forEach(i=>$(i).value=''); $('ntScope').value='single'; $('ntRtype').value=''; $('ntMsg').innerHTML=''; show('newTplModal'); };
+    $('ntCancel').onclick=()=>hide('newTplModal');
+    $('ntSave').onclick=async()=>{
+      const code=$('ntCode').value.trim(), title=$('ntTitle').value.trim();
+      if(!code||!title){ $('ntMsg').innerHTML='<div class="error">Įveskite kodą ir pavadinimą.</div>'; return; }
+      const res=await sb.rpc('create_insolvency_template',{ p:{ code, title, scope:$('ntScope').value, recipient_type:$('ntRtype').value } });
+      if(res.error){ $('ntMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+      if(res.data&&res.data.ok===false){ const m={code_exists:'Toks kodas jau yra',bad_code:'Netinkamas kodas'}; $('ntMsg').innerHTML='<div class="error">'+(m[res.data.error_code]||res.data.error_code)+'</div>'; return; }
+      hide('newTplModal'); $('settingsMsg').innerHTML='<div class="success">Šablonas sukurtas. Dabar įkelkite jo DOCX (⬆️ DOCX).</div>'; await renderSetTemplates();
+    };
+    window.delTpl=async(code,title)=>{
+      if(!confirm('Ištrinti šabloną „'+title+'“? DOCX failas Storage liks, bet įrašas dings.'))return;
+      const res=await sb.rpc('delete_insolvency_template',{ p_code:code });
+      if(res.error){ $('settingsMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+      $('settingsMsg').innerHTML='<div class="success">Šablonas ištrintas.</div>'; await renderSetTemplates();
+    };
     window.renameTpl=async(code,cur)=>{
       const title=prompt('Naujas šablono pavadinimas:',cur); if(title===null||!title.trim())return;
       const res=await sb.rpc('update_insolvency_template',{ p_code:code, p:{ title:title.trim() } });
