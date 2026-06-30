@@ -485,6 +485,20 @@
     </div>
   </div>
 
+  <!-- PDF PERŽIŪROS MODALĖ -->
+  <div id="previewModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:900px;width:100%;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h2 id="previewTitle" style="margin:0;font-size:17px;">Dokumento peržiūra</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm" id="previewDownloadBtn">⬇️ Atsisiųsti</button>
+          <button class="btn btn-sm btn-ghost" id="previewCloseBtn">✕ Uždaryti</button>
+        </div>
+      </div>
+      <iframe id="previewFrame" style="width:100%;height:70vh;border:1px solid var(--bd);border-radius:6px;"></iframe>
+    </div>
+  </div>
+
   <!-- PDF GENERAVIMO MODALĖ (priedų pasirinkimas) -->
   <div id="pdfModal" class="modal-bg hidden">
     <div class="modal">
@@ -947,6 +961,30 @@
       $('documentsTable').innerHTML='<table><thead><tr><th>Data</th><th>Dokumentas</th><th>Šablonas</th><th></th></tr></thead><tbody>'+
         docx.map(d=>`<tr><td class="muted">${fmtDate(d.created_at)}</td><td><b>${esc(d.file_name||'—')}</b></td><td>${esc(d.template_code||'')}</td><td style="text-align:right;white-space:nowrap;">${d.docx_path?`<button class="btn btn-sm btn-ghost" onclick="downloadDoc('${esc(d.docx_path)}')">⬇️ DOCX</button> <button class="btn btn-sm btn-gold" onclick="openPdfModal('${d.id}','${esc(d.file_name||'')}')">📄 Generuoti PDF</button>`:''}</td></tr>`).join('')+'</tbody></table>';
     }
+    let PREVIEW_PATH=null, PREVIEW_BLOB=null;
+    window.previewDoc=async(path,title)=>{ // peržiūra modaliame lange per blob (visada inline)
+      PREVIEW_PATH=path;
+      $('previewTitle').textContent=title||'Dokumento peržiūra';
+      $('previewFrame').src='about:blank';
+      show('previewModal');
+      try{
+        const { data:{ session } } = await sb.auth.getSession();
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+          body:JSON.stringify({ path })});
+        const r=await res.json();
+        if(!r.success||!r.url){ hide('previewModal'); alert('Nepavyko atidaryti: '+(r.error||'')); return; }
+        // atsisiunčiam kaip blob ir rodom per blob: URL — naršyklė rodo inline, neatsisiunčia
+        let blob=await (await fetch(r.url)).blob();
+        // jei tipas neaiškus, bet failas .pdf — priskiriam PDF tipą (kad rodytų inline)
+        if((!blob.type||blob.type==='application/octet-stream')&&/\.pdf$/i.test(path)) blob=new Blob([blob],{type:'application/pdf'});
+        if(PREVIEW_BLOB)URL.revokeObjectURL(PREVIEW_BLOB);
+        PREVIEW_BLOB=URL.createObjectURL(blob);
+        $('previewFrame').src=PREVIEW_BLOB;
+      }catch(err){ hide('previewModal'); alert('Klaida: '+(err.message||err)); }
+    };
+    $('previewCloseBtn').onclick=()=>{ $('previewFrame').src='about:blank'; if(PREVIEW_BLOB){URL.revokeObjectURL(PREVIEW_BLOB);PREVIEW_BLOB=null;} hide('previewModal'); };
+    $('previewDownloadBtn').onclick=()=>{ if(PREVIEW_PATH)downloadDoc(PREVIEW_PATH); };
     window.downloadDoc=async(path)=>{
       const { data:{ session } } = await sb.auth.getSession();
       const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{
@@ -1261,10 +1299,11 @@
       const rows=data||[];
       if(!rows.length){ $('logTable').innerHTML='<div class="muted center" style="padding:16px;">Žurnalas tuščias.</div>'; return; }
       const lbl={ docs_generated:'Dokumentai sugeneruoti', list_exported:'Sąrašas eksportuotas', courier_list:'Kurjerio sąrašas', docs_sent:'Išsiųsta el. paštu' };
-      $('logTable').innerHTML='<table><thead><tr><th>Data</th><th>Įvykis</th><th>Detalės</th></tr></thead><tbody>'+
-        rows.map(r=>{ const d=r.details||{};
+      $('logTable').innerHTML='<table><thead><tr><th>Data</th><th>Įvykis</th><th>Detalės</th><th></th></tr></thead><tbody>'+
+        rows.map(r=>{ const d=Object.assign({},r.details||{}); const pdf=d.pdf_path; delete d.pdf_path;
           const det=Object.entries(d).map(([k,v])=>k+': '+v).join(', ');
-          return `<tr><td class="muted">${fmtDate(r.created_at)}</td><td><b>${esc(lbl[r.action]||r.action)}</b></td><td class="muted">${esc(det)}</td></tr>`;
+          const act=pdf?`<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(pdf)}')">👁 Peržiūrėti</button>`:'';
+          return `<tr><td class="muted">${fmtDate(r.created_at)}</td><td><b>${esc(lbl[r.action]||r.action)}</b></td><td class="muted">${esc(det)}</td><td style="text-align:right;">${act}</td></tr>`;
         }).join('')+'</tbody></table>';
     }
 
@@ -1343,7 +1382,7 @@
       if(!pdfs.length){ $('finalDocsTable').innerHTML='<div class="muted center" style="padding:16px;">Galutinių PDF dar nėra. Generuokite PDF iš DOCX (Dokumentai).</div>'; return; }
       $('finalDocsTable').innerHTML='<table><thead><tr><th>Data</th><th>Dokumentas</th><th>Priedų</th><th></th></tr></thead><tbody>'+
         pdfs.map(d=>{ const na=(d.attachments||[]).filter(a=>a.ok).length;
-          return `<tr><td class="muted">${fmtDate(d.created_at)}</td><td><b>${esc(d.file_name||'—')}</b></td><td>${na||'—'}</td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="downloadDoc('${esc(d.pdf_path)}')">👁 Peržiūrėti</button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(d.pdf_path)}')">⬇️ Atsisiųsti</button> <button class="btn btn-sm btn-gold" onclick="useAsAttachment('${esc(d.pdf_path)}','${esc(d.file_name||'')}')">📎 Į priedus</button></td></tr>`;
+          return `<tr><td class="muted">${fmtDate(d.created_at)}</td><td><b>${esc(d.file_name||'—')}</b></td><td>${na||'—'}</td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(d.pdf_path)}')">👁 Peržiūrėti</button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(d.pdf_path)}')">⬇️ Atsisiųsti</button> <button class="btn btn-sm btn-gold" onclick="useAsAttachment('${esc(d.pdf_path)}','${esc(d.file_name||'')}')">📎 Į priedus</button></td></tr>`;
         }).join('')+'</tbody></table>';
     }
     window.downloadDocDl=async(path)=>{ // su download=true
@@ -1361,7 +1400,7 @@
       const atts=await loadAttachments();
       if(!atts.length){ $('attachTable').innerHTML='<div class="muted center" style="padding:16px;">Priedų bibliotekoje nieko nėra.</div>'; return; }
       $('attachTable').innerHTML='<table><thead><tr><th>Data</th><th>Pavadinimas</th><th></th></tr></thead><tbody>'+
-        atts.map(a=>`<tr><td class="muted">${fmtDate(a.created_at)}</td><td><b>${esc(a.title)}</b></td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="downloadDoc('${esc(a.storage_path)}')">👁</button> <button class="btn btn-sm btn-danger" onclick="delAttach('${a.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>';
+        atts.map(a=>`<tr><td class="muted">${fmtDate(a.created_at)}</td><td><b>${esc(a.title)}</b></td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(a.storage_path)}','${esc(a.title)}')">👁</button> <button class="btn btn-sm btn-danger" onclick="delAttach('${a.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>';
     }
     $('attachUploadBtn').onclick=()=>$('attachFile').click();
     $('attachFile').onchange=async(e)=>{
@@ -1398,7 +1437,7 @@
       ACTS=data||[];
       if(!ACTS.length){ $('actsTable').innerHTML='<div class="muted center" style="padding:16px;">Aktų dar nėra.</div>'; return; }
       $('actsTable').innerHTML='<table><thead><tr><th>Data</th><th>Nr.</th><th>Tipas</th><th>Statusas</th><th></th></tr></thead><tbody>'+
-        ACTS.map(a=>`<tr><td class="muted">${esc(a.act_date||'')}</td><td>${esc(a.act_no||'')}</td><td>${esc(ACT_TITLES[a.act_type]||a.act_type)}</td><td>${a.status==='final'?'<span class="badge badge-green">Galutinis</span>':'<span class="badge badge-gold">Juodraštis</span>'}</td><td style="text-align:right;white-space:nowrap;">${a.pdf_path?`<button class="btn btn-sm btn-ghost" onclick="downloadDoc('${esc(a.pdf_path)}')">👁 PDF</button> `:''}<button class="btn btn-sm btn-ghost" onclick="editAct('${a.id}')">✎ Koreguoti</button> <button class="btn btn-sm btn-danger" onclick="delAct('${a.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>';
+        ACTS.map(a=>`<tr><td class="muted">${esc(a.act_date||'')}</td><td>${esc(a.act_no||'')}</td><td>${esc(ACT_TITLES[a.act_type]||a.act_type)}</td><td>${a.status==='final'?'<span class="badge badge-green">Galutinis</span>':'<span class="badge badge-gold">Juodraštis</span>'}</td><td style="text-align:right;white-space:nowrap;">${a.pdf_path?`<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(a.pdf_path)}','${esc(a.act_no||'Aktas')}')">👁 PDF</button> `:''}<button class="btn btn-sm btn-ghost" onclick="editAct('${a.id}')">✎ Koreguoti</button> <button class="btn btn-sm btn-danger" onclick="delAct('${a.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>';
     }
     $('newActBtn').onclick=()=>openActEditor(null);
     $('backToActs').onclick=()=>loadActs();
@@ -1630,7 +1669,7 @@
         const { error }=await sb.storage.from('insolvency-docs').upload(path,blob,{ contentType:'application/pdf', upsert:true });
         if(error)throw error;
         await sb.rpc('save_insolvency_act',{ p_id:id, p:{ pdf_path:path } });
-        try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:'docs_generated', p_details:{ type:'act', act:p.act_no } }); }catch(_){}
+        try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:'docs_generated', p_details:{ type:'act', act:p.act_no, pdf_path:path } }); }catch(_){}
         // atsisiunčiam iškart
         const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=fname; a.click(); URL.revokeObjectURL(url);
         $('actMsg').innerHTML='<div class="success">Aktas sugeneruotas (PDF). Rasite aktų sąraše ir Dokumentų bibliotekoje.</div>';
