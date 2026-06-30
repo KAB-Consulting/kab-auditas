@@ -296,12 +296,39 @@
 
           <!-- lentelė (ne automobiliui) -->
           <div id="actTableWrap" style="margin-top:14px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
               <strong id="actTableTitle">Eilutės</strong>
-              <button class="btn btn-sm btn-ghost" id="addRowBtn">+ Eilutė</button>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="btn btn-sm btn-ghost" id="pasteRowsBtn">📋 Įklijuoti iš Excel/Word</button>
+                <button class="btn btn-sm btn-ghost" id="addRowBtn">+ Eilutė</button>
+              </div>
             </div>
             <div id="actRows"></div>
           </div>
+
+          <!-- copy/paste blokas -->
+          <div id="pasteBlock" class="hidden" style="margin-top:10px;background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:12px;">
+            <div class="hint" style="margin-bottom:6px;">Nukopijuokite lentelę iš Excel/Word ir įklijuokite žemiau (Ctrl+V). Pirma eilutė — antraštė.</div>
+            <textarea id="pasteData" class="textarea" style="min-height:90px;font-family:monospace;" placeholder="Įklijuokite čia…"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-sm" id="pasteParseBtn">Atpažinti stulpelius</button><button class="btn btn-sm btn-ghost" id="pasteCancelBtn">Atšaukti</button></div>
+            <div id="pasteMapBlock" class="hidden" style="margin-top:10px;">
+              <div class="hint" style="margin-bottom:6px;">Patikrinkite stulpelių priskyrimą (galite pakeisti):</div>
+              <div id="pasteMapping"></div>
+              <button class="btn btn-sm btn-gold" id="pasteApplyBtn" style="margin-top:8px;">✓ Įkelti eilutes</button>
+            </div>
+            <div id="pasteMsg"></div>
+          </div>
+
+          <!-- nuotraukos -->
+          <div class="sec-title" style="margin-top:18px;">Nuotraukos (priedas akto gale)</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <input type="file" id="photoFile" accept="image/*" multiple class="hidden">
+            <input type="file" id="photoCam" accept="image/*" capture="environment" class="hidden">
+            <button class="btn btn-sm btn-ghost" id="photoUploadBtn">🖼 Įkelti nuotraukas</button>
+            <button class="btn btn-sm btn-ghost" id="photoCamBtn">📷 Fotografuoti</button>
+          </div>
+          <div id="photoMsg"></div>
+          <div id="photoGrid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
 
           <!-- parašai -->
           <div class="sec-title" style="margin-top:18px;">Parašai</div>
@@ -1363,7 +1390,7 @@
       asset_intangible:[['name','Pavadinimas'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
     };
     const ACT_TITLES={ documents:'DOKUMENTŲ PERDAVIMO AKTAS', asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)', asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)', asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)', asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)', asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)', vehicle:'AUTOMOBILIO PERDAVIMO AKTAS' };
-    let ACTS=[], ACT_ROWS=[];
+    let ACTS=[], ACT_ROWS=[], ACT_PHOTOS=[];
 
     async function loadActs(){
       $('actEditor').classList.add('hidden'); $('actsListWrap').classList.remove('hidden');
@@ -1389,6 +1416,9 @@
       $('actHandover').value=a.handover_person||'';
       $('actReceiver').value=a.receiver_person|| (CURRENT_ADM&&CURRENT_ADM.authorized_person)||'';
       ACT_ROWS = Array.isArray(a.rows)&&a.rows.length ? a.rows.slice() : [];
+      ACT_PHOTOS = Array.isArray(a.photos) ? a.photos.slice() : [];
+      $('pasteBlock').classList.add('hidden'); $('pasteData').value=''; $('pasteMapBlock').classList.add('hidden'); $('pasteMsg').innerHTML='';
+      renderPhotos();
       const m=a.meta||{};
       $('vMarke').value=m.marke||''; $('vVin').value=m.vin||''; $('vPlate').value=m.plate||''; $('vKm').value=m.km||''; $('vColor').value=m.color||''; $('vCond').value=m.cond||''; $('vNotes').value=m.notes||'';
       $('actMsg').innerHTML='';
@@ -1444,6 +1474,7 @@
         handover_person:$('actHandover').value.trim(), receiver_person:$('actReceiver').value.trim(),
         rows: t==='vehicle'?[]:ACT_ROWS,
         meta: t==='vehicle'?{ marke:$('vMarke').value, vin:$('vVin').value, plate:$('vPlate').value, km:$('vKm').value, color:$('vColor').value, cond:$('vCond').value, notes:$('vNotes').value }:{},
+        photos: ACT_PHOTOS,
         sig_handover:sigData('sigHandover'), sig_receiver:sigData('sigReceiver'), status
       };
     }
@@ -1456,6 +1487,81 @@
       return res.data.id;
     }
     $('actSaveDraft').onclick=async()=>{ const id=await saveAct('draft'); if(id)$('actMsg').innerHTML='<div class="success">Tarpinė informacija išsaugota.</div>'; };
+
+    // ----- NUOTRAUKOS -----
+    $('photoUploadBtn').onclick=()=>$('photoFile').click();
+    $('photoCamBtn').onclick=()=>$('photoCam').click();
+    async function handlePhotos(files){
+      $('photoMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
+      try{
+        for(const file of files){
+          const safe=(file.name||'foto.jpg').replace(/[^A-Za-z0-9._-]+/g,'_');
+          const path=`${CURRENT.case_short_code}/act_photos/${Date.now()}_${Math.random().toString(36).slice(2,7)}_${safe}`;
+          const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true, contentType:file.type||'image/jpeg' });
+          if(error)throw error;
+          ACT_PHOTOS.push({ path, name:file.name||'nuotrauka' });
+        }
+        await renderPhotos(); $('photoMsg').innerHTML='<div class="success">Nuotraukos įkeltos. Nepamirškite išsaugoti akto.</div>';
+      }catch(err){ $('photoMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+    }
+    $('photoFile').onchange=e=>{ if(e.target.files.length)handlePhotos(Array.from(e.target.files)); e.target.value=''; };
+    $('photoCam').onchange=e=>{ if(e.target.files.length)handlePhotos(Array.from(e.target.files)); e.target.value=''; };
+    async function renderPhotos(){
+      if(!ACT_PHOTOS.length){ $('photoGrid').innerHTML='<div class="muted" style="font-size:12px;">Nuotraukų nėra.</div>'; return; }
+      const { data:{ session } } = await sb.auth.getSession();
+      const cells=await Promise.all(ACT_PHOTOS.map(async(ph,i)=>{
+        let url='';
+        try{ const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},body:JSON.stringify({ path:ph.path })}); const r=await res.json(); url=r.url||''; }catch(_){}
+        return `<div style="position:relative;width:90px;"><img src="${url}" style="width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--bd);"><button class="btn btn-sm btn-danger" style="position:absolute;top:2px;right:2px;padding:2px 6px;" onclick="delPhoto(${i})">✕</button></div>`;
+      }));
+      $('photoGrid').innerHTML=cells.join('');
+    }
+    window.delPhoto=i=>{ ACT_PHOTOS.splice(i,1); renderPhotos(); };
+
+    // ----- COPY/PASTE su auto-mapping -----
+    let PASTE_MATRIX=[], PASTE_HEADERS=[];
+    $('pasteRowsBtn').onclick=()=>{ $('pasteBlock').classList.toggle('hidden'); $('pasteData').value=''; $('pasteMapBlock').classList.add('hidden'); $('pasteMsg').innerHTML=''; setTimeout(()=>$('pasteData').focus(),50); };
+    $('pasteCancelBtn').onclick=()=>$('pasteBlock').classList.add('hidden');
+    $('pasteParseBtn').onclick=()=>{
+      const raw=$('pasteData').value.trim();
+      if(!raw){ $('pasteMsg').innerHTML='<div class="error">Įklijuokite duomenis.</div>'; return; }
+      // Excel/Word kopijavimas → eilutės skiriamos \n, stulpeliai \t (Excel) arba keli tarpai
+      const lines=raw.split('\n').map(l=>l.replace(/\r$/,'')).filter(l=>l.trim());
+      const sep = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : '\t');
+      PASTE_MATRIX=lines.map(l=>l.split(sep).map(c=>c.trim()));
+      PASTE_HEADERS=PASTE_MATRIX[0];
+      // auto-mapping pagal raktažodžius
+      const cols=ACT_COLS[$('actType').value]||[];
+      const guess=h=>{ const n=h.toLowerCase();
+        if(/pavad|name|daikt|preki|dokument/.test(n))return 'name';
+        if(/adres|address/.test(n))return 'address';
+        if(/unikal|unique/.test(n))return 'unique_no';
+        if(/vieta|location|saugoj/.test(n))return 'location';
+        if(/kiek|qty|quantity|vnt/.test(n))return 'qty';
+        if(/lap|pages|psl/.test(n))return 'pages';
+        if(/pastab.*2|notes.*2/.test(n))return 'notes2';
+        if(/pastab|notes|komentar/.test(n))return 'notes1';
+        return '';
+      };
+      const opts=k=>['<option value="">— nepriskirta —</option>'].concat(cols.map(c=>`<option value="${c[0]}" ${k===c[0]?'selected':''}>${esc(c[1])}</option>`)).join('');
+      $('pasteMapping').innerHTML=PASTE_HEADERS.map((h,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="min-width:140px;font-size:13px;"><b>${esc(h||('Stulpelis '+(i+1)))}</b></span> → <select class="select pmap" data-ci="${i}" style="max-width:220px;">${opts(guess(h))}</select></div>`).join('');
+      $('pasteMapBlock').classList.remove('hidden');
+      $('pasteMsg').innerHTML='<div class="hint">Rasta stulpelių: '+PASTE_HEADERS.length+', eilučių: '+(PASTE_MATRIX.length-1)+'. Patikrinkite priskyrimą.</div>';
+    };
+    $('pasteApplyBtn').onclick=()=>{
+      const map={}; document.querySelectorAll('.pmap').forEach(s=>{ if(s.value)map[+s.dataset.ci]=s.value; });
+      if(!Object.values(map).includes('name')){ $('pasteMsg').innerHTML='<div class="error">Bent vienas stulpelis turi būti priskirtas „Pavadinimui“.</div>'; return; }
+      // ar pirma eilutė antraštė? jei bent vienas headeris atpažintas — taip
+      const start=1;
+      let added=0;
+      for(let i=start;i<PASTE_MATRIX.length;i++){
+        const r=PASTE_MATRIX[i]; const row={};
+        for(const ci in map){ row[map[ci]]=r[ci]||''; }
+        if(row.name){ ACT_ROWS.push(row); added++; }
+      }
+      $('pasteBlock').classList.add('hidden'); renderActRows();
+      $('actMsg').innerHTML='<div class="success">Įkelta eilučių: '+added+'. Patikrinkite ir papildykite.</div>';
+    };
 
     // ----- PDF generavimas (html2canvas + jsPDF, lietuviškos raidės) -----
     function actHtml(p){
@@ -1476,6 +1582,7 @@
           (p.rows.length?p.rows:[{}]).map((r,i)=>`<tr><td style="padding:5px;border:1px solid #999;text-align:center;">${i+1}</td>`+cols.map(c=>`<td style="padding:5px;border:1px solid #999;">${esc(r[c[0]]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
       }
       const sig=(lbl,who,data)=>`<div style="display:inline-block;width:45%;vertical-align:top;margin-top:10px;"><div style="font-size:12px;color:#555;">${lbl}</div>${data?`<img src="${data}" style="height:50px;">`:'<div style="height:50px;"></div>'}<div style="border-top:1px solid #333;font-size:12px;padding-top:3px;">${esc(who||'')}</div></div>`;
+      const photosHtml=(p._photoData&&p._photoData.length)?`<div style="margin-top:20px;"><div style="font-weight:bold;font-size:13px;margin-bottom:6px;">Nuotraukos (priedas):</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p._photoData.map(d=>`<img src="${d}" style="width:160px;height:160px;object-fit:cover;border:1px solid #999;">`).join('')}</div></div>`:'';
       return `<div style="font-family:'Times New Roman',serif;color:#000;width:700px;padding:10px;">
         <div style="text-align:right;font-size:12px;">${esc(p.act_date||'')} ${p.act_no?('Nr. '+esc(p.act_no)):''}</div>
         <div style="font-weight:bold;">${esc(CURRENT.debtor_name||'')}</div>
@@ -1483,6 +1590,7 @@
         <div style="font-size:13px;margin-bottom:10px;">Perdavėjas: ${esc(CURRENT.debtor_name||'')}, perduodantis asmuo: <b>${esc(p.handover_person||'')}</b>. Perėmėjas: <b>${esc(p.receiver_person||'')}</b>.</div>
         ${body}
         <div style="margin-top:30px;">${sig('Perdavė:',p.handover_person,p.sig_handover)}<span style="display:inline-block;width:8%;"></span>${sig('Priėmė:',p.receiver_person,p.sig_receiver)}</div>
+        ${photosHtml}
       </div>`;
     }
     $('actGenPdf').onclick=async()=>{
@@ -1490,13 +1598,32 @@
       try{
         const id=await saveAct('final'); if(!id)return;
         const p=collectAct('final');
+        // atsisiunčiam nuotraukas kaip base64 (kad html2canvas jas įtrauktų)
+        p._photoData=[];
+        if(ACT_PHOTOS.length){
+          const { data:{ session } } = await sb.auth.getSession();
+          for(const ph of ACT_PHOTOS){
+            try{
+              const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},body:JSON.stringify({ path:ph.path })});
+              const r=await res.json(); if(!r.url)continue;
+              const blob=await (await fetch(r.url)).blob();
+              const b64=await new Promise(rs=>{ const fr=new FileReader(); fr.onload=()=>rs(fr.result); fr.readAsDataURL(blob); });
+              p._photoData.push(b64);
+            }catch(_){}
+          }
+        }
         const holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-9999px'; holder.style.top='0';
         holder.innerHTML=actHtml(p); document.body.appendChild(holder);
         const canvas=await html2canvas(holder.firstElementChild,{ scale:2, backgroundColor:'#fff' });
         document.body.removeChild(holder);
         const { jsPDF }=window.jspdf; const pdf=new jsPDF('p','mm','a4');
-        const w=190, h=canvas.height*w/canvas.width;
-        pdf.addImage(canvas.toDataURL('image/png'),'PNG',10,10,w,Math.min(h,277));
+        const w=190, fullH=canvas.height*w/canvas.width, pageH=277;
+        const img=canvas.toDataURL('image/png');
+        if(fullH<=pageH){ pdf.addImage(img,'PNG',10,10,w,fullH); }
+        else { // daugiapuslapis: slenkam per aukštį
+          let pos=0;
+          while(pos<fullH){ if(pos>0)pdf.addPage(); pdf.addImage(img,'PNG',10,10-pos,w,fullH); pos+=pageH; }
+        }
         const blob=pdf.output('blob');
         const fname=(p.act_no||'aktas').replace(/[^A-Za-z0-9._-]+/g,'_')+'.pdf';
         const path=`${CURRENT.case_short_code}/acts/${Date.now()}_${fname}`;
