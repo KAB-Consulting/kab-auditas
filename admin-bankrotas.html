@@ -149,6 +149,8 @@
         <div class="tab active" data-pane="card">📋 Bylos kortelė</div>
         <div class="tab" data-pane="recipients">👥 Gavėjai</div>
         <div class="tab" data-pane="documents">📑 Dokumentai</div>
+        <div class="tab" data-pane="library">📚 Dokumentų biblioteka</div>
+        <div class="tab" data-pane="acts">📝 Perdavimo aktai</div>
         <div class="tab" data-pane="dispatch">📤 Siuntimas ir sąrašai</div>
         <div class="tab" data-pane="log">🕓 Žurnalas</div>
       </div>
@@ -217,8 +219,111 @@
           <button class="btn btn-ghost btn-sm" id="tplUploadBtn" type="button">⬆️ Įkelti/keisti šio šablono DOCX</button>
         </div>
         <div id="docsMsg"></div>
-        <div class="sec-title" style="margin-top:22px;">📚 Sugeneruotų dokumentų biblioteka</div>
+        <div class="sec-title" style="margin-top:22px;">📄 Sugeneruoti DOCX (darbiniai)</div>
+        <div class="hint" style="margin-bottom:6px;">Patikrinę tekstą, konvertuokite į PDF. Galite pridėti priedus prieš generuojant.</div>
         <div id="documentsTable" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- DOKUMENTŲ BIBLIOTEKA (galutiniai PDF + priedų biblioteka) -->
+      <div id="paneLibrary" class="card hidden">
+        <div class="tabs" style="margin-bottom:14px;">
+          <div class="tab active" data-lib="final">📕 Galutiniai PDF</div>
+          <div class="tab" data-lib="attach">📎 Priedų biblioteka</div>
+        </div>
+
+        <!-- GALUTINIAI PDF -->
+        <div id="libFinal">
+          <div class="muted" style="font-size:12px;margin-bottom:10px;">Sugeneruoti galutiniai PDF (lydraštis ant blanko + priedai). Peržiūrai, atsisiuntimui, siuntimui.</div>
+          <div id="finalDocsTable"></div>
+        </div>
+
+        <!-- PRIEDŲ BIBLIOTEKA -->
+        <div id="libAttach" class="hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <div class="muted" style="font-size:12px;">Pakartotinai naudojami PDF priedai (pvz. teismo nutartis). Pridedami prie generuojamų PDF.</div>
+            <div><input type="file" id="attachFile" accept=".pdf" class="hidden">
+              <button class="btn btn-sm btn-gold" id="attachUploadBtn">⬆️ Įkelti priedą (PDF)</button></div>
+          </div>
+          <div id="attachMsg"></div>
+          <div id="attachTable"></div>
+        </div>
+      </div>
+
+      <!-- PERDAVIMO AKTAI -->
+      <div id="paneActs" class="card hidden">
+        <!-- AKTŲ SĄRAŠAS -->
+        <div id="actsListWrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <strong>Perdavimo aktai</strong>
+            <button class="btn btn-sm" id="newActBtn">+ Naujas aktas</button>
+          </div>
+          <div id="actsTable"></div>
+        </div>
+
+        <!-- AKTO REDAKTORIUS -->
+        <div id="actEditor" class="hidden">
+          <div class="crumb" id="backToActs">← Atgal į aktų sąrašą</div>
+          <input type="hidden" id="actId">
+          <label class="label">Akto tipas</label>
+          <select id="actType" class="select">
+            <option value="documents">Dokumentų perdavimo aktas</option>
+            <option value="asset_realestate">Turto perdavimas — Nekilnojamas</option>
+            <option value="asset_movable">Turto perdavimas — Kilnojamas</option>
+            <option value="asset_inventory">Turto perdavimas — Prekės / Atsargos</option>
+            <option value="asset_other">Turto perdavimas — Kitas</option>
+            <option value="asset_intangible">Turto perdavimas — Nematerialus</option>
+            <option value="vehicle">Automobilio perdavimo aktas</option>
+          </select>
+          <div class="row" style="margin-top:10px;">
+            <div><label class="label">Akto Nr.</label><input id="actNo" class="input"></div>
+            <div><label class="label">Data</label><input id="actDate" class="input" type="date"></div>
+          </div>
+          <div class="row">
+            <div><label class="label">Perduodantis asmuo (įmonės vadovas/įgaliotas)</label><input id="actHandover" class="input"></div>
+            <div><label class="label">Perimantis asmuo</label><input id="actReceiver" class="input"></div>
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:6px;">Perdavėjas: bankrutuojanti įmonė <b id="actDebtor"></b> (įrašoma automatiškai).</div>
+
+          <!-- automobilio laukai -->
+          <div id="actVehicleFields" class="hidden" style="margin-top:12px;">
+            <div class="sec-title">Automobilio duomenys</div>
+            <div class="row"><div><label class="label">Markė / modelis</label><input id="vMarke" class="input"></div><div><label class="label">VIN numeris</label><input id="vVin" class="input"></div></div>
+            <div class="row"><div><label class="label">Valst. numeris</label><input id="vPlate" class="input"></div><div><label class="label">Rida (km)</label><input id="vKm" class="input"></div><div><label class="label">Spalva</label><input id="vColor" class="input"></div></div>
+            <label class="label">Būklės aprašymas</label><textarea id="vCond" class="textarea" style="min-height:60px;"></textarea>
+            <label class="label">Pastabos</label><textarea id="vNotes" class="textarea" style="min-height:50px;"></textarea>
+            <div class="hint">Rekomenduojama pridėti: kuro lygis, komplektacija (raktai, dokumentai, padangų komplektas), pastebėti defektai, priedų (žiebtuvėlis, įkroviklis) sąrašas.</div>
+          </div>
+
+          <!-- lentelė (ne automobiliui) -->
+          <div id="actTableWrap" style="margin-top:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <strong id="actTableTitle">Eilutės</strong>
+              <button class="btn btn-sm btn-ghost" id="addRowBtn">+ Eilutė</button>
+            </div>
+            <div id="actRows"></div>
+          </div>
+
+          <!-- parašai -->
+          <div class="sec-title" style="margin-top:18px;">Parašai</div>
+          <div class="row">
+            <div>
+              <label class="label">Perduodančio asmens parašas</label>
+              <canvas id="sigHandover" width="380" height="120" style="border:1px solid var(--bd);border-radius:6px;touch-action:none;width:100%;max-width:380px;background:#fff;"></canvas>
+              <button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('sigHandover')">Išvalyti</button>
+            </div>
+            <div>
+              <label class="label">Perimančio asmens parašas</label>
+              <canvas id="sigReceiver" width="380" height="120" style="border:1px solid var(--bd);border-radius:6px;touch-action:none;width:100%;max-width:380px;background:#fff;"></canvas>
+              <button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('sigReceiver')">Išvalyti</button>
+            </div>
+          </div>
+
+          <div id="actMsg"></div>
+          <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+            <button class="btn btn-ghost" id="actSaveDraft">💾 Išsaugoti (tarpinis)</button>
+            <button class="btn" id="actGenPdf">📄 Generuoti PDF</button>
+          </div>
+        </div>
       </div>
 
       <!-- SIUNTIMAS IR SĄRAŠAI -->
@@ -353,6 +458,29 @@
     </div>
   </div>
 
+  <!-- PDF GENERAVIMO MODALĖ (priedų pasirinkimas) -->
+  <div id="pdfModal" class="modal-bg hidden">
+    <div class="modal">
+      <h2>Generuoti PDF</h2>
+      <div class="muted" id="pdfDocName" style="margin-bottom:12px;"></div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="pdfAtt" value="no" checked> Be priedų</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="pdfAtt" value="yes"> Pridėti priedus</label>
+      </div>
+      <div id="pdfAttBlock" class="hidden" style="border:1px solid var(--bd);border-radius:8px;padding:12px;">
+        <div class="hint" style="margin-bottom:8px;">Pažymėkite priedus iš bibliotekos (pridedami pagal eiliškumą) arba įkelkite naują PDF.</div>
+        <div id="pdfAttList" style="max-height:200px;overflow:auto;"></div>
+        <div style="margin-top:8px;"><input type="file" id="pdfAttUpload" accept=".pdf" class="hidden">
+          <button class="btn btn-sm btn-ghost" id="pdfAttUploadBtn" type="button">⬆️ Įkelti naują priedą</button></div>
+      </div>
+      <div id="pdfMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="pdfCancel">Atšaukti</button>
+        <button class="btn" id="pdfGenerate">⚙️ Generuoti PDF</button>
+      </div>
+    </div>
+  </div>
+
   <!-- NAUJO ŠABLONO MODALĖ -->
   <div id="newTplModal" class="modal-bg hidden">
     <div class="modal" style="max-width:520px;">
@@ -376,6 +504,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
@@ -490,7 +620,7 @@
       REC_TYPE='employee'; ENRICHED={};
       document.querySelectorAll('#paneRecipients .tab').forEach(t=>t.classList.toggle('active',t.dataset.rtype==='employee'));
       document.querySelectorAll('#caseDetailView > .tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.pane==='card'));
-      show('paneCard'); hide('paneRecipients'); hide('paneDocuments'); hide('paneDispatch'); hide('paneLog');
+      show('paneCard'); hide('paneRecipients'); hide('paneDocuments'); hide('paneLibrary'); hide('paneActs'); hide('paneDispatch'); hide('paneLog');
       $('cardMsg').innerHTML=''; $('aiMsg').innerHTML='';
       views('caseDetailView');
       if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); }
@@ -516,8 +646,12 @@
         $('paneCard').classList.toggle('hidden',p!=='card');
         $('paneRecipients').classList.toggle('hidden',p!=='recipients');
         $('paneDocuments').classList.toggle('hidden',p!=='documents');
+        $('paneLibrary').classList.toggle('hidden',p!=='library');
+        $('paneActs').classList.toggle('hidden',p!=='acts');
         $('paneDispatch').classList.toggle('hidden',p!=='dispatch');
         $('paneLog').classList.toggle('hidden',p!=='log');
+        if(p==='library')loadLibrary();
+        if(p==='acts')loadActs();
         if(p==='dispatch')renderDispatch();
         if(p==='log')loadLog();
       };
@@ -781,9 +915,10 @@
     }
     function fmtDate(s){ if(!s)return''; const d=new Date(s); return d.toLocaleString('lt-LT',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
     function renderDocuments(){
-      if(!DOCUMENTS.length){ $('documentsTable').innerHTML='<div class="muted center" style="padding:16px;">Sugeneruotų dokumentų dar nėra.</div>'; return; }
-      $('documentsTable').innerHTML='<table><thead><tr><th>Data</th><th>Dokumentas</th><th>Šablonas</th><th>Statusas</th><th></th></tr></thead><tbody>'+
-        DOCUMENTS.map(d=>`<tr><td class="muted">${fmtDate(d.created_at)}</td><td><b>${esc(d.file_name||'—')}</b></td><td>${esc(d.template_code||'')}</td><td>${esc(d.status)}</td><td style="text-align:right;">${d.docx_path?`<button class="btn btn-sm" onclick="downloadDoc('${esc(d.docx_path)}')">⬇️ Atsisiųsti</button>`:''}</td></tr>`).join('')+'</tbody></table>';
+      const docx=DOCUMENTS.filter(d=>d.kind!=='final_pdf');
+      if(!docx.length){ $('documentsTable').innerHTML='<div class="muted center" style="padding:16px;">Sugeneruotų DOCX dar nėra.</div>'; return; }
+      $('documentsTable').innerHTML='<table><thead><tr><th>Data</th><th>Dokumentas</th><th>Šablonas</th><th></th></tr></thead><tbody>'+
+        docx.map(d=>`<tr><td class="muted">${fmtDate(d.created_at)}</td><td><b>${esc(d.file_name||'—')}</b></td><td>${esc(d.template_code||'')}</td><td style="text-align:right;white-space:nowrap;">${d.docx_path?`<button class="btn btn-sm btn-ghost" onclick="downloadDoc('${esc(d.docx_path)}')">⬇️ DOCX</button> <button class="btn btn-sm btn-gold" onclick="openPdfModal('${d.id}','${esc(d.file_name||'')}')">📄 Generuoti PDF</button>`:''}</td></tr>`).join('')+'</tbody></table>';
     }
     window.downloadDoc=async(path)=>{
       const { data:{ session } } = await sb.auth.getSession();
@@ -1105,6 +1240,276 @@
           return `<tr><td class="muted">${fmtDate(r.created_at)}</td><td><b>${esc(lbl[r.action]||r.action)}</b></td><td class="muted">${esc(det)}</td></tr>`;
         }).join('')+'</tbody></table>';
     }
+
+    // ---------- PDF GENERAVIMAS SU PRIEDAIS ----------
+    let PDF_DOC_ID=null, PDF_UPLOADED_ATT=[]; // įkelti ad-hoc priedai (storage keliai)
+    window.openPdfModal=async(docId,fileName)=>{
+      PDF_DOC_ID=docId; PDF_UPLOADED_ATT=[];
+      $('pdfDocName').textContent='Dokumentas: '+fileName;
+      document.querySelector('input[name="pdfAtt"][value="no"]').checked=true;
+      $('pdfAttBlock').classList.add('hidden'); $('pdfMsg').innerHTML='';
+      await renderPdfAttList();
+      show('pdfModal');
+    };
+    $('pdfCancel').onclick=()=>hide('pdfModal');
+    document.querySelectorAll('input[name="pdfAtt"]').forEach(r=>r.onchange=()=>{
+      $('pdfAttBlock').classList.toggle('hidden', document.querySelector('input[name="pdfAtt"]:checked').value!=='yes');
+    });
+    async function loadAttachments(){
+      // bibliotekos priedai: bendri (case_id null) + šios bylos + šio administratoriaus
+      const { data }=await sb.from('insolvency_attachments').select('*').order('created_at',{ascending:false});
+      return (data||[]).filter(a=> !a.case_id || a.case_id===CURRENT.id ).filter(a=> !a.administrator_id || a.administrator_id===CURRENT_ADM.id );
+    }
+    async function renderPdfAttList(){
+      const atts=await loadAttachments();
+      const up=PDF_UPLOADED_ATT.map((p,i)=>`<label style="display:flex;align-items:center;gap:6px;padding:3px 0;"><input type="checkbox" class="pdf-att-cb" value="${esc(p.path)}" checked> 📎 ${esc(p.name)} <span class="muted">(ką tik įkeltas)</span></label>`).join('');
+      const lib=atts.map(a=>`<label style="display:flex;align-items:center;gap:6px;padding:3px 0;"><input type="checkbox" class="pdf-att-cb" value="${esc(a.storage_path)}"> 📎 ${esc(a.title)}</label>`).join('');
+      $('pdfAttList').innerHTML=(up+lib)||'<div class="muted">Priedų bibliotekoje nėra. Įkelkite naują.</div>';
+    }
+    $('pdfAttUploadBtn').onclick=()=>$('pdfAttUpload').click();
+    $('pdfAttUpload').onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file)return;
+      $('pdfMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
+      try{
+        const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
+        const path=`${CURRENT.case_short_code}/attachments/${Date.now()}_${safe}`;
+        const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+        if(error)throw error;
+        PDF_UPLOADED_ATT.push({ path, name:file.name });
+        await renderPdfAttList(); $('pdfMsg').innerHTML='<div class="success">Priedas įkeltas ir pažymėtas.</div>';
+      }catch(err){ $('pdfMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    };
+    $('pdfGenerate').onclick=async()=>{
+      const withAtt=document.querySelector('input[name="pdfAtt"]:checked').value==='yes';
+      const paths=withAtt ? Array.from(document.querySelectorAll('.pdf-att-cb:checked')).map(cb=>cb.value) : [];
+      $('pdfMsg').innerHTML='<div class="muted">⏳ Konvertuojama į PDF…</div>'; $('pdfGenerate').disabled=true;
+      try{
+        const { data:{ session } } = await sb.auth.getSession();
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/convert-and-merge-pdf`,{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+          body:JSON.stringify({ document_id:PDF_DOC_ID, attachment_paths:paths })});
+        const r=await res.json();
+        if(!r.success){
+          const hint=r.error==='gotenberg_not_configured'?' — PDF konvertavimo servisas dar nesukonfigūruotas (GOTENBERG_URL).':r.error==='convert_failed'?' — konvertavimo klaida.':'';
+          $('pdfMsg').innerHTML='<div class="error">Klaida: '+esc(r.error||'')+hint+'</div>'; return;
+        }
+        $('pdfMsg').innerHTML='<div class="success">PDF sugeneruotas: '+esc(r.file_name)+'. Rasite Dokumentų bibliotekoje.</div>';
+        await loadDocuments();
+      }catch(err){ $('pdfMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ $('pdfGenerate').disabled=false; }
+    };
+
+    // ---------- DOKUMENTŲ BIBLIOTEKA ----------
+    document.querySelectorAll('#paneLibrary .tab').forEach(t=>{
+      t.onclick=()=>{
+        document.querySelectorAll('#paneLibrary .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+        const l=t.dataset.lib;
+        $('libFinal').classList.toggle('hidden',l!=='final');
+        $('libAttach').classList.toggle('hidden',l!=='attach');
+        if(l==='attach')renderAttachLib();
+      };
+    });
+    async function loadLibrary(){ await loadDocuments(); renderFinalDocs(); }
+    function renderFinalDocs(){
+      const pdfs=DOCUMENTS.filter(d=>d.kind==='final_pdf');
+      if(!pdfs.length){ $('finalDocsTable').innerHTML='<div class="muted center" style="padding:16px;">Galutinių PDF dar nėra. Generuokite PDF iš DOCX (Dokumentai).</div>'; return; }
+      $('finalDocsTable').innerHTML='<table><thead><tr><th>Data</th><th>Dokumentas</th><th>Priedų</th><th></th></tr></thead><tbody>'+
+        pdfs.map(d=>{ const na=(d.attachments||[]).filter(a=>a.ok).length;
+          return `<tr><td class="muted">${fmtDate(d.created_at)}</td><td><b>${esc(d.file_name||'—')}</b></td><td>${na||'—'}</td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="downloadDoc('${esc(d.pdf_path)}')">👁 Peržiūrėti</button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(d.pdf_path)}')">⬇️ Atsisiųsti</button> <button class="btn btn-sm btn-gold" onclick="useAsAttachment('${esc(d.pdf_path)}','${esc(d.file_name||'')}')">📎 Į priedus</button></td></tr>`;
+        }).join('')+'</tbody></table>';
+    }
+    window.downloadDocDl=async(path)=>{ // su download=true
+      const { data:{ session } } = await sb.auth.getSession();
+      const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},body:JSON.stringify({ path, download:true })});
+      const r=await res.json(); if(r.success&&r.url)window.open(r.url,'_blank'); else alert('Nepavyko: '+(r.error||''));
+    };
+    window.useAsAttachment=async(path,name)=>{
+      // pridedam galutinį PDF į priedų biblioteką (pakartotiniam naudojimui)
+      const res=await sb.rpc('add_insolvency_attachment',{ p:{ case_id:CURRENT.id, title:name, storage_path:path } });
+      if(res.error){ alert(res.error.message); return; }
+      alert('Pridėta į priedų biblioteką. Galėsite pridėti prie kitų dokumentų generuojant PDF.');
+    };
+    async function renderAttachLib(){
+      const atts=await loadAttachments();
+      if(!atts.length){ $('attachTable').innerHTML='<div class="muted center" style="padding:16px;">Priedų bibliotekoje nieko nėra.</div>'; return; }
+      $('attachTable').innerHTML='<table><thead><tr><th>Data</th><th>Pavadinimas</th><th></th></tr></thead><tbody>'+
+        atts.map(a=>`<tr><td class="muted">${fmtDate(a.created_at)}</td><td><b>${esc(a.title)}</b></td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="downloadDoc('${esc(a.storage_path)}')">👁</button> <button class="btn btn-sm btn-danger" onclick="delAttach('${a.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>';
+    }
+    $('attachUploadBtn').onclick=()=>$('attachFile').click();
+    $('attachFile').onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file)return;
+      $('attachMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
+      try{
+        const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
+        const path=`${CURRENT.case_short_code}/attachments/${Date.now()}_${safe}`;
+        const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+        if(error)throw error;
+        await sb.rpc('add_insolvency_attachment',{ p:{ case_id:CURRENT.id, title:file.name, storage_path:path, file_size:file.size } });
+        $('attachMsg').innerHTML='<div class="success">Priedas įkeltas.</div>'; await renderAttachLib();
+      }catch(err){ $('attachMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    };
+    window.delAttach=async id=>{ if(!confirm('Pašalinti priedą iš bibliotekos?'))return; await sb.rpc('delete_insolvency_attachment',{ p_id:id }); await renderAttachLib(); };
+
+    // ---------- PERDAVIMO AKTAI ----------
+    // lentelių stulpeliai pagal akto tipą
+    const ACT_COLS={
+      documents:[['name','Dokumento/segtuvo pavadinimas'],['pages','Lapų sk.'],['notes','Pastabos']],
+      asset_realestate:[['name','Pavadinimas'],['address','Adresas'],['unique_no','Unikalus nr.'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
+      asset_movable:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
+      asset_inventory:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
+      asset_other:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
+      asset_intangible:[['name','Pavadinimas'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
+    };
+    const ACT_TITLES={ documents:'DOKUMENTŲ PERDAVIMO AKTAS', asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)', asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)', asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)', asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)', asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)', vehicle:'AUTOMOBILIO PERDAVIMO AKTAS' };
+    let ACTS=[], ACT_ROWS=[];
+
+    async function loadActs(){
+      $('actEditor').classList.add('hidden'); $('actsListWrap').classList.remove('hidden');
+      const { data }=await sb.from('insolvency_acts').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
+      ACTS=data||[];
+      if(!ACTS.length){ $('actsTable').innerHTML='<div class="muted center" style="padding:16px;">Aktų dar nėra.</div>'; return; }
+      $('actsTable').innerHTML='<table><thead><tr><th>Data</th><th>Nr.</th><th>Tipas</th><th>Statusas</th><th></th></tr></thead><tbody>'+
+        ACTS.map(a=>`<tr><td class="muted">${esc(a.act_date||'')}</td><td>${esc(a.act_no||'')}</td><td>${esc(ACT_TITLES[a.act_type]||a.act_type)}</td><td>${a.status==='final'?'<span class="badge badge-green">Galutinis</span>':'<span class="badge badge-gold">Juodraštis</span>'}</td><td style="text-align:right;white-space:nowrap;">${a.pdf_path?`<button class="btn btn-sm btn-ghost" onclick="downloadDoc('${esc(a.pdf_path)}')">👁 PDF</button> `:''}<button class="btn btn-sm btn-ghost" onclick="editAct('${a.id}')">✎ Koreguoti</button> <button class="btn btn-sm btn-danger" onclick="delAct('${a.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>';
+    }
+    $('newActBtn').onclick=()=>openActEditor(null);
+    $('backToActs').onclick=()=>loadActs();
+    window.editAct=id=>openActEditor(ACTS.find(a=>a.id===id));
+    window.delAct=async id=>{ if(!confirm('Ištrinti aktą?'))return; await sb.rpc('delete_insolvency_act',{ p_id:id }); await loadActs(); };
+
+    async function openActEditor(a){
+      a=a||{};
+      $('actsListWrap').classList.add('hidden'); $('actEditor').classList.remove('hidden');
+      $('actId').value=a.id||'';
+      $('actDebtor').textContent=CURRENT.debtor_name||'';
+      $('actType').value=a.act_type||'documents';
+      $('actNo').value=a.act_no|| '';
+      $('actDate').value=a.act_date||new Date().toISOString().slice(0,10);
+      $('actHandover').value=a.handover_person||'';
+      $('actReceiver').value=a.receiver_person|| (CURRENT_ADM&&CURRENT_ADM.authorized_person)||'';
+      ACT_ROWS = Array.isArray(a.rows)&&a.rows.length ? a.rows.slice() : [];
+      const m=a.meta||{};
+      $('vMarke').value=m.marke||''; $('vVin').value=m.vin||''; $('vPlate').value=m.plate||''; $('vKm').value=m.km||''; $('vColor').value=m.color||''; $('vCond').value=m.cond||''; $('vNotes').value=m.notes||'';
+      $('actMsg').innerHTML='';
+      if(!a.act_no){ const r=await sb.rpc('next_insolvency_act_no',{ p_case_id:CURRENT.id }); if(!r.error)$('actNo').value=r.data; }
+      onActTypeChange();
+      // parašai
+      setupSig('sigHandover'); setupSig('sigReceiver');
+      if(a.sig_handover)drawSigFromData('sigHandover',a.sig_handover); else clearSig('sigHandover');
+      if(a.sig_receiver)drawSigFromData('sigReceiver',a.sig_receiver); else clearSig('sigReceiver');
+    }
+    $('actType').onchange=()=>{ ACT_ROWS=[]; onActTypeChange(); };
+    function onActTypeChange(){
+      const t=$('actType').value;
+      const isVehicle=t==='vehicle';
+      $('actVehicleFields').classList.toggle('hidden',!isVehicle);
+      $('actTableWrap').classList.toggle('hidden',isVehicle);
+      if(!isVehicle){ $('actTableTitle').textContent='Eilutės'; renderActRows(); }
+    }
+    function renderActRows(){
+      const t=$('actType').value; const cols=ACT_COLS[t]||[];
+      let h='<table><thead><tr><th style="width:36px;">Nr.</th>'+cols.map(c=>`<th>${esc(c[1])}</th>`).join('')+'<th></th></tr></thead><tbody>';
+      ACT_ROWS.forEach((row,i)=>{
+        h+=`<tr><td>${i+1}</td>`+cols.map(c=>`<td><input class="input" style="min-width:90px;" data-ri="${i}" data-ck="${c[0]}" value="${esc(row[c[0]]||'')}"></td>`).join('')+`<td><button class="btn btn-sm btn-danger" onclick="delActRow(${i})">✕</button></td></tr>`;
+      });
+      h+='</tbody></table>';
+      $('actRows').innerHTML=h;
+      $('actRows').querySelectorAll('input[data-ri]').forEach(inp=>inp.oninput=()=>{ ACT_ROWS[+inp.dataset.ri][inp.dataset.ck]=inp.value; });
+    }
+    window.delActRow=i=>{ ACT_ROWS.splice(i,1); renderActRows(); };
+    $('addRowBtn').onclick=()=>{ ACT_ROWS.push({}); renderActRows(); };
+
+    // ----- PARAŠAI (canvas, touch+pelė) -----
+    const sigState={};
+    function setupSig(id){
+      const c=$(id); if(c._wired)return; c._wired=true;
+      const ctx=c.getContext('2d'); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#0B1E3F';
+      let drawing=false;
+      const pos=e=>{ const r=c.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return { x:(t.clientX-r.left)*(c.width/r.width), y:(t.clientY-r.top)*(c.height/r.height) }; };
+      const start=e=>{ drawing=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); e.preventDefault(); };
+      const move=e=>{ if(!drawing)return; const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); sigState[id]=true; e.preventDefault(); };
+      const end=()=>{ drawing=false; };
+      c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
+      c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',end);
+    }
+    window.clearSig=id=>{ const c=$(id); c.getContext('2d').clearRect(0,0,c.width,c.height); sigState[id]=false; };
+    function drawSigFromData(id,data){ const c=$(id); const ctx=c.getContext('2d'); const img=new Image(); img.onload=()=>{ ctx.clearRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height); }; img.src=data; sigState[id]=true; }
+    function sigData(id){ return sigState[id] ? $(id).toDataURL('image/png') : null; }
+
+    function collectAct(status){
+      const t=$('actType').value;
+      return {
+        case_id:CURRENT.id, act_type:t, act_no:$('actNo').value.trim(), act_date:$('actDate').value,
+        handover_person:$('actHandover').value.trim(), receiver_person:$('actReceiver').value.trim(),
+        rows: t==='vehicle'?[]:ACT_ROWS,
+        meta: t==='vehicle'?{ marke:$('vMarke').value, vin:$('vVin').value, plate:$('vPlate').value, km:$('vKm').value, color:$('vColor').value, cond:$('vCond').value, notes:$('vNotes').value }:{},
+        sig_handover:sigData('sigHandover'), sig_receiver:sigData('sigReceiver'), status
+      };
+    }
+    async function saveAct(status){
+      const p=collectAct(status); const id=$('actId').value||null;
+      const res=await sb.rpc('save_insolvency_act',{ p_id:id, p });
+      if(res.error){ $('actMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return null; }
+      if(res.data&&res.data.ok===false){ $('actMsg').innerHTML='<div class="error">'+esc(res.data.error_code)+'</div>'; return null; }
+      if(!id)$('actId').value=res.data.id;
+      return res.data.id;
+    }
+    $('actSaveDraft').onclick=async()=>{ const id=await saveAct('draft'); if(id)$('actMsg').innerHTML='<div class="success">Tarpinė informacija išsaugota.</div>'; };
+
+    // ----- PDF generavimas (html2canvas + jsPDF, lietuviškos raidės) -----
+    function actHtml(p){
+      const cols=ACT_COLS[p.act_type]||[];
+      let body='';
+      if(p.act_type==='vehicle'){
+        const m=p.meta;
+        body=`<table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr><td style="padding:6px;border:1px solid #999;width:40%;"><b>Markė / modelis</b></td><td style="padding:6px;border:1px solid #999;">${esc(m.marke||'')}</td></tr>
+          <tr><td style="padding:6px;border:1px solid #999;"><b>VIN numeris</b></td><td style="padding:6px;border:1px solid #999;">${esc(m.vin||'')}</td></tr>
+          <tr><td style="padding:6px;border:1px solid #999;"><b>Valst. numeris</b></td><td style="padding:6px;border:1px solid #999;">${esc(m.plate||'')}</td></tr>
+          <tr><td style="padding:6px;border:1px solid #999;"><b>Rida (km)</b></td><td style="padding:6px;border:1px solid #999;">${esc(m.km||'')}</td></tr>
+          <tr><td style="padding:6px;border:1px solid #999;"><b>Spalva</b></td><td style="padding:6px;border:1px solid #999;">${esc(m.color||'')}</td></tr>
+          <tr><td style="padding:6px;border:1px solid #999;"><b>Būklės aprašymas</b></td><td style="padding:6px;border:1px solid #999;">${esc(m.cond||'')}</td></tr>
+          <tr><td style="padding:6px;border:1px solid #999;"><b>Pastabos</b></td><td style="padding:6px;border:1px solid #999;">${esc(m.notes||'')}</td></tr></table>`;
+      } else {
+        body='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="padding:5px;border:1px solid #999;">Nr.</th>'+cols.map(c=>`<th style="padding:5px;border:1px solid #999;">${esc(c[1])}</th>`).join('')+'</tr></thead><tbody>'+
+          (p.rows.length?p.rows:[{}]).map((r,i)=>`<tr><td style="padding:5px;border:1px solid #999;text-align:center;">${i+1}</td>`+cols.map(c=>`<td style="padding:5px;border:1px solid #999;">${esc(r[c[0]]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+      }
+      const sig=(lbl,who,data)=>`<div style="display:inline-block;width:45%;vertical-align:top;margin-top:10px;"><div style="font-size:12px;color:#555;">${lbl}</div>${data?`<img src="${data}" style="height:50px;">`:'<div style="height:50px;"></div>'}<div style="border-top:1px solid #333;font-size:12px;padding-top:3px;">${esc(who||'')}</div></div>`;
+      return `<div style="font-family:'Times New Roman',serif;color:#000;width:700px;padding:10px;">
+        <div style="text-align:right;font-size:12px;">${esc(p.act_date||'')} ${p.act_no?('Nr. '+esc(p.act_no)):''}</div>
+        <div style="font-weight:bold;">${esc(CURRENT.debtor_name||'')}</div>
+        <h2 style="text-align:center;font-size:16px;margin:16px 0;">${esc(ACT_TITLES[p.act_type]||'')}</h2>
+        <div style="font-size:13px;margin-bottom:10px;">Perdavėjas: ${esc(CURRENT.debtor_name||'')}, perduodantis asmuo: <b>${esc(p.handover_person||'')}</b>. Perėmėjas: <b>${esc(p.receiver_person||'')}</b>.</div>
+        ${body}
+        <div style="margin-top:30px;">${sig('Perdavė:',p.handover_person,p.sig_handover)}<span style="display:inline-block;width:8%;"></span>${sig('Priėmė:',p.receiver_person,p.sig_receiver)}</div>
+      </div>`;
+    }
+    $('actGenPdf').onclick=async()=>{
+      $('actMsg').innerHTML='<div class="muted">⏳ Generuojama…</div>'; $('actGenPdf').disabled=true;
+      try{
+        const id=await saveAct('final'); if(!id)return;
+        const p=collectAct('final');
+        const holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-9999px'; holder.style.top='0';
+        holder.innerHTML=actHtml(p); document.body.appendChild(holder);
+        const canvas=await html2canvas(holder.firstElementChild,{ scale:2, backgroundColor:'#fff' });
+        document.body.removeChild(holder);
+        const { jsPDF }=window.jspdf; const pdf=new jsPDF('p','mm','a4');
+        const w=190, h=canvas.height*w/canvas.width;
+        pdf.addImage(canvas.toDataURL('image/png'),'PNG',10,10,w,Math.min(h,277));
+        const blob=pdf.output('blob');
+        const fname=(p.act_no||'aktas').replace(/[^A-Za-z0-9._-]+/g,'_')+'.pdf';
+        const path=`${CURRENT.case_short_code}/acts/${Date.now()}_${fname}`;
+        const { error }=await sb.storage.from('insolvency-docs').upload(path,blob,{ contentType:'application/pdf', upsert:true });
+        if(error)throw error;
+        await sb.rpc('save_insolvency_act',{ p_id:id, p:{ pdf_path:path } });
+        try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:'docs_generated', p_details:{ type:'act', act:p.act_no } }); }catch(_){}
+        // atsisiunčiam iškart
+        const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=fname; a.click(); URL.revokeObjectURL(url);
+        $('actMsg').innerHTML='<div class="success">Aktas sugeneruotas (PDF). Rasite aktų sąraše ir Dokumentų bibliotekoje.</div>';
+      }catch(err){ $('actMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ $('actGenPdf').disabled=false; }
+    };
 
     boot();
   </script>
