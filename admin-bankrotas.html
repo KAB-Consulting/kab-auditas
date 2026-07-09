@@ -149,6 +149,7 @@
         <div class="tab active" data-pane="card">📋 Bylos kortelė</div>
         <div class="tab" data-pane="recipients">👥 Gavėjai</div>
         <div class="tab" data-pane="documents">📑 Dokumentai</div>
+        <div class="tab" data-pane="registry">🗂 Dokumentų registras</div>
         <div class="tab" data-pane="library">📚 Dokumentų biblioteka</div>
         <div class="tab" data-pane="acts">📝 Perdavimo aktai</div>
         <div class="tab" data-pane="dispatch">📤 Siuntimas ir sąrašai</div>
@@ -173,6 +174,25 @@
         <div id="cardForm"></div>
         <div id="cardMsg"></div>
         <button class="btn" id="saveCardBtn" style="margin-top:16px;">💾 Išsaugoti kortelę</button>
+
+        <!-- KONTAKTINIAI ASMENYS -->
+        <div class="sec-title" style="margin-top:26px;">Kontaktiniai asmenys (vadovas, buhalteris ir kt.)</div>
+        <div class="hint" style="margin-bottom:8px;">Įmonės vadovas ir kiti kontaktiniai asmenys su ryšio tipu. Išsaugoma iš karto (byla turi būti išsaugota).</div>
+        <div id="contactsList" style="margin-bottom:10px;"></div>
+        <div class="row" style="align-items:flex-end;">
+          <div><label class="label" style="margin-top:0;">Vardas, pavardė</label><input id="ctName" class="input"></div>
+          <div><label class="label" style="margin-top:0;">Pareigos / ryšys</label>
+            <input id="ctRole" class="input" list="ctRoleList" placeholder="pvz. Vadovas">
+            <datalist id="ctRoleList">
+              <option value="Vadovas"></option><option value="Buhalteris"></option><option value="Teisininkas"></option>
+              <option value="Ūkvedys"></option><option value="Akcininkas"></option><option value="Kita"></option>
+            </datalist>
+          </div>
+          <div><label class="label" style="margin-top:0;">Telefonas</label><input id="ctPhone" class="input"></div>
+          <div><label class="label" style="margin-top:0;">El. paštas</label><input id="ctEmail" class="input"></div>
+          <div style="flex:0;min-width:auto;"><button class="btn btn-sm" id="ctAddBtn" type="button">+ Pridėti</button></div>
+        </div>
+        <div id="ctMsg"></div>
       </div>
 
       <!-- GAVĖJAI -->
@@ -222,6 +242,27 @@
         <div class="sec-title" style="margin-top:22px;">📄 Sugeneruoti DOCX (darbiniai)</div>
         <div class="hint" style="margin-bottom:6px;">Patikrinę tekstą, konvertuokite į PDF. Galite pridėti priedus prieš generuojant.</div>
         <div id="documentsTable" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- DOKUMENTŲ REGISTRAS (gaunami / siunčiami) -->
+      <div id="paneRegistry" class="card hidden">
+        <div id="regCodeWarn" class="hidden" style="background:#FFF7E0;border:1px solid var(--gold);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+          <strong style="color:#8A6D00;">⚠ Nenustatytas registracijos trumpinys</strong>
+          <div class="muted" style="font-size:12px;">Bylos kortelėje įveskite trumpinį (pvz. TOR) ir išsaugokite — be jo registracijos numeris (pvz. G26-TOR-001) negali būti suformuotas.</div>
+        </div>
+        <div class="tabs" style="margin-bottom:14px;">
+          <div class="tab active" data-regtype="received">📥 Gaunami (<span id="cntRegG">0</span>)</div>
+          <div class="tab" data-regtype="sent">📤 Siunčiami (<span id="cntRegS">0</span>)</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div>
+            <strong id="regListTitle">Gaunamų dokumentų žurnalas</strong>
+            <div class="muted" style="font-size:12px;">Registruotas dokumentas — vienas PDF su registracijos žyma pirmame puslapyje. Paspaudus Nr. — peržiūra.</div>
+          </div>
+          <button class="btn" id="newRegBtn">➕ Registruoti dokumentą</button>
+        </div>
+        <input id="regSearch" class="input" placeholder="Paieška: Nr., aprašymas, siuntėjas/gavėjas…" style="margin-bottom:10px;">
+        <div id="registryTable"></div>
       </div>
 
       <!-- DOKUMENTŲ BIBLIOTEKA (galutiniai PDF + priedų biblioteka) -->
@@ -543,10 +584,45 @@
     </div>
   </div>
 
+  <!-- DOKUMENTO REGISTRAVIMO MODALĖ -->
+  <div id="regModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:640px;">
+      <h2 id="regModalTitle">Registruoti gaunamą dokumentą</h2>
+      <div class="muted" style="margin-bottom:12px;">Bus suformuotas numeris <b id="regNumPreview">G26-…-…</b>, failai sujungti į vieną PDF ir pažymėti registracijos žyma.</div>
+      <input type="hidden" id="regType" value="received">
+      <label class="label">Trumpas dokumento aprašymas *</label>
+      <input id="regTitle" class="input" placeholder="pvz. VMI raštas dėl mokestinės nepriemokos">
+      <div class="row">
+        <div><label class="label" id="regDateLbl">Gavimo data *</label><input id="regDate" class="input" type="date"></div>
+        <div>
+          <label class="label" id="regPartyLbl">Siuntėjas</label>
+          <input id="regParty" class="input" list="regPartyList" placeholder="pradėkite rašyti — pasiūlys ankstesnius" autocomplete="off">
+          <datalist id="regPartyList"></datalist>
+        </div>
+      </div>
+      <label class="label">Pastabos</label>
+      <textarea id="regNotes" class="textarea" style="min-height:50px;"></textarea>
+      <label class="label">Dokumento failai * (PDF / JPG / PNG — sujungiami nurodyta tvarka)</label>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+        <input type="file" id="regFiles" accept=".pdf,.jpg,.jpeg,.png" multiple class="hidden">
+        <button class="btn btn-sm btn-gold" id="regFilesBtn" type="button">⬆️ Pridėti failus</button>
+        <span class="hint" id="regFilesHint">Failų nepridėta.</span>
+      </div>
+      <div id="regFileList"></div>
+      <div id="regMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="regCancel">Atšaukti</button>
+        <button class="btn" id="regSubmit">✔ Registruoti</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
   <script>
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
@@ -559,6 +635,7 @@
     function views(v){ ['loginView','loadingView','admListView','workspaceView','caseDetailView','settingsView'].forEach(x=>hide(x)); show(v); }
 
     let ADMINS=[], TEMPLATES=[], PERSONS=[], CASES=[], CURRENT_ADM=null, CURRENT=null, RECIPIENTS=[], DOCUMENTS=[];
+    let REGISTRATIONS=[], CONTACTS=[], REG_TYPE='received';
 
     // ---------- AUTH ----------
     async function boot(){
@@ -644,14 +721,27 @@
       ['effective_date','Įsiteisėjimo data','date'],
       ['creditor_claim_deadline','Kreditorinių reikalavimų terminas','date'],
       ['doc_no','Dokumento Nr. (jei naudojamas)'],
+      ['__sec','Dokumentų registracija'],
+      ['project_code','Registracijos trumpinys (2–6 raidės/skaitmenys, pvz. TOR — numeris bus G26-TOR-001)'],
+      ['__sec','Banko sąskaitos'],
+      ['deposit_account_iban','Kaupiamosios sąskaitos Nr. (IBAN)'],
+      ['deposit_bank_name','Banko pavadinimas (kaupiamoji sąskaita)'],
+      ['has_business_activity','Įmonė vykdo ūkinę komercinę veiklą','checkbox'],
+      ['business_account_iban','Ūkinės komercinės veiklos sąskaitos Nr. (IBAN)','text','biz'],
+      ['business_bank_name','Banko pavadinimas (veiklos sąskaita)','text','biz'],
     ];
     function renderCard(c){
       c=c||{};
       $('cardForm').innerHTML=CARD_FIELDS.map(f=>{
         if(f[0]==='__sec') return `<div class="sec-title">${esc(f[1])}</div>`;
-        const [key,lbl,type]=f; const v=c[key]||'';
-        return `<label class="label">${esc(lbl)}</label><input class="input" data-f="${key}" type="${type||'text'}" value="${esc(v)}">`;
+        const [key,lbl,type,grp]=f; const v=c[key]||'';
+        if(type==='checkbox')
+          return `<label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:14px;"><input type="checkbox" data-f="${key}" ${c[key]?'checked':''}> ${esc(lbl)}</label>`;
+        const wrap=grp==='biz'?' data-biz="1"':'';
+        return `<div${wrap}><label class="label">${esc(lbl)}</label><input class="input" data-f="${key}" type="${type||'text'}" value="${esc(v)}"></div>`;
       }).join('');
+      const bizToggle=()=>{ const on=document.querySelector('#cardForm [data-f="has_business_activity"]').checked; document.querySelectorAll('#cardForm [data-biz]').forEach(el=>el.classList.toggle('hidden',!on)); };
+      const cb=document.querySelector('#cardForm [data-f="has_business_activity"]'); if(cb){ cb.onchange=bizToggle; bizToggle(); }
     }
     window.openCase=async(id)=>{
       CURRENT=id?CASES.find(c=>c.id===id):{ __new:true, status:'draft', administrator_id:CURRENT_ADM.id };
@@ -661,19 +751,24 @@
       REC_TYPE='employee'; ENRICHED={};
       document.querySelectorAll('#paneRecipients .tab').forEach(t=>t.classList.toggle('active',t.dataset.rtype==='employee'));
       document.querySelectorAll('#caseDetailView > .tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.pane==='card'));
-      show('paneCard'); hide('paneRecipients'); hide('paneDocuments'); hide('paneLibrary'); hide('paneActs'); hide('paneDispatch'); hide('paneLog');
-      $('cardMsg').innerHTML=''; $('aiMsg').innerHTML='';
+      show('paneCard'); hide('paneRecipients'); hide('paneDocuments'); hide('paneRegistry'); hide('paneLibrary'); hide('paneActs'); hide('paneDispatch'); hide('paneLog');
+      $('cardMsg').innerHTML=''; $('aiMsg').innerHTML=''; $('ctMsg').innerHTML='';
+      REG_TYPE='received'; REGISTRATIONS=[]; CONTACTS=[];
+      document.querySelectorAll('#paneRegistry .tab').forEach(t=>t.classList.toggle('active',t.dataset.regtype==='received'));
       views('caseDetailView');
-      if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); }
-      else { RECIPIENTS=[]; DOCUMENTS=[]; }
+      if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); loadContacts(); }
+      else { RECIPIENTS=[]; DOCUMENTS=[]; renderContacts(); }
     };
-    function collectCard(){ const o={ administrator_id:CURRENT_ADM.id }; document.querySelectorAll('#cardForm [data-f]').forEach(el=>{ o[el.dataset.f]=el.value; }); return o; }
+    function collectCard(){ const o={ administrator_id:CURRENT_ADM.id }; document.querySelectorAll('#cardForm [data-f]').forEach(el=>{ o[el.dataset.f]=el.type==='checkbox'?el.checked:el.value; }); return o; }
     $('saveCardBtn').onclick=async()=>{
       const p=collectCard(); $('cardMsg').innerHTML='';
       if(!p.debtor_name){ $('cardMsg').innerHTML='<div class="error">Įveskite įmonės pavadinimą.</div>'; return; }
       let res = CURRENT.__new ? await sb.rpc('create_insolvency_case',{ p }) : await sb.rpc('update_insolvency_case',{ p_id:CURRENT.id, p });
       if(res.error){ $('cardMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
-      if(res.data&&res.data.ok===false){ $('cardMsg').innerHTML='<div class="error">Klaida: '+esc(res.data.error_code)+'</div>'; return; }
+      if(res.data&&res.data.ok===false){
+        const chint={ bad_project_code:'Trumpinys — 2–6 raidės/skaitmenys be tarpų (pvz. TOR).', project_code_taken:'Toks trumpinys jau naudojamas kitoje byloje.', project_code_locked:'Trumpinio keisti negalima — byloje jau yra registruotų dokumentų.' }[res.data.error_code]||'';
+        $('cardMsg').innerHTML='<div class="error">Klaida: '+esc(res.data.error_code)+(chint?' — '+chint:'')+'</div>'; return;
+      }
       const newId=CURRENT.__new?res.data.id:CURRENT.id;
       // perkraunam administratoriaus bylas
       const { data }=await sb.from('insolvency_cases').select('*').eq('administrator_id',CURRENT_ADM.id).order('created_at',{ascending:false});
@@ -687,10 +782,12 @@
         $('paneCard').classList.toggle('hidden',p!=='card');
         $('paneRecipients').classList.toggle('hidden',p!=='recipients');
         $('paneDocuments').classList.toggle('hidden',p!=='documents');
+        $('paneRegistry').classList.toggle('hidden',p!=='registry');
         $('paneLibrary').classList.toggle('hidden',p!=='library');
         $('paneActs').classList.toggle('hidden',p!=='acts');
         $('paneDispatch').classList.toggle('hidden',p!=='dispatch');
         $('paneLog').classList.toggle('hidden',p!=='log');
+        if(p==='registry')loadRegistry();
         if(p==='library')loadLibrary();
         if(p==='acts')loadActs();
         if(p==='dispatch')renderDispatch();
@@ -1290,6 +1387,228 @@
       await logEvent('list_exported',{ group:$('dispGroup').value, count:targets.length });
     };
 
+    // ---------- KONTAKTINIAI ASMENYS ----------
+    let CT_EDIT_ID=null;
+    async function loadContacts(){
+      if(!CURRENT||CURRENT.__new){ CONTACTS=[]; renderContacts(); return; }
+      const { data }=await sb.from('insolvency_case_contacts').select('*').eq('case_id',CURRENT.id).order('sort_order').order('created_at');
+      CONTACTS=data||[]; renderContacts();
+    }
+    function renderContacts(){
+      if(CURRENT&&CURRENT.__new){ $('contactsList').innerHTML='<div class="muted">Kontaktus galėsite pridėti išsaugoję bylą.</div>'; return; }
+      if(!CONTACTS.length){ $('contactsList').innerHTML='<div class="muted">Kontaktinių asmenų dar nėra.</div>'; return; }
+      $('contactsList').innerHTML='<table><thead><tr><th>Vardas, pavardė</th><th>Pareigos / ryšys</th><th>Telefonas</th><th>El. paštas</th><th></th></tr></thead><tbody>'+
+        CONTACTS.map(c=>`<tr><td><b>${esc(c.full_name)}</b></td><td>${esc(c.role||'')}</td><td>${esc(c.phone||'')}</td><td>${esc(c.email||'')}</td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="editContact('${c.id}')">✎</button> <button class="btn btn-sm btn-danger" onclick="delContact('${c.id}')">✕</button></td></tr>`).join('')+'</tbody></table>';
+    }
+    window.editContact=(id)=>{
+      const c=CONTACTS.find(x=>x.id===id); if(!c)return;
+      CT_EDIT_ID=id; $('ctName').value=c.full_name||''; $('ctRole').value=c.role||''; $('ctPhone').value=c.phone||''; $('ctEmail').value=c.email||'';
+      $('ctAddBtn').textContent='💾 Išsaugoti'; $('ctMsg').innerHTML='<div class="muted">Redaguojamas: '+esc(c.full_name)+'</div>';
+    };
+    window.delContact=async(id)=>{
+      if(!confirm('Pašalinti kontaktinį asmenį?'))return;
+      const { error }=await sb.from('insolvency_case_contacts').delete().eq('id',id);
+      if(error){ $('ctMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      loadContacts();
+    };
+    $('ctAddBtn').onclick=async()=>{
+      $('ctMsg').innerHTML='';
+      if(CURRENT.__new){ $('ctMsg').innerHTML='<div class="error">Pirma išsaugokite bylos kortelę.</div>'; return; }
+      const name=$('ctName').value.trim();
+      if(!name){ $('ctMsg').innerHTML='<div class="error">Įveskite vardą, pavardę.</div>'; return; }
+      const row={ full_name:name, role:$('ctRole').value.trim()||null, phone:$('ctPhone').value.trim()||null, email:$('ctEmail').value.trim()||null };
+      const res = CT_EDIT_ID
+        ? await sb.from('insolvency_case_contacts').update(row).eq('id',CT_EDIT_ID)
+        : await sb.from('insolvency_case_contacts').insert(Object.assign({ case_id:CURRENT.id },row));
+      if(res.error){ $('ctMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+      CT_EDIT_ID=null; $('ctAddBtn').textContent='+ Pridėti';
+      $('ctName').value=''; $('ctRole').value=''; $('ctPhone').value=''; $('ctEmail').value='';
+      loadContacts();
+    };
+
+    // ---------- DOKUMENTŲ REGISTRAS ----------
+    document.querySelectorAll('#paneRegistry .tab').forEach(t=>{
+      t.onclick=()=>{
+        document.querySelectorAll('#paneRegistry .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+        REG_TYPE=t.dataset.regtype; renderRegistry();
+      };
+    });
+    async function loadRegistry(){
+      $('regCodeWarn').classList.toggle('hidden', !!(CURRENT&&CURRENT.project_code));
+      if(!CURRENT||CURRENT.__new){ REGISTRATIONS=[]; renderRegistry(); return; }
+      const { data, error }=await sb.from('insolvency_doc_registrations').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
+      if(error){ $('registryTable').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      REGISTRATIONS=data||[]; renderRegistry();
+    }
+    function renderRegistry(){
+      $('cntRegG').textContent=REGISTRATIONS.filter(r=>r.doc_type==='received').length;
+      $('cntRegS').textContent=REGISTRATIONS.filter(r=>r.doc_type==='sent').length;
+      const rcv=REG_TYPE==='received';
+      $('regListTitle').textContent=rcv?'Gaunamų dokumentų žurnalas':'Siunčiamų dokumentų žurnalas';
+      const q=($('regSearch').value||'').toLowerCase();
+      const rows=REGISTRATIONS.filter(r=>r.doc_type===REG_TYPE)
+        .filter(r=>!q||[r.registration_number,r.document_title,r.counterparty_name].some(v=>(v||'').toLowerCase().includes(q)));
+      if(!rows.length){ $('registryTable').innerHTML='<div class="muted center" style="padding:24px;">'+(rcv?'Gaunamų':'Siunčiamų')+' dokumentų dar neregistruota.</div>'; return; }
+      $('registryTable').innerHTML='<table><thead><tr><th>Reg. Nr.</th><th>'+(rcv?'Gavimo data':'Išsiuntimo data')+'</th><th>'+(rcv?'Siuntėjas':'Gavėjas')+'</th><th>Aprašymas</th><th></th></tr></thead><tbody>'+
+        rows.map(r=>`<tr>
+          <td><a href="javascript:void(0)" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')" style="color:var(--navy);font-weight:700;text-decoration:underline;">${esc(r.registration_number)}</a></td>
+          <td>${esc(r.registration_date||'')}</td>
+          <td>${esc(r.counterparty_name||'—')}</td>
+          <td>${esc(r.document_title)}${r.notes?'<div class="muted" style="font-size:12px;">'+esc(r.notes)+'</div>':''}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')">👁</button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')">⬇️</button></td>
+        </tr>`).join('')+'</tbody></table>';
+    }
+    $('regSearch').oninput=renderRegistry;
+
+    // --- registravimo modalė ---
+    let REG_FILES=[];
+    function openRegModal(type){
+      if(CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; }
+      if(!CURRENT.project_code){ alert('Bylos kortelėje įveskite registracijos trumpinį (pvz. TOR) ir išsaugokite.'); return; }
+      $('regType').value=type;
+      const rcv=type==='received';
+      $('regModalTitle').textContent=rcv?'Registruoti gaunamą dokumentą':'Registruoti siunčiamą dokumentą';
+      $('regDateLbl').textContent=rcv?'Gavimo data *':'Išsiuntimo data *';
+      $('regPartyLbl').textContent=rcv?'Siuntėjas':'Gavėjas (adresatas)';
+      $('regNumPreview').textContent=(rcv?'G':'S')+String(new Date().getFullYear()).slice(-2)+'-'+CURRENT.project_code+'-'+String((REGISTRATIONS.filter(r=>r.doc_type===type).length||0)+1).padStart(3,'0')+' (preliminarus)';
+      $('regTitle').value=''; $('regParty').value=''; $('regNotes').value='';
+      $('regDate').value=new Date().toISOString().slice(0,10);
+      REG_FILES=[]; renderRegFiles(); $('regMsg').innerHTML='';
+      $('regSubmit').disabled=false;
+      fillPartySuggestions();
+      show('regModal');
+    }
+    $('newRegBtn').onclick=()=>openRegModal(REG_TYPE);
+    $('regCancel').onclick=()=>hide('regModal');
+    async function fillPartySuggestions(){
+      try{
+        const { data }=await sb.from('insolvency_doc_registrations').select('counterparty_name').not('counterparty_name','is',null).order('created_at',{ascending:false}).limit(400);
+        const seen=new Set(), names=[];
+        (data||[]).forEach(r=>{ const n=(r.counterparty_name||'').trim(); const k=n.toLowerCase(); if(n&&!seen.has(k)){ seen.add(k); names.push(n); } });
+        $('regPartyList').innerHTML=names.map(n=>`<option value="${esc(n)}"></option>`).join('');
+      }catch(_){}
+    }
+    $('regFilesBtn').onclick=()=>$('regFiles').click();
+    $('regFiles').onchange=(e)=>{
+      for(const f of e.target.files){
+        if(!/\.(pdf|jpe?g|png)$/i.test(f.name)){ $('regMsg').innerHTML='<div class="error">Praleistas failas '+esc(f.name)+' — palaikomi tik PDF, JPG, PNG.</div>'; continue; }
+        REG_FILES.push(f);
+      }
+      e.target.value=''; renderRegFiles();
+    };
+    function renderRegFiles(){
+      $('regFilesHint').textContent=REG_FILES.length?('Failų: '+REG_FILES.length):'Failų nepridėta.';
+      $('regFileList').innerHTML=REG_FILES.map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border:1px solid #F0F0F0;border-radius:6px;margin-bottom:4px;">
+        <span class="muted" style="width:20px;">${i+1}.</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(f.name)}</span>
+        <span class="muted" style="font-size:11px;">${(f.size/1024/1024).toFixed(2)} MB</span>
+        <button class="btn btn-sm btn-ghost" onclick="regMove(${i},-1)" ${i===0?'disabled':''}>▲</button>
+        <button class="btn btn-sm btn-ghost" onclick="regMove(${i},1)" ${i===REG_FILES.length-1?'disabled':''}>▼</button>
+        <button class="btn btn-sm btn-danger" onclick="regDelFile(${i})">✕</button></div>`).join('');
+    }
+    window.regMove=(i,d)=>{ const j=i+d; if(j<0||j>=REG_FILES.length)return; [REG_FILES[i],REG_FILES[j]]=[REG_FILES[j],REG_FILES[i]]; renderRegFiles(); };
+    window.regDelFile=(i)=>{ REG_FILES.splice(i,1); renderRegFiles(); };
+
+    // --- PDF sujungimas + registracijos žyma (pdf-lib) ---
+    let STAMP_FONT_BYTES=null;
+    async function getStampFonts(pdfDoc){
+      try{
+        if(!STAMP_FONT_BYTES){
+          const [r,b]=await Promise.all([
+            fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf'),
+            fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf')
+          ]);
+          if(!r.ok||!b.ok)throw new Error('font_fetch');
+          STAMP_FONT_BYTES={ reg:await r.arrayBuffer(), bold:await b.arrayBuffer() };
+        }
+        pdfDoc.registerFontkit(window.fontkit);
+        return { reg:await pdfDoc.embedFont(STAMP_FONT_BYTES.reg,{subset:true}), bold:await pdfDoc.embedFont(STAMP_FONT_BYTES.bold,{subset:true}), unicode:true };
+      }catch(_){
+        return { reg:await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica), bold:await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold), unicode:false };
+      }
+    }
+    const LT_MAP={'ą':'a','č':'c','ę':'e','ė':'e','į':'i','š':'s','ų':'u','ū':'u','ž':'z','Ą':'A','Č':'C','Ę':'E','Ė':'E','Į':'I','Š':'S','Ų':'U','Ū':'U','Ž':'Z'};
+    const deLT=s=>String(s||'').replace(/[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,c=>LT_MAP[c]||c);
+    async function buildRegisteredPdf(files, meta){
+      const { PDFDocument, rgb } = PDFLib;
+      const out=await PDFDocument.create();
+      for(const f of files){
+        const buf=await f.arrayBuffer();
+        if(/\.pdf$/i.test(f.name)){
+          const src=await PDFDocument.load(buf,{ ignoreEncryption:true });
+          const pages=await out.copyPages(src,src.getPageIndices());
+          pages.forEach(p=>out.addPage(p));
+        }else{
+          const img=/\.png$/i.test(f.name)?await out.embedPng(buf):await out.embedJpg(buf);
+          const page=out.addPage([img.width,img.height]);
+          page.drawImage(img,{ x:0, y:0, width:img.width, height:img.height });
+        }
+      }
+      if(!out.getPageCount())throw new Error('Nepavyko suformuoti PDF (nėra puslapių).');
+      // registracijos žyma pirmame puslapyje, viršuje dešinėje
+      const fonts=await getStampFonts(out);
+      const T=s=>fonts.unicode?String(s||''):deLT(s);
+      const page=out.getPage(0);
+      const pw=page.getWidth(), ph=page.getHeight();
+      const w=232, h=66, m=10, x=pw-w-m, y=ph-h-m;
+      const red=rgb(0.86,0.15,0.15);
+      page.drawRectangle({ x, y, width:w, height:h, color:rgb(1,1,1), opacity:0.9, borderColor:red, borderWidth:1.4 });
+      const fit=(s,f,size,max)=>{ s=String(s||''); while(s.length>3&&f.widthOfTextAtSize(s,size)>max)s=s.slice(0,-2); return s; };
+      page.drawText(fit(T(meta.admName).toUpperCase(),fonts.bold,8.5,w-16),{ x:x+8, y:y+h-15, size:8.5, font:fonts.bold, color:red });
+      page.drawText('Reg. Nr.: '+meta.regNumber,{ x:x+8, y:y+h-29, size:9.5, font:fonts.bold, color:red });
+      page.drawText(T(meta.dateLabel)+': '+meta.dateStr,{ x:x+8, y:y+h-43, size:9, font:fonts.reg, color:red });
+      page.drawText(fit(T('Byla: '+(meta.caseName||'')),fonts.reg,8,w-16),{ x:x+8, y:y+h-56, size:8, font:fonts.reg, color:red });
+      const bytes=await out.save();
+      return { blob:new Blob([new Uint8Array(bytes)],{ type:'application/pdf' }), pageCount:out.getPageCount() };
+    }
+
+    // --- registravimo submit ---
+    $('regSubmit').onclick=async()=>{
+      $('regMsg').innerHTML='';
+      const type=$('regType').value, title=$('regTitle').value.trim(), dateV=$('regDate').value, party=$('regParty').value.trim();
+      if(!title){ $('regMsg').innerHTML='<div class="error">Įveskite dokumento aprašymą.</div>'; return; }
+      if(!dateV){ $('regMsg').innerHTML='<div class="error">Nurodykite datą.</div>'; return; }
+      if(!REG_FILES.length){ $('regMsg').innerHTML='<div class="error">Pridėkite bent vieną failą.</div>'; return; }
+      $('regSubmit').disabled=true;
+      $('regMsg').innerHTML='<div class="muted">⏳ Formuojamas registracijos numeris…</div>';
+      try{
+        // 1) registracijos numeris
+        const nr=await sb.rpc('generate_insolvency_reg_number',{ p_case_id:CURRENT.id, p_doc_type:type });
+        if(nr.error)throw new Error(nr.error.message);
+        if(!nr.data.ok){
+          const hint={ no_project_code:'Bylos kortelėje įveskite registracijos trumpinį.', not_admin:'Neturite administratoriaus teisių.' }[nr.data.error_code]||'';
+          throw new Error('Klaida: '+nr.data.error_code+(hint?' — '+hint:''));
+        }
+        const regNumber=nr.data.reg_number;
+        // 2) PDF sujungimas + žyma
+        $('regMsg').innerHTML='<div class="muted">⏳ Jungiami failai ir dedama žyma ('+esc(regNumber)+')…</div>';
+        const { blob, pageCount }=await buildRegisteredPdf(REG_FILES,{
+          regNumber, dateStr:dateV, dateLabel:type==='received'?'Gauta':'Išsiųsta',
+          admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
+        // 3) įkėlimas į Storage (be perrašymo — registruoti PDF nekeičiami)
+        $('regMsg').innerHTML='<div class="muted">⏳ Įkeliamas dokumentas…</div>';
+        const path=`${CURRENT.case_short_code}/registered/${regNumber}.pdf`;
+        const up=await sb.storage.from('insolvency-docs').upload(path,blob,{ upsert:false, contentType:'application/pdf' });
+        if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
+        // 4) įrašas žurnale (+ auditas RPC viduje)
+        const reg=await sb.rpc('register_insolvency_document',{ p:{
+          case_id:CURRENT.id, registration_number:regNumber, doc_type:type, registration_date:dateV,
+          document_title:title, counterparty_name:party, notes:$('regNotes').value.trim(),
+          storage_path:path, file_size:blob.size, page_count:pageCount,
+          original_files_metadata:REG_FILES.map(f=>({ name:f.name, size:f.size, type:f.type })) } });
+        if(reg.error)throw new Error(reg.error.message);
+        if(!reg.data.ok){
+          const hint=reg.data.error_code==='duplicate_number'?' — numeris jau užimtas, bandykite dar kartą.':'';
+          throw new Error('Klaida: '+reg.data.error_code+hint);
+        }
+        hide('regModal');
+        await loadRegistry();
+        alert('Dokumentas užregistruotas: '+regNumber);
+      }catch(err){
+        $('regMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>';
+        $('regSubmit').disabled=false;
+      }
+    };
+
     // ---------- ŽURNALAS ----------
     async function logEvent(action, details){
       try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:action, p_details:details }); }catch(_){}
@@ -1298,7 +1617,7 @@
       const { data }=await sb.from('insolvency_activity_log').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
       const rows=data||[];
       if(!rows.length){ $('logTable').innerHTML='<div class="muted center" style="padding:16px;">Žurnalas tuščias.</div>'; return; }
-      const lbl={ docs_generated:'Dokumentai sugeneruoti', list_exported:'Sąrašas eksportuotas', courier_list:'Kurjerio sąrašas', docs_sent:'Išsiųsta el. paštu' };
+      const lbl={ docs_generated:'Dokumentai sugeneruoti', list_exported:'Sąrašas eksportuotas', courier_list:'Kurjerio sąrašas', docs_sent:'Išsiųsta el. paštu', doc_registered:'Dokumentas užregistruotas' };
       $('logTable').innerHTML='<table><thead><tr><th>Data</th><th>Įvykis</th><th>Detalės</th><th></th></tr></thead><tbody>'+
         rows.map(r=>{ const d=Object.assign({},r.details||{}); const pdf=d.pdf_path; delete d.pdf_path;
           const det=Object.entries(d).map(([k,v])=>k+': '+v).join(', ');
