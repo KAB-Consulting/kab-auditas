@@ -49,6 +49,23 @@
     .adm-card { border:1px solid var(--bd); border-radius:10px; padding:18px; cursor:pointer; transition:.15s; }
     .adm-card:hover { border-color:var(--gold); box-shadow:0 2px 8px rgba(0,0,0,.08); }
     .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+    /* ===== Kompaktiškas kortelės laukų tinklelis =====
+       KAIP KOREGUOTI PAČIAM:
+       --fld-min  — minimalus lauko plotis (mažesnis skaičius = daugiau stulpelių eilutėje)
+       .fld-sm    — siauras laukas (datos, kodai); plotį keiskite max-width reikšme
+       Lauko priskyrimas: CARD_FIELDS įraše 4-as elementas 'sm' (siauras) arba 'biz' (ūkinės veiklos blokas) */
+    :root { --fld-min:210px; }
+    .fgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(var(--fld-min),1fr)); gap:2px 14px; align-items:end; }
+    .fgrid .sec-title, .fgrid .fchk { grid-column:1/-1; }
+    .fgrid .fld-sm { max-width:185px; }
+    .fgrid .input { padding:7px 10px; font-size:13px; }
+    .fgrid .label { margin-top:8px; font-size:12px; }
+    .subtabs { display:flex; gap:6px; margin:-6px 0 14px; flex-wrap:wrap; }
+    .subtabs .tab { padding:6px 13px; font-size:12.5px; border-radius:16px; }
+    .subtabs .tab.active { background:var(--gold); color:var(--navy); border-color:var(--gold); }
+    .bigbtn { border:1px solid var(--bd); border-radius:12px; padding:26px 20px; cursor:pointer; text-align:center; transition:.15s; background:#fff; }
+    .bigbtn:hover { border-color:var(--gold); box-shadow:0 2px 8px rgba(0,0,0,.08); }
+    .bigbtn .bb-ico { font-size:30px; } .bigbtn .bb-t { font-weight:700; color:var(--navy); margin-top:6px; }
   </style>
 </head>
 <body>
@@ -145,16 +162,16 @@
         <h2 style="color:var(--navy);font-size:19px;" id="cdTitle"></h2>
         <div class="muted" id="cdSub"></div>
       </div>
-      <div class="tabs">
-        <div class="tab active" data-pane="card">📋 Bylos kortelė</div>
-        <div class="tab" data-pane="recipients">👥 Gavėjai</div>
-        <div class="tab" data-pane="documents">📑 Dokumentai</div>
-        <div class="tab" data-pane="registry">🗂 Dokumentų registras</div>
-        <div class="tab" data-pane="library">📚 Dokumentų biblioteka</div>
-        <div class="tab" data-pane="acts">📝 Perdavimo aktai</div>
-        <div class="tab" data-pane="dispatch">📤 Siuntimas ir sąrašai</div>
-        <div class="tab" data-pane="log">🕓 Žurnalas</div>
+      <div class="tabs" id="topTabs">
+        <div class="tab active" data-top="main">📋 Pagrindinis</div>
+        <div class="tab" data-top="registry">🗂 Dok. registravimas</div>
+        <div class="tab" data-top="creditors">💼 Kreditoriai</div>
+        <div class="tab" data-top="debtors">💰 Debitoriai</div>
+        <div class="tab" data-top="docs">📑 Dok. rengimas</div>
+        <div class="tab" data-top="assets">🏠 Turtas</div>
+        <div class="tab" data-top="acts">📝 Aktai</div>
       </div>
+      <div class="tabs subtabs" id="subTabs"></div>
 
       <!-- KORTELĖ -->
       <div id="paneCard" class="card">
@@ -233,6 +250,9 @@
             <select id="docPerson" class="select"></select>
           </div>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:14px;">
+          <input type="checkbox" id="genRegCb"> Registruoti siunčiamų dokumentų žurnale (registracijos Nr. bus įrašytas į dokumentą per {{case.doc_no}} žymę)
+        </label>
         <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
           <button class="btn" id="generateDocsBtn">⚙️ Generuoti dokumentus</button>
           <input type="file" id="tplFile" accept=".docx" class="hidden">
@@ -244,6 +264,54 @@
         <div id="documentsTable" style="margin-top:10px;"></div>
       </div>
 
+      <!-- REGISTRUOTI (pasirinkimas G/S) -->
+      <div id="paneRegNew" class="card hidden">
+        <div id="regCodeWarn2" class="hidden" style="background:#FFF7E0;border:1px solid var(--gold);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+          <strong style="color:#8A6D00;">⚠ Nenustatytas registracijos trumpinys</strong>
+          <div class="muted" style="font-size:12px;">Bylos kortelėje (Pagrindinis) įveskite trumpinį (pvz. TOR) ir išsaugokite — be jo registracijos numeris negali būti suformuotas.</div>
+        </div>
+        <div class="muted" style="margin-bottom:14px;">Pasirinkite, kokį dokumentą registruojate. Failai bus sujungti į vieną PDF su registracijos žyma.</div>
+        <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));max-width:560px;">
+          <div class="bigbtn" id="regNewReceived"><div class="bb-ico">📥</div><div class="bb-t">Gaunamas dokumentas</div><div class="muted" style="font-size:12px;">Nr. G26-…-001</div></div>
+          <div class="bigbtn" id="regNewSent"><div class="bb-ico">📤</div><div class="bb-t">Siunčiamas dokumentas</div><div class="muted" style="font-size:12px;">Nr. S26-…-001</div></div>
+        </div>
+      </div>
+
+      <!-- DEBITORIAI (placeholder) -->
+      <div id="paneDebtors" class="card hidden">
+        <div class="sec-title" style="margin-top:0;">💰 Debitoriai</div>
+        <div class="muted" style="padding:20px 0;">Debitorių (skolininkų) sąrašo ir darbo su skolininkais funkcionalumas bus diegiamas kitame etape.</div>
+      </div>
+
+      <!-- TURTAS -->
+      <div id="paneAssets" class="card hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div><strong>🏠 Turto sąrašas</strong>
+            <div class="muted" style="font-size:12px;">Inventorizuotas turtas, kainos ir jų keitimo istorija, pardavimo fiksavimas, turto kortelės su fotofiksacija.</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-ghost" id="assetPasteBtn">📋 Įklijuoti sąrašą</button>
+            <button class="btn btn-sm" id="newAssetBtn">+ Pridėti turtą</button>
+          </div>
+        </div>
+        <div id="assetPasteBlock" class="hidden" style="background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:12px;margin-bottom:12px;">
+          <div class="hint" style="margin-bottom:6px;">Stulpeliai: <b>Pavadinimas; Kiekis; Vieta; Kaina (€)</b> — po vieną turto vienetą eilutėje (skirtukas ; arba Tab iš Excel).</div>
+          <textarea id="assetPasteData" class="textarea" style="min-height:90px;font-family:monospace;" placeholder="Stalas medinis; 4; Sandėlis Vilniuje; 120"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn-sm" id="assetPasteSave">✓ Importuoti</button>
+            <button class="btn btn-sm btn-ghost" id="assetPasteCancel">Atšaukti</button>
+          </div>
+        </div>
+        <div class="row" style="margin-bottom:10px;">
+          <div><input id="assetSearch" class="input" placeholder="Paieška pagal pavadinimą / vietą…"></div>
+          <div style="max-width:200px;"><select id="assetStatusFilter" class="select">
+            <option value="">Visi statusai</option><option value="in_stock">Apskaitytas</option><option value="for_sale">Parduodamas</option>
+            <option value="sold">Parduotas</option><option value="written_off">Nurašytas</option><option value="transferred">Perduotas</option>
+          </select></div>
+        </div>
+        <div id="assetsMsg"></div>
+        <div id="assetsTable"></div>
+      </div>
+
       <!-- DOKUMENTŲ REGISTRAS (gaunami / siunčiami) -->
       <div id="paneRegistry" class="card hidden">
         <div id="regCodeWarn" class="hidden" style="background:#FFF7E0;border:1px solid var(--gold);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
@@ -251,7 +319,7 @@
           <div class="muted" style="font-size:12px;">Bylos kortelėje įveskite trumpinį (pvz. TOR) ir išsaugokite — be jo registracijos numeris (pvz. G26-TOR-001) negali būti suformuotas.</div>
         </div>
         <div class="tabs" style="margin-bottom:14px;">
-          <div class="tab active" data-regtype="received">📥 Gaunami (<span id="cntRegG">0</span>)</div>
+          <div class="tab active" data-regtype="received">📥 Gauti (<span id="cntRegG">0</span>)</div>
           <div class="tab" data-regtype="sent">📤 Siunčiami (<span id="cntRegS">0</span>)</div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
@@ -584,6 +652,113 @@
     </div>
   </div>
 
+  <!-- TURTO MODALĖ -->
+  <div id="assetModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:620px;">
+      <h2 id="assetModalTitle">Pridėti turtą</h2>
+      <input type="hidden" id="assetId">
+      <label class="label">Pavadinimas *</label><input id="asName" class="input">
+      <div class="row">
+        <div><label class="label">Kategorija</label>
+          <select id="asCategory" class="select">
+            <option value="movable">Kilnojamas turtas</option><option value="realestate">Nekilnojamas turtas</option>
+            <option value="inventory">Prekės / atsargos</option><option value="vehicle">Transporto priemonė</option>
+            <option value="intangible">Nematerialus</option><option value="other">Kita</option>
+          </select></div>
+        <div><label class="label">Kiekis</label><input id="asQty" class="input" type="number" step="0.01" value="1"></div>
+        <div><label class="label">Mato vnt.</label><input id="asUnit" class="input" value="vnt."></div>
+      </div>
+      <label class="label">Saugojimo vieta</label><input id="asLocation" class="input">
+      <label class="label">Aprašymas</label><textarea id="asDesc" class="textarea" style="min-height:50px;"></textarea>
+      <div class="row">
+        <div><label class="label">Pradinė kaina (€)</label><input id="asPrice" class="input" type="number" step="0.01"></div>
+        <div><label class="label">Statusas</label>
+          <select id="asStatus" class="select">
+            <option value="in_stock">Apskaitytas</option><option value="for_sale">Parduodamas</option>
+            <option value="written_off">Nurašytas</option><option value="transferred">Perduotas</option>
+          </select></div>
+      </div>
+      <label class="label">Pastabos</label><input id="asNotes" class="input">
+      <div id="assetPhotoSec" class="hidden">
+        <div class="sec-title">Fotofiksacija</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <input type="file" id="asPhotoFile" accept="image/*" multiple class="hidden">
+          <input type="file" id="asPhotoCam" accept="image/*" capture="environment" class="hidden">
+          <button class="btn btn-sm btn-ghost" id="asPhotoUploadBtn" type="button">🖼 Įkelti nuotraukas</button>
+          <button class="btn btn-sm btn-ghost" id="asPhotoCamBtn" type="button">📷 Fotografuoti</button>
+        </div>
+        <div id="asPhotoGrid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+      <div id="assetMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="assetCancel">Uždaryti</button>
+        <button class="btn" id="assetSave">Išsaugoti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KAINOS KEITIMO MODALĖ -->
+  <div id="priceModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:520px;">
+      <h2>💶 Kainos fiksavimas / keitimas</h2>
+      <div class="muted" id="priceAssetName" style="margin-bottom:10px;"></div>
+      <input type="hidden" id="priceAssetId">
+      <div class="row">
+        <div><label class="label">Dabartinė kaina (€)</label><input id="priceOld" class="input" readonly style="background:#f5f5f5;"></div>
+        <div><label class="label">Nauja kaina (€) *</label><input id="priceNew" class="input" type="number" step="0.01"></div>
+      </div>
+      <label class="label">Keitimo priežastis / pagrindas</label>
+      <input id="priceReason" class="input" placeholder="pvz. kreditorių susirinkimo 2026-07-01 nutarimas, kainos mažinimas 20%">
+      <div class="sec-title">Kainų istorija</div>
+      <div id="priceHistory" class="hint" style="max-height:180px;overflow:auto;">—</div>
+      <div id="priceMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="priceCancel">Uždaryti</button>
+        <button class="btn" id="priceSave">Fiksuoti kainą</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARDAVIMO MODALĖ -->
+  <div id="sellModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:520px;">
+      <h2>🛒 Turto pardavimas</h2>
+      <div class="muted" id="sellAssetName" style="margin-bottom:10px;"></div>
+      <input type="hidden" id="sellAssetId">
+      <div class="row">
+        <div><label class="label">Pardavimo kaina (€) *</label><input id="sellPrice" class="input" type="number" step="0.01"></div>
+        <div><label class="label">Pardavimo data *</label><input id="sellDate" class="input" type="date"></div>
+      </div>
+      <label class="label">Pirkėjas</label><input id="sellBuyer" class="input">
+      <div id="sellMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="sellCancel">Atšaukti</button>
+        <button class="btn" id="sellSave">Fiksuoti pardavimą</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIUNČIAMO DOKUMENTO REGISTRAVIMO (GENERUOJANT) MODALĖ -->
+  <div id="sendRegModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:560px;">
+      <h2>📤 Siunčiamo dokumento registravimas</h2>
+      <div class="muted" style="margin-bottom:12px;">Registracijos Nr. <b id="sendRegNumPreview">S26-…</b> bus įrašytas į generuojamą dokumentą ir siunčiamų žurnalą.</div>
+      <label class="label">Siunčiamo dokumento turinys (aprašymas) *</label>
+      <input id="sendRegTitle" class="input">
+      <div class="row">
+        <div><label class="label">Siuntimo data *</label><input id="sendRegDate" class="input" type="date"></div>
+        <div><label class="label">Dokumento rengėjas</label><input id="sendRegAuthor" class="input"></div>
+      </div>
+      <label class="label">Gavėjas (adresatas)</label>
+      <input id="sendRegParty" class="input" list="regPartyList" placeholder="pvz. Kreditoriai (visi) arba konkretus gavėjas">
+      <div id="sendRegMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="sendRegCancel">Atšaukti</button>
+        <button class="btn" id="sendRegConfirm">✔ Tvirtinti ir generuoti</button>
+      </div>
+    </div>
+  </div>
+
   <!-- DOKUMENTO REGISTRAVIMO MODALĖ -->
   <div id="regModal" class="modal-bg hidden">
     <div class="modal" style="max-width:640px;">
@@ -708,40 +883,51 @@
     $('backToCases').onclick=()=>{ views('workspaceView'); };
 
     // ---------- LYGIS 3: BYLOS KORTELĖ ----------
+    // 4-as elementas (opts): 'sm' = siauras laukas; 'biz' = rodomas tik kai vykdoma ūkinė veikla; gali būti 'biz sm'
     const CARD_FIELDS=[
       ['__sec','Bankrutuojanti įmonė'],
       ['debtor_name','Įmonės pavadinimas'],
       ['debtor_short_name','Trumpas pavadinimas (BUAB eilutei)'],
-      ['debtor_code','Įmonės kodas'],
+      ['debtor_code','Įmonės kodas','text','sm'],
       ['debtor_address','Adresas'],
       ['__sec','Bylos duomenys'],
       ['court','Teismas'],
-      ['civil_case_no','Civilinės bylos Nr.'],
-      ['ruling_date','Nutarties data','date'],
-      ['effective_date','Įsiteisėjimo data','date'],
-      ['creditor_claim_deadline','Kreditorinių reikalavimų terminas','date'],
-      ['doc_no','Dokumento Nr. (jei naudojamas)'],
+      ['civil_case_no','Civilinės bylos Nr.','text','sm'],
+      ['ruling_date','Nutarties data','date','sm'],
+      ['effective_date','Įsiteisėjimo data','date','sm'],
+      ['creditor_claim_deadline','Kreditorinių reikalavimų terminas','date','sm'],
+      ['doc_no','Dokumento Nr. (jei naudojamas)','text','sm'],
       ['__sec','Dokumentų registracija'],
-      ['project_code','Registracijos trumpinys (2–6 raidės/skaitmenys, pvz. TOR — numeris bus G26-TOR-001)'],
+      ['project_code','Registracijos trumpinys (pvz. TOR)','text','sm'],
       ['__sec','Banko sąskaitos'],
       ['deposit_account_iban','Kaupiamosios sąskaitos Nr. (IBAN)'],
-      ['deposit_bank_name','Banko pavadinimas (kaupiamoji sąskaita)'],
+      ['deposit_bank_name','Bankas (kaupiamoji sąskaita)'],
       ['has_business_activity','Įmonė vykdo ūkinę komercinę veiklą','checkbox'],
-      ['business_account_iban','Ūkinės komercinės veiklos sąskaitos Nr. (IBAN)','text','biz'],
-      ['business_bank_name','Banko pavadinimas (veiklos sąskaita)','text','biz'],
+      ['business_account_iban','Veiklos sąskaitos Nr. (IBAN)','text','biz'],
+      ['business_bank_name','Bankas (veiklos sąskaita)','text','biz'],
     ];
+    function setCardSaved(saved){
+      const b=$('saveCardBtn');
+      b.disabled=saved;
+      b.textContent=saved?'✔ Išsaugota':'💾 Išsaugoti kortelę';
+    }
     function renderCard(c){
       c=c||{};
-      $('cardForm').innerHTML=CARD_FIELDS.map(f=>{
+      $('cardForm').innerHTML='<div class="fgrid">'+CARD_FIELDS.map(f=>{
         if(f[0]==='__sec') return `<div class="sec-title">${esc(f[1])}</div>`;
-        const [key,lbl,type,grp]=f; const v=c[key]||'';
+        const [key,lbl,type,opts]=f; const v=c[key]||''; const o=opts||'';
         if(type==='checkbox')
-          return `<label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:14px;"><input type="checkbox" data-f="${key}" ${c[key]?'checked':''}> ${esc(lbl)}</label>`;
-        const wrap=grp==='biz'?' data-biz="1"':'';
-        return `<div${wrap}><label class="label">${esc(lbl)}</label><input class="input" data-f="${key}" type="${type||'text'}" value="${esc(v)}"></div>`;
-      }).join('');
+          return `<label class="fchk" style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:14px;"><input type="checkbox" data-f="${key}" ${c[key]?'checked':''}> ${esc(lbl)}</label>`;
+        const cls=o.includes('sm')?' fld-sm':'';
+        const wrap=o.includes('biz')?' data-biz="1"':'';
+        return `<div class="fld${cls}"${wrap}><label class="label">${esc(lbl)}</label><input class="input" data-f="${key}" type="${type||'text'}" value="${esc(v)}"></div>`;
+      }).join('')+'</div>';
       const bizToggle=()=>{ const on=document.querySelector('#cardForm [data-f="has_business_activity"]').checked; document.querySelectorAll('#cardForm [data-biz]').forEach(el=>el.classList.toggle('hidden',!on)); };
-      const cb=document.querySelector('#cardForm [data-f="has_business_activity"]'); if(cb){ cb.onchange=bizToggle; bizToggle(); }
+      const cb=document.querySelector('#cardForm [data-f="has_business_activity"]'); if(cb){ cb.addEventListener('change',bizToggle); bizToggle(); }
+      // bet koks pakeitimas vėl aktyvuoja išsaugojimo mygtuką
+      document.querySelectorAll('#cardForm [data-f]').forEach(el=>{
+        el.addEventListener(el.type==='checkbox'?'change':'input',()=>setCardSaved(false));
+      });
     }
     window.openCase=async(id)=>{
       CURRENT=id?CASES.find(c=>c.id===id):{ __new:true, status:'draft', administrator_id:CURRENT_ADM.id };
@@ -749,12 +935,11 @@
       $('cdSub').textContent=(id?('Bylos kodas: '+CURRENT.case_short_code+' · '):'')+'Administratorius: '+CURRENT_ADM.name;
       renderCard(CURRENT);
       REC_TYPE='employee'; ENRICHED={};
-      document.querySelectorAll('#paneRecipients .tab').forEach(t=>t.classList.toggle('active',t.dataset.rtype==='employee'));
-      document.querySelectorAll('#caseDetailView > .tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.pane==='card'));
-      show('paneCard'); hide('paneRecipients'); hide('paneDocuments'); hide('paneRegistry'); hide('paneLibrary'); hide('paneActs'); hide('paneDispatch'); hide('paneLog');
+      document.querySelectorAll('#paneRecipients .tab[data-rtype]').forEach(t=>t.classList.toggle('active',t.dataset.rtype==='employee'));
       $('cardMsg').innerHTML=''; $('aiMsg').innerHTML=''; $('ctMsg').innerHTML='';
-      REG_TYPE='received'; REGISTRATIONS=[]; CONTACTS=[];
+      REG_TYPE='received'; REGISTRATIONS=[]; CONTACTS=[]; ASSETS=[];
       document.querySelectorAll('#paneRegistry .tab').forEach(t=>t.classList.toggle('active',t.dataset.regtype==='received'));
+      setTop('main'); setCardSaved(false);
       views('caseDetailView');
       if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); loadContacts(); }
       else { RECIPIENTS=[]; DOCUMENTS=[]; renderContacts(); }
@@ -772,28 +957,66 @@
       const newId=CURRENT.__new?res.data.id:CURRENT.id;
       // perkraunam administratoriaus bylas
       const { data }=await sb.from('insolvency_cases').select('*').eq('administrator_id',CURRENT_ADM.id).order('created_at',{ascending:false});
-      CASES=data||[]; openCase(newId);
+      CASES=data||[]; await openCase(newId);
+      $('cardMsg').innerHTML='<div class="success">✔ Kortelė sėkmingai išsaugota.</div>';
+      setCardSaved(true);
     };
 
-    document.querySelectorAll('#caseDetailView > .tabs .tab').forEach(t=>{
-      t.onclick=()=>{
-        document.querySelectorAll('#caseDetailView > .tabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
-        const p=t.dataset.pane;
-        $('paneCard').classList.toggle('hidden',p!=='card');
-        $('paneRecipients').classList.toggle('hidden',p!=='recipients');
-        $('paneDocuments').classList.toggle('hidden',p!=='documents');
-        $('paneRegistry').classList.toggle('hidden',p!=='registry');
-        $('paneLibrary').classList.toggle('hidden',p!=='library');
-        $('paneActs').classList.toggle('hidden',p!=='acts');
-        $('paneDispatch').classList.toggle('hidden',p!=='dispatch');
-        $('paneLog').classList.toggle('hidden',p!=='log');
-        if(p==='registry')loadRegistry();
-        if(p==='library')loadLibrary();
-        if(p==='acts')loadActs();
-        if(p==='dispatch')renderDispatch();
-        if(p==='log')loadLog();
-      };
-    });
+    // ---------- TABŲ STRUKTŪRA (7 pagrindiniai + sub-tabai) ----------
+    const TOP_TABS={
+      main:      [['card','📋 Bylos kortelė'],['log','🕓 Žurnalas']],
+      registry:  [['regnew','➕ Registruoti'],['regjournal','📓 Reg. žurnalas']],
+      creditors: [['creditors','💼 Kreditorių sąrašas']],
+      debtors:   [['debtors','💰 Debitoriai']],
+      docs:      [['recipients','👥 Gavėjai'],['documents','⚙️ Generavimas'],['library','📚 Biblioteka'],['dispatch','📤 Siuntimas ir sąrašai']],
+      assets:    [['assets','🏠 Turto sąrašas']],
+      acts:      [['acts','📝 Perdavimo aktai']]
+    };
+    const PANE_OF={ card:'paneCard', log:'paneLog', regnew:'paneRegNew', regjournal:'paneRegistry',
+      creditors:'paneRecipients', debtors:'paneDebtors', recipients:'paneRecipients', documents:'paneDocuments',
+      library:'paneLibrary', dispatch:'paneDispatch', assets:'paneAssets', acts:'paneActs' };
+    const ALL_PANES=['paneCard','paneLog','paneRegNew','paneRegistry','paneRecipients','paneDebtors','paneDocuments','paneLibrary','paneDispatch','paneAssets','paneActs'];
+    let TOP='main';
+    function setTop(top){
+      TOP=top;
+      document.querySelectorAll('#topTabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.top===top));
+      const subs=TOP_TABS[top];
+      $('subTabs').innerHTML=subs.map(([k,l],i)=>`<div class="tab${i===0?' active':''}" data-sub="${k}">${l}</div>`).join('');
+      $('subTabs').classList.toggle('hidden',subs.length<2);
+      document.querySelectorAll('#subTabs .tab').forEach(t=>{
+        t.onclick=()=>{
+          document.querySelectorAll('#subTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+          openPane(t.dataset.sub);
+        };
+      });
+      openPane(subs[0][0]);
+    }
+    function openPane(key){
+      ALL_PANES.forEach(p=>hide(p));
+      show(PANE_OF[key]);
+      if(key==='creditors'||key==='recipients'){
+        const credMode=(key==='creditors');
+        // kreditorių tabe tipo perjungiklis paslepiamas (rodomi tik kreditoriai);
+        // Dok. rengimas → Gavėjai rodo darbuotojus/suinteresuotus (kreditoriai turi savo tabą)
+        const typeRow=document.querySelector('#paneRecipients .tabs');
+        if(typeRow)typeRow.classList.toggle('hidden',credMode);
+        if(credMode){ REC_TYPE='creditor'; }
+        else if(REC_TYPE==='creditor'){ REC_TYPE='employee'; }
+        document.querySelectorAll('#paneRecipients .tab[data-rtype]').forEach(t=>{
+          t.classList.toggle('active',t.dataset.rtype===REC_TYPE);
+          t.classList.toggle('hidden',!credMode&&t.dataset.rtype==='creditor');
+        });
+        renderRecipients();
+      }
+      if(key==='regjournal')loadRegistry();
+      if(key==='regnew')$('regCodeWarn2').classList.toggle('hidden', !!(CURRENT&&CURRENT.project_code));
+      if(key==='library')loadLibrary();
+      if(key==='acts')loadActs();
+      if(key==='dispatch')renderDispatch();
+      if(key==='log')loadLog();
+      if(key==='assets')loadAssets();
+    }
+    document.querySelectorAll('#topTabs .tab').forEach(t=>{ t.onclick=()=>setTop(t.dataset.top); });
 
     // ---------- GAVĖJAI ----------
     async function loadRecipients(){
@@ -1092,20 +1315,71 @@
     };
     $('generateDocsBtn').onclick=async()=>{
       if(CURRENT.__new){ $('docsMsg').innerHTML='<div class="error">Pirma išsaugokite bylą.</div>'; return; }
+      if($('genRegCb').checked){ openSendRegModal(); return; }
+      await runGenerate(null,null);
+    };
+    async function runGenerate(docNo, regMeta){
       const code=$('docTemplate').value, personId=$('docPerson').value||null;
       $('docsMsg').innerHTML='<div class="muted">⏳ Generuojama…</div>';
       const { data:{ session } } = await sb.auth.getSession();
       const res=await fetch(`${SUPABASE_URL}/functions/v1/generate-insolvency-docx`,{
         method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
-        body:JSON.stringify({ case_id:CURRENT.id, template_code:code, person_id:personId })});
+        body:JSON.stringify({ case_id:CURRENT.id, template_code:code, person_id:personId, doc_no:docNo||undefined })});
       const r=await res.json();
       if(!r.success){
         const hint = r.error==='no_administrator_blank'?' (administratoriui neįkeltas blankas)':r.error==='no_template_file'?' (šablonui neįkeltas DOCX)':r.error==='no_recipients'?' (nėra gavėjų)':'';
         $('docsMsg').innerHTML='<div class="error">Klaida: '+esc(r.error||'')+hint+'</div>'; return;
       }
-      $('docsMsg').innerHTML='<div class="success">Sugeneruota dokumentų: <b>'+r.count+'</b>.</div>';
-      try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:'docs_generated', p_details:{ template:code, count:r.count } }); }catch(_){}
+      let msg='Sugeneruota dokumentų: <b>'+r.count+'</b>.';
+      // registracija siunčiamų žurnale (jei pasirinkta)
+      if(docNo&&regMeta&&r.documents&&r.documents.length){
+        const reg=await sb.rpc('register_insolvency_document',{ p:{
+          case_id:CURRENT.id, registration_number:docNo, doc_type:'sent', registration_date:regMeta.date,
+          document_title:regMeta.title, counterparty_name:regMeta.party,
+          notes:(regMeta.author?'Rengėjas: '+regMeta.author+'. ':'')+'Šablonas: '+code+', failų: '+r.count+'.',
+          storage_path:r.documents[0].path, page_count:null,
+          original_files_metadata:r.documents.map(d=>({ name:d.file_name, path:d.path })) } });
+        if(reg.error||!(reg.data&&reg.data.ok)){
+          msg+=' <span style="color:#C0392B;">⚠ Registracija žurnale nepavyko: '+esc((reg.error&&reg.error.message)||(reg.data&&reg.data.error_code)||'')+'</span>';
+        }else{
+          msg+=' Užregistruota siunčiamų žurnale: <b>'+esc(docNo)+'</b> (numeris įrašytas į dokumentą).';
+        }
+      }
+      $('docsMsg').innerHTML='<div class="success">'+msg+'</div>';
+      try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:'docs_generated', p_details:{ template:code, count:r.count, doc_no:docNo||null } }); }catch(_){}
       await loadDocuments();
+    }
+    // --- siunčiamo dokumento registravimo popup (generuojant) ---
+    function openSendRegModal(){
+      if(!CURRENT.project_code){ $('docsMsg').innerHTML='<div class="error">Bylos kortelėje įveskite registracijos trumpinį (pvz. TOR) — be jo negalima registruoti.</div>'; $('genRegCb').checked=false; return; }
+      const code=$('docTemplate').value;
+      const tpl=TEMPLATES.find(t=>t.code===code)||{};
+      const grp={ employee:'Darbuotojai', creditor:'Kreditoriai', interested:'Suinteresuoti asmenys', debtor:'Debitoriai' }[tpl.recipient_type]||'';
+      $('sendRegTitle').value=tpl.title||code||'';
+      $('sendRegDate').value=new Date().toISOString().slice(0,10);
+      $('sendRegAuthor').value=($('docPerson').selectedOptions[0]&&$('docPerson').selectedOptions[0].text)||'';
+      $('sendRegParty').value=grp?(grp+' (pagal sąrašą)'):'';
+      $('sendRegNumPreview').textContent='S'+String(new Date().getFullYear()).slice(-2)+'-'+CURRENT.project_code+'-'+String((REGISTRATIONS.filter(r=>r.doc_type==='sent').length||0)+1).padStart(3,'0')+' (preliminarus)';
+      $('sendRegMsg').innerHTML=''; $('sendRegConfirm').disabled=false;
+      fillPartySuggestions();
+      show('sendRegModal');
+    }
+    $('sendRegCancel').onclick=()=>hide('sendRegModal');
+    $('sendRegConfirm').onclick=async()=>{
+      const title=$('sendRegTitle').value.trim(), dateV=$('sendRegDate').value;
+      if(!title){ $('sendRegMsg').innerHTML='<div class="error">Įveskite dokumento turinį (aprašymą).</div>'; return; }
+      if(!dateV){ $('sendRegMsg').innerHTML='<div class="error">Nurodykite siuntimo datą.</div>'; return; }
+      $('sendRegConfirm').disabled=true;
+      $('sendRegMsg').innerHTML='<div class="muted">⏳ Formuojamas numeris…</div>';
+      const nr=await sb.rpc('generate_insolvency_reg_number',{ p_case_id:CURRENT.id, p_doc_type:'sent' });
+      if(nr.error||!(nr.data&&nr.data.ok)){
+        $('sendRegMsg').innerHTML='<div class="error">Klaida: '+esc((nr.error&&nr.error.message)||(nr.data&&nr.data.error_code)||'')+'</div>';
+        $('sendRegConfirm').disabled=false; return;
+      }
+      const meta={ title, date:dateV, author:$('sendRegAuthor').value.trim(), party:$('sendRegParty').value.trim() };
+      hide('sendRegModal');
+      await runGenerate(nr.data.reg_number, meta);
+      await loadRegistry();
     };
 
     // ---------- ADMINISTRATORIAUS MODALĖ ----------
@@ -1459,6 +1733,8 @@
         </tr>`).join('')+'</tbody></table>';
     }
     $('regSearch').oninput=renderRegistry;
+    $('regNewReceived').onclick=()=>openRegModal('received');
+    $('regNewSent').onclick=()=>openRegModal('sent');
 
     // --- registravimo modalė ---
     let REG_FILES=[];
@@ -1609,6 +1885,228 @@
       }
     };
 
+    // ---------- TURTAS ----------
+    let ASSETS=[], AS_PHOTOS=[];
+    const AS_CAT={ realestate:'Nekilnojamas', movable:'Kilnojamas', inventory:'Atsargos', vehicle:'Transportas', intangible:'Nematerialus', other:'Kita' };
+    const AS_ST={ in_stock:'Apskaitytas', for_sale:'Parduodamas', sold:'Parduotas', written_off:'Nurašytas', transferred:'Perduotas' };
+    const fmtEur=v=>(v==null||v==='')?'—':Number(v).toLocaleString('lt-LT',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+    async function loadAssets(){
+      if(!CURRENT||CURRENT.__new){ ASSETS=[]; renderAssets(); return; }
+      const { data, error }=await sb.from('insolvency_assets').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
+      if(error){ $('assetsTable').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      ASSETS=data||[]; renderAssets();
+    }
+    function renderAssets(){
+      if(CURRENT&&CURRENT.__new){ $('assetsTable').innerHTML='<div class="muted center" style="padding:24px;">Pirma išsaugokite bylos kortelę.</div>'; return; }
+      const q=($('assetSearch').value||'').toLowerCase(), st=$('assetStatusFilter').value;
+      const rows=ASSETS.filter(a=>(!st||a.status===st)&&(!q||[a.name,a.location,a.description].some(v=>(v||'').toLowerCase().includes(q))));
+      if(!rows.length){ $('assetsTable').innerHTML='<div class="muted center" style="padding:24px;">Turto įrašų nėra.</div>'; return; }
+      $('assetsTable').innerHTML='<table><thead><tr><th>Pavadinimas</th><th>Kategorija</th><th>Kiekis</th><th>Vieta</th><th>Kaina</th><th>Statusas</th><th>Foto</th><th></th></tr></thead><tbody>'+
+        rows.map(a=>{
+          const stb=a.status==='sold'?'<span class="badge badge-green">Parduotas</span>':a.status==='for_sale'?'<span class="badge badge-gold">Parduodamas</span>':'<span class="badge badge-gray">'+esc(AS_ST[a.status]||a.status)+'</span>';
+          const price=a.status==='sold'?fmtEur(a.sold_price):fmtEur(a.current_price);
+          return `<tr><td><b>${esc(a.name)}</b>${a.description?'<div class="muted" style="font-size:12px;">'+esc(a.description)+'</div>':''}</td>
+            <td>${esc(AS_CAT[a.category]||'')}</td><td>${esc(String(a.quantity??''))} ${esc(a.unit||'')}</td><td>${esc(a.location||'')}</td>
+            <td>${price}</td><td>${stb}</td><td>${(a.photos||[]).length||'—'}</td>
+            <td style="text-align:right;white-space:nowrap;">
+              <button class="btn btn-sm btn-ghost" onclick="openAssetModal('${a.id}')" title="Redaguoti / nuotraukos">✎</button>
+              <button class="btn btn-sm btn-ghost" onclick="openPriceModal('${a.id}')" title="Kainos fiksavimas">💶</button>
+              ${a.status!=='sold'?`<button class="btn btn-sm btn-ghost" onclick="openSellModal('${a.id}')" title="Parduoti">🛒</button>`:''}
+              <button class="btn btn-sm btn-gold" onclick="assetCardPdf('${a.id}')" title="Turto kortelė (PDF)">📄</button>
+              <button class="btn btn-sm btn-danger" onclick="delAsset('${a.id}')">🗑</button>
+            </td></tr>`;
+        }).join('')+'</tbody></table>';
+    }
+    $('assetSearch').oninput=renderAssets;
+    $('assetStatusFilter').onchange=renderAssets;
+    window.delAsset=async(id)=>{
+      const a=ASSETS.find(x=>x.id===id);
+      if(!confirm('Ištrinti turto įrašą „'+(a?a.name:'')+'“? Trynimas negrįžtamas.'))return;
+      const { error }=await sb.from('insolvency_assets').delete().eq('id',id);
+      if(error){ $('assetsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      loadAssets();
+    };
+    // --- turto modalė (CRUD + nuotraukos) ---
+    window.openAssetModal=(id)=>{
+      if(CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; }
+      const a=id?ASSETS.find(x=>x.id===id):{};
+      $('assetModalTitle').textContent=id?'Redaguoti turtą':'Pridėti turtą';
+      $('assetId').value=a.id||''; $('asName').value=a.name||''; $('asCategory').value=a.category||'movable';
+      $('asQty').value=a.quantity??1; $('asUnit').value=a.unit||'vnt.'; $('asLocation').value=a.location||'';
+      $('asDesc').value=a.description||''; $('asPrice').value=a.current_price??a.initial_price??'';
+      $('asStatus').value=(a.status&&a.status!=='sold')?a.status:'in_stock';
+      $('asNotes').value=a.notes||''; $('assetMsg').innerHTML='';
+      AS_PHOTOS=(a.photos||[]).slice();
+      $('assetPhotoSec').classList.toggle('hidden',!id);
+      renderAsPhotos();
+      show('assetModal');
+    };
+    $('assetCancel').onclick=()=>hide('assetModal');
+    function renderAsPhotos(){
+      $('asPhotoGrid').innerHTML=AS_PHOTOS.length?AS_PHOTOS.map((p,i)=>`<div style="border:1px solid var(--bd);border-radius:6px;padding:4px 8px;display:flex;align-items:center;gap:6px;font-size:12px;">
+        🖼 ${esc(p.name||('foto '+(i+1)))} <span style="cursor:pointer;" onclick="previewDoc('${esc(p.path)}','${esc(p.name||'Nuotrauka')}')">👁</span>
+        <span style="cursor:pointer;color:#C0392B;" onclick="delAsPhoto(${i})">✕</span></div>`).join(''):'<span class="muted" style="font-size:12px;">Nuotraukų nėra.</span>';
+    }
+    window.delAsPhoto=async(i)=>{ AS_PHOTOS.splice(i,1); renderAsPhotos(); await saveAsPhotos(); };
+    async function saveAsPhotos(){
+      const id=$('assetId').value; if(!id)return;
+      await sb.from('insolvency_assets').update({ photos:AS_PHOTOS, updated_at:new Date().toISOString() }).eq('id',id);
+      loadAssets();
+    }
+    $('asPhotoUploadBtn').onclick=()=>$('asPhotoFile').click();
+    $('asPhotoCamBtn').onclick=()=>$('asPhotoCam').click();
+    async function handleAssetPhotos(e){
+      const id=$('assetId').value; if(!id)return;
+      $('assetMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
+      try{
+        for(const file of e.target.files){
+          const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
+          const path=`${CURRENT.case_short_code}/assets/${id}/${Date.now()}_${safe}`;
+          const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+          if(error)throw error;
+          AS_PHOTOS.push({ path, name:file.name });
+        }
+        renderAsPhotos(); await saveAsPhotos();
+        $('assetMsg').innerHTML='<div class="success">Nuotraukos įkeltos.</div>';
+      }catch(err){ $('assetMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    }
+    $('asPhotoFile').onchange=handleAssetPhotos;
+    $('asPhotoCam').onchange=handleAssetPhotos;
+    $('assetSave').onclick=async()=>{
+      const name=$('asName').value.trim();
+      if(!name){ $('assetMsg').innerHTML='<div class="error">Įveskite pavadinimą.</div>'; return; }
+      const id=$('assetId').value||null;
+      const price=$('asPrice').value===''?null:Number($('asPrice').value);
+      const row={ name, category:$('asCategory').value, quantity:Number($('asQty').value)||1, unit:$('asUnit').value.trim()||'vnt.',
+        location:$('asLocation').value.trim()||null, description:$('asDesc').value.trim()||null,
+        status:$('asStatus').value, notes:$('asNotes').value.trim()||null, updated_at:new Date().toISOString() };
+      let res;
+      if(id){ row.current_price=price; res=await sb.from('insolvency_assets').update(row).eq('id',id); }
+      else { row.case_id=CURRENT.id; row.initial_price=price; row.current_price=price; row.photos=[]; res=await sb.from('insolvency_assets').insert(row).select().single(); }
+      if(res.error){ $('assetMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+      if(!id&&res.data){ $('assetId').value=res.data.id; $('assetPhotoSec').classList.remove('hidden'); $('assetMsg').innerHTML='<div class="success">Išsaugota. Dabar galite pridėti nuotraukas.</div>'; }
+      else { $('assetMsg').innerHTML='<div class="success">Išsaugota.</div>'; }
+      loadAssets();
+    };
+    $('newAssetBtn').onclick=()=>openAssetModal(null);
+    // --- copy/paste importas ---
+    $('assetPasteBtn').onclick=()=>{ $('assetPasteBlock').classList.toggle('hidden'); };
+    $('assetPasteCancel').onclick=()=>hide('assetPasteBlock');
+    $('assetPasteSave').onclick=async()=>{
+      if(CURRENT.__new){ $('assetsMsg').innerHTML='<div class="error">Pirma išsaugokite bylos kortelę.</div>'; return; }
+      const lines=$('assetPasteData').value.split('\n').map(l=>l.trim()).filter(Boolean);
+      if(!lines.length)return;
+      const rows=lines.map(l=>{
+        const p=l.split(/\t|;/).map(x=>x.trim());
+        const price=p[3]!==undefined&&p[3]!==''?Number(String(p[3]).replace(',','.').replace(/[^0-9.\-]/g,'')):null;
+        return { case_id:CURRENT.id, name:p[0]||'—', quantity:Number(String(p[1]||'1').replace(',','.'))||1,
+          location:p[2]||null, initial_price:isNaN(price)?null:price, current_price:isNaN(price)?null:price, photos:[] };
+      }).filter(r=>r.name&&r.name!=='—');
+      if(!rows.length){ $('assetsMsg').innerHTML='<div class="error">Nepavyko atpažinti eilučių.</div>'; return; }
+      const { error }=await sb.from('insolvency_assets').insert(rows);
+      if(error){ $('assetsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      $('assetPasteData').value=''; hide('assetPasteBlock');
+      $('assetsMsg').innerHTML='<div class="success">Importuota įrašų: '+rows.length+'.</div>';
+      loadAssets();
+    };
+    // --- kainos fiksavimas / keitimas ---
+    window.openPriceModal=async(id)=>{
+      const a=ASSETS.find(x=>x.id===id); if(!a)return;
+      $('priceAssetId').value=id; $('priceAssetName').textContent=a.name;
+      $('priceOld').value=a.current_price??''; $('priceNew').value=''; $('priceReason').value=''; $('priceMsg').innerHTML='';
+      const { data }=await sb.from('insolvency_asset_price_log').select('*').eq('asset_id',id).order('created_at',{ascending:false});
+      $('priceHistory').innerHTML=(data&&data.length)?data.map(r=>`<div style="padding:3px 0;border-bottom:1px solid #f0f0f0;">${fmtDate(r.created_at)}: ${fmtEur(r.old_price)} → <b>${fmtEur(r.new_price)}</b>${r.reason?' <span class="muted">('+esc(r.reason)+')</span>':''}</div>`).join(''):'Kainų keitimų dar nebuvo.';
+      show('priceModal');
+    };
+    $('priceCancel').onclick=()=>hide('priceModal');
+    $('priceSave').onclick=async()=>{
+      const id=$('priceAssetId').value, a=ASSETS.find(x=>x.id===id);
+      const nv=$('priceNew').value;
+      if(nv===''){ $('priceMsg').innerHTML='<div class="error">Įveskite naują kainą.</div>'; return; }
+      const { data:{ user } }=await sb.auth.getUser();
+      const logRes=await sb.from('insolvency_asset_price_log').insert({ asset_id:id, old_price:a.current_price, new_price:Number(nv), reason:$('priceReason').value.trim()||null, created_by:user?user.id:null });
+      if(logRes.error){ $('priceMsg').innerHTML='<div class="error">'+esc(logRes.error.message)+'</div>'; return; }
+      const upRes=await sb.from('insolvency_assets').update({ current_price:Number(nv), updated_at:new Date().toISOString() }).eq('id',id);
+      if(upRes.error){ $('priceMsg').innerHTML='<div class="error">'+esc(upRes.error.message)+'</div>'; return; }
+      hide('priceModal'); loadAssets();
+    };
+    // --- pardavimas ---
+    window.openSellModal=(id)=>{
+      const a=ASSETS.find(x=>x.id===id); if(!a)return;
+      $('sellAssetId').value=id; $('sellAssetName').textContent=a.name+' (dabartinė kaina: '+fmtEur(a.current_price)+')';
+      $('sellPrice').value=a.current_price??''; $('sellDate').value=new Date().toISOString().slice(0,10);
+      $('sellBuyer').value=''; $('sellMsg').innerHTML='';
+      show('sellModal');
+    };
+    $('sellCancel').onclick=()=>hide('sellModal');
+    $('sellSave').onclick=async()=>{
+      const id=$('sellAssetId').value;
+      const price=$('sellPrice').value, dateV=$('sellDate').value;
+      if(price===''||!dateV){ $('sellMsg').innerHTML='<div class="error">Įveskite kainą ir datą.</div>'; return; }
+      const { error }=await sb.from('insolvency_assets').update({ status:'sold', sold_price:Number(price), sold_date:dateV, buyer_name:$('sellBuyer').value.trim()||null, updated_at:new Date().toISOString() }).eq('id',id);
+      if(error){ $('sellMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      hide('sellModal'); loadAssets();
+    };
+    // --- turto kortelė PDF su fotofiksacija ---
+    window.assetCardPdf=async(id)=>{
+      const a=ASSETS.find(x=>x.id===id); if(!a)return;
+      $('assetsMsg').innerHTML='<div class="muted">⏳ Generuojama turto kortelė…</div>';
+      try{
+        const { data:{ session } }=await sb.auth.getSession();
+        // nuotraukos → base64 (per signed URL)
+        const photoData=[];
+        for(const ph of (a.photos||[])){
+          try{
+            const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{ method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY}, body:JSON.stringify({ path:ph.path })});
+            const r=await res.json();
+            if(r.success&&r.url){
+              const blob=await (await fetch(r.url)).blob();
+              const dataUrl=await new Promise(ok=>{ const fr=new FileReader(); fr.onload=()=>ok(fr.result); fr.readAsDataURL(blob); });
+              photoData.push({ src:dataUrl, name:ph.name });
+            }
+          }catch(_){}
+        }
+        const { data:hist }=await sb.from('insolvency_asset_price_log').select('*').eq('asset_id',id).order('created_at');
+        const histHtml=(hist&&hist.length)?'<h3 style="margin:14px 0 6px;font-size:13px;">Kainų keitimo istorija</h3><table style="width:100%;border-collapse:collapse;font-size:11px;">'+hist.map(r=>`<tr><td style="border:1px solid #ccc;padding:4px;">${fmtDate(r.created_at)}</td><td style="border:1px solid #ccc;padding:4px;">${fmtEur(r.old_price)} → ${fmtEur(r.new_price)}</td><td style="border:1px solid #ccc;padding:4px;">${esc(r.reason||'')}</td></tr>`).join('')+'</table>':'';
+        const soldHtml=a.status==='sold'?`<tr><td style="border:1px solid #ccc;padding:5px;"><b>Parduota</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(a.sold_date||'')} už ${fmtEur(a.sold_price)}${a.buyer_name?', pirkėjas: '+esc(a.buyer_name):''}</td></tr>`:'';
+        const photosHtml=photoData.length?'<h3 style="margin:14px 0 6px;font-size:13px;">Fotofiksacija</h3><div style="display:flex;flex-wrap:wrap;gap:8px;">'+photoData.map(p=>`<img src="${p.src}" style="width:230px;border:1px solid #ccc;">`).join('')+'</div>':'';
+        const el=document.createElement('div');
+        el.style.cssText='position:fixed;left:-10000px;top:0;width:794px;background:#fff;padding:36px;font-family:Arial,sans-serif;color:#222;';
+        el.innerHTML=`
+          <div style="border-bottom:3px solid #0B1E3F;padding-bottom:8px;margin-bottom:12px;">
+            <div style="font-size:17px;font-weight:700;color:#0B1E3F;">TURTO KORTELĖ</div>
+            <div style="font-size:11px;color:#666;">${esc(CURRENT.debtor_name||'')} · byla ${esc(CURRENT.case_short_code||'')} · ${new Date().toISOString().slice(0,10)}</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <tr><td style="border:1px solid #ccc;padding:5px;width:32%;"><b>Pavadinimas</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(a.name)}</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:5px;"><b>Kategorija</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(AS_CAT[a.category]||'')}</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:5px;"><b>Kiekis</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(String(a.quantity??''))} ${esc(a.unit||'')}</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:5px;"><b>Saugojimo vieta</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(a.location||'—')}</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:5px;"><b>Aprašymas</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(a.description||'—')}</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:5px;"><b>Pradinė kaina</b></td><td style="border:1px solid #ccc;padding:5px;">${fmtEur(a.initial_price)}</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:5px;"><b>Dabartinė kaina</b></td><td style="border:1px solid #ccc;padding:5px;">${fmtEur(a.current_price)}</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:5px;"><b>Statusas</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(AS_ST[a.status]||a.status)}</td></tr>
+            ${soldHtml}
+            <tr><td style="border:1px solid #ccc;padding:5px;"><b>Pastabos</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(a.notes||'—')}</td></tr>
+          </table>
+          ${histHtml}${photosHtml}`;
+        document.body.appendChild(el);
+        const canvas=await html2canvas(el,{ scale:2, backgroundColor:'#fff', useCORS:true });
+        document.body.removeChild(el);
+        const pdf=new jspdf.jsPDF('p','mm','a4');
+        const pw=210, ph=297, imgH=canvas.height*pw/canvas.width;
+        const img=canvas.toDataURL('image/jpeg',0.92);
+        let pos=0, remaining=imgH;
+        pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph;
+        while(remaining>0){ pdf.addPage(); pos-=ph; pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph; }
+        const safe=(a.name||'turtas').replace(/[^A-Za-z0-9._-]+/g,'_');
+        pdf.save('Turto_kortele_'+safe+'.pdf');
+        $('assetsMsg').innerHTML='<div class="success">Turto kortelė sugeneruota ir atsisiųsta.</div>';
+        try{ await logEvent('asset_card_generated',{ asset:a.name }); }catch(_){}
+      }catch(err){ $('assetsMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+    };
+
     // ---------- ŽURNALAS ----------
     async function logEvent(action, details){
       try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:action, p_details:details }); }catch(_){}
@@ -1617,7 +2115,7 @@
       const { data }=await sb.from('insolvency_activity_log').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
       const rows=data||[];
       if(!rows.length){ $('logTable').innerHTML='<div class="muted center" style="padding:16px;">Žurnalas tuščias.</div>'; return; }
-      const lbl={ docs_generated:'Dokumentai sugeneruoti', list_exported:'Sąrašas eksportuotas', courier_list:'Kurjerio sąrašas', docs_sent:'Išsiųsta el. paštu', doc_registered:'Dokumentas užregistruotas' };
+      const lbl={ docs_generated:'Dokumentai sugeneruoti', list_exported:'Sąrašas eksportuotas', courier_list:'Kurjerio sąrašas', docs_sent:'Išsiųsta el. paštu', doc_registered:'Dokumentas užregistruotas', asset_card_generated:'Turto kortelė sugeneruota' };
       $('logTable').innerHTML='<table><thead><tr><th>Data</th><th>Įvykis</th><th>Detalės</th><th></th></tr></thead><tbody>'+
         rows.map(r=>{ const d=Object.assign({},r.details||{}); const pdf=d.pdf_path; delete d.pdf_path;
           const det=Object.entries(d).map(([k,v])=>k+': '+v).join(', ');
