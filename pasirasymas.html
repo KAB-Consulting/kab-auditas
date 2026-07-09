@@ -59,8 +59,10 @@
       <p class="center muted" id="actSub"></p>
       <dl>
         <dt>Įmonė (perdavėjas):</dt><dd id="dDebtor"></dd>
+        <dt>Įmonės kodas:</dt><dd id="dDebtorCode"></dd>
+        <dt>Adresas:</dt><dd id="dDebtorAddress"></dd>
         <dt>Perduodantis asmuo:</dt><dd id="dHandover"></dd>
-        <dt>Perimantis asmuo:</dt><dd id="dReceiver"></dd>
+        <dt>Nemokumo administratoriaus įgaliotas asmuo (perimantis):</dt><dd id="dReceiver"></dd>
       </dl>
       <div id="actBody"></div>
       <div style="margin-top:26px;">
@@ -151,6 +153,8 @@
     $('actTitle').textContent = ACT_TITLES[a.act_type] || 'PERDAVIMO AKTAS';
     $('actSub').textContent = (a.act_date||'') + (a.act_no ? '  ·  Nr. ' + a.act_no : '');
     $('dDebtor').textContent = a.debtor_name || '—';
+    $('dDebtorCode').textContent = a.debtor_code || '—';
+    $('dDebtorAddress').textContent = a.debtor_address || '—';
     $('dHandover').textContent = a.handover_person || '—';
     $('dReceiver').textContent = a.receiver_person || '—';
 

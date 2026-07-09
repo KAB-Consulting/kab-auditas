@@ -389,7 +389,7 @@
           </div>
           <div class="row">
             <div><label class="label">Perduodantis asmuo (įmonės vadovas/įgaliotas)</label><input id="actHandover" class="input"></div>
-            <div><label class="label">Perimantis asmuo</label><input id="actReceiver" class="input"></div>
+            <div><label class="label">Perimantis asmuo (nemokumo administratoriaus įgaliotas asmuo)</label><input id="actReceiver" class="input"></div>
           </div>
           <div class="muted" style="font-size:12px;margin-top:6px;">Perdavėjas: bankrutuojanti įmonė <b id="actDebtor"></b> (įrašoma automatiškai).</div>
 
@@ -2549,8 +2549,9 @@
       return `<div style="font-family:'Times New Roman',serif;color:#000;width:700px;padding:10px;">
         <div style="text-align:right;font-size:12px;">${esc(p.act_date||'')} ${p.act_no?('Nr. '+esc(p.act_no)):''}</div>
         <div style="font-weight:bold;">${esc(CURRENT.debtor_name||'')}</div>
+        <div style="font-size:12px;">${CURRENT.debtor_code?('Įmonės kodas '+esc(CURRENT.debtor_code)):''}${CURRENT.debtor_code&&CURRENT.debtor_address?', ':''}${esc(CURRENT.debtor_address||'')}</div>
         <h2 style="text-align:center;font-size:16px;margin:16px 0;">${esc(ACT_TITLES[p.act_type]||'')}</h2>
-        <div style="font-size:13px;margin-bottom:10px;">Perdavėjas: ${esc(CURRENT.debtor_name||'')}, perduodantis asmuo: <b>${esc(p.handover_person||'')}</b>. Perėmėjas: <b>${esc(p.receiver_person||'')}</b>.</div>
+        <div style="font-size:13px;margin-bottom:10px;">Perdavėjas: ${esc(CURRENT.debtor_name||'')}${CURRENT.debtor_code?(', įmonės kodas '+esc(CURRENT.debtor_code)):''}${CURRENT.debtor_address?(', '+esc(CURRENT.debtor_address)):''}, perduodantis asmuo: <b>${esc(p.handover_person||'')}</b>. Perėmėjas: nemokumo administratoriaus įgaliotas asmuo <b>${esc(p.receiver_person||'')}</b>.</div>
         ${body}
         <div style="margin-top:30px;">${sig('Perdavė:',p.handover_person,p.sig_handover,p.esign_handover)}<span style="display:inline-block;width:8%;"></span>${sig('Priėmė:',p.receiver_person,p.sig_receiver,p.esign_receiver)}</div>
         ${photosHtml}
