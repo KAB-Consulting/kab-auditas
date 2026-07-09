@@ -229,7 +229,41 @@
       if (session){ await afterLogin(session.user); } else { hide('loadingView'); show('loginView'); }
     })();
 
+    // ===== MODULIO TEISĖS (dokumentai) =====
+    let PERM_LEVEL = 'full';
+    async function checkModuleAccess(moduleCode){
+      try{
+        const { data, error } = await supabase.rpc('module_access', { p_module: moduleCode });
+        if (error) throw error;
+        PERM_LEVEL = data || 'none';
+      }catch(e){ PERM_LEVEL = 'none'; }
+
+      if (PERM_LEVEL === 'none'){
+        document.body.innerHTML = '<div style="max-width:480px;margin:15vh auto;text-align:center;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0B1E3F;"><h2>⛔ Prieiga negalima</h2><p style="color:#6B7280;">Jūsų paskyra neturi prieigos prie šio modulio. Kreipkitės į administratorių.</p><a href="admin.html" style="color:#C9A961;font-weight:600;text-decoration:none;">← Grįžti į pagrindinį</a></div>';
+      } else if (PERM_LEVEL === 'view'){
+        const st = document.createElement('style');
+        st.textContent = `
+          body.perm-view #newCaseBtn, body.perm-view #addRecipientBtn, body.perm-view #importRecipientsBtn,
+          body.perm-view #bulkInviteBtn, body.perm-view #bulkRemindBtn, body.perm-view #uploadBtn,
+          body.perm-view #mCaseSave, body.perm-view #mRSave, body.perm-view #mImpPreview, body.perm-view #mImpSave,
+          body.perm-view #eRDelete, body.perm-view #eRSave,
+          body.perm-view [onclick*="archiveCase"], body.perm-view [onclick*="restoreCase"], body.perm-view [onclick*="purgeCase"],
+          body.perm-view [onclick*="editRecipient"], body.perm-view [onclick*="inviteRecipient"],
+          body.perm-view [onclick*="removeFile"], body.perm-view [onclick*="adminDeleteDocument"]
+          { display: none !important; }`;
+        document.head.appendChild(st);
+        document.body.classList.add('perm-view');
+        const banner = document.createElement('div');
+        banner.style.cssText = 'background:#E0E7FF;color:#4338CA;text-align:center;padding:8px;font-size:13px;font-weight:600;';
+        banner.textContent = '👁️ Peržiūros režimas — duomenų keitimas šiame modulyje negalimas';
+        document.body.prepend(banner);
+      }
+      return PERM_LEVEL;
+    }
+
     async function afterLogin(user){
+      const lvl = await checkModuleAccess('dokumentai');
+      if (lvl === 'none') return;
       $('userEmail').textContent = user.email;
       hide('loginView'); hide('loadingView'); show('casesView');
       await loadCases();

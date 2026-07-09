@@ -812,11 +812,56 @@
     let ADMINS=[], TEMPLATES=[], PERSONS=[], CASES=[], CURRENT_ADM=null, CURRENT=null, RECIPIENTS=[], DOCUMENTS=[];
     let REGISTRATIONS=[], CONTACTS=[], REG_TYPE='received';
 
+    // ---------- MODULIO TEISĖS (bankrotas) ----------
+    let PERM_LEVEL = 'full';
+    async function checkModuleAccess(moduleCode){
+      try{
+        const { data, error } = await sb.rpc('module_access', { p_module: moduleCode });
+        if (error) throw error;
+        PERM_LEVEL = data || 'none';
+      }catch(e){ PERM_LEVEL = 'none'; }
+
+      if (PERM_LEVEL === 'none'){
+        document.body.innerHTML = '<div style="max-width:480px;margin:15vh auto;text-align:center;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0B1E3F;"><h2>⛔ Prieiga negalima</h2><p style="color:#6B7280;">Jūsų paskyra neturi prieigos prie šio modulio. Kreipkitės į administratorių.</p><a href="admin.html" style="color:#C9A961;font-weight:600;text-decoration:none;">← Grįžti į pagrindinį</a></div>';
+      } else if (PERM_LEVEL === 'view'){
+        const st = document.createElement('style');
+        st.textContent = `
+          body.perm-view #newAdmBtn, body.perm-view #newTplBtn, body.perm-view #editAdmBtn, body.perm-view #newCaseBtn,
+          body.perm-view #rulingBtn, body.perm-view #saveCardBtn, body.perm-view #ctAddBtn,
+          body.perm-view #addRecipientBtn, body.perm-view #importRecipientsBtn, body.perm-view #enrichBtn, body.perm-view #delSelectedBtn,
+          body.perm-view #generateDocsBtn, body.perm-view #tplUploadBtn, body.perm-view #assetPasteBtn, body.perm-view #newAssetBtn,
+          body.perm-view #assetPasteSave, body.perm-view #newRegBtn, body.perm-view #attachUploadBtn, body.perm-view #newActBtn,
+          body.perm-view #pasteRowsBtn, body.perm-view #addRowBtn, body.perm-view #pasteParseBtn, body.perm-view #pasteApplyBtn,
+          body.perm-view #photoUploadBtn, body.perm-view #photoCamBtn, body.perm-view #actSaveDraft, body.perm-view #actGenPdf,
+          body.perm-view #admBlankBtn, body.perm-view #addPersonBtn, body.perm-view #admSave, body.perm-view #recSave,
+          body.perm-view #impFileBtn, body.perm-view #impSheetBtn, body.perm-view #impSave, body.perm-view #pdfAttUploadBtn, body.perm-view #pdfGenerate,
+          body.perm-view #ntSave, body.perm-view #asPhotoUploadBtn, body.perm-view #asPhotoCamBtn, body.perm-view #assetSave, body.perm-view #priceSave,
+          body.perm-view [onclick*="clearSig"], body.perm-view [onclick*="delRecipient"], body.perm-view [onclick*="editRecipient"],
+          body.perm-view [onclick*="delPerson"], body.perm-view [onclick*="delAdmin"], body.perm-view [onclick*="delCase"],
+          body.perm-view [onclick*="renameTpl"], body.perm-view [onclick*="delTpl"], body.perm-view [onclick*="editContact"],
+          body.perm-view [onclick*="delContact"], body.perm-view [onclick*="regMove"], body.perm-view [onclick*="regDelFile"],
+          body.perm-view [onclick*="openAssetModal"], body.perm-view [onclick*="openPriceModal"], body.perm-view [onclick*="openSellModal"],
+          body.perm-view [onclick*="delAsset"], body.perm-view [onclick*="delAsPhoto"], body.perm-view [onclick*="useAsAttachment"],
+          body.perm-view [onclick*="delAttach"], body.perm-view [onclick*="editAct"], body.perm-view [onclick*="delAct"],
+          body.perm-view [onclick*="delActRow"], body.perm-view [onclick*="delPhoto"]
+          { display: none !important; }`;
+        document.head.appendChild(st);
+        document.body.classList.add('perm-view');
+        const banner = document.createElement('div');
+        banner.style.cssText = 'background:#E0E7FF;color:#4338CA;text-align:center;padding:8px;font-size:13px;font-weight:600;';
+        banner.textContent = '👁️ Peržiūros režimas — duomenų keitimas šiame modulyje negalimas';
+        document.body.prepend(banner);
+      }
+      return PERM_LEVEL;
+    }
+
     // ---------- AUTH ----------
     async function boot(){
       try{
         const { data:{ session } } = await sb.auth.getSession();
         if(!session){ views('loginView'); return; }
+        const lvl = await checkModuleAccess('bankrotas');
+        if (lvl === 'none') return;
         $('userEmail').textContent = session.user.email;
         await loadAdmins();
       }catch(err){

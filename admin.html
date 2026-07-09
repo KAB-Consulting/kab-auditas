@@ -637,6 +637,40 @@
       align-items: center;
       gap: 8px;
     }
+    /* ============ TEISIŲ SISTEMA (v7) ============ */
+    /* View-only režimas: paslepiami rašymo veiksmai */
+    body.perm-view [onclick*="openCreateModal"],
+    body.perm-view [onclick*="openSpecModal"],
+    body.perm-view [onclick*="createSubmission"],
+    body.perm-view [onclick*="createSpecSubmission"],
+    body.perm-view [onclick*="deleteSubmission"],
+    body.perm-view [onclick*="archiveSubmission"],
+    body.perm-view [onclick*="unarchiveSubmission"],
+    body.perm-view [onclick*="openEditClientCard"],
+    body.perm-view [onclick*="generateReport"],
+    body.perm-view [onclick*="addAdminComment"],
+    body.perm-view [onclick*="extendToken"],
+    body.perm-view [onclick*="clearPendingReview"],
+    body.perm-view [onclick*="openAddObserverDialog"],
+    body.perm-view [onclick*="removeObserver"],
+    body.perm-view [onclick*="openAddCollaboratorDialog"],
+    body.perm-view [onclick*="sendCollaboratorInvite"],
+    body.perm-view [onclick*="removeCollaborator"],
+    body.perm-view select[onchange] {
+      display: none !important;
+    }
+
+    .perm-grid { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .perm-grid th, .perm-grid td { padding: 8px 10px; border-bottom: 1px solid #F3F4F6; text-align: left; }
+    .perm-grid th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; }
+    .perm-grid td.center, .perm-grid th.center { text-align: center; }
+    .role-badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .role-badge.superadmin { background: #FEF3C7; color: #D97706; }
+    .role-badge.user { background: #DBEAFE; color: #2563EB; }
+    .perm-level-badge { padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .perm-level-badge.full { background: #D1FAE5; color: #047857; }
+    .perm-level-badge.view { background: #E0E7FF; color: #4338CA; }
+    .perm-level-badge.none { background: #F3F4F6; color: #9CA3AF; }
   </style>
 </head>
 <body>
@@ -660,6 +694,28 @@
       <div id="login-error" class="alert alert-error hidden"></div>
 
       <button class="btn btn-primary" style="width: 100%;" onclick="doLogin()">Prisijungti</button>
+    </div>
+  </div>
+
+  <!-- SLAPTAŽODŽIO SUSIKŪRIMAS (pakvietimo srautas) -->
+  <div id="setpw-view" class="hidden">
+    <div class="login-box">
+      <h1>🔑 Sveiki atvykę!</h1>
+      <p style="text-align: center; color: var(--kab-gray); font-size: 13px;">Susikurkite slaptažodį paskyrai <strong id="setpw-email"></strong></p>
+
+      <div class="form-field" style="margin-bottom: 12px;">
+        <label>Naujas slaptažodis (min. 8 simboliai)</label>
+        <input type="password" id="setpw-password" autocomplete="new-password">
+      </div>
+
+      <div class="form-field" style="margin-bottom: 15px;">
+        <label>Pakartokite slaptažodį</label>
+        <input type="password" id="setpw-password2" autocomplete="new-password">
+      </div>
+
+      <div id="setpw-error" class="alert alert-error hidden"></div>
+
+      <button class="btn btn-primary" style="width: 100%;" onclick="doSetPassword()">Išsaugoti ir prisijungti</button>
     </div>
   </div>
 
@@ -780,7 +836,7 @@
             <h2 class="page-section-title">🚀 Moduliai</h2>
           </div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
-            <a href="admin-dokumentai.html" style="text-decoration:none; color: inherit; display: block;">
+            <a href="admin-dokumentai.html" id="card-dokumentai" style="text-decoration:none; color: inherit; display: block;">
               <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
                   <div style="width:42px; height:42px; background:#FEF3C7; color:#D97706; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📂</div>
@@ -789,7 +845,7 @@
                 <p style="font-size: 12px; color: #6B7280; margin: 0;">Bylos, gavėjai, dokumentų įkėlimas, prisijungimų istorija</p>
               </div>
             </a>
-            <a href="admin-bankrotas.html" style="text-decoration:none; color: inherit; display: block;">
+            <a href="admin-bankrotas.html" id="card-bankrotas" style="text-decoration:none; color: inherit; display: block;">
               <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
                   <div style="width:42px; height:42px; background:#FEE2E2; color:#DC2626; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">⚖️</div>
@@ -899,9 +955,10 @@
       <!-- =============== VARTOTOJAI =============== -->
       <section id="users-section" class="page-section">
         <div class="page-section-header">
-          <h2 class="page-section-title">👥 KAB administratoriai</h2>
+          <h2 class="page-section-title">👥 Sistemos vartotojai</h2>
+          <button class="btn btn-gold btn-small" id="btn-new-user" onclick="openUserModal()">➕ Naujas vartotojas</button>
         </div>
-        <p style="color:#6B7280; margin: 0 0 12px;">Šios sistemos administratoriai (lentelė <code>admin_users</code>). Naujų pridėjimui — žr. operacinį manualą (5.2 skyrius).</p>
+        <p style="color:#6B7280; margin: 0 0 12px;">Vartotojų paskyros ir jų teisės moduliuose. Naujas vartotojas gauna el. laišką su slaptažodžio susikūrimo nuoroda.</p>
         <div id="admin-users-list" style="font-size: 13px; color: #6B7280;">Kraunama...</div>
       </section>
 
@@ -924,6 +981,67 @@
       </div><!-- /content-area -->
     </div><!-- /app-layout -->
 
+  </div>
+
+  <!-- Modal: sistemos vartotojo kūrimas/redagavimas -->
+  <div id="user-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeUserModal()">
+    <div class="modal" style="max-width: 560px;">
+      <h2 style="color: var(--kab-navy); margin: 0 0 4px;" id="user-modal-title">➕ Naujas vartotojas</h2>
+      <p style="color:#6B7280; font-size: 12px; margin: 0 0 16px;">Sukūrus paskyrą, vartotojui bus išsiųstas laiškas su slaptažodžio susikūrimo nuoroda.</p>
+      <input type="hidden" id="um-id">
+      <div class="form-field" style="margin-bottom: 10px;">
+        <label>Vardas, pavardė *</label>
+        <input type="text" id="um-name" placeholder="Vardas Pavardė">
+      </div>
+      <div class="form-field" style="margin-bottom: 10px;">
+        <label>El. paštas *</label>
+        <input type="email" id="um-email" placeholder="vardas@kab.lt">
+      </div>
+      <div class="form-field" style="margin-bottom: 10px;">
+        <label>Rolė</label>
+        <select id="um-role" onchange="onUserRoleChange()">
+          <option value="user">Vartotojas (teisės pagal modulius)</option>
+          <option value="superadmin">Superadmin (visos teisės + vartotojų valdymas)</option>
+        </select>
+      </div>
+      <div class="form-field" style="margin-bottom: 10px;" id="um-active-field">
+        <label>Būsena</label>
+        <select id="um-active">
+          <option value="true">Aktyvus</option>
+          <option value="false">Neaktyvus (prieiga sustabdyta)</option>
+        </select>
+      </div>
+      <div id="um-perms-block">
+        <label style="font-size: 12px; font-weight: 600; color: var(--kab-navy);">Teisės moduliuose</label>
+        <table class="perm-grid" style="margin-top: 6px;">
+          <thead><tr><th>Modulis</th><th class="center">Nemato</th><th class="center">Peržiūra</th><th class="center">Pilnos teisės</th></tr></thead>
+          <tbody id="um-perms-body"></tbody>
+        </table>
+      </div>
+      <div id="user-modal-alert" style="margin-top: 10px;"></div>
+      <div style="display:flex; gap: 10px; justify-content: flex-end; margin-top: 16px;">
+        <button class="btn btn-ghost" onclick="closeUserModal()">Atšaukti</button>
+        <button class="btn btn-primary" id="um-save-btn" onclick="saveUserModal()">Išsaugoti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: užduočių perdavimas prieš trynimą -->
+  <div id="transfer-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeTransferModal()">
+    <div class="modal" style="max-width: 560px;">
+      <h2 style="color: var(--kab-navy); margin: 0 0 4px;">⚠️ Vartotojas turi nebaigtų užduočių</h2>
+      <p style="color:#6B7280; font-size: 13px; margin: 0 0 14px;">Prieš ištrinant vartotoją <strong id="tm-user-label"></strong>, jo atsakomybes reikia perduoti kitam vartotojui.</p>
+      <div id="tm-responsibilities" style="max-height: 260px; overflow-y: auto; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px; margin-bottom: 14px; font-size: 13px;"></div>
+      <div class="form-field" style="margin-bottom: 10px;">
+        <label>Perduoti užduotis vartotojui *</label>
+        <select id="tm-target"></select>
+      </div>
+      <div id="transfer-modal-alert" style="margin-top: 6px;"></div>
+      <div style="display:flex; gap: 10px; justify-content: flex-end; margin-top: 16px;">
+        <button class="btn btn-ghost" onclick="closeTransferModal()">Atšaukti</button>
+        <button class="btn btn-primary" style="background:#C00000;" onclick="confirmTransferDelete()">Perduoti ir ištrinti</button>
+      </div>
+    </div>
   </div>
 
   <!-- Modal: kliento detali peržiūra -->
@@ -1299,19 +1417,153 @@
   let lastGeneratedLink = null;
   let lastCreatedSubmission = null;
 
+  // ============================================================
+  // TEISIŲ SISTEMA (v7) — mano prieiga
+  // ============================================================
+  let MY_ACCESS = null;        // { id, email, full_name, role, modules: {code: 'view'|'full'} }
+  let SYSTEM_MODULES = [];     // modulių sąrašas vartotojų valdymui
+
+  function myLevel(moduleCode) {
+    if (!MY_ACCESS) return 'none';
+    if (MY_ACCESS.role === 'superadmin') return 'full';
+    return (MY_ACCESS.modules && MY_ACCESS.modules[moduleCode]) || 'none';
+  }
+
+  async function loadMyAccess() {
+    const { data, error } = await supabase.rpc('get_my_access');
+    if (error || !data || !data.ok) return null;
+    return data;
+  }
+
+  function applyAccess() {
+    if (!MY_ACCESS) return;
+    const isSuper = MY_ACCESS.role === 'superadmin';
+
+    // Vartotojų valdymas — tik superadmin
+    const usersNav = document.querySelector('.sidebar-nav-item[data-view="users"]');
+    if (usersNav) usersNav.style.display = isSuper ? '' : 'none';
+    const usersSection = document.getElementById('users-section');
+    if (usersSection) usersSection.style.display = isSuper ? '' : 'none';
+
+    // Klausimynų modulis (šis puslapis)
+    const klausLevel = myLevel('klausimynai');
+    if (klausLevel === 'view') document.body.classList.add('perm-view');
+    if (klausLevel === 'none') {
+      ['submissions-section', 'dashboard-stats-section', 'templates-section'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      ['submissions', 'dashboard', 'templates'].forEach(v => {
+        const el = document.querySelector(`.sidebar-nav-item[data-view="${v}"]`);
+        if (el) el.style.display = 'none';
+      });
+    }
+
+    // Dokumentai kreditoriams
+    if (myLevel('dokumentai') === 'none') {
+      const card = document.getElementById('card-dokumentai');
+      if (card) card.style.display = 'none';
+      const sec = document.getElementById('credit-section');
+      if (sec) sec.style.display = 'none';
+      const nav = document.querySelector('.sidebar-nav-item[data-view="credit"]');
+      if (nav) nav.style.display = 'none';
+    }
+
+    // Bankroto dokumentai
+    if (myLevel('bankrotas') === 'none') {
+      const card = document.getElementById('card-bankrotas');
+      if (card) card.style.display = 'none';
+    }
+  }
+
+  // Po prisijungimo: patikrinti prieigą ir užkrauti duomenis
+  async function bootstrapAfterLogin(user) {
+    MY_ACCESS = await loadMyAccess();
+    if (!MY_ACCESS) {
+      await supabase.auth.signOut();
+      showLogin();
+      const errorEl = document.getElementById('login-error');
+      errorEl.textContent = 'Jūsų paskyra neturi prieigos prie sistemos arba yra išjungta. Kreipkitės į administratorių.';
+      errorEl.classList.remove('hidden');
+      return false;
+    }
+    showDashboard(user);
+    applyAccess();
+    if (myLevel('klausimynai') !== 'none') {
+      await loadTemplates();
+      await loadSpecTemplates();
+      await loadSubmissions();
+    }
+    return true;
+  }
+
   // Init
   (async function init() {
-    const { data: { session } } = await supabase.auth.getSession();
+    // 1. Pakvietimo nuoroda? (#invite_token=...&email=...)
+    const hash = window.location.hash || '';
+    if (hash.includes('invite_token=')) {
+      await handleInviteToken(hash);
+      return;
+    }
 
+    // 2. Įprastas srautas
+    const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      showDashboard(session.user);
-      await loadTemplates();     // Įkrauti šablonus (v4.0)
-      await loadSpecTemplates(); // Spec. (multi_entity) šablonai
-      await loadSubmissions();
+      await bootstrapAfterLogin(session.user);
     } else {
       showLogin();
     }
   })();
+
+  // ============================================================
+  // PAKVIETIMO SRAUTAS — slaptažodžio susikūrimas
+  // ============================================================
+  async function handleInviteToken(hash) {
+    const params = new URLSearchParams(hash.replace(/^#/, ''));
+    const tokenHash = params.get('invite_token');
+    const email = params.get('email') || '';
+    // Išvalyti hash, kad token neliktų naršyklės istorijoje
+    history.replaceState(null, '', window.location.pathname);
+
+    const { data, error } = await supabase.auth.verifyOtp({ type: 'recovery', token_hash: tokenHash });
+    if (error || !data || !data.session) {
+      showLogin();
+      const errorEl = document.getElementById('login-error');
+      errorEl.textContent = 'Pakvietimo nuoroda nebegalioja. Paprašykite administratoriaus atsiųsti naują.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    document.getElementById('setpw-email').textContent = data.user?.email || email;
+    document.getElementById('login-view').classList.add('hidden');
+    document.getElementById('dashboard-view').classList.add('hidden');
+    document.getElementById('setpw-view').classList.remove('hidden');
+  }
+
+  async function doSetPassword() {
+    const p1 = document.getElementById('setpw-password').value;
+    const p2 = document.getElementById('setpw-password2').value;
+    const errEl = document.getElementById('setpw-error');
+    errEl.classList.add('hidden');
+
+    if (!p1 || p1.length < 8) {
+      errEl.textContent = 'Slaptažodis turi būti bent 8 simbolių.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (p1 !== p2) {
+      errEl.textContent = 'Slaptažodžiai nesutampa.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    const { data, error } = await supabase.auth.updateUser({ password: p1 });
+    if (error) {
+      errEl.textContent = 'Nepavyko išsaugoti slaptažodžio: ' + error.message;
+      errEl.classList.remove('hidden');
+      return;
+    }
+    document.getElementById('setpw-view').classList.add('hidden');
+    await bootstrapAfterLogin(data.user);
+  }
 
   // ============================================================
   // ŠABLONAI (v4.0)
@@ -1559,35 +1811,268 @@
     if (avatar) avatar.textContent = initials;
     // Sidebar user name
     const name = document.getElementById('sidebar-user-name');
-    if (name) name.textContent = user.email.split('@')[0];
-    // Užkrauti admin'us users sekcijai
-    loadAdminUsersList();
+    if (name) name.textContent = (MY_ACCESS && MY_ACCESS.full_name) || user.email.split('@')[0];
+    // Užkrauti vartotojų valdymą (tik superadmin)
+    if (MY_ACCESS && MY_ACCESS.role === 'superadmin') loadSystemUsers();
   }
 
-  async function loadAdminUsersList() {
-    try {
-      const { data, error } = await supabase.from('admin_users').select('*').order('full_name');
-      if (error) throw error;
-      const el = document.getElementById('admin-users-list');
-      if (!el) return;
-      if (!data || data.length === 0) {
-        el.innerHTML = '<em>Nėra adminų</em>';
-        return;
-      }
-      let html = '<table style="width:100%; font-size: 13px; border-collapse: collapse;"><thead><tr style="border-bottom: 1px solid #E5E7EB;"><th style="text-align:left; padding: 8px;">El. paštas</th><th style="text-align:left; padding: 8px;">Asmuo</th><th style="text-align:left; padding: 8px;">Rolė</th><th style="text-align:center; padding: 8px;">Aktyvus</th></tr></thead><tbody>';
-      for (const u of data) {
-        html += `<tr style="border-bottom: 1px solid #F3F4F6;">
-          <td style="padding: 8px;"><strong>${escapeHtml(u.email)}</strong></td>
-          <td style="padding: 8px;">${escapeHtml(u.full_name || '—')}</td>
-          <td style="padding: 8px;">${u.role === 'superadmin' ? '<span style="background:#FEF3C7; color:#D97706; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">SUPERADMIN</span>' : '<span style="background:#DBEAFE; color:#2563EB; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">admin</span>'}</td>
-          <td style="padding: 8px; text-align:center;">${u.is_active ? '✅' : '❌'}</td>
-        </tr>`;
-      }
-      html += '</tbody></table>';
-      el.innerHTML = html;
-    } catch (e) {
-      console.error(e);
+  // ============================================================
+  // SISTEMOS VARTOTOJŲ VALDYMAS (tik superadmin)
+  // ============================================================
+  let SYSTEM_USERS = [];
+  let pendingDeleteUserId = null;
+
+  async function loadSystemModules() {
+    if (SYSTEM_MODULES.length) return SYSTEM_MODULES;
+    const { data } = await supabase.from('system_modules').select('*').eq('is_active', true).order('sort_order');
+    SYSTEM_MODULES = data || [];
+    return SYSTEM_MODULES;
+  }
+
+  async function loadSystemUsers() {
+    const el = document.getElementById('admin-users-list');
+    if (!el) return;
+    await loadSystemModules();
+    const { data, error } = await supabase.rpc('admin_list_system_users');
+    if (error || !data || !data.ok) {
+      el.innerHTML = '<em>Nepavyko užkrauti vartotojų sąrašo.</em>';
+      return;
     }
+    SYSTEM_USERS = data.users || [];
+    if (SYSTEM_USERS.length === 0) {
+      el.innerHTML = '<em>Vartotojų nėra</em>';
+      return;
+    }
+    let modHead = SYSTEM_MODULES.map(m => `<th class="center" title="${escapeHtml(m.name)}">${m.icon || ''}</th>`).join('');
+    let html = `<div style="overflow-x:auto;"><table class="perm-grid"><thead><tr>
+      <th>Vartotojas</th><th>Rolė</th>${modHead}<th class="center">Būsena</th><th class="center">Veiksmai</th>
+    </tr></thead><tbody>`;
+    for (const u of SYSTEM_USERS) {
+      let modCells = SYSTEM_MODULES.map(m => {
+        const lvl = u.role === 'superadmin' ? 'full' : ((u.permissions || {})[m.code] || 'none');
+        const label = lvl === 'full' ? 'Pilna' : lvl === 'view' ? 'Peržiūra' : '—';
+        return `<td class="center"><span class="perm-level-badge ${lvl}">${label}</span></td>`;
+      }).join('');
+      const status = !u.is_active
+        ? '<span title="Neaktyvus">⛔</span>'
+        : (u.has_auth && u.last_login_at ? '<span title="Aktyvus">✅</span>' : '<span title="Pakviestas, dar neprisijungė">✉️</span>');
+      const resendBtn = u.is_active && u.id !== MY_ACCESS.id
+        ? `<button class="btn btn-ghost btn-small" title="Siųsti prisijungimo nuorodą iš naujo" onclick="resendInvite('${u.id}')">✉️</button>` : '';
+      const deleteBtn = u.id !== MY_ACCESS.id
+        ? `<button class="btn btn-ghost btn-small" title="Ištrinti" style="color:#C00000;" onclick="deleteSystemUser('${u.id}')">🗑️</button>` : '';
+      html += `<tr>
+        <td><strong>${escapeHtml(u.full_name || '—')}</strong><br><small style="color:#9CA3AF;">${escapeHtml(u.email)}</small></td>
+        <td><span class="role-badge ${u.role}">${u.role === 'superadmin' ? 'SUPERADMIN' : 'Vartotojas'}</span></td>
+        ${modCells}
+        <td class="center">${status}</td>
+        <td class="center" style="white-space:nowrap;">
+          <button class="btn btn-ghost btn-small" title="Redaguoti" onclick="openUserModal('${u.id}')">✏️</button>
+          ${resendBtn}${deleteBtn}
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
+  }
+
+  function renderPermRows(perms) {
+    const body = document.getElementById('um-perms-body');
+    body.innerHTML = SYSTEM_MODULES.map(m => {
+      const lvl = (perms || {})[m.code] || 'none';
+      return `<tr>
+        <td>${m.icon || ''} ${escapeHtml(m.name)}</td>
+        <td class="center"><input type="radio" name="perm-${m.code}" value="none" ${lvl === 'none' ? 'checked' : ''}></td>
+        <td class="center"><input type="radio" name="perm-${m.code}" value="view" ${lvl === 'view' ? 'checked' : ''}></td>
+        <td class="center"><input type="radio" name="perm-${m.code}" value="full" ${lvl === 'full' ? 'checked' : ''}></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function collectPerms() {
+    const perms = {};
+    for (const m of SYSTEM_MODULES) {
+      const sel = document.querySelector(`input[name="perm-${m.code}"]:checked`);
+      if (sel && sel.value !== 'none') perms[m.code] = sel.value;
+    }
+    return perms;
+  }
+
+  function onUserRoleChange() {
+    const role = document.getElementById('um-role').value;
+    document.getElementById('um-perms-block').style.display = role === 'superadmin' ? 'none' : '';
+  }
+
+  async function openUserModal(userId) {
+    await loadSystemModules();
+    const u = userId ? SYSTEM_USERS.find(x => x.id === userId) : null;
+    document.getElementById('um-id').value = u ? u.id : '';
+    document.getElementById('user-modal-title').textContent = u ? '✏️ Redaguoti vartotoją' : '➕ Naujas vartotojas';
+    document.getElementById('um-name').value = u ? (u.full_name || '') : '';
+    document.getElementById('um-email').value = u ? u.email : '';
+    document.getElementById('um-email').disabled = !!u;
+    document.getElementById('um-role').value = u ? u.role : 'user';
+    document.getElementById('um-active').value = u ? String(u.is_active) : 'true';
+    document.getElementById('um-active-field').style.display = u ? '' : 'none';
+    document.getElementById('user-modal-alert').innerHTML = '';
+    renderPermRows(u ? u.permissions : {});
+    onUserRoleChange();
+    document.getElementById('user-modal').classList.remove('hidden');
+  }
+
+  function closeUserModal() {
+    document.getElementById('user-modal').classList.add('hidden');
+  }
+
+  const USER_ERR = {
+    forbidden: 'Veiksmas leidžiamas tik superadmin.',
+    invalid_email: 'Neteisingas el. pašto adresas.',
+    email_exists: 'Vartotojas su šiuo el. paštu jau egzistuoja.',
+    invalid_role: 'Neteisinga rolė.',
+    not_found: 'Vartotojas nerastas.',
+    last_superadmin: 'Negalima — sistemoje neliktų nė vieno aktyvaus superadmin.',
+    cannot_delete_self: 'Negalite ištrinti savo paskyros.',
+    invalid_transfer_target: 'Netinkamas perėmėjas — pasirinkite kitą aktyvų vartotoją.'
+  };
+
+  async function saveUserModal() {
+    const id = document.getElementById('um-id').value;
+    const name = document.getElementById('um-name').value.trim();
+    const email = document.getElementById('um-email').value.trim().toLowerCase();
+    const role = document.getElementById('um-role').value;
+    const isActive = document.getElementById('um-active').value === 'true';
+    const alertEl = document.getElementById('user-modal-alert');
+    alertEl.innerHTML = '';
+
+    if (!name || !email) {
+      alertEl.innerHTML = '<div class="alert alert-error">Užpildykite vardą ir el. paštą.</div>';
+      return;
+    }
+    const btn = document.getElementById('um-save-btn');
+    btn.disabled = true;
+    try {
+      if (!id) {
+        // Naujas vartotojas: sukurti įrašą + išsiųsti pakvietimą
+        const { data, error } = await supabase.rpc('admin_create_system_user', {
+          p_email: email, p_full_name: name, p_role: role, p_permissions: collectPerms()
+        });
+        if (error) throw new Error(error.message);
+        if (!data.ok) throw new Error(USER_ERR[data.error_code] || data.error_code);
+        const invited = await callInviteFunction(data.id, 'invite');
+        if (!invited.ok) {
+          alertEl.innerHTML = `<div class="alert alert-error">Vartotojas sukurtas, bet laiško išsiųsti nepavyko (${escapeHtml(invited.error_code || '')}). Bandykite „✉️ siųsti iš naujo".</div>`;
+          await loadSystemUsers();
+          return;
+        }
+        alertEl.innerHTML = '<div class="alert alert-success">✅ Vartotojas sukurtas, pakvietimas išsiųstas!</div>';
+        setTimeout(() => { closeUserModal(); }, 1200);
+      } else {
+        const { data, error } = await supabase.rpc('admin_update_system_user', {
+          p_id: id, p_full_name: name, p_role: role, p_is_active: isActive, p_permissions: collectPerms()
+        });
+        if (error) throw new Error(error.message);
+        if (!data.ok) throw new Error(USER_ERR[data.error_code] || data.error_code);
+        closeUserModal();
+      }
+      await loadSystemUsers();
+    } catch (e) {
+      alertEl.innerHTML = `<div class="alert alert-error">${escapeHtml(e.message)}</div>`;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function callInviteFunction(adminUserId, action) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/invite-system-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ action: action || 'invite', admin_user_id: adminUserId })
+      });
+      return await resp.json();
+    } catch (e) {
+      return { ok: false, error_code: 'network', detail: String(e) };
+    }
+  }
+
+  async function resendInvite(userId) {
+    const u = SYSTEM_USERS.find(x => x.id === userId);
+    if (!u) return;
+    if (!confirm(`Siųsti naują prisijungimo nuorodą į ${u.email}?`)) return;
+    const res = await callInviteFunction(userId, 'resend');
+    alert(res.ok ? '✅ Nuoroda išsiųsta.' : 'Nepavyko išsiųsti: ' + (res.error_code || ''));
+  }
+
+  // --- Trynimas su užduočių perdavimu ---
+  async function deleteSystemUser(userId) {
+    const u = SYSTEM_USERS.find(x => x.id === userId);
+    if (!u) return;
+    if (!confirm(`Ar tikrai norite ištrinti vartotoją ${u.full_name || u.email}? Šio veiksmo atšaukti negalima.`)) return;
+
+    const { data, error } = await supabase.rpc('admin_delete_system_user', { p_id: userId });
+    if (error) { alert('Klaida: ' + error.message); return; }
+
+    if (data.ok) {
+      await loadSystemUsers();
+      return;
+    }
+    if (data.error_code === 'needs_transfer') {
+      openTransferModal(u, data.responsibilities);
+      return;
+    }
+    alert(USER_ERR[data.error_code] || data.error_code);
+  }
+
+  function openTransferModal(user, resp) {
+    pendingDeleteUserId = user.id;
+    document.getElementById('tm-user-label').textContent = `${user.full_name || ''} (${user.email})`;
+
+    // Atsakomybių sąrašas
+    const groups = (resp && resp.groups) || [];
+    let html = '';
+    for (const g of groups) {
+      html += `<div style="margin-bottom: 10px;"><strong>${escapeHtml(g.label)}</strong> — ${g.count} vnt.<ul style="margin: 4px 0 0 18px; color:#6B7280;">`;
+      for (const it of (g.items || []).slice(0, 10)) {
+        html += `<li>${escapeHtml(it.title || it.id)}</li>`;
+      }
+      if ((g.items || []).length > 10) html += `<li>… ir dar ${g.items.length - 10}</li>`;
+      html += '</ul></div>';
+    }
+    document.getElementById('tm-responsibilities').innerHTML = html || '<em>Nėra</em>';
+
+    // Perėmėjų sąrašas — kiti aktyvūs vartotojai
+    const targets = SYSTEM_USERS.filter(x => x.id !== user.id && x.is_active);
+    document.getElementById('tm-target').innerHTML =
+      '<option value="">— Pasirinkite vartotoją —</option>' +
+      targets.map(t => `<option value="${t.id}">${escapeHtml(t.full_name || t.email)} (${escapeHtml(t.email)})</option>`).join('');
+    document.getElementById('transfer-modal-alert').innerHTML = '';
+    document.getElementById('transfer-modal').classList.remove('hidden');
+  }
+
+  function closeTransferModal() {
+    pendingDeleteUserId = null;
+    document.getElementById('transfer-modal').classList.add('hidden');
+  }
+
+  async function confirmTransferDelete() {
+    const targetId = document.getElementById('tm-target').value;
+    const alertEl = document.getElementById('transfer-modal-alert');
+    if (!targetId) {
+      alertEl.innerHTML = '<div class="alert alert-error">Pasirinkite, kam perduoti užduotis.</div>';
+      return;
+    }
+    const { data, error } = await supabase.rpc('admin_delete_system_user', {
+      p_id: pendingDeleteUserId, p_transfer_to: targetId
+    });
+    if (error) { alertEl.innerHTML = `<div class="alert alert-error">${escapeHtml(error.message)}</div>`; return; }
+    if (!data.ok) { alertEl.innerHTML = `<div class="alert alert-error">${escapeHtml(USER_ERR[data.error_code] || data.error_code)}</div>`; return; }
+    closeTransferModal();
+    await loadSystemUsers();
+    alert(`✅ Vartotojas ištrintas. Perduota atsakomybių: ${data.transferred_total}.`);
   }
 
   async function doLogin() {
@@ -1605,10 +2090,7 @@
       return;
     }
 
-    showDashboard(data.user);
-    await loadTemplates();
-    await loadSpecTemplates();
-    await loadSubmissions();
+    await bootstrapAfterLogin(data.user);
   }
 
   async function doLogout() {
