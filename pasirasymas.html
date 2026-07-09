@@ -107,6 +107,7 @@
 
   const ACT_TITLES = {
     documents:'DOKUMENTŲ PERDAVIMO AKTAS',
+    documents_v2:'BYLŲ (DOKUMENTŲ) PERDAVIMO AKTAS',
     asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)',
     asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)',
     asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)',
@@ -116,6 +117,7 @@
   };
   const ACT_COLS = {
     documents:[['name','Dokumentų pavadinimas'],['qty','Kiekis (vnt.)'],['pages','Lapų sk.'],['notes1','Pastabos']],
+    documents_v2:[['name','Bylos antraštė (dokumento pavadinimas)'],['chrono','Bylos chronologinės ribos ar data (dokumento data, numeris)'],['pages','Bylos ar dokumento apimtis (kiekis, matavimo vienetas)'],['file_no','Bylos Nr.'],['box_no','Dėžės Nr.']],
     asset_realestate:[['name','Pavadinimas'],['address','Adresas'],['unique_no','Unikalus Nr.'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
     asset_movable:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
     asset_inventory:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],

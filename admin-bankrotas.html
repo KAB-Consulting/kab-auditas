@@ -376,6 +376,7 @@
           <label class="label">Akto tipas</label>
           <select id="actType" class="select">
             <option value="documents">Dokumentų perdavimo aktas</option>
+            <option value="documents_v2">Bylų (dokumentų) perdavimo aktas — nauja forma</option>
             <option value="asset_realestate">Turto perdavimas — Nekilnojamas</option>
             <option value="asset_movable">Turto perdavimas — Kilnojamas</option>
             <option value="asset_inventory">Turto perdavimas — Prekės / Atsargos</option>
@@ -2293,13 +2294,14 @@
     // lentelių stulpeliai pagal akto tipą
     const ACT_COLS={
       documents:[['name','Dokumento/segtuvo pavadinimas'],['pages','Lapų sk.'],['notes','Pastabos']],
+      documents_v2:[['name','Bylos antraštė (dokumento pavadinimas)'],['chrono','Bylos chronologinės ribos ar data (dokumento data, numeris)'],['pages','Bylos ar dokumento apimtis (kiekis, matavimo vienetas)'],['file_no','Bylos Nr.'],['box_no','Dėžės Nr.']],
       asset_realestate:[['name','Pavadinimas'],['address','Adresas'],['unique_no','Unikalus nr.'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
       asset_movable:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
       asset_inventory:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
       asset_other:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
       asset_intangible:[['name','Pavadinimas'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
     };
-    const ACT_TITLES={ documents:'DOKUMENTŲ PERDAVIMO AKTAS', asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)', asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)', asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)', asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)', asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)', vehicle:'AUTOMOBILIO PERDAVIMO AKTAS' };
+    const ACT_TITLES={ documents:'DOKUMENTŲ PERDAVIMO AKTAS', documents_v2:'BYLŲ (DOKUMENTŲ) PERDAVIMO AKTAS', asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)', asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)', asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)', asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)', asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)', vehicle:'AUTOMOBILIO PERDAVIMO AKTAS' };
     let ACTS=[], ACT_ROWS=[], ACT_PHOTOS=[];
 
     async function loadActs(){
@@ -2493,12 +2495,15 @@
       // auto-mapping pagal raktažodžius
       const cols=ACT_COLS[$('actType').value]||[];
       const guess=h=>{ const n=h.toLowerCase();
-        if(/pavad|name|daikt|preki|dokument/.test(n))return 'name';
+        if(/chronolog|ribos|laikotarp|period/.test(n))return 'chrono';
+        if(/d[ėe][žz]/.test(n))return 'box_no';
+        if(/byl\w*[\s.]*(nr|numer)/.test(n))return 'file_no';
+        if(/apimt|lap|pages|psl/.test(n))return 'pages';
+        if(/antra[šs]t|pavad|name|daikt|preki|dokument/.test(n))return 'name';
         if(/adres|address/.test(n))return 'address';
         if(/unikal|unique/.test(n))return 'unique_no';
         if(/vieta|location|saugoj/.test(n))return 'location';
         if(/kiek|qty|quantity|vnt/.test(n))return 'qty';
-        if(/lap|pages|psl/.test(n))return 'pages';
         if(/pastab.*2|notes.*2/.test(n))return 'notes2';
         if(/pastab|notes|komentar/.test(n))return 'notes1';
         return '';
@@ -2546,6 +2551,7 @@
         :(data?`<img src="${data}" style="height:50px;">`:'<div style="height:50px;"></div>')
       }<div style="border-top:1px solid #333;font-size:12px;padding-top:3px;">${esc(who||'')}</div></div>`;
       const photosHtml=(p._photoData&&p._photoData.length)?`<div style="margin-top:20px;"><div style="font-weight:bold;font-size:13px;margin-bottom:6px;">Nuotraukos (priedas):</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p._photoData.map(d=>`<img src="${d}" style="width:160px;height:160px;object-fit:cover;border:1px solid #999;">`).join('')}</div></div>`:'';
+      const totalLine=p.act_type==='documents_v2'?`<div style="font-size:13px;margin-top:10px;">Iš viso perduota bylų (dokumentų): <b>${p.rows.length}</b>.</div>`:'';
       return `<div style="font-family:'Times New Roman',serif;color:#000;width:700px;padding:10px;">
         <div style="text-align:right;font-size:12px;">${esc(p.act_date||'')} ${p.act_no?('Nr. '+esc(p.act_no)):''}</div>
         <div style="font-weight:bold;">${esc(CURRENT.debtor_name||'')}</div>
@@ -2553,6 +2559,7 @@
         <h2 style="text-align:center;font-size:16px;margin:16px 0;">${esc(ACT_TITLES[p.act_type]||'')}</h2>
         <div style="font-size:13px;margin-bottom:10px;">Perdavėjas: ${esc(CURRENT.debtor_name||'')}${CURRENT.debtor_code?(', įmonės kodas '+esc(CURRENT.debtor_code)):''}${CURRENT.debtor_address?(', '+esc(CURRENT.debtor_address)):''}, perduodantis asmuo: <b>${esc(p.handover_person||'')}</b>. Perėmėjas: nemokumo administratoriaus įgaliotas asmuo <b>${esc(p.receiver_person||'')}</b>.</div>
         ${body}
+        ${totalLine}
         <div style="margin-top:30px;">${sig('Perdavė:',p.handover_person,p.sig_handover,p.esign_handover)}<span style="display:inline-block;width:8%;"></span>${sig('Priėmė:',p.receiver_person,p.sig_receiver,p.esign_receiver)}</div>
         ${photosHtml}
       </div>`;
