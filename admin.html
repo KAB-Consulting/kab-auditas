@@ -739,18 +739,24 @@
             <span class="sidebar-nav-icon">⊞</span>
             <span>Apžvalga</span>
           </button>
-          <button class="sidebar-nav-item" data-view="submissions" onclick="navigateTo('submissions')">
+
+          <div class="sidebar-section-label" style="margin-top: 16px;">Moduliai</div>
+          <button class="sidebar-nav-item" data-view="submissions" data-module="klausimynai" onclick="navigateTo('submissions')">
             <span class="sidebar-nav-icon">📋</span>
             <span>Klausimynai</span>
             <span class="sidebar-nav-badge" id="sidebar-badge-submissions">—</span>
           </button>
-          <button class="sidebar-nav-item" data-view="credit" onclick="navigateTo('credit')">
-            <span class="sidebar-nav-icon">📑</span>
+          <a class="sidebar-nav-item" data-module="dokumentai" href="admin-dokumentai.html" style="text-decoration:none;">
+            <span class="sidebar-nav-icon">📂</span>
             <span>Dokumentai kreditoriams</span>
-          </button>
+          </a>
+          <a class="sidebar-nav-item" data-module="bankrotas" href="admin-bankrotas.html" style="text-decoration:none;">
+            <span class="sidebar-nav-icon">⚖️</span>
+            <span>Nemokumo procesai</span>
+          </a>
 
           <div class="sidebar-section-label" style="margin-top: 16px;">Konfigūracija</div>
-          <button class="sidebar-nav-item" data-view="templates" onclick="navigateTo('templates')">
+          <button class="sidebar-nav-item" data-view="templates" data-module="klausimynai" onclick="navigateTo('templates')">
             <span class="sidebar-nav-icon">📐</span>
             <span>Klausimynų šablonai</span>
           </button>
@@ -798,8 +804,8 @@
 
       <!-- =============== DASHBOARD APŽVALGA =============== -->
       <section id="dashboard-stats-section">
-        <!-- Statistikos kortelės — modernios -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 22px;">
+        <!-- Statistikos kortelės — modernios (klausimynų modulis) -->
+        <div id="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 22px;">
           <div class="stat-card-v2">
             <div class="stat-card-v2-icon gold">📝</div>
             <div>
@@ -849,19 +855,19 @@
               <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
                   <div style="width:42px; height:42px; background:#FEE2E2; color:#DC2626; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">⚖️</div>
-                  <strong style="color: var(--kab-navy); font-size: 14px;">Bankroto dokumentai</strong>
+                  <strong style="color: var(--kab-navy); font-size: 14px;">Nemokumo procesai</strong>
                 </div>
-                <p style="font-size: 12px; color: #6B7280; margin: 0;">Pirminiai raštai, blankai, generavimas</p>
+                <p style="font-size: 12px; color: #6B7280; margin: 0;">Nemokumo proceso valdymas: pirminiai raštai, blankai, registras</p>
               </div>
             </a>
-            <div onclick="openSpecModal()" style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
+            <div id="card-spec" data-module="klausimynai" onclick="openSpecModal()" style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
               <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
                 <div style="width:42px; height:42px; background:#DBEAFE; color:#2563EB; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🗂️</div>
                 <strong style="color: var(--kab-navy); font-size: 14px;">Pavieniai klausimynai</strong>
               </div>
               <p style="font-size: 12px; color: #6B7280; margin: 0;">Spec. šablonai konkretiems klientams (multi-entity)</p>
             </div>
-            <div onclick="openCreateModal()" style="border: 1px solid var(--kab-gold); border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: linear-gradient(135deg, #FFFEF7, #FFF9E6);" onmouseover="this.style.boxShadow='0 4px 12px rgba(201,169,97,0.2)';" onmouseout="this.style.boxShadow='none';">
+            <div id="card-new" data-module="klausimynai" onclick="openCreateModal()" style="border: 1px solid var(--kab-gold); border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: linear-gradient(135deg, #FFFEF7, #FFF9E6);" onmouseover="this.style.boxShadow='0 4px 12px rgba(201,169,97,0.2)';" onmouseout="this.style.boxShadow='none';">
               <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
                 <div style="width:42px; height:42px; background: var(--kab-gold); color: var(--kab-navy); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight: 700;">+</div>
                 <strong style="color: var(--kab-navy); font-size: 14px;">Naujas klausimynas</strong>
@@ -1445,16 +1451,18 @@
     const usersSection = document.getElementById('users-section');
     if (usersSection) usersSection.style.display = isSuper ? '' : 'none';
 
-    // Klausimynų modulis (šis puslapis)
+    // Universalu: visi elementai su data-module atributu (sidebar punktai, kortelės)
+    document.querySelectorAll('[data-module]').forEach(el => {
+      if (myLevel(el.dataset.module) === 'none') el.style.display = 'none';
+    });
+
+    // Klausimynų modulis (šio puslapio turinys)
     const klausLevel = myLevel('klausimynai');
     if (klausLevel === 'view') document.body.classList.add('perm-view');
     if (klausLevel === 'none') {
-      ['submissions-section', 'dashboard-stats-section', 'templates-section'].forEach(id => {
+      // Slepiame klausimynų turinį, bet paliekame „Moduliai" korteles apžvalgoje
+      ['submissions-section', 'stats-grid', 'templates-section'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      });
-      ['submissions', 'dashboard', 'templates'].forEach(v => {
-        const el = document.querySelector(`.sidebar-nav-item[data-view="${v}"]`);
         if (el) el.style.display = 'none';
       });
     }
@@ -1465,11 +1473,9 @@
       if (card) card.style.display = 'none';
       const sec = document.getElementById('credit-section');
       if (sec) sec.style.display = 'none';
-      const nav = document.querySelector('.sidebar-nav-item[data-view="credit"]');
-      if (nav) nav.style.display = 'none';
     }
 
-    // Bankroto dokumentai
+    // Nemokumo procesai
     if (myLevel('bankrotas') === 'none') {
       const card = document.getElementById('card-bankrotas');
       if (card) card.style.display = 'none';
