@@ -138,10 +138,12 @@
     return `<div class="esign">✍️ <b>Pasirašyta el. paštu</b><br>${esc(e.name)}<br>${esc(e.email)}<br>${fmtTime(e.signed_at)}</div>`;
   }
 
-  function renderSig(el, esign, hasCanvasSig, personName){
-    if (esign) { el.innerHTML = esignBlock(esign); }
-    else if (hasCanvasSig) { el.innerHTML = `<div class="esign">✍️ Pasirašyta ekrane</div><div class="line">${esc(personName||'')}</div>`; }
-    else { el.innerHTML = `<div class="line">${esc(personName||'')}</div>`; }
+  function renderSig(el, esign, sigImg, personName, isMine){
+    let inner;
+    if (esign) { inner = esignBlock(esign); }
+    else if (sigImg) { inner = `<img src="${sigImg}" alt="parašas" style="height:56px;display:block;"><div class="line">${esc(personName||'')}</div>`; }
+    else { inner = `<div class="line">${esc(personName||'')}</div>` + (isMine ? '<div style="color:#B45309;font-size:11px;margin-top:4px;">⬆ Čia atsiras Jūsų parašo žyma</div>' : ''); }
+    el.innerHTML = inner;
   }
 
   function renderAct(d){
@@ -165,8 +167,8 @@
     }
     $('actBody').innerHTML = body;
 
-    renderSig($('sigH'), a.esign_handover, a.has_sig_handover, a.handover_person);
-    renderSig($('sigR'), a.esign_receiver, a.has_sig_receiver, a.receiver_person);
+    renderSig($('sigH'), a.esign_handover, a.sig_handover, a.handover_person, MY_PARTY === 'handover');
+    renderSig($('sigR'), a.esign_receiver, a.sig_receiver, a.receiver_person, MY_PARTY === 'receiver');
     $('actCard').classList.remove('hidden');
   }
 

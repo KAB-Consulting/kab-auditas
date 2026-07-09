@@ -2406,6 +2406,7 @@
       const name=(nameField.value||'').trim();
       if(!name){ $('actMsg').innerHTML='<div class="error">Pirma įveskite '+(party==='handover'?'perduodančio':'perimančio')+' asmens vardą ir pavardę.</div>'; return; }
       if(ACT_ESIGN[party]){ if(!confirm('Ši šalis jau pasirašė el. paštu. Siųsti naują kvietimą (ankstesnis parašas bus pakeistas nauju)?'))return; }
+      if(!confirm('Kvietimas pasirašyti bus išsiųstas šaliai:\n\n'+(party==='handover'?'PERDUODANTI ŠALIS (Perdavė)':'PERIMANTI ŠALIS (Priėmė)')+' — '+name+'\n\nJei tai ne ta šalis, atšaukite ir spauskite „✉️" mygtuką po KITO parašo laukeliu.'))return;
       const email=prompt('Įveskite '+(party==='handover'?'perduodančios':'perimančios')+' šalies el. pašto adresą:\n\n'+name);
       if(email===null)return;
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())){ $('actMsg').innerHTML='<div class="error">Neteisingas el. pašto adresas.</div>'; return; }
