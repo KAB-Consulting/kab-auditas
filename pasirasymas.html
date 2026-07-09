@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>KAB Consulting — Dokumento pasirašymas</title>
+  <style>
+    :root{ --navy:#0B1E3F; --gold:#C9A961; --bg:#F7F4EC; --bd:#E5E7EB; --gray:#6B7280; }
+    *{ box-sizing:border-box; }
+    body{ margin:0; background:var(--bg); font-family:-apple-system,'Segoe UI',Arial,sans-serif; color:#222; }
+    .top{ background:var(--navy); border-bottom:4px solid var(--gold); padding:18px 24px; }
+    .top .brand{ color:#fff; font-size:19px; font-weight:600; letter-spacing:.5px; }
+    .top .sub{ color:rgba(255,255,255,.8); font-size:12px; margin-top:2px; }
+    .wrap{ max-width:760px; margin:26px auto; padding:0 16px; }
+    .card{ background:#fff; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,.08); padding:26px; margin-bottom:16px; }
+    h1{ font-size:19px; color:var(--navy); margin:0 0 4px; text-align:center; }
+    h2{ font-size:15px; color:var(--navy); margin:0 0 10px; }
+    .muted{ color:var(--gray); font-size:13px; }
+    table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+    th,td{ border:1px solid #C9CDD4; padding:6px 8px; text-align:left; }
+    th{ background:#F3F4F6; font-size:12px; }
+    .btn{ display:inline-block; background:var(--gold); color:var(--navy); font-weight:700; font-size:14px; padding:13px 30px; border-radius:6px; border:none; cursor:pointer; }
+    .btn:disabled{ opacity:.5; cursor:default; }
+    .btn-ghost{ background:transparent; border:1px solid var(--bd); color:var(--navy); font-weight:600; }
+    .center{ text-align:center; }
+    .error{ background:#FDE8E8; color:#B91C1C; border-radius:6px; padding:10px 14px; font-size:13px; margin:10px 0; }
+    .success{ background:#DEF7EC; color:#046C4E; border-radius:6px; padding:10px 14px; font-size:13px; margin:10px 0; }
+    .hidden{ display:none; }
+    .otp-input{ font-family:Menlo,Consolas,monospace; font-size:26px; letter-spacing:10px; text-align:center; width:230px; padding:10px; border:2px solid var(--gold); border-radius:8px; }
+    .sigbox{ display:inline-block; width:47%; vertical-align:top; font-size:12px; }
+    .sigbox .line{ border-top:1px solid #333; margin-top:44px; padding-top:4px; }
+    .esign{ background:#F7F4EC; border:1px dashed var(--gold); border-radius:6px; padding:8px 10px; margin-top:6px; font-size:12px; color:var(--navy); }
+    .party-tag{ background:#FEF3C7; color:#B45309; border-radius:4px; padding:2px 8px; font-size:11px; font-weight:700; }
+    dl{ display:grid; grid-template-columns:180px 1fr; gap:4px 12px; font-size:13px; margin:10px 0 0; }
+    dt{ color:var(--gray); } dd{ margin:0; }
+    @media(max-width:560px){ .sigbox{ width:100%; display:block; margin-bottom:14px; } dl{ grid-template-columns:130px 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">KAB Consulting</div>
+    <div class="sub">Dokumentų pasirašymas</div>
+  </div>
+
+  <div class="wrap">
+    <!-- Kraunama -->
+    <div id="loading" class="card center"><div class="muted">⏳ Kraunama…</div></div>
+
+    <!-- Klaida -->
+    <div id="errCard" class="card center hidden">
+      <h1>⚠️ Nuoroda negalioja</h1>
+      <p class="muted" id="errText">Nuoroda neteisinga arba nebegalioja. Kreipkitės į dokumentą atsiuntusį asmenį.</p>
+    </div>
+
+    <!-- Aktas -->
+    <div id="actCard" class="card hidden">
+      <h1 id="actTitle"></h1>
+      <p class="center muted" id="actSub"></p>
+      <dl>
+        <dt>Įmonė (perdavėjas):</dt><dd id="dDebtor"></dd>
+        <dt>Perduodantis asmuo:</dt><dd id="dHandover"></dd>
+        <dt>Perimantis asmuo:</dt><dd id="dReceiver"></dd>
+      </dl>
+      <div id="actBody"></div>
+      <div style="margin-top:26px;">
+        <div class="sigbox"><div class="muted">Perdavė:</div><div id="sigH"></div></div>
+        <div class="sigbox" style="margin-left:4%;"><div class="muted">Priėmė:</div><div id="sigR"></div></div>
+      </div>
+    </div>
+
+    <!-- Pasirašymo blokas -->
+    <div id="signCard" class="card center hidden">
+      <h2>Jūs pasirašote kaip: <span class="party-tag" id="myParty"></span> <span id="myName"></span></h2>
+      <p class="muted">Tapatybei patvirtinti į Jūsų el. paštą bus išsiųstas 6 skaitmenų kodas.</p>
+      <div id="signMsg"></div>
+      <div id="step1">
+        <button class="btn" id="getCodeBtn">📧 Gauti patvirtinimo kodą</button>
+      </div>
+      <div id="step2" class="hidden">
+        <p class="muted">Įveskite kodą, gautą el. paštu:</p>
+        <input class="otp-input" id="otpInput" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="______">
+        <div style="margin-top:16px;">
+          <button class="btn" id="signBtn">✍️ Pasirašyti</button>
+        </div>
+        <p class="muted" style="margin-top:12px;"><a href="#" id="resendLink" style="color:var(--navy);">Siųsti kodą dar kartą</a></p>
+      </div>
+    </div>
+
+    <!-- Pasirašyta -->
+    <div id="doneCard" class="card center hidden">
+      <h1>✅ Dokumentas pasirašytas</h1>
+      <p class="muted" id="doneText"></p>
+      <p class="muted" style="font-size:12px;">Pasirašymo žyma (vardas, el. paštas, data ir laikas) užfiksuota dokumente. Galite uždaryti šį langą.</p>
+    </div>
+
+    <div class="center muted" style="font-size:11px; margin:20px 0;">
+      Pasirašymas el. paštu — paprastasis elektroninis parašas. Fiksuojama: vardas, el. pašto adresas, data, laikas.
+    </div>
+  </div>
+
+  <script>
+  const FN_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co/functions/v1/act-sign';
+  const TOKEN = new URLSearchParams(location.search).get('t') || '';
+
+  const ACT_TITLES = {
+    documents:'DOKUMENTŲ PERDAVIMO AKTAS',
+    asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)',
+    asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)',
+    asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)',
+    asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)',
+    asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)',
+    vehicle:'AUTOMOBILIO PERDAVIMO AKTAS'
+  };
+  const ACT_COLS = {
+    documents:[['name','Dokumentų pavadinimas'],['qty','Kiekis (vnt.)'],['pages','Lapų sk.'],['notes1','Pastabos']],
+    asset_realestate:[['name','Pavadinimas'],['address','Adresas'],['unique_no','Unikalus Nr.'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
+    asset_movable:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
+    asset_inventory:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
+    asset_other:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
+    asset_intangible:[['name','Pavadinimas'],['notes1','Pastabos 1'],['notes2','Pastabos 2']]
+  };
+
+  const $ = id => document.getElementById(id);
+  const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let MY_PARTY = '';
+
+  async function api(payload){
+    const res = await fetch(FN_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    return await res.json();
+  }
+
+  function fmtTime(ts){
+    try{ return new Date(ts).toLocaleString('lt-LT',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ts; }
+  }
+
+  function esignBlock(e){
+    return `<div class="esign">✍️ <b>Pasirašyta el. paštu</b><br>${esc(e.name)}<br>${esc(e.email)}<br>${fmtTime(e.signed_at)}</div>`;
+  }
+
+  function renderSig(el, esign, hasCanvasSig, personName){
+    if (esign) { el.innerHTML = esignBlock(esign); }
+    else if (hasCanvasSig) { el.innerHTML = `<div class="esign">✍️ Pasirašyta ekrane</div><div class="line">${esc(personName||'')}</div>`; }
+    else { el.innerHTML = `<div class="line">${esc(personName||'')}</div>`; }
+  }
+
+  function renderAct(d){
+    const a = d.act;
+    $('actTitle').textContent = ACT_TITLES[a.act_type] || 'PERDAVIMO AKTAS';
+    $('actSub').textContent = (a.act_date||'') + (a.act_no ? '  ·  Nr. ' + a.act_no : '');
+    $('dDebtor').textContent = a.debtor_name || '—';
+    $('dHandover').textContent = a.handover_person || '—';
+    $('dReceiver').textContent = a.receiver_person || '—';
+
+    let body = '';
+    if (a.act_type === 'vehicle') {
+      const m = a.meta || {};
+      const rows = [['Markė / modelis',m.marke],['VIN numeris',m.vin],['Valst. numeris',m.plate],['Rida (km)',m.km],['Spalva',m.color],['Būklės aprašymas',m.cond],['Pastabos',m.notes]];
+      body = '<table>' + rows.map(r=>`<tr><td style="width:40%;"><b>${esc(r[0])}</b></td><td>${esc(r[1]||'')}</td></tr>`).join('') + '</table>';
+    } else {
+      const cols = ACT_COLS[a.act_type] || [];
+      const rows = Array.isArray(a.rows) ? a.rows : [];
+      body = '<table><thead><tr><th style="width:36px;">Nr.</th>' + cols.map(c=>`<th>${esc(c[1])}</th>`).join('') + '</tr></thead><tbody>' +
+        (rows.length?rows:[{}]).map((r,i)=>`<tr><td>${i+1}</td>` + cols.map(c=>`<td>${esc(r[c[0]]||'')}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
+    }
+    $('actBody').innerHTML = body;
+
+    renderSig($('sigH'), a.esign_handover, a.has_sig_handover, a.handover_person);
+    renderSig($('sigR'), a.esign_receiver, a.has_sig_receiver, a.receiver_person);
+    $('actCard').classList.remove('hidden');
+  }
+
+  async function init(){
+    if (!TOKEN) { $('loading').classList.add('hidden'); $('errCard').classList.remove('hidden'); return; }
+    const d = await api({ action:'get', token: TOKEN });
+    $('loading').classList.add('hidden');
+    if (!d.ok) {
+      const msgs = { expired:'Nuorodos galiojimas baigėsi. Paprašykite naujos nuorodos.', cancelled:'Ši pasirašymo užklausa atšaukta — greičiausiai išsiųsta nauja nuoroda.', invalid_token:'Nuoroda neteisinga.' };
+      $('errText').textContent = msgs[d.error_code] || 'Nuoroda neteisinga arba nebegalioja.';
+      $('errCard').classList.remove('hidden');
+      return;
+    }
+    MY_PARTY = d.party;
+    renderAct(d);
+    if (d.status === 'signed') {
+      $('doneText').textContent = 'Jūs jau pasirašėte šį dokumentą ' + fmtTime(d.signed_at) + '.';
+      $('doneCard').classList.remove('hidden');
+      return;
+    }
+    $('myParty').textContent = d.party === 'handover' ? 'PERDUODANTI ŠALIS' : 'PERIMANTI ŠALIS';
+    $('myName').textContent = d.signer_name || '';
+    $('signCard').classList.remove('hidden');
+  }
+
+  async function sendOtp(){
+    $('signMsg').innerHTML = '<div class="muted">⏳ Siunčiama…</div>';
+    $('getCodeBtn').disabled = true;
+    const r = await api({ action:'send_otp', token: TOKEN });
+    $('getCodeBtn').disabled = false;
+    if (!r.ok) {
+      const msgs = { rate_limited:'Kodas ką tik išsiųstas — palaukite minutę.', expired:'Nuorodos galiojimas baigėsi.', not_pending:'Ši užklausa nebeaktyvi.' };
+      $('signMsg').innerHTML = '<div class="error">' + (msgs[r.error_code] || 'Nepavyko išsiųsti kodo. Bandykite dar kartą.') + '</div>';
+      return;
+    }
+    $('signMsg').innerHTML = '<div class="success">Kodas išsiųstas į Jūsų el. paštą.</div>';
+    $('step1').classList.add('hidden');
+    $('step2').classList.remove('hidden');
+    $('otpInput').focus();
+  }
+
+  $('getCodeBtn').onclick = sendOtp;
+  $('resendLink').onclick = e => { e.preventDefault(); sendOtp(); };
+
+  $('signBtn').onclick = async () => {
+    const code = $('otpInput').value.trim();
+    if (!/^\d{6}$/.test(code)) { $('signMsg').innerHTML = '<div class="error">Įveskite 6 skaitmenų kodą.</div>'; return; }
+    $('signBtn').disabled = true;
+    $('signMsg').innerHTML = '<div class="muted">⏳ Pasirašoma…</div>';
+    const r = await api({ action:'sign', token: TOKEN, code });
+    $('signBtn').disabled = false;
+    if (!r.ok) {
+      const msgs = {
+        wrong_code:'Neteisingas kodas.' + (r.attempts_left != null ? ' Liko bandymų: ' + r.attempts_left + '.' : ''),
+        otp_expired:'Kodo galiojimas baigėsi — gaukite naują.',
+        too_many_attempts:'Per daug bandymų. Paprašykite naujos pasirašymo nuorodos.',
+        already_signed:'Dokumentas jau pasirašytas.',
+        expired:'Nuorodos galiojimas baigėsi.'
+      };
+      $('signMsg').innerHTML = '<div class="error">' + (msgs[r.error_code] || 'Klaida: ' + esc(r.error_code||'')) + '</div>';
+      return;
+    }
+    // Sėkmė
+    const e = r.esign;
+    (MY_PARTY === 'handover' ? $('sigH') : $('sigR')).innerHTML = esignBlock(e);
+    $('signCard').classList.add('hidden');
+    $('doneText').textContent = 'Pasirašymo žyma: ' + e.name + ', ' + e.email + ', ' + fmtTime(e.signed_at) + '.';
+    $('doneCard').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  init();
+  </script>
+</body>
+</html>

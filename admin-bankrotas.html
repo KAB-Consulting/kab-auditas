@@ -441,16 +441,25 @@
 
           <!-- parašai -->
           <div class="sec-title" style="margin-top:18px;">Parašai</div>
+          <div class="hint" style="margin-bottom:8px;">Pasirašyti galima ekrane (touch pad / pelė) arba išsiųsti šaliai nuorodą el. paštu — gavėjas patvirtina tapatybę 6 skaitmenų kodu ir pasirašo nuotoliniu būdu.</div>
           <div class="row">
             <div>
               <label class="label">Perduodančio asmens parašas</label>
               <canvas id="sigHandover" width="380" height="120" style="border:1px solid var(--bd);border-radius:6px;touch-action:none;width:100%;max-width:380px;background:#fff;"></canvas>
-              <button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('sigHandover')">Išvalyti</button>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                <button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('sigHandover')">Išvalyti</button>
+                <button class="btn btn-sm btn-gold" type="button" id="esignHandoverBtn" onclick="sendSignRequest('handover')">✉️ Siųsti pasirašyti el. paštu</button>
+              </div>
+              <div id="esignHandoverStatus" style="font-size:12px;margin-top:6px;"></div>
             </div>
             <div>
               <label class="label">Perimančio asmens parašas</label>
               <canvas id="sigReceiver" width="380" height="120" style="border:1px solid var(--bd);border-radius:6px;touch-action:none;width:100%;max-width:380px;background:#fff;"></canvas>
-              <button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('sigReceiver')">Išvalyti</button>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                <button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('sigReceiver')">Išvalyti</button>
+                <button class="btn btn-sm btn-gold" type="button" id="esignReceiverBtn" onclick="sendSignRequest('receiver')">✉️ Siųsti pasirašyti el. paštu</button>
+              </div>
+              <div id="esignReceiverStatus" style="font-size:12px;margin-top:6px;"></div>
             </div>
           </div>
 
@@ -843,7 +852,7 @@
           body.perm-view [onclick*="openAssetModal"], body.perm-view [onclick*="openPriceModal"], body.perm-view [onclick*="openSellModal"],
           body.perm-view [onclick*="delAsset"], body.perm-view [onclick*="delAsPhoto"], body.perm-view [onclick*="useAsAttachment"],
           body.perm-view [onclick*="delAttach"], body.perm-view [onclick*="editAct"], body.perm-view [onclick*="delAct"],
-          body.perm-view [onclick*="delActRow"], body.perm-view [onclick*="delPhoto"]
+          body.perm-view [onclick*="delActRow"], body.perm-view [onclick*="delPhoto"], body.perm-view [onclick*="sendSignRequest"]
           { display: none !important; }`;
         document.head.appendChild(st);
         document.body.classList.add('perm-view');
@@ -2329,6 +2338,11 @@
       setupSig('sigHandover'); setupSig('sigReceiver');
       if(a.sig_handover)drawSigFromData('sigHandover',a.sig_handover); else clearSig('sigHandover');
       if(a.sig_receiver)drawSigFromData('sigReceiver',a.sig_receiver); else clearSig('sigReceiver');
+      // el. parašai (pasirašymas el. paštu)
+      ACT_ESIGN={ handover:a.esign_handover||null, receiver:a.esign_receiver||null };
+      ESIGN_REQS=[];
+      renderEsignStatuses();
+      if(a.id) loadEsignRequests(a.id);
     }
     $('actType').onchange=()=>{ ACT_ROWS=[]; onActTypeChange(); };
     function onActTypeChange(){
@@ -2367,6 +2381,50 @@
     window.clearSig=id=>{ const c=$(id); c.getContext('2d').clearRect(0,0,c.width,c.height); sigState[id]=false; };
     function drawSigFromData(id,data){ const c=$(id); const ctx=c.getContext('2d'); const img=new Image(); img.onload=()=>{ ctx.clearRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height); }; img.src=data; sigState[id]=true; }
     function sigData(id){ return sigState[id] ? $(id).toDataURL('image/png') : null; }
+
+    // ----- PASIRAŠYMAS EL. PAŠTU (su OTP) -----
+    let ACT_ESIGN={ handover:null, receiver:null }, ESIGN_REQS=[];
+    function esignStamp(e){ return '✅ <b>Pasirašyta el. paštu:</b> '+esc(e.name)+', '+esc(e.email)+', '+new Date(e.signed_at).toLocaleString('lt-LT'); }
+    function renderEsignStatuses(){
+      ['handover','receiver'].forEach(party=>{
+        const el=$(party==='handover'?'esignHandoverStatus':'esignReceiverStatus'); if(!el)return;
+        const e=ACT_ESIGN[party];
+        if(e){ el.innerHTML='<span style="color:#046C4E;">'+esignStamp(e)+'</span>'; return; }
+        const req=ESIGN_REQS.find(r=>r.party===party&&r.status==='pending');
+        el.innerHTML=req
+          ? '<span class="muted">✉️ Išsiųsta '+esc(req.signer_email||'')+' ('+new Date(req.sent_at).toLocaleString('lt-LT')+') — laukiama pasirašymo. Galite siųsti iš naujo.</span>'
+          : '';
+      });
+    }
+    async function loadEsignRequests(actId){
+      const { data }=await sb.from('act_sign_requests').select('*').eq('act_id',actId).order('created_at',{ascending:false});
+      ESIGN_REQS=data||[];
+      renderEsignStatuses();
+    }
+    window.sendSignRequest=async function(party){
+      const nameField=party==='handover'?$('actHandover'):$('actReceiver');
+      const name=(nameField.value||'').trim();
+      if(!name){ $('actMsg').innerHTML='<div class="error">Pirma įveskite '+(party==='handover'?'perduodančio':'perimančio')+' asmens vardą ir pavardę.</div>'; return; }
+      if(ACT_ESIGN[party]){ if(!confirm('Ši šalis jau pasirašė el. paštu. Siųsti naują kvietimą (ankstesnis parašas bus pakeistas nauju)?'))return; }
+      const email=prompt('Įveskite '+(party==='handover'?'perduodančios':'perimančios')+' šalies el. pašto adresą:\n\n'+name);
+      if(email===null)return;
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())){ $('actMsg').innerHTML='<div class="error">Neteisingas el. pašto adresas.</div>'; return; }
+      // aktas turi būti išsaugotas, kad turėtų ID
+      const id=await saveAct(undefined); if(!id)return;
+      $('actMsg').innerHTML='<div class="muted">⏳ Siunčiamas kvietimas pasirašyti…</div>';
+      try{
+        const { data:{ session } }=await sb.auth.getSession();
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/act-sign`,{
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${session.access_token}`, 'apikey':SUPABASE_ANON_KEY },
+          body:JSON.stringify({ action:'request', act_id:id, party, signer_name:name, signer_email:email.trim() })
+        });
+        const r=await res.json();
+        if(!r.ok){ $('actMsg').innerHTML='<div class="error">Nepavyko išsiųsti: '+esc(r.error_code||'')+'</div>'; return; }
+        $('actMsg').innerHTML='<div class="success">Kvietimas pasirašyti išsiųstas: '+esc(email.trim())+'. Šalis gaus nuorodą ir patvirtins tapatybę kodu.</div>';
+        await loadEsignRequests(id);
+      }catch(err){ $('actMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+    };
 
     function collectAct(status){
       const t=$('actType').value;
@@ -2482,7 +2540,10 @@
         body='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="padding:5px;border:1px solid #999;">Nr.</th>'+cols.map(c=>`<th style="padding:5px;border:1px solid #999;">${esc(c[1])}</th>`).join('')+'</tr></thead><tbody>'+
           (p.rows.length?p.rows:[{}]).map((r,i)=>`<tr><td style="padding:5px;border:1px solid #999;text-align:center;">${i+1}</td>`+cols.map(c=>`<td style="padding:5px;border:1px solid #999;">${esc(r[c[0]]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
       }
-      const sig=(lbl,who,data)=>`<div style="display:inline-block;width:45%;vertical-align:top;margin-top:10px;"><div style="font-size:12px;color:#555;">${lbl}</div>${data?`<img src="${data}" style="height:50px;">`:'<div style="height:50px;"></div>'}<div style="border-top:1px solid #333;font-size:12px;padding-top:3px;">${esc(who||'')}</div></div>`;
+      const sig=(lbl,who,data,es)=>`<div style="display:inline-block;width:45%;vertical-align:top;margin-top:10px;"><div style="font-size:12px;color:#555;">${lbl}</div>${
+        es?`<div style="border:1px dashed #888;padding:6px 10px;font-size:11px;line-height:1.5;margin:4px 0;display:inline-block;">Pasirašyta elektroniniu būdu (el. paštu)<br><b>${esc(es.name||'')}</b><br>${esc(es.email||'')}<br>${new Date(es.signed_at).toLocaleString('lt-LT',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>`
+        :(data?`<img src="${data}" style="height:50px;">`:'<div style="height:50px;"></div>')
+      }<div style="border-top:1px solid #333;font-size:12px;padding-top:3px;">${esc(who||'')}</div></div>`;
       const photosHtml=(p._photoData&&p._photoData.length)?`<div style="margin-top:20px;"><div style="font-weight:bold;font-size:13px;margin-bottom:6px;">Nuotraukos (priedas):</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p._photoData.map(d=>`<img src="${d}" style="width:160px;height:160px;object-fit:cover;border:1px solid #999;">`).join('')}</div></div>`:'';
       return `<div style="font-family:'Times New Roman',serif;color:#000;width:700px;padding:10px;">
         <div style="text-align:right;font-size:12px;">${esc(p.act_date||'')} ${p.act_no?('Nr. '+esc(p.act_no)):''}</div>
@@ -2490,7 +2551,7 @@
         <h2 style="text-align:center;font-size:16px;margin:16px 0;">${esc(ACT_TITLES[p.act_type]||'')}</h2>
         <div style="font-size:13px;margin-bottom:10px;">Perdavėjas: ${esc(CURRENT.debtor_name||'')}, perduodantis asmuo: <b>${esc(p.handover_person||'')}</b>. Perėmėjas: <b>${esc(p.receiver_person||'')}</b>.</div>
         ${body}
-        <div style="margin-top:30px;">${sig('Perdavė:',p.handover_person,p.sig_handover)}<span style="display:inline-block;width:8%;"></span>${sig('Priėmė:',p.receiver_person,p.sig_receiver)}</div>
+        <div style="margin-top:30px;">${sig('Perdavė:',p.handover_person,p.sig_handover,p.esign_handover)}<span style="display:inline-block;width:8%;"></span>${sig('Priėmė:',p.receiver_person,p.sig_receiver,p.esign_receiver)}</div>
         ${photosHtml}
       </div>`;
     }
@@ -2499,6 +2560,7 @@
       try{
         const id=await saveAct('final'); if(!id)return;
         const p=collectAct('final');
+        p.esign_handover=ACT_ESIGN.handover; p.esign_receiver=ACT_ESIGN.receiver;
         // atsisiunčiam nuotraukas kaip base64 (kad html2canvas jas įtrauktų)
         p._photoData=[];
         if(ACT_PHOTOS.length){
