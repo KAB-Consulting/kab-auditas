@@ -824,6 +824,7 @@
 
     // ---------- MODULIO TEISĖS (bankrotas) ----------
     let PERM_LEVEL = 'full';
+    let IS_SUPERADMIN = false;
     async function checkModuleAccess(moduleCode){
       try{
         const { data, error } = await sb.rpc('module_access', { p_module: moduleCode });
@@ -872,6 +873,7 @@
         if(!session){ views('loginView'); return; }
         const lvl = await checkModuleAccess('bankrotas');
         if (lvl === 'none') return;
+        try{ const r = await sb.rpc('is_superadmin'); IS_SUPERADMIN = r.data === true; }catch(_){ IS_SUPERADMIN = false; }
         $('userEmail').textContent = session.user.email;
         await loadAdmins();
       }catch(err){
@@ -2310,12 +2312,35 @@
       ACTS=data||[];
       if(!ACTS.length){ $('actsTable').innerHTML='<div class="muted center" style="padding:16px;">Aktų dar nėra.</div>'; return; }
       $('actsTable').innerHTML='<table><thead><tr><th>Data</th><th>Nr.</th><th>Tipas</th><th>Statusas</th><th></th></tr></thead><tbody>'+
-        ACTS.map(a=>`<tr><td class="muted">${esc(a.act_date||'')}</td><td>${esc(a.act_no||'')}</td><td>${esc(ACT_TITLES[a.act_type]||a.act_type)}</td><td>${a.status==='final'?'<span class="badge badge-green">Galutinis</span>':'<span class="badge badge-gold">Juodraštis</span>'}</td><td style="text-align:right;white-space:nowrap;">${a.pdf_path?`<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(a.pdf_path)}','${esc(a.act_no||'Aktas')}')">👁 PDF</button> `:''}<button class="btn btn-sm btn-ghost" onclick="editAct('${a.id}')">✎ Koreguoti</button> <button class="btn btn-sm btn-danger" onclick="delAct('${a.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>';
+        ACTS.map(a=>{
+          const locked = a.status==='final' && a.pdf_path; // sugeneruotas PDF → aktas užrakintas
+          const statusHtml = a.status==='final'
+            ? '<span class="badge badge-green">Galutinis</span>'+(locked?' <span class="badge" title="Aktas užrakintas — koreguoti gali tik superadministratorius" style="background:#FEF3C7;color:#92400E;">🔒 Užrakinta</span>':'')
+            : '<span class="badge badge-gold">Juodraštis</span>';
+          const canEdit = !locked || IS_SUPERADMIN;
+          const editBtn = canEdit ? `<button class="btn btn-sm btn-ghost" onclick="editAct('${a.id}')">✎ Koreguoti</button> ` : '';
+          const delBtn = canEdit ? `<button class="btn btn-sm btn-danger" onclick="delAct('${a.id}')">🗑</button>` : '';
+          return `<tr><td class="muted">${esc(a.act_date||'')}</td><td>${esc(a.act_no||'')}</td><td>${esc(ACT_TITLES[a.act_type]||a.act_type)}</td><td>${statusHtml}</td><td style="text-align:right;white-space:nowrap;">${a.pdf_path?`<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(a.pdf_path)}','${esc(a.act_no||'Aktas')}')">👁 PDF</button> `:''}${editBtn}${delBtn}</td></tr>`;
+        }).join('')+'</tbody></table>';
     }
     $('newActBtn').onclick=()=>openActEditor(null);
     $('backToActs').onclick=()=>loadActs();
-    window.editAct=id=>openActEditor(ACTS.find(a=>a.id===id));
-    window.delAct=async id=>{ if(!confirm('Ištrinti aktą?'))return; await sb.rpc('delete_insolvency_act',{ p_id:id }); await loadActs(); };
+    window.editAct=id=>{
+      const a=ACTS.find(x=>x.id===id); if(!a)return;
+      const locked=a.status==='final'&&a.pdf_path;
+      if(locked&&!IS_SUPERADMIN){ alert('Aktas užrakintas: PDF jau sugeneruotas. Koreguoti gali tik superadministratorius.'); return; }
+      if(locked&&IS_SUPERADMIN&&!confirm('DĖMESIO: šis aktas yra galutinis ir jo PDF jau sugeneruotas.\n\nKoreguojant akto turinį jis nebesutaps su sugeneruotu PDF failu — pakoregavę BŪTINAI iš naujo sugeneruokite PDF.\n\nVeiksmas bus užfiksuotas veiklos žurnale. Tęsti?'))return;
+      openActEditor(a);
+    };
+    window.delAct=async id=>{
+      const a=ACTS.find(x=>x.id===id);
+      const locked=a&&a.status==='final'&&a.pdf_path;
+      if(locked&&!IS_SUPERADMIN){ alert('Aktas užrakintas: PDF jau sugeneruotas. Ištrinti gali tik superadministratorius.'); return; }
+      if(!confirm(locked?'DĖMESIO: trinamas GALUTINIS pasirašytas aktas su sugeneruotu PDF. Veiksmas bus užfiksuotas veiklos žurnale.\n\nIštrinti aktą?':'Ištrinti aktą?'))return;
+      const res=await sb.rpc('delete_insolvency_act',{ p_id:id });
+      if(res.data&&res.data.ok===false){ alert(res.data.error_code==='act_locked'?'Aktas užrakintas — ištrinti gali tik superadministratorius.':('Klaida: '+res.data.error_code)); return; }
+      await loadActs();
+    };
 
     async function openActEditor(a){
       a=a||{};
@@ -2333,7 +2358,9 @@
       renderPhotos();
       const m=a.meta||{};
       $('vMarke').value=m.marke||''; $('vVin').value=m.vin||''; $('vPlate').value=m.plate||''; $('vKm').value=m.km||''; $('vColor').value=m.color||''; $('vCond').value=m.cond||''; $('vNotes').value=m.notes||'';
-      $('actMsg').innerHTML='';
+      $('actMsg').innerHTML = (a.id && a.status==='final' && a.pdf_path)
+        ? '<div style="background:#FEF3C7;border:1px solid #F59E0B;color:#92400E;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;">🔒 <b>Užrakintas galutinis aktas.</b> Koreguojate superadministratoriaus teisėmis — atlikę pakeitimus iš naujo sugeneruokite PDF, kad akto turinys ir PDF failas sutaptų. Veiksmas fiksuojamas veiklos žurnale.</div>'
+        : '';
       if(!a.act_no){ const r=await sb.rpc('next_insolvency_act_no',{ p_case_id:CURRENT.id }); if(!r.error)$('actNo').value=r.data; }
       onActTypeChange();
       // parašai
@@ -2444,7 +2471,12 @@
       const p=collectAct(status); const id=$('actId').value||null;
       const res=await sb.rpc('save_insolvency_act',{ p_id:id, p });
       if(res.error){ $('actMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return null; }
-      if(res.data&&res.data.ok===false){ $('actMsg').innerHTML='<div class="error">'+esc(res.data.error_code)+'</div>'; return null; }
+      if(res.data&&res.data.ok===false){
+        const msg = res.data.error_code==='act_locked'
+          ? 'Aktas užrakintas: PDF jau sugeneruotas, todėl koreguoti gali tik superadministratorius.'
+          : res.data.error_code;
+        $('actMsg').innerHTML='<div class="error">'+esc(msg)+'</div>'; return null;
+      }
       if(!id)$('actId').value=res.data.id;
       return res.data.id;
     }
