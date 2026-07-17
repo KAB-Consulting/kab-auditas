@@ -108,6 +108,7 @@
   const ACT_TITLES = {
     documents:'DOKUMENTŲ PERDAVIMO AKTAS',
     documents_v2:'BYLŲ (DOKUMENTŲ) PERDAVIMO AKTAS',
+    grouped:'PRIĖMIMO-PERDAVIMO AKTAS',
     asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)',
     asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)',
     asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)',
@@ -161,7 +162,32 @@
     $('dReceiver').textContent = a.receiver_person || '—';
 
     let body = '';
-    if (a.act_type === 'vehicle') {
+    if (a.act_type === 'grouped') {
+      const m = a.meta || {};
+      const bi = !!m.bilingual;
+      const pre = s => esc(s==null?'':String(s)).replace(/\n/g,'<br>');
+      const rom = n => ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'][n-1]||String(n);
+      const gt = (g,i) => (/^[IVXLC]+[.\s]/.test((g||'').trim())?'':rom(i+1)+'. ')+(g||'');
+      if (bi) {
+        $('actTitle').textContent = (m.title2||'ACT OF ACCEPTANCE AND TRANSFER') + ' / PRIĖMIMO-PERDAVIMO AKTAS';
+        const cell = 'vertical-align:top;padding:5px 8px;font-size:13px;line-height:1.5;width:48%;';
+        const row = (l,r) => `<tr><td style="${cell}">${l}</td><td style="width:4%;"></td><td style="${cell}">${r}</td></tr>`;
+        body = '<table style="width:100%;border-collapse:collapse;">'
+          + (m.sub2||m.sub_lt ? row(pre(m.sub2), pre(m.sub_lt)) : '')
+          + (m.intro2||m.intro_lt ? row(pre(m.intro2), pre(m.intro_lt)) : '')
+          + (m.groups||[]).map((g,i)=>row(
+              `<div style="font-weight:bold;margin-top:6px;">${esc(gt(g.t2,i))}</div><div>${pre(g.b2)}</div>`,
+              `<div style="font-weight:bold;margin-top:6px;">${esc(gt(g.t_lt,i))}</div><div>${pre(g.b_lt)}</div>`)).join('')
+          + (m.notes2||m.notes_lt ? row(`<div style="font-weight:bold;margin-top:6px;">Additional notes</div><div>${pre(m.notes2)}</div>`,
+                                        `<div style="font-weight:bold;margin-top:6px;">Papildomos nuostatos</div><div>${pre(m.notes_lt)}</div>`) : '')
+          + '</table>';
+      } else {
+        body = (m.sub_lt?`<div style="text-align:center;font-size:13px;margin-bottom:8px;">${pre(m.sub_lt)}</div>`:'')
+          + (m.intro_lt?`<div style="font-size:13px;line-height:1.5;margin:8px 0;">${pre(m.intro_lt)}</div>`:'')
+          + (m.groups||[]).map((g,i)=>`<div style="font-weight:bold;font-size:13px;margin-top:10px;">${esc(gt(g.t_lt,i))}</div><div style="font-size:13px;line-height:1.5;">${pre(g.b_lt)}</div>`).join('')
+          + (m.notes_lt?`<div style="font-weight:bold;font-size:13px;margin-top:10px;">Papildomos nuostatos</div><div style="font-size:13px;line-height:1.5;">${pre(m.notes_lt)}</div>`:'');
+      }
+    } else if (a.act_type === 'vehicle') {
       const m = a.meta || {};
       const rows = [['Markė / modelis',m.marke],['VIN numeris',m.vin],['Valst. numeris',m.plate],['Rida (km)',m.km],['Spalva',m.color],['Būklės aprašymas',m.cond],['Pastabos',m.notes]];
       body = '<table>' + rows.map(r=>`<tr><td style="width:40%;"><b>${esc(r[0])}</b></td><td>${esc(r[1]||'')}</td></tr>`).join('') + '</table>';

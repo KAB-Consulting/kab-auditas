@@ -383,6 +383,7 @@
             <option value="asset_other">Turto perdavimas — Kitas</option>
             <option value="asset_intangible">Turto perdavimas — Nematerialus</option>
             <option value="vehicle">Automobilio perdavimo aktas</option>
+            <option value="grouped">Priėmimo-perdavimo aktas (grupėmis / dvikalbis)</option>
           </select>
           <div class="row" style="margin-top:10px;">
             <div><label class="label">Akto Nr.</label><input id="actNo" class="input"></div>
@@ -402,6 +403,46 @@
             <label class="label">Būklės aprašymas</label><textarea id="vCond" class="textarea" style="min-height:60px;"></textarea>
             <label class="label">Pastabos</label><textarea id="vNotes" class="textarea" style="min-height:50px;"></textarea>
             <div class="hint">Rekomenduojama pridėti: kuro lygis, komplektacija (raktai, dokumentai, padangų komplektas), pastebėti defektai, priedų (žiebtuvėlis, įkroviklis) sąrašas.</div>
+          </div>
+
+          <!-- grupių / dvikalbio akto laukai -->
+          <div id="actGroupedFields" class="hidden" style="margin-top:12px;">
+            <div class="sec-title">Akto turinys grupėmis</div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;"><input type="checkbox" id="gBilingual"> Dvikalbis aktas</label>
+              <span id="gLangWrap" class="hidden">Antroji kalba: <input id="gLang" class="input" style="max-width:140px;display:inline-block;" value="English"></span>
+            </div>
+            <div id="gTitle2Wrap" class="hidden">
+              <label class="label">Akto pavadinimas antrąja kalba</label>
+              <input id="gTitle2" class="input" value="ACT OF ACCEPTANCE AND TRANSFER">
+            </div>
+            <label class="label" style="margin-top:8px;">Akto paantraštė (dėl ko) — LT</label>
+            <input id="gSubLt" class="input" placeholder="pvz. dėl UAB „...“ dokumentų, prieigos duomenų ir susijusios informacijos">
+            <div id="gSub2Wrap" class="hidden">
+              <label class="label">Paantraštė antrąja kalba</label>
+              <input id="gSub2" class="input" placeholder="e.g. of UAB “...” Documents, Access Credentials, and Related Information">
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:6px;">
+              <label class="label" style="margin:0;">Įžanga (šalys) — LT</label>
+              <button class="btn btn-sm btn-ghost" type="button" id="gIntroTplBtn">✨ Užpildyti pagal bylos duomenis</button>
+            </div>
+            <textarea id="gIntroLt" class="textarea" style="min-height:80px;"></textarea>
+            <div id="gIntro2Wrap" class="hidden">
+              <label class="label">Įžanga antrąja kalba</label>
+              <textarea id="gIntro2" class="textarea" style="min-height:80px;"></textarea>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px;flex-wrap:wrap;gap:6px;">
+              <strong>Grupės (pvz. Dokumentai, Turtas, Įranga...)</strong>
+              <button class="btn btn-sm" type="button" id="gAddGroupBtn">+ Grupė</button>
+            </div>
+            <div class="hint" style="margin-bottom:6px;">Į teksto laukus galite tiesiog įklijuoti turinį iš parengtų Word/Excel dokumentų (Ctrl+V) — eilučių lūžiai išsaugomi. Dvikalbiame režime kiekviena grupė turi du laukus: LT ir antrosios kalbos.</div>
+            <div id="gGroups"></div>
+            <label class="label" style="margin-top:10px;">Papildomos nuostatos — LT</label>
+            <textarea id="gNotesLt" class="textarea" style="min-height:60px;"></textarea>
+            <div id="gNotes2Wrap" class="hidden">
+              <label class="label">Papildomos nuostatos antrąja kalba</label>
+              <textarea id="gNotes2" class="textarea" style="min-height:60px;"></textarea>
+            </div>
           </div>
 
           <!-- lentelė (ne automobiliui) -->
@@ -448,6 +489,7 @@
               <label class="label">Perduodančio asmens parašas</label>
               <canvas id="sigHandover" width="380" height="120" style="border:1px solid var(--bd);border-radius:6px;touch-action:none;width:100%;max-width:380px;background:#fff;"></canvas>
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                <button class="btn btn-sm" type="button" onclick="openSigModal('sigHandover')">✍️ Pasirašyti</button>
                 <button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('sigHandover')">Išvalyti</button>
                 <button class="btn btn-sm btn-gold" type="button" id="esignHandoverBtn" onclick="sendSignRequest('handover')">✉️ Siųsti pasirašyti el. paštu</button>
               </div>
@@ -457,6 +499,7 @@
               <label class="label">Perimančio asmens parašas</label>
               <canvas id="sigReceiver" width="380" height="120" style="border:1px solid var(--bd);border-radius:6px;touch-action:none;width:100%;max-width:380px;background:#fff;"></canvas>
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                <button class="btn btn-sm" type="button" onclick="openSigModal('sigReceiver')">✍️ Pasirašyti</button>
                 <button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('sigReceiver')">Išvalyti</button>
                 <button class="btn btn-sm btn-gold" type="button" id="esignReceiverBtn" onclick="sendSignRequest('receiver')">✉️ Siųsti pasirašyti el. paštu</button>
               </div>
@@ -468,6 +511,22 @@
           <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
             <button class="btn btn-ghost" id="actSaveDraft">💾 Išsaugoti (tarpinis)</button>
             <button class="btn" id="actGenPdf">📄 Generuoti PDF</button>
+          </div>
+
+          <!-- parašo popup (2x dydžio) -->
+          <div id="sigModal" style="display:none;position:fixed;inset:0;background:rgba(11,30,63,.55);z-index:1000;align-items:center;justify-content:center;">
+            <div style="background:#fff;border-radius:12px;padding:18px;max-width:860px;width:96%;box-shadow:0 10px 40px rgba(0,0,0,.25);">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <strong id="sigModalTitle">Pasirašymas</strong>
+                <button class="btn btn-sm btn-ghost" type="button" onclick="closeSigModal()">✕</button>
+              </div>
+              <div class="hint" style="margin-bottom:6px;">Pasirašykite žemiau (pirštu arba pele) ir spauskite „Tvirtinu" — parašas bus atvaizduotas akte.</div>
+              <canvas id="sigModalCanvas" width="760" height="240" style="border:2px dashed var(--bd);border-radius:8px;touch-action:none;width:100%;background:#fff;"></canvas>
+              <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+                <button class="btn btn-ghost" type="button" onclick="clearSigModal()">Išvalyti</button>
+                <button class="btn" type="button" onclick="confirmSigModal()">✓ Tvirtinu</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -854,7 +913,9 @@
           body.perm-view [onclick*="openAssetModal"], body.perm-view [onclick*="openPriceModal"], body.perm-view [onclick*="openSellModal"],
           body.perm-view [onclick*="delAsset"], body.perm-view [onclick*="delAsPhoto"], body.perm-view [onclick*="useAsAttachment"],
           body.perm-view [onclick*="delAttach"], body.perm-view [onclick*="editAct"], body.perm-view [onclick*="delAct"],
-          body.perm-view [onclick*="delActRow"], body.perm-view [onclick*="delPhoto"], body.perm-view [onclick*="sendSignRequest"]
+          body.perm-view [onclick*="delActRow"], body.perm-view [onclick*="delPhoto"], body.perm-view [onclick*="sendSignRequest"],
+          body.perm-view [onclick*="openSigModal"], body.perm-view [onclick*="delGroup"], body.perm-view [onclick*="moveGroup"],
+          body.perm-view #gAddGroupBtn, body.perm-view #gIntroTplBtn
           { display: none !important; }`;
         document.head.appendChild(st);
         document.body.classList.add('perm-view');
@@ -2303,7 +2364,7 @@
       asset_other:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
       asset_intangible:[['name','Pavadinimas'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
     };
-    const ACT_TITLES={ documents:'DOKUMENTŲ PERDAVIMO AKTAS', documents_v2:'BYLŲ (DOKUMENTŲ) PERDAVIMO AKTAS', asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)', asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)', asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)', asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)', asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)', vehicle:'AUTOMOBILIO PERDAVIMO AKTAS' };
+    const ACT_TITLES={ documents:'DOKUMENTŲ PERDAVIMO AKTAS', documents_v2:'BYLŲ (DOKUMENTŲ) PERDAVIMO AKTAS', grouped:'PRIĖMIMO-PERDAVIMO AKTAS', asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)', asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)', asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)', asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)', asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)', vehicle:'AUTOMOBILIO PERDAVIMO AKTAS' };
     let ACTS=[], ACT_ROWS=[], ACT_PHOTOS=[];
 
     async function loadActs(){
@@ -2358,6 +2419,14 @@
       renderPhotos();
       const m=a.meta||{};
       $('vMarke').value=m.marke||''; $('vVin').value=m.vin||''; $('vPlate').value=m.plate||''; $('vKm').value=m.km||''; $('vColor').value=m.color||''; $('vCond').value=m.cond||''; $('vNotes').value=m.notes||'';
+      // grupių / dvikalbio akto laukai
+      $('gBilingual').checked=!!m.bilingual;
+      $('gLang').value=m.lang2||'English';
+      $('gTitle2').value=m.title2||'ACT OF ACCEPTANCE AND TRANSFER';
+      $('gSubLt').value=m.sub_lt||''; $('gSub2').value=m.sub2||'';
+      $('gIntroLt').value=m.intro_lt||''; $('gIntro2').value=m.intro2||'';
+      $('gNotesLt').value=m.notes_lt||''; $('gNotes2').value=m.notes2||'';
+      GROUPED=Array.isArray(m.groups)?m.groups.map(g=>({t_lt:g.t_lt||'',t2:g.t2||'',b_lt:g.b_lt||'',b2:g.b2||''})):[];
       $('actMsg').innerHTML = (a.id && a.status==='final' && a.pdf_path)
         ? '<div style="background:#FEF3C7;border:1px solid #F59E0B;color:#92400E;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;">🔒 <b>Užrakintas galutinis aktas.</b> Koreguojate superadministratoriaus teisėmis — atlikę pakeitimus iš naujo sugeneruokite PDF, kad akto turinys ir PDF failas sutaptų. Veiksmas fiksuojamas veiklos žurnale.</div>'
         : '';
@@ -2376,11 +2445,76 @@
     $('actType').onchange=()=>{ ACT_ROWS=[]; onActTypeChange(); };
     function onActTypeChange(){
       const t=$('actType').value;
-      const isVehicle=t==='vehicle';
+      const isVehicle=t==='vehicle', isGrouped=t==='grouped';
       $('actVehicleFields').classList.toggle('hidden',!isVehicle);
-      $('actTableWrap').classList.toggle('hidden',isVehicle);
-      if(!isVehicle){ $('actTableTitle').textContent='Eilutės'; renderActRows(); }
+      $('actGroupedFields').classList.toggle('hidden',!isGrouped);
+      $('actTableWrap').classList.toggle('hidden',isVehicle||isGrouped);
+      if(isGrouped){ toggleBilingualUI(); renderGroups(); }
+      if(!isVehicle&&!isGrouped){ $('actTableTitle').textContent='Eilutės'; renderActRows(); }
     }
+
+    // ----- GRUPIŲ / DVIKALBIS AKTAS -----
+    let GROUPED=[];
+    function roman(n){ return ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'][n-1]||String(n); }
+    function toggleBilingualUI(){
+      const bi=$('gBilingual').checked;
+      ['gLangWrap','gTitle2Wrap','gSub2Wrap','gIntro2Wrap','gNotes2Wrap'].forEach(id=>$(id).classList.toggle('hidden',!bi));
+    }
+    function renderGroups(){
+      const bi=$('gBilingual').checked;
+      $('gGroups').innerHTML=GROUPED.length?GROUPED.map((g,i)=>`
+        <div style="border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:8px;background:#FAFBFD;">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
+            <span class="muted" style="font-size:12px;min-width:24px;"><b>${roman(i+1)}.</b></span>
+            <input class="input" data-gi="${i}" data-gk="t_lt" placeholder="Grupės pavadinimas LT (pvz. DOKUMENTAI)" value="${esc(g.t_lt||'')}" style="flex:1;min-width:160px;">
+            ${bi?`<input class="input" data-gi="${i}" data-gk="t2" placeholder="Group title (antroji kalba)" value="${esc(g.t2||'')}" style="flex:1;min-width:160px;">`:''}
+            <button class="btn btn-sm btn-ghost" type="button" onclick="moveGroup(${i},-1)" title="Aukštyn">↑</button>
+            <button class="btn btn-sm btn-ghost" type="button" onclick="moveGroup(${i},1)" title="Žemyn">↓</button>
+            <button class="btn btn-sm btn-danger" type="button" onclick="delGroup(${i})">✕</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <textarea class="textarea" data-gi="${i}" data-gk="b_lt" placeholder="Turinys LT — įklijuokite iš parengto dokumento" style="min-height:90px;flex:1;min-width:220px;">${esc(g.b_lt||'')}</textarea>
+            ${bi?`<textarea class="textarea" data-gi="${i}" data-gk="b2" placeholder="Content (antroji kalba) — paste here" style="min-height:90px;flex:1;min-width:220px;">${esc(g.b2||'')}</textarea>`:''}
+          </div>
+        </div>`).join(''):'<div class="muted" style="font-size:13px;padding:6px 0;">Grupių dar nėra — spauskite „+ Grupė".</div>';
+      $('gGroups').querySelectorAll('[data-gi]').forEach(el=>el.oninput=()=>{ GROUPED[+el.dataset.gi][el.dataset.gk]=el.value; });
+    }
+    window.delGroup=i=>{ if(GROUPED[i]&&(GROUPED[i].t_lt||GROUPED[i].b_lt||GROUPED[i].t2||GROUPED[i].b2)&&!confirm('Pašalinti grupę su turiniu?'))return; GROUPED.splice(i,1); renderGroups(); };
+    window.moveGroup=(i,d)=>{ const j=i+d; if(j<0||j>=GROUPED.length)return; [GROUPED[i],GROUPED[j]]=[GROUPED[j],GROUPED[i]]; renderGroups(); };
+    $('gAddGroupBtn').onclick=()=>{ GROUPED.push({t_lt:'',t2:'',b_lt:'',b2:''}); renderGroups(); };
+    $('gBilingual').onchange=()=>{ toggleBilingualUI(); renderGroups(); };
+    $('gIntroTplBtn').onclick=()=>{
+      const debtor=CURRENT.debtor_name||'', code=CURRENT.debtor_code||'';
+      const hand=$('actHandover').value.trim()||'____________';
+      const adm=(CURRENT_ADM&&CURRENT_ADM.name)||'____________';
+      const rec=$('actReceiver').value.trim()||'____________';
+      if(!$('gIntroLt').value.trim())
+        $('gIntroLt').value='Šis priėmimo-perdavimo aktas (toliau – Aktas) sudarytas tarp:\n\n'+hand+', '+debtor+(code?(', įmonės kodas '+code):'')+', kaip perduodančios šalies (toliau – Perdavėjas);\n\nir\n\nnemokumo administratoriaus '+adm+', atstovaujamo įgalioto asmens '+rec+', kaip perimančios šalies (toliau – Perėmėjas).\n\nŠalys patvirtina, kad Perdavėjas perdavė, o Perėmėjas priėmė šiuos dokumentus, turtą ir susijusią informaciją:';
+      if($('gBilingual').checked&&!$('gIntro2').value.trim())
+        $('gIntro2').value='This Act of Acceptance and Transfer (the "Act") is made between:\n\n'+hand+', '+debtor+(code?(', entity code '+code):'')+', as the transferring party (the "Transferor");\n\nand\n\ninsolvency administrator '+adm+', represented by authorized person '+rec+', as the receiving party (the "Recipient").\n\nThe parties confirm that the Transferor has transferred, and the Recipient has accepted, the following documents, assets and related information:';
+      if(!$('gNotesLt').value.trim())
+        $('gNotesLt').value='Šis Aktas sudarytas dviem vienodą juridinę galią turinčiais egzemplioriais, po vieną kiekvienai šaliai.';
+      if($('gBilingual').checked&&!$('gNotes2').value.trim())
+        $('gNotes2').value='This Act is executed in two counterparts, one for each party, both having equal legal force.';
+    };
+
+    // ----- PARAŠO POPUP (2x dydžio) -----
+    let SIG_TARGET=null;
+    window.openSigModal=id=>{
+      SIG_TARGET=id;
+      $('sigModalTitle').textContent = id==='sigHandover' ? 'Perduodančio asmens parašas' : 'Perimančio asmens parašas';
+      $('sigModal').style.display='flex';
+      setupSig('sigModalCanvas');
+      clearSig('sigModalCanvas');
+    };
+    window.closeSigModal=()=>{ $('sigModal').style.display='none'; SIG_TARGET=null; };
+    window.clearSigModal=()=>clearSig('sigModalCanvas');
+    window.confirmSigModal=()=>{
+      if(!sigState['sigModalCanvas']){ alert('Pirmiausia pasirašykite lange.'); return; }
+      const src=$('sigModalCanvas'), dst=$(SIG_TARGET);
+      if(dst){ const ctx=dst.getContext('2d'); ctx.clearRect(0,0,dst.width,dst.height); ctx.drawImage(src,0,0,dst.width,dst.height); sigState[SIG_TARGET]=true; }
+      closeSigModal();
+    };
     function renderActRows(){
       const t=$('actType').value; const cols=ACT_COLS[t]||[];
       let h='<table><thead><tr><th style="width:36px;">Nr.</th>'+cols.map(c=>`<th>${esc(c[1])}</th>`).join('')+'<th></th></tr></thead><tbody>';
@@ -2461,8 +2595,15 @@
       return {
         case_id:CURRENT.id, act_type:t, act_no:$('actNo').value.trim(), act_date:$('actDate').value,
         handover_person:$('actHandover').value.trim(), receiver_person:$('actReceiver').value.trim(),
-        rows: t==='vehicle'?[]:ACT_ROWS,
-        meta: t==='vehicle'?{ marke:$('vMarke').value, vin:$('vVin').value, plate:$('vPlate').value, km:$('vKm').value, color:$('vColor').value, cond:$('vCond').value, notes:$('vNotes').value }:{},
+        rows: (t==='vehicle'||t==='grouped')?[]:ACT_ROWS,
+        meta: t==='vehicle'?{ marke:$('vMarke').value, vin:$('vVin').value, plate:$('vPlate').value, km:$('vKm').value, color:$('vColor').value, cond:$('vCond').value, notes:$('vNotes').value }
+          : t==='grouped'?{
+              bilingual:$('gBilingual').checked, lang2:$('gLang').value.trim()||'English',
+              title2:$('gTitle2').value.trim(), sub_lt:$('gSubLt').value.trim(), sub2:$('gSub2').value.trim(),
+              intro_lt:$('gIntroLt').value, intro2:$('gIntro2').value,
+              groups:GROUPED.filter(g=>g.t_lt||g.b_lt||g.t2||g.b2),
+              notes_lt:$('gNotesLt').value, notes2:$('gNotes2').value
+            }:{},
         photos: ACT_PHOTOS,
         sig_handover:sigData('sigHandover'), sig_receiver:sigData('sigReceiver'), status
       };
@@ -2561,7 +2702,51 @@
     };
 
     // ----- PDF generavimas (html2canvas + jsPDF, lietuviškos raidės) -----
+    function actHtmlGrouped(p){
+      const m=p.meta||{}; const bi=!!m.bilingual;
+      const pre=s=>esc(s||'').replace(/\n/g,'<br>');
+      const gTitle=(g,i)=>{ const num=/^[IVXLC]+[.\s]/.test((g||'').trim())?'':roman(i+1)+'. '; return num+(g||''); };
+      const sig=(lbl,who,data,es)=>`<div style="display:inline-block;width:45%;vertical-align:top;margin-top:10px;"><div style="font-size:12px;color:#555;">${lbl}</div>${
+        es?`<div style="border:1px dashed #888;padding:6px 10px;font-size:11px;line-height:1.5;margin:4px 0;display:inline-block;">Pasirašyta elektroniniu būdu (el. paštu)${bi?' / Signed electronically (by email)':''}<br><b>${esc(es.name||'')}</b><br>${esc(es.email||'')}<br>${new Date(es.signed_at).toLocaleString('lt-LT',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>`
+        :(data?`<img src="${data}" style="height:50px;">`:'<div style="height:50px;"></div>')
+      }<div style="border-top:1px solid #333;font-size:12px;padding-top:3px;">${esc(who||'')}</div></div>`;
+      const photosHtml=(p._photoData&&p._photoData.length)?`<div style="margin-top:20px;"><div style="font-weight:bold;font-size:13px;margin-bottom:6px;">Nuotraukos (priedas)${bi?' / Photos (annex)':''}:</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p._photoData.map(d=>`<img src="${d}" style="width:160px;height:160px;object-fit:cover;border:1px solid #999;">`).join('')}</div></div>`:'';
+      const cell='vertical-align:top;padding:5px 8px;font-size:12.5px;line-height:1.5;width:48%;';
+      let body='';
+      if(bi){
+        // dvikalbis: kairėje antroji kalba, dešinėje LT (kaip pavyzdyje)
+        const row=(l,r)=>`<tr><td style="${cell}">${l}</td><td style="width:4%;"></td><td style="${cell}">${r}</td></tr>`;
+        body='<table style="width:100%;border-collapse:collapse;">'
+          + row(`<div style="text-align:center;font-weight:bold;font-size:14px;">${esc(m.title2||'ACT OF ACCEPTANCE AND TRANSFER')}</div>${m.sub2?`<div style="text-align:center;font-size:12.5px;margin-top:4px;">${pre(m.sub2)}</div>`:''}`,
+                `<div style="text-align:center;font-weight:bold;font-size:14px;">PRIĖMIMO-PERDAVIMO AKTAS</div>${m.sub_lt?`<div style="text-align:center;font-size:12.5px;margin-top:4px;">${pre(m.sub_lt)}</div>`:''}`)
+          + row(`Date: ${esc(p.act_date||'')}`,`Data: ${esc(p.act_date||'')}`)
+          + (m.intro2||m.intro_lt?row(pre(m.intro2),pre(m.intro_lt)):'')
+          + (m.groups||[]).map((g,i)=>row(
+              `<div style="font-weight:bold;margin-top:8px;">${esc(gTitle(g.t2,i))}</div><div style="margin-top:4px;">${pre(g.b2)}</div>`,
+              `<div style="font-weight:bold;margin-top:8px;">${esc(gTitle(g.t_lt,i))}</div><div style="margin-top:4px;">${pre(g.b_lt)}</div>`)).join('')
+          + (m.notes2||m.notes_lt?row(`<div style="font-weight:bold;margin-top:8px;">Additional notes</div><div style="margin-top:4px;">${pre(m.notes2)}</div>`,
+                                       `<div style="font-weight:bold;margin-top:8px;">Papildomos nuostatos</div><div style="margin-top:4px;">${pre(m.notes_lt)}</div>`):'')
+          + '</table>';
+      } else {
+        body=`<h2 style="text-align:center;font-size:16px;margin:16px 0 4px;">PRIĖMIMO-PERDAVIMO AKTAS</h2>`
+          + (m.sub_lt?`<div style="text-align:center;font-size:13px;margin-bottom:10px;">${pre(m.sub_lt)}</div>`:'')
+          + (m.intro_lt?`<div style="font-size:13px;line-height:1.5;margin:10px 0;">${pre(m.intro_lt)}</div>`:'')
+          + (m.groups||[]).map((g,i)=>`<div style="font-weight:bold;font-size:13px;margin-top:12px;">${esc(gTitle(g.t_lt,i))}</div><div style="font-size:13px;line-height:1.5;margin-top:4px;">${pre(g.b_lt)}</div>`).join('')
+          + (m.notes_lt?`<div style="font-weight:bold;font-size:13px;margin-top:12px;">Papildomos nuostatos</div><div style="font-size:13px;line-height:1.5;margin-top:4px;">${pre(m.notes_lt)}</div>`:'');
+      }
+      const lblH=bi?'Transferor / Perdavėjas:':'Perdavė:';
+      const lblR=bi?'Recipient / Perėmėjas:':'Priėmė:';
+      return `<div style="font-family:'Times New Roman',serif;color:#000;width:700px;padding:10px;">
+        <div style="text-align:right;font-size:12px;">${esc(p.act_date||'')} ${p.act_no?('Nr. '+esc(p.act_no)):''}</div>
+        <div style="font-weight:bold;">${esc(CURRENT.debtor_name||'')}</div>
+        <div style="font-size:12px;">${CURRENT.debtor_code?('Įmonės kodas '+esc(CURRENT.debtor_code)):''}${CURRENT.debtor_code&&CURRENT.debtor_address?', ':''}${esc(CURRENT.debtor_address||'')}</div>
+        <div style="margin-top:12px;">${body}</div>
+        <div style="margin-top:30px;">${sig(lblH,p.handover_person,p.sig_handover,p.esign_handover)}<span style="display:inline-block;width:8%;"></span>${sig(lblR,p.receiver_person,p.sig_receiver,p.esign_receiver)}</div>
+        ${photosHtml}
+      </div>`;
+    }
     function actHtml(p){
+      if(p.act_type==='grouped') return actHtmlGrouped(p);
       const cols=ACT_COLS[p.act_type]||[];
       let body='';
       if(p.act_type==='vehicle'){
