@@ -994,7 +994,8 @@
           body.perm-view [onclick*="saveActType"], body.perm-view #newAssetGroupBtn, body.perm-view [onclick*="delAssetGroup"],
           body.perm-view [onclick*="delGroupItem"], body.perm-view [onclick*="addGroupItem"], body.perm-view #regNoOverrideWrap,
           body.perm-view #libUploadBtn, body.perm-view [onclick*="editLibraryDoc"], body.perm-view [onclick*="delLibraryDoc"],
-          body.perm-view [onclick*="registerLibraryDoc"], body.perm-view #newDocKindBtn, body.perm-view [onclick*="saveDocKind"]
+          body.perm-view [onclick*="registerLibraryDoc"], body.perm-view #newDocKindBtn, body.perm-view [onclick*="saveDocKind"],
+          body.perm-view [onclick*="saveAssetGroup"], body.perm-view [onclick*="renameAssetGroup"]
           { display: none !important; }`;
         document.head.appendChild(st);
         document.body.classList.add('perm-view');
@@ -2340,8 +2341,13 @@
         return `<div style="border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:10px;background:#FAFBFD;">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
             <strong>🧩 ${esc(g.name)} <span class="muted" style="font-weight:normal;font-size:12px;">(${items.length} poz.)</span></strong>
-            <button class="btn btn-sm btn-danger" onclick="delAssetGroup('${g.id}')" title="Šalinama tik grupė — turto pozicijos lieka">🗑 Šalinti grupę</button>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-sm" onclick="saveAssetGroup('${g.id}')" title="Patvirtinti ir išsaugoti grupės sudėtį">💾 Išsaugoti grupę</button>
+              <button class="btn btn-sm btn-ghost" onclick="renameAssetGroup('${g.id}')" title="Pervadinti grupę">✎</button>
+              <button class="btn btn-sm btn-danger" onclick="delAssetGroup('${g.id}')" title="Šalinama tik grupė — turto pozicijos lieka">🗑</button>
+            </div>
           </div>
+          <div id="agmsg_${g.id}" style="font-size:12px;margin-top:4px;"></div>
           ${items.length?'<table style="margin-top:8px;"><thead><tr><th>Pozicija</th><th>Rolė</th><th>Priklauso</th><th></th></tr></thead><tbody>'+items.map(i=>`<tr>
             <td>${esc(assetNameById(i.asset_id))}</td>
             <td>${i.role==='kompleksas'?'<span class="badge badge-gold">Kompleksas</span>':'<span class="badge badge-gray">Priklausinys</span>'}</td>
@@ -2369,9 +2375,30 @@
     window.delAssetGroup=async id=>{
       if(!confirm('Šalinti grupę? Turto pozicijos liks — bus panaikintas tik jų susiejimas.'))return;
       await sb.from('insolvency_asset_groups').delete().eq('id',id);
+      $('assetGroupsMsg').innerHTML='<div class="success">Grupė pašalinta.</div>';
       loadAssetGroups();
     };
-    window.delGroupItem=async id=>{ await sb.from('insolvency_asset_group_items').delete().eq('id',id); loadAssetGroups(); };
+    window.renameAssetGroup=async id=>{
+      const g=ASSET_GROUPS.find(x=>x.id===id); if(!g)return;
+      const name=prompt('Naujas grupės pavadinimas:',g.name); if(!name||!name.trim()||name.trim()===g.name)return;
+      const { error }=await sb.from('insolvency_asset_groups').update({ name:name.trim() }).eq('id',id);
+      if(error){ $('assetGroupsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      loadAssetGroups();
+    };
+    window.saveAssetGroup=async id=>{
+      // sudėtis saugoma automatiškai po kiekvieno veiksmo — čia patikriname DB ir patvirtiname vartotojui
+      await loadAssetGroups();
+      const g=ASSET_GROUPS.find(x=>x.id===id); if(!g)return;
+      const n=ASSET_GROUP_ITEMS.filter(i=>i.group_id===id).length;
+      const el=$('agmsg_'+id);
+      if(el){ el.innerHTML='<span style="color:#046C4E;">✔ Grupė „'+esc(g.name)+'" išsaugota — pozicijų: '+n+'.</span>'; }
+    };
+    window.delGroupItem=async id=>{
+      const it=ASSET_GROUP_ITEMS.find(x=>x.id===id);
+      await sb.from('insolvency_asset_group_items').delete().eq('id',id);
+      await loadAssetGroups();
+      if(it){ const el=$('agmsg_'+it.group_id); if(el)el.innerHTML='<span style="color:#046C4E;">✔ Pozicija išimta iš grupės ir pakeitimas išsaugotas.</span>'; }
+    };
     window.addGroupItem=async gid=>{
       const assetSel=document.querySelector(`.agAsset[data-g="${gid}"]`);
       const role=document.querySelector(`.agRole[data-g="${gid}"]`).value;
@@ -2380,7 +2407,9 @@
       const { error }=await sb.from('insolvency_asset_group_items').insert({ group_id:gid, asset_id:assetSel.value, role, parent_asset_id:role==='priklausinys'?parent:null });
       if(error){ $('assetGroupsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
       $('assetGroupsMsg').innerHTML='';
-      loadAssetGroups();
+      await loadAssetGroups();
+      const el=$('agmsg_'+gid);
+      if(el)el.innerHTML='<span style="color:#046C4E;">✔ Pozicija pridėta į grupę ir išsaugota.</span>';
     };
 
     // --- kainos fiksavimas / keitimas ---
