@@ -132,6 +132,17 @@
           <button class="btn btn-sm" id="newTplBtn">+ Naujas šablonas</button>
         </div>
         <div id="setTemplatesList"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:26px 0 6px;">
+          <strong>Perdavimo aktų šablonai (pavadinimai ir tekstai)</strong>
+        </div>
+        <div class="hint" style="margin-bottom:10px;">Pakeiskite akto tipo pavadinimą sąraše (kad būtų lengviau atskirti aktus), PDF antraštę ir standartinį įžangos tekstą PDF dokumente. Įžangos tekste galima naudoti žymes: <b>{{imone}}</b>, <b>{{imones_kodas}}</b>, <b>{{adresas}}</b>, <b>{{perdave}}</b>, <b>{{pereme}}</b>. Pakeitimai galioja visiems administratoriams.</div>
+        <div id="setActTypes"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:26px 0 6px;">
+          <strong>Dokumentų tipai (Galutinių PDF biblioteka)</strong>
+          <button class="btn btn-sm" id="newDocKindBtn">+ Naujas tipas</button>
+        </div>
+        <div class="hint" style="margin-bottom:10px;">Tipai, iš kurių renkamasi įkeliant dokumentą į biblioteką (Sutartis, Įgaliojimas, Aktas ir kt.). Galite pridėti naujų arba pervadinti / išjungti esamus — pakeitimai galioja visose bylose.</div>
+        <div id="setDocKinds"></div>
       </div>
       <div id="settingsMsg"></div>
     </div>
@@ -310,6 +321,15 @@
         </div>
         <div id="assetsMsg"></div>
         <div id="assetsTable"></div>
+
+        <!-- TURTO GRUPĖS -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:26px 0 6px;">
+          <strong>🧩 Turto grupės (kompleksai ir priklausiniai)</strong>
+          <button class="btn btn-sm" id="newAssetGroupBtn">+ Nauja grupė</button>
+        </div>
+        <div class="hint" style="margin-bottom:8px;"><b>Kompleksas</b> — turto pozicijos, veikiančios kaip visuma (pastatų kompleksas, įrengimų linija). <b>Priklausinys</b> — pozicija, priklausanti kitam turtui ar kompleksui (liftas, kondicionierius, sumontuotas įrengimas) — jos pardavimas atskirai sudėtingas. Priklausiniui galima (nebūtina) nurodyti konkrečią poziciją, kuriai jis priklauso. Vienoje grupėje gali būti ir kompleksų, ir priklausinių.</div>
+        <div id="assetGroupsMsg"></div>
+        <div id="assetGroupsList"></div>
       </div>
 
       <!-- DOKUMENTŲ REGISTRAS (gaunami / siunčiami) -->
@@ -342,7 +362,11 @@
 
         <!-- GALUTINIAI PDF -->
         <div id="libFinal">
-          <div class="muted" style="font-size:12px;margin-bottom:10px;">Sugeneruoti galutiniai PDF (lydraštis ant blanko + priedai). Peržiūrai, atsisiuntimui, siuntimui.</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <div class="muted" style="font-size:12px;">Sugeneruoti galutiniai PDF ir rankiniu būdu įkelti dokumentai. Dokumentą galima (neprivaloma) registruoti siunčiamų dokumentų žurnale.</div>
+            <button class="btn btn-sm btn-gold" id="libUploadBtn">⬆️ Įkelti dokumentą</button>
+          </div>
+          <div id="libMsg"></div>
           <div id="finalDocsTable"></div>
         </div>
 
@@ -511,6 +535,7 @@
           <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
             <button class="btn btn-ghost" id="actSaveDraft">💾 Išsaugoti (tarpinis)</button>
             <button class="btn" id="actGenPdf">📄 Generuoti PDF</button>
+            <button class="btn btn-ghost" id="actLockBtn" style="display:none;">🔒 Užrakinti aktą</button>
           </div>
 
           <!-- parašo popup (2x dydžio) -->
@@ -828,11 +853,58 @@
     </div>
   </div>
 
+  <!-- BIBLIOTEKOS DOKUMENTO ĮKĖLIMO / POŽYMIŲ MODALĖ -->
+  <div id="libDocModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:640px;">
+      <h2 id="libDocModalTitle">Įkelti dokumentą į biblioteką</h2>
+      <input type="hidden" id="libDocId">
+      <div id="libFileRow" style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+        <input type="file" id="libFile" accept=".pdf" class="hidden">
+        <button class="btn btn-sm btn-gold" id="libFileBtn" type="button">📄 Pasirinkti PDF failą</button>
+        <span class="hint" id="libFileHint">Failas nepasirinktas.</span>
+      </div>
+      <div class="row">
+        <div><label class="label">Dokumento tipas *</label><select id="libType" class="select"></select></div>
+        <div><label class="label">Dok. numeris</label><input id="libNo" class="input" placeholder="pvz. 2026-05"></div>
+      </div>
+      <label class="label">Dokumento pavadinimas *</label>
+      <input id="libTitle" class="input" placeholder="pvz. Patalpų nuomos sutartis">
+      <div class="row">
+        <div><label class="label">Sudarymo data</label><input id="libDate" class="input" type="date"></div>
+        <div><label class="label">Galiojimo data</label><input id="libValid" class="input" type="date"></div>
+      </div>
+      <label class="label">Šalis, su kuria dokumentas sudarytas / kam išduotas</label>
+      <input id="libParty" class="input" placeholder="pvz. UAB „Įmonė“ / Vardenis Pavardenis">
+      <label class="label">Trumpas aprašymas</label>
+      <textarea id="libDesc" class="textarea" style="min-height:50px;"></textarea>
+      <div id="libRegBlock" style="background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:10px 12px;margin-top:10px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="checkbox" id="libRegCb"> Registruoti siunčiamų dokumentų žurnale (neprivaloma)
+        </label>
+        <div id="libRegFields" class="hidden" style="margin-top:8px;">
+          <label class="label">Registravimo data</label>
+          <input id="libRegDate" class="input" type="date" style="max-width:200px;">
+          <div class="hint">Numeris bus suteiktas automatiškai — sekantis laisvas siunčiamų žurnale (S26-…). Ant dokumento bus uždėta registracijos žyma.</div>
+        </div>
+      </div>
+      <div id="libDocMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="libDocCancel">Atšaukti</button>
+        <button class="btn" id="libDocSave">✔ Išsaugoti</button>
+      </div>
+    </div>
+  </div>
+
   <!-- DOKUMENTO REGISTRAVIMO MODALĖ -->
   <div id="regModal" class="modal-bg hidden">
     <div class="modal" style="max-width:640px;">
       <h2 id="regModalTitle">Registruoti gaunamą dokumentą</h2>
       <div class="muted" style="margin-bottom:12px;">Bus suformuotas numeris <b id="regNumPreview">G26-…-…</b>, failai sujungti į vieną PDF ir pažymėti registracijos žyma.</div>
+      <div id="regNoOverrideWrap" style="margin-bottom:10px;">
+        <label class="label">Registracijos Nr. (palikite tuščią — bus suteiktas automatiškai)</label>
+        <input id="regNoOverride" class="input" placeholder="pvz. G26-TOR-015" style="max-width:260px;">
+        <div class="hint">Numerį koreguoti gali administratorius (pilnos teisės) arba superadministratorius.</div>
+      </div>
       <input type="hidden" id="regType" value="received">
       <label class="label">Trumpas dokumento aprašymas *</label>
       <input id="regTitle" class="input" placeholder="pvz. VMI raštas dėl mokestinės nepriemokos">
@@ -884,6 +956,7 @@
     // ---------- MODULIO TEISĖS (bankrotas) ----------
     let PERM_LEVEL = 'full';
     let IS_SUPERADMIN = false;
+    let CURRENT_UID = null;
     async function checkModuleAccess(moduleCode){
       try{
         const { data, error } = await sb.rpc('module_access', { p_module: moduleCode });
@@ -915,7 +988,13 @@
           body.perm-view [onclick*="delAttach"], body.perm-view [onclick*="editAct"], body.perm-view [onclick*="delAct"],
           body.perm-view [onclick*="delActRow"], body.perm-view [onclick*="delPhoto"], body.perm-view [onclick*="sendSignRequest"],
           body.perm-view [onclick*="openSigModal"], body.perm-view [onclick*="delGroup"], body.perm-view [onclick*="moveGroup"],
-          body.perm-view #gAddGroupBtn, body.perm-view #gIntroTplBtn
+          body.perm-view #gAddGroupBtn, body.perm-view #gIntroTplBtn,
+          body.perm-view [onclick*="lockAct"], body.perm-view [onclick*="unlockAct"], body.perm-view #actLockBtn,
+          body.perm-view [onclick*="sendActCopy"], body.perm-view [onclick*="registerAct"], body.perm-view [onclick*="transferActAssets"],
+          body.perm-view [onclick*="saveActType"], body.perm-view #newAssetGroupBtn, body.perm-view [onclick*="delAssetGroup"],
+          body.perm-view [onclick*="delGroupItem"], body.perm-view [onclick*="addGroupItem"], body.perm-view #regNoOverrideWrap,
+          body.perm-view #libUploadBtn, body.perm-view [onclick*="editLibraryDoc"], body.perm-view [onclick*="delLibraryDoc"],
+          body.perm-view [onclick*="registerLibraryDoc"], body.perm-view #newDocKindBtn, body.perm-view [onclick*="saveDocKind"]
           { display: none !important; }`;
         document.head.appendChild(st);
         document.body.classList.add('perm-view');
@@ -928,6 +1007,86 @@
     }
 
     // ---------- AUTH ----------
+    // ---------- AKTŲ ŠABLONŲ KONFIGŪRACIJA (pavadinimai / tekstai) ----------
+    let ACT_CFG=[];
+    async function loadActTypesCfg(){
+      try{
+        const { data }=await sb.from('insolvency_act_types').select('*').eq('is_active',true).order('sort_order');
+        if(!data||!data.length)return;
+        ACT_CFG=data;
+        const sel=$('actType');
+        if(sel) sel.innerHTML=data.map(t=>`<option value="${esc(t.key)}">${esc(t.label)}</option>`).join('');
+        data.forEach(t=>{ if(t.pdf_title) ACT_TITLES[t.key]=t.pdf_title; if(t.label) ACT_LABELS[t.key]=t.label; });
+        renderActTypesSettings();
+      }catch(_){}
+    }
+    function renderActTypesSettings(){
+      const el=$('setActTypes'); if(!el)return;
+      if(!ACT_CFG.length){ el.innerHTML='<div class="muted" style="font-size:13px;">Aktų šablonų konfigūracija neužkrauta.</div>'; return; }
+      el.innerHTML=ACT_CFG.map(t=>`
+        <div style="border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:8px;">
+          <div class="row">
+            <div><label class="label">Pavadinimas sąraše</label><input class="input atl" data-k="${esc(t.key)}" value="${esc(t.label)}"></div>
+            <div><label class="label">PDF antraštė</label><input class="input atp" data-k="${esc(t.key)}" value="${esc(t.pdf_title)}"></div>
+          </div>
+          <label class="label">Standartinis įžangos tekstas PDF dokumente (nebūtinas — jei tuščias, naudojamas standartinis)</label>
+          <textarea class="textarea ati" data-k="${esc(t.key)}" style="min-height:44px;">${esc(t.intro_text||'')}</textarea>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+            <button class="btn btn-sm" onclick="saveActType('${esc(t.key)}')">💾 Išsaugoti</button>
+            <span id="atmsg_${esc(t.key)}" style="font-size:12px;"></span>
+          </div>
+        </div>`).join('');
+    }
+    window.saveActType=async k=>{
+      const q=s=>document.querySelector(s+`[data-k="${k}"]`);
+      const res=await sb.rpc('upsert_insolvency_act_type',{ p_key:k, p:{ label:q('.atl').value.trim(), pdf_title:q('.atp').value.trim(), intro_text:q('.ati').value } });
+      const msg=$('atmsg_'+k); if(!msg)return;
+      if(res.error||(res.data&&res.data.ok===false)){ msg.textContent='Klaida: '+(res.error?res.error.message:res.data.error_code); msg.style.color='#C0392B'; return; }
+      msg.textContent='✓ Išsaugota'; msg.style.color='#046C4E';
+      await loadActTypesCfg();
+    };
+
+    // ---------- DOKUMENTŲ TIPŲ ŽINYNAS (Galutinių PDF biblioteka) ----------
+    let DOC_KINDS=[];
+    const DOC_KINDS_FALLBACK=['Sutartis','Įgaliojimas','Aktas','Pažyma','Pretenzija','Pranešimas','Raštas','Kita'];
+    async function loadDocKinds(){
+      try{
+        const { data }=await sb.from('insolvency_doc_kinds').select('*').order('sort_order');
+        DOC_KINDS=data||[];
+      }catch(_){ DOC_KINDS=[]; }
+      renderDocKindsSettings();
+    }
+    function activeDocKindNames(){
+      const act=DOC_KINDS.filter(k=>k.is_active).map(k=>k.name);
+      return act.length?act:DOC_KINDS_FALLBACK;
+    }
+    function renderDocKindsSettings(){
+      const el=$('setDocKinds'); if(!el)return;
+      if(!DOC_KINDS.length){ el.innerHTML='<div class="muted" style="font-size:13px;">Tipų žinynas neužkrautas.</div>'; return; }
+      el.innerHTML=DOC_KINDS.map(k=>`
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
+          <input class="input dkn" data-id="${k.id}" value="${esc(k.name)}" style="max-width:280px;">
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;"><input type="checkbox" class="dka" data-id="${k.id}" ${k.is_active?'checked':''}> aktyvus</label>
+          <button class="btn btn-sm" onclick="saveDocKind('${k.id}')">💾</button>
+          <span id="dkmsg_${k.id}" style="font-size:12px;"></span>
+        </div>`).join('');
+    }
+    window.saveDocKind=async id=>{
+      const name=document.querySelector(`.dkn[data-id="${id}"]`).value.trim();
+      const active=document.querySelector(`.dka[data-id="${id}"]`).checked;
+      const res=await sb.rpc('upsert_insolvency_doc_kind',{ p_id:id, p:{ name, is_active:active } });
+      const msg=$('dkmsg_'+id); if(!msg)return;
+      if(res.error||(res.data&&res.data.ok===false)){ msg.textContent='Klaida: '+(res.error?res.error.message:res.data.error_code); msg.style.color='#C0392B'; return; }
+      msg.textContent='✓'; msg.style.color='#046C4E';
+      await loadDocKinds();
+    };
+    $('newDocKindBtn').onclick=async()=>{
+      const name=prompt('Naujo dokumento tipo pavadinimas:'); if(!name||!name.trim())return;
+      const res=await sb.rpc('upsert_insolvency_doc_kind',{ p_id:null, p:{ name:name.trim(), sort_order:(DOC_KINDS.length+1)*10 } });
+      if(res.error||(res.data&&res.data.ok===false)){ alert('Klaida: '+(res.error?res.error.message:res.data.error_code)); return; }
+      await loadDocKinds();
+    };
+
     async function boot(){
       try{
         const { data:{ session } } = await sb.auth.getSession();
@@ -935,7 +1094,10 @@
         const lvl = await checkModuleAccess('bankrotas');
         if (lvl === 'none') return;
         try{ const r = await sb.rpc('is_superadmin'); IS_SUPERADMIN = r.data === true; }catch(_){ IS_SUPERADMIN = false; }
+        CURRENT_UID = session.user.id;
         $('userEmail').textContent = session.user.email;
+        await loadActTypesCfg();
+        await loadDocKinds();
         await loadAdmins();
       }catch(err){
         views('loginView');
@@ -1059,7 +1221,7 @@
       document.querySelectorAll('#paneRegistry .tab').forEach(t=>t.classList.toggle('active',t.dataset.regtype==='received'));
       setTop('main'); setCardSaved(false);
       views('caseDetailView');
-      if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); loadContacts(); }
+      if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); loadContacts(); updateAssetsStar(true); }
       else { RECIPIENTS=[]; DOCUMENTS=[]; renderContacts(); }
     };
     function collectCard(){ const o={ administrator_id:CURRENT_ADM.id }; document.querySelectorAll('#cardForm [data-f]').forEach(el=>{ o[el.dataset.f]=el.type==='checkbox'?el.checked:el.value; }); return o; }
@@ -1865,6 +2027,10 @@
       $('regDateLbl').textContent=rcv?'Gavimo data *':'Išsiuntimo data *';
       $('regPartyLbl').textContent=rcv?'Siuntėjas':'Gavėjas (adresatas)';
       $('regNumPreview').textContent=(rcv?'G':'S')+String(new Date().getFullYear()).slice(-2)+'-'+CURRENT.project_code+'-'+String((REGISTRATIONS.filter(r=>r.doc_type===type).length||0)+1).padStart(3,'0')+' (preliminarus)';
+      $('regNoOverride').value='';
+      const canOverride=(PERM_LEVEL==='full'||IS_SUPERADMIN);
+      $('regNoOverride').disabled=!canOverride;
+      $('regNoOverrideWrap').style.display=canOverride?'':'none';
       $('regTitle').value=''; $('regParty').value=''; $('regNotes').value='';
       $('regDate').value=new Date().toISOString().slice(0,10);
       REG_FILES=[]; renderRegFiles(); $('regMsg').innerHTML='';
@@ -1965,14 +2131,18 @@
       $('regSubmit').disabled=true;
       $('regMsg').innerHTML='<div class="muted">⏳ Formuojamas registracijos numeris…</div>';
       try{
-        // 1) registracijos numeris
-        const nr=await sb.rpc('generate_insolvency_reg_number',{ p_case_id:CURRENT.id, p_doc_type:type });
-        if(nr.error)throw new Error(nr.error.message);
-        if(!nr.data.ok){
-          const hint={ no_project_code:'Bylos kortelėje įveskite registracijos trumpinį.', not_admin:'Neturite administratoriaus teisių.' }[nr.data.error_code]||'';
-          throw new Error('Klaida: '+nr.data.error_code+(hint?' — '+hint:''));
+        // 1) registracijos numeris (automatinis arba admin/superadmin įvestas)
+        let regNumber=($('regNoOverride').value||'').trim();
+        if(regNumber&&!(PERM_LEVEL==='full'||IS_SUPERADMIN)) regNumber='';
+        if(!regNumber){
+          const nr=await sb.rpc('generate_insolvency_reg_number',{ p_case_id:CURRENT.id, p_doc_type:type });
+          if(nr.error)throw new Error(nr.error.message);
+          if(!nr.data.ok){
+            const hint={ no_project_code:'Bylos kortelėje įveskite registracijos trumpinį.', not_admin:'Neturite administratoriaus teisių.' }[nr.data.error_code]||'';
+            throw new Error('Klaida: '+nr.data.error_code+(hint?' — '+hint:''));
+          }
+          regNumber=nr.data.reg_number;
         }
-        const regNumber=nr.data.reg_number;
         // 2) PDF sujungimas + žyma
         $('regMsg').innerHTML='<div class="muted">⏳ Jungiami failai ir dedama žyma ('+esc(regNumber)+')…</div>';
         const { blob, pageCount }=await buildRegisteredPdf(REG_FILES,{
@@ -2009,10 +2179,24 @@
     const AS_ST={ in_stock:'Apskaitytas', for_sale:'Parduodamas', sold:'Parduotas', written_off:'Nurašytas', transferred:'Perduotas' };
     const fmtEur=v=>(v==null||v==='')?'—':Number(v).toLocaleString('lt-LT',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
     async function loadAssets(){
-      if(!CURRENT||CURRENT.__new){ ASSETS=[]; renderAssets(); return; }
+      if(!CURRENT||CURRENT.__new){ ASSETS=[]; renderAssets(); renderAssetGroups(); return; }
       const { data, error }=await sb.from('insolvency_assets').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
       if(error){ $('assetsTable').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
       ASSETS=data||[]; renderAssets();
+      updateAssetsStar(false);
+      loadAssetGroups();
+    }
+    // ⭐ ant „Turtas" tabo — yra naujų (nepapildytų) turto kortelių iš perdavimo aktų
+    async function updateAssetsStar(fetchFresh){
+      const tab=document.querySelector('#topTabs .tab[data-top="assets"]'); if(!tab)return;
+      let n=0;
+      if(fetchFresh){
+        if(!CURRENT||CURRENT.__new||!CURRENT.id)return;
+        try{ const r=await sb.from('insolvency_assets').select('id',{count:'exact',head:true}).eq('case_id',CURRENT.id).eq('needs_review',true); n=r.count||0; }catch(_){ n=0; }
+      } else {
+        n=ASSETS.filter(a=>a.needs_review).length;
+      }
+      tab.innerHTML='🏠 Turtas'+(n?' <span title="Naujos turto pozicijos iš perdavimo akto — atidarykite kortelę ir papildykite informaciją" style="color:#C9A961;font-weight:700;">⭐'+n+'</span>':'');
     }
     function renderAssets(){
       if(CURRENT&&CURRENT.__new){ $('assetsTable').innerHTML='<div class="muted center" style="padding:24px;">Pirma išsaugokite bylos kortelę.</div>'; return; }
@@ -2023,7 +2207,9 @@
         rows.map(a=>{
           const stb=a.status==='sold'?'<span class="badge badge-green">Parduotas</span>':a.status==='for_sale'?'<span class="badge badge-gold">Parduodamas</span>':'<span class="badge badge-gray">'+esc(AS_ST[a.status]||a.status)+'</span>';
           const price=a.status==='sold'?fmtEur(a.sold_price):fmtEur(a.current_price);
-          return `<tr><td><b>${esc(a.name)}</b>${a.description?'<div class="muted" style="font-size:12px;">'+esc(a.description)+'</div>':''}</td>
+          const gi=ASSET_GROUP_ITEMS.find(i=>i.asset_id===a.id);
+          const gname=gi?(ASSET_GROUPS.find(g=>g.id===gi.group_id)||{}).name:null;
+          return `<tr><td><b>${esc(a.name)}</b>${a.needs_review?' <span class="badge" title="Nauja pozicija iš perdavimo akto — papildykite informaciją" style="background:#FEF3C7;color:#92400E;">🆕 papildyti</span>':''}${a.description?'<div class="muted" style="font-size:12px;">'+esc(a.description)+'</div>':''}${gname?'<div style="font-size:11px;color:#8A6D00;">🧩 '+esc(gname)+' ('+(gi.role==='kompleksas'?'kompleksas':'priklausinys')+')</div>':''}</td>
             <td>${esc(AS_CAT[a.category]||'')}</td><td>${esc(String(a.quantity??''))} ${esc(a.unit||'')}</td><td>${esc(a.location||'')}</td>
             <td>${price}</td><td>${stb}</td><td>${(a.photos||[]).length||'—'}</td>
             <td style="text-align:right;white-space:nowrap;">
@@ -2098,7 +2284,7 @@
       const price=$('asPrice').value===''?null:Number($('asPrice').value);
       const row={ name, category:$('asCategory').value, quantity:Number($('asQty').value)||1, unit:$('asUnit').value.trim()||'vnt.',
         location:$('asLocation').value.trim()||null, description:$('asDesc').value.trim()||null,
-        status:$('asStatus').value, notes:$('asNotes').value.trim()||null, updated_at:new Date().toISOString() };
+        status:$('asStatus').value, notes:$('asNotes').value.trim()||null, needs_review:false, updated_at:new Date().toISOString() };
       let res;
       if(id){ row.current_price=price; res=await sb.from('insolvency_assets').update(row).eq('id',id); }
       else { row.case_id=CURRENT.id; row.initial_price=price; row.current_price=price; row.photos=[]; res=await sb.from('insolvency_assets').insert(row).select().single(); }
@@ -2128,6 +2314,74 @@
       $('assetsMsg').innerHTML='<div class="success">Importuota įrašų: '+rows.length+'.</div>';
       loadAssets();
     };
+    // --- TURTO GRUPĖS (kompleksai / priklausiniai) ---
+    let ASSET_GROUPS=[], ASSET_GROUP_ITEMS=[];
+    function assetNameById(id){ const a=ASSETS.find(x=>x.id===id); return a?a.name:'—'; }
+    async function loadAssetGroups(){
+      if(!CURRENT||CURRENT.__new){ ASSET_GROUPS=[]; ASSET_GROUP_ITEMS=[]; renderAssetGroups(); return; }
+      try{
+        const g=await sb.from('insolvency_asset_groups').select('*').eq('case_id',CURRENT.id).order('created_at');
+        ASSET_GROUPS=g.data||[];
+        const ids=ASSET_GROUPS.map(x=>x.id);
+        if(ids.length){ const it=await sb.from('insolvency_asset_group_items').select('*').in('group_id',ids); ASSET_GROUP_ITEMS=it.data||[]; }
+        else ASSET_GROUP_ITEMS=[];
+      }catch(_){ ASSET_GROUPS=[]; ASSET_GROUP_ITEMS=[]; }
+      renderAssetGroups(); renderAssets();
+    }
+    function renderAssetGroups(){
+      const el=$('assetGroupsList'); if(!el)return;
+      if(CURRENT&&CURRENT.__new){ el.innerHTML=''; return; }
+      if(!ASSET_GROUPS.length){ el.innerHTML='<div class="muted" style="font-size:13px;">Grupių dar nėra — spauskite „+ Nauja grupė".</div>'; return; }
+      el.innerHTML=ASSET_GROUPS.map(g=>{
+        const items=ASSET_GROUP_ITEMS.filter(i=>i.group_id===g.id);
+        const anchors=items.filter(i=>i.role==='kompleksas');
+        const free=ASSETS.filter(a=>!ASSET_GROUP_ITEMS.some(i=>i.asset_id===a.id));
+        return `<div style="border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:10px;background:#FAFBFD;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+            <strong>🧩 ${esc(g.name)} <span class="muted" style="font-weight:normal;font-size:12px;">(${items.length} poz.)</span></strong>
+            <button class="btn btn-sm btn-danger" onclick="delAssetGroup('${g.id}')" title="Šalinama tik grupė — turto pozicijos lieka">🗑 Šalinti grupę</button>
+          </div>
+          ${items.length?'<table style="margin-top:8px;"><thead><tr><th>Pozicija</th><th>Rolė</th><th>Priklauso</th><th></th></tr></thead><tbody>'+items.map(i=>`<tr>
+            <td>${esc(assetNameById(i.asset_id))}</td>
+            <td>${i.role==='kompleksas'?'<span class="badge badge-gold">Kompleksas</span>':'<span class="badge badge-gray">Priklausinys</span>'}</td>
+            <td class="muted">${i.parent_asset_id?esc(assetNameById(i.parent_asset_id)):'—'}</td>
+            <td style="text-align:right;"><button class="btn btn-sm btn-ghost" onclick="delGroupItem('${i.id}')" title="Išimti iš grupės">✕</button></td>
+          </tr>`).join('')+'</tbody></table>':'<div class="muted" style="font-size:12px;margin-top:6px;">Pozicijų dar nėra — pridėkite žemiau.</div>'}
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;">
+            <select class="select agAsset" data-g="${g.id}" style="max-width:260px;">${free.length?free.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join(''):'<option value="">— nėra laisvų pozicijų —</option>'}</select>
+            <select class="select agRole" data-g="${g.id}" style="max-width:150px;"><option value="kompleksas">Kompleksas</option><option value="priklausinys">Priklausinys</option></select>
+            <select class="select agParent" data-g="${g.id}" style="max-width:240px;"><option value="">Priklauso pozicijai (nebūtina)…</option>${anchors.map(i=>`<option value="${i.asset_id}">${esc(assetNameById(i.asset_id))}</option>`).join('')}</select>
+            <button class="btn btn-sm" onclick="addGroupItem('${g.id}')">+ Pridėti į grupę</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    $('newAssetGroupBtn').onclick=async()=>{
+      if(!CURRENT||CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; }
+      const name=prompt('Grupės pavadinimas (pvz. „Gamybos linija Nr. 1" arba „Pastatų kompleksas, Pramonės g. 5"):');
+      if(!name||!name.trim())return;
+      const { error }=await sb.from('insolvency_asset_groups').insert({ case_id:CURRENT.id, name:name.trim(), created_by:CURRENT_UID });
+      if(error){ $('assetGroupsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      $('assetGroupsMsg').innerHTML='';
+      loadAssetGroups();
+    };
+    window.delAssetGroup=async id=>{
+      if(!confirm('Šalinti grupę? Turto pozicijos liks — bus panaikintas tik jų susiejimas.'))return;
+      await sb.from('insolvency_asset_groups').delete().eq('id',id);
+      loadAssetGroups();
+    };
+    window.delGroupItem=async id=>{ await sb.from('insolvency_asset_group_items').delete().eq('id',id); loadAssetGroups(); };
+    window.addGroupItem=async gid=>{
+      const assetSel=document.querySelector(`.agAsset[data-g="${gid}"]`);
+      const role=document.querySelector(`.agRole[data-g="${gid}"]`).value;
+      const parent=document.querySelector(`.agParent[data-g="${gid}"]`).value||null;
+      if(!assetSel||!assetSel.value){ alert('Nėra laisvų turto pozicijų — visos jau priskirtos grupėms.'); return; }
+      const { error }=await sb.from('insolvency_asset_group_items').insert({ group_id:gid, asset_id:assetSel.value, role, parent_asset_id:role==='priklausinys'?parent:null });
+      if(error){ $('assetGroupsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      $('assetGroupsMsg').innerHTML='';
+      loadAssetGroups();
+    };
+
     // --- kainos fiksavimas / keitimas ---
     window.openPriceModal=async(id)=>{
       const a=ASSETS.find(x=>x.id===id); if(!a)return;
@@ -2314,11 +2568,164 @@
     async function loadLibrary(){ await loadDocuments(); renderFinalDocs(); }
     function renderFinalDocs(){
       const pdfs=DOCUMENTS.filter(d=>d.kind==='final_pdf');
-      if(!pdfs.length){ $('finalDocsTable').innerHTML='<div class="muted center" style="padding:16px;">Galutinių PDF dar nėra. Generuokite PDF iš DOCX (Dokumentai).</div>'; return; }
-      $('finalDocsTable').innerHTML='<table><thead><tr><th>Data</th><th>Dokumentas</th><th>Priedų</th><th></th></tr></thead><tbody>'+
-        pdfs.map(d=>{ const na=(d.attachments||[]).filter(a=>a.ok).length;
-          return `<tr><td class="muted">${fmtDate(d.created_at)}</td><td><b>${esc(d.file_name||'—')}</b></td><td>${na||'—'}</td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(d.pdf_path)}')">👁 Peržiūrėti</button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(d.pdf_path)}')">⬇️ Atsisiųsti</button> <button class="btn btn-sm btn-gold" onclick="useAsAttachment('${esc(d.pdf_path)}','${esc(d.file_name||'')}')">📎 Į priedus</button></td></tr>`;
+      if(!pdfs.length){ $('finalDocsTable').innerHTML='<div class="muted center" style="padding:16px;">Galutinių PDF dar nėra. Generuokite PDF iš DOCX (Dokumentai) arba įkelkite rankiniu būdu.</div>'; return; }
+      $('finalDocsTable').innerHTML='<table><thead><tr><th>Data</th><th>Tipas</th><th>Dokumentas</th><th>Galioja iki</th><th>Registracija</th><th></th></tr></thead><tbody>'+
+        pdfs.map(d=>{
+          const meta=[d.doc_no?('Nr. '+d.doc_no):'', d.counterparty?('Šalis: '+d.counterparty):'', d.doc_date?('Sudaryta: '+d.doc_date):''].filter(Boolean).join(' · ');
+          const regHtml=d.reg_number
+            ? '<span class="badge badge-green" title="Registruota siunčiamų dokumentų žurnale">📓 '+esc(d.reg_number)+'</span>'
+            : `<button class="btn btn-sm btn-ghost" title="Registruoti siunčiamų dokumentų žurnale" onclick="registerLibraryDoc('${d.id}')">📓 Registruoti</button>`;
+          return `<tr><td class="muted">${fmtDate(d.created_at)}</td>
+            <td>${d.doc_type?esc(d.doc_type):'<span class="muted">—</span>'}${d.source==='manual'?'<div class="muted" style="font-size:11px;">įkeltas</div>':'<div class="muted" style="font-size:11px;">sugeneruotas</div>'}</td>
+            <td><b>${esc(d.file_name||'—')}</b>${meta?'<div class="muted" style="font-size:12px;">'+esc(meta)+'</div>':''}${d.description?'<div class="muted" style="font-size:12px;">'+esc(d.description)+'</div>':''}</td>
+            <td class="muted">${d.valid_until?esc(d.valid_until):'—'}</td>
+            <td>${regHtml}</td>
+            <td style="text-align:right;white-space:nowrap;">
+              <button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(d.pdf_path)}')" title="Peržiūrėti">👁</button>
+              <button class="btn btn-sm btn-ghost" onclick="downloadDocDl('${esc(d.pdf_path)}')" title="Atsisiųsti">⬇️</button>
+              <button class="btn btn-sm btn-ghost" onclick="editLibraryDoc('${d.id}')" title="Koreguoti požymius">✎</button>
+              <button class="btn btn-sm btn-gold" onclick="useAsAttachment('${esc(d.pdf_path)}','${esc(d.file_name||'')}')" title="Į priedų biblioteką">📎</button>
+              ${(d.source==='manual'&&!d.reg_number)?`<button class="btn btn-sm btn-danger" onclick="delLibraryDoc('${d.id}')" title="Šalinti">🗑</button>`:''}
+            </td></tr>`;
         }).join('')+'</tbody></table>';
+    }
+
+    // --- rankinis įkėlimas / požymių korekcija ---
+    let LIB_FILE=null;
+    function fillLibTypeSelect(sel,current){
+      const names=activeDocKindNames();
+      const opts=names.map(n=>`<option value="${esc(n)}" ${n===current?'selected':''}>${esc(n)}</option>`);
+      if(current&&!names.includes(current))opts.unshift(`<option value="${esc(current)}" selected>${esc(current)}</option>`);
+      sel.innerHTML=opts.join('');
+    }
+    function openLibDocModal(d){
+      d=d||null;
+      $('libDocId').value=d?d.id:'';
+      $('libDocModalTitle').textContent=d?'Dokumento požymiai':'Įkelti dokumentą į biblioteką';
+      $('libFileRow').style.display=d?'none':'flex';
+      LIB_FILE=null; $('libFileHint').textContent='Failas nepasirinktas.';
+      fillLibTypeSelect($('libType'),d?d.doc_type:null);
+      $('libNo').value=d?(d.doc_no||''):'';
+      $('libTitle').value=d?(d.file_name||''):'';
+      $('libDate').value=d?(d.doc_date||''):new Date().toISOString().slice(0,10);
+      $('libValid').value=d?(d.valid_until||''):'';
+      $('libParty').value=d?(d.counterparty||''):'';
+      $('libDesc').value=d?(d.description||''):'';
+      $('libRegCb').checked=false; $('libRegFields').classList.add('hidden');
+      $('libRegDate').value=new Date().toISOString().slice(0,10);
+      $('libRegBlock').style.display=(d&&d.reg_number)?'none':'';
+      $('libDocMsg').innerHTML='';
+      show('libDocModal');
+    }
+    $('libUploadBtn').onclick=()=>{
+      if(!CURRENT||CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; }
+      openLibDocModal(null);
+    };
+    window.editLibraryDoc=id=>{ const d=DOCUMENTS.find(x=>x.id===id); if(d)openLibDocModal(d); };
+    $('libDocCancel').onclick=()=>hide('libDocModal');
+    $('libFileBtn').onclick=()=>$('libFile').click();
+    $('libFile').onchange=e=>{
+      const f=e.target.files[0]; e.target.value='';
+      if(!f)return;
+      if(!/\.pdf$/i.test(f.name)){ $('libDocMsg').innerHTML='<div class="error">Palaikomi tik PDF failai.</div>'; return; }
+      LIB_FILE=f; $('libFileHint').textContent=f.name+' ('+(f.size/1024/1024).toFixed(2)+' MB)';
+      if(!$('libTitle').value.trim())$('libTitle').value=f.name.replace(/\.pdf$/i,'');
+    };
+    $('libRegCb').onchange=()=>$('libRegFields').classList.toggle('hidden',!$('libRegCb').checked);
+    $('libDocSave').onclick=async()=>{
+      const id=$('libDocId').value||null;
+      const title=$('libTitle').value.trim();
+      if(!title){ $('libDocMsg').innerHTML='<div class="error">Įveskite dokumento pavadinimą.</div>'; return; }
+      if(!id&&!LIB_FILE){ $('libDocMsg').innerHTML='<div class="error">Pasirinkite PDF failą.</div>'; return; }
+      $('libDocSave').disabled=true;
+      try{
+        let docId=id;
+        const meta={ doc_type:$('libType').value, doc_no:$('libNo').value.trim(), doc_date:$('libDate').value,
+          counterparty:$('libParty').value.trim(), description:$('libDesc').value.trim(), valid_until:$('libValid').value, file_name:title };
+        if(!id){
+          $('libDocMsg').innerHTML='<div class="muted">⏳ Įkeliamas failas…</div>';
+          const safe=title.replace(/[^A-Za-z0-9ĄČĘĖĮŠŲŪŽąčęėįšųūž ._-]+/g,'_').replace(/\s+/g,'_');
+          const path=`${CURRENT.case_short_code}/library/${Date.now()}_${safe}.pdf`;
+          const up=await sb.storage.from('insolvency-docs').upload(path,LIB_FILE,{ upsert:false, contentType:'application/pdf' });
+          if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
+          const res=await sb.rpc('save_library_document',{ p_id:null, p:{ ...meta, case_id:CURRENT.id, pdf_path:path, pdf_size:LIB_FILE.size, source:'manual' } });
+          if(res.error)throw new Error(res.error.message);
+          if(res.data&&res.data.ok===false)throw new Error('Klaida: '+res.data.error_code);
+          docId=res.data.id;
+        } else {
+          const res=await sb.rpc('save_library_document',{ p_id:id, p:meta });
+          if(res.error)throw new Error(res.error.message);
+          if(res.data&&res.data.ok===false)throw new Error('Klaida: '+res.data.error_code);
+        }
+        await loadDocuments();
+        // neprivalomas registravimas siunčiamų žurnale
+        if($('libRegCb').checked){
+          $('libDocMsg').innerHTML='<div class="muted">⏳ Registruojama siunčiamų žurnale…</div>';
+          await doRegisterLibraryDoc(docId,$('libRegDate').value||new Date().toISOString().slice(0,10));
+        }
+        hide('libDocModal');
+        renderFinalDocs();
+        $('libMsg').innerHTML='<div class="success">Dokumentas išsaugotas.</div>';
+      }catch(err){ $('libDocMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ $('libDocSave').disabled=false; }
+    };
+    window.delLibraryDoc=async id=>{
+      if(!confirm('Pašalinti įkeltą dokumentą iš bibliotekos? Trynimas negrįžtamas.'))return;
+      const res=await sb.rpc('delete_library_document',{ p_id:id });
+      if(res.error||(res.data&&res.data.ok===false)){ alert('Klaida: '+(res.error?res.error.message:res.data.error_code)); return; }
+      await loadDocuments(); renderFinalDocs();
+    };
+
+    // --- registravimas siunčiamų dokumentų žurnale (iš bibliotekos) ---
+    window.registerLibraryDoc=async id=>{
+      const d=DOCUMENTS.find(x=>x.id===id); if(!d)return;
+      if(d.reg_number){ alert('Dokumentas jau registruotas: '+d.reg_number); return; }
+      if(!CURRENT.project_code){ alert('Bylos kortelėje (Pagrindinis) įveskite registracijos trumpinį (pvz. TOR) ir išsaugokite.'); return; }
+      let dateV=prompt('Registravimo data (YYYY-MM-DD).\nNumeris bus suteiktas automatiškai — sekantis laisvas siunčiamų žurnale:',new Date().toISOString().slice(0,10));
+      if(dateV===null)return;
+      dateV=dateV.trim();
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(dateV)){ alert('Neteisingas datos formatas. Naudokite YYYY-MM-DD.'); return; }
+      $('libMsg').innerHTML='<div class="muted">⏳ Registruojama…</div>';
+      try{
+        await doRegisterLibraryDoc(id,dateV);
+        $('libMsg').innerHTML='<div class="success">Dokumentas užregistruotas siunčiamų žurnale.</div>';
+      }catch(err){ $('libMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      renderFinalDocs();
+    };
+    async function doRegisterLibraryDoc(docId,dateV){
+      await loadDocuments();
+      const d=DOCUMENTS.find(x=>x.id===docId);
+      if(!d)throw new Error('Dokumentas nerastas.');
+      if(d.reg_number)return;
+      // 1) numeris — sekantis laisvas siunčiamų žurnale
+      const nr=await sb.rpc('generate_insolvency_reg_number',{ p_case_id:CURRENT.id, p_doc_type:'sent' });
+      if(nr.error)throw new Error(nr.error.message);
+      if(!nr.data.ok)throw new Error('Klaida: '+nr.data.error_code);
+      const regNumber=nr.data.reg_number;
+      // 2) dokumento PDF su registracijos žyma
+      const { data:{ session } }=await sb.auth.getSession();
+      const fr=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY}, body:JSON.stringify({ path:d.pdf_path }) });
+      const fu=await fr.json(); if(!fu.url)throw new Error('Nepavyko gauti dokumento failo.');
+      const blob=await (await fetch(fu.url)).blob();
+      const file=new File([blob],(d.file_name||'dokumentas')+'.pdf',{ type:'application/pdf' });
+      const { blob:regBlob, pageCount }=await buildRegisteredPdf([file],{ regNumber, dateStr:dateV, dateLabel:'Išsiųsta', admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
+      // 3) įkėlimas
+      const path=`${CURRENT.case_short_code}/registered/${regNumber}.pdf`;
+      const up=await sb.storage.from('insolvency-docs').upload(path,regBlob,{ upsert:false, contentType:'application/pdf' });
+      if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
+      // 4) įrašas žurnale — laukai iš dokumento požymių
+      const notes=[d.doc_type?('Tipas: '+d.doc_type):'', d.doc_no?('Dok. Nr. '+d.doc_no):'', d.doc_date?('Sudaryta: '+d.doc_date):'', d.valid_until?('Galioja iki: '+d.valid_until):'', d.description||''].filter(Boolean).join('; ');
+      const reg=await sb.rpc('register_insolvency_document',{ p:{
+        case_id:CURRENT.id, registration_number:regNumber, doc_type:'sent', registration_date:dateV,
+        document_title:(d.file_name||'Dokumentas'), counterparty_name:d.counterparty||'', notes,
+        storage_path:path, file_size:regBlob.size, page_count:pageCount,
+        original_files_metadata:[{ name:d.file_name, size:d.pdf_size||null }], source_type:'library' } });
+      if(reg.error)throw new Error(reg.error.message);
+      if(!reg.data.ok)throw new Error('Klaida: '+reg.data.error_code);
+      // 5) žyma bibliotekoje
+      await sb.rpc('save_library_document',{ p_id:docId, p:{ reg_number:regNumber, reg_id:reg.data.id } });
+      await loadDocuments();
+      try{ if(typeof REGISTRATIONS!=='undefined'&&$('paneRegistry')&&!$('paneRegistry').classList.contains('hidden'))loadRegistry(); }catch(_){}
     }
     window.downloadDocDl=async(path)=>{ // su download=true
       const { data:{ session } } = await sb.auth.getSession();
@@ -2365,6 +2772,8 @@
       asset_intangible:[['name','Pavadinimas'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
     };
     const ACT_TITLES={ documents:'DOKUMENTŲ PERDAVIMO AKTAS', documents_v2:'BYLŲ (DOKUMENTŲ) PERDAVIMO AKTAS', grouped:'PRIĖMIMO-PERDAVIMO AKTAS', asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)', asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)', asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)', asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)', asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)', vehicle:'AUTOMOBILIO PERDAVIMO AKTAS' };
+    const ACT_LABELS={ documents:'Dokumentų perdavimo aktas', documents_v2:'Bylų (dokumentų) perdavimo aktas — nauja forma', asset_realestate:'Turto perdavimas — Nekilnojamas', asset_movable:'Turto perdavimas — Kilnojamas', asset_inventory:'Turto perdavimas — Prekės / Atsargos', asset_other:'Turto perdavimas — Kitas', asset_intangible:'Turto perdavimas — Nematerialus', vehicle:'Automobilio perdavimo aktas', grouped:'Priėmimo-perdavimo aktas (grupėmis / dvikalbis)' };
+    const ASSET_ACT_TYPES=['asset_realestate','asset_movable','asset_inventory','asset_other','asset_intangible','vehicle'];
     let ACTS=[], ACT_ROWS=[], ACT_PHOTOS=[];
 
     async function loadActs(){
@@ -2375,19 +2784,109 @@
       $('actsTable').innerHTML='<table><thead><tr><th>Data</th><th>Nr.</th><th>Tipas</th><th>Statusas</th><th></th></tr></thead><tbody>'+
         ACTS.map(a=>{
           const locked = a.status==='final' && a.pdf_path; // sugeneruotas PDF → aktas užrakintas
-          const statusHtml = a.status==='final'
+          const mlocked = !!a.manual_locked;               // rankinis administratoriaus užraktas
+          const hasSig = !!(a.sig_handover||a.sig_receiver||a.esign_handover||a.esign_receiver);
+          const statusHtml = (a.status==='final'
             ? '<span class="badge badge-green">Galutinis</span>'+(locked?' <span class="badge" title="Aktas užrakintas — koreguoti gali tik superadministratorius" style="background:#FEF3C7;color:#92400E;">🔒 Užrakinta</span>':'')
-            : '<span class="badge badge-gold">Juodraštis</span>';
-          const canEdit = !locked || IS_SUPERADMIN;
+            : '<span class="badge badge-gold">Juodraštis</span>')
+            + (mlocked?' <span class="badge" title="Aktą užrakino administratorius — koreguoti negalima, kol jis neatrakins" style="background:#FEE2E2;color:#991B1B;">🔐 Užrakinta administratoriaus</span>':'');
+          const canUnlock = mlocked && (IS_SUPERADMIN || a.manual_locked_by===CURRENT_UID);
+          const canEdit = !mlocked && (!locked || IS_SUPERADMIN);
           const editBtn = canEdit ? `<button class="btn btn-sm btn-ghost" onclick="editAct('${a.id}')">✎ Koreguoti</button> ` : '';
           const delBtn = canEdit ? `<button class="btn btn-sm btn-danger" onclick="delAct('${a.id}')">🗑</button>` : '';
-          return `<tr><td class="muted">${esc(a.act_date||'')}</td><td>${esc(a.act_no||'')}</td><td>${esc(ACT_TITLES[a.act_type]||a.act_type)}</td><td>${statusHtml}</td><td style="text-align:right;white-space:nowrap;">${a.pdf_path?`<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(a.pdf_path)}','${esc(a.act_no||'Aktas')}')">👁 PDF</button> `:''}${editBtn}${delBtn}</td></tr>`;
+          const lockBtn = (!mlocked && hasSig) ? `<button class="btn btn-sm btn-ghost" title="Užrakinti aktą, kad nebūtų koreguojamas" onclick="lockAct('${a.id}')">🔒 Užrakinti</button> ` : '';
+          const unlockBtn = canUnlock ? `<button class="btn btn-sm btn-gold" onclick="unlockAct('${a.id}')">🔓 Atrakinti</button> ` : '';
+          const isFinalPdf = a.status==='final' && a.pdf_path;
+          const sendBtn = isFinalPdf ? `<button class="btn btn-sm btn-ghost" title="Siųsti akto kopiją šalims el. paštu (saugi nuoroda)" onclick="sendActCopy('${a.id}')">📧</button> ` : '';
+          const regBtn = isFinalPdf ? `<button class="btn btn-sm btn-ghost" title="Registruoti aktą gaunamų dokumentų žurnale" onclick="registerAct('${a.id}')">📑</button> ` : '';
+          const transferBtn = ASSET_ACT_TYPES.includes(a.act_type) ? `<button class="btn btn-sm btn-ghost" title="Perkelti akto turto pozicijas į Turto korteles" onclick="transferActAssets('${a.id}')">📦</button> ` : '';
+          return `<tr><td class="muted">${esc(a.act_date||'')}</td><td>${esc(a.act_no||'')}</td><td>${esc(ACT_LABELS[a.act_type]||ACT_TITLES[a.act_type]||a.act_type)}</td><td>${statusHtml}</td><td style="text-align:right;white-space:nowrap;">${a.pdf_path?`<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(a.pdf_path)}','${esc(a.act_no||'Aktas')}')">👁 PDF</button> `:''}${sendBtn}${regBtn}${transferBtn}${lockBtn}${unlockBtn}${editBtn}${delBtn}</td></tr>`;
         }).join('')+'</tbody></table>';
     }
     $('newActBtn').onclick=()=>openActEditor(null);
     $('backToActs').onclick=()=>loadActs();
+    // ----- AKTO KOPIJOS SIUNTIMAS ŠALIMS (saugi nuoroda) -----
+    window.sendActCopy=async id=>{
+      const a=ACTS.find(x=>x.id===id); if(!a)return;
+      const pre=[a.esign_handover&&a.esign_handover.email, a.esign_receiver&&a.esign_receiver.email].filter(Boolean).join(', ');
+      const inp=prompt('Įveskite gavėjų el. pašto adresus (kelis atskirkite kableliais).\nAkto PDF kopija bus išsiųsta saugia nuoroda, galiojančia 14 dienų:', pre);
+      if(inp===null)return;
+      const emails=[...new Set(inp.split(/[,;\s]+/).map(e=>e.trim().toLowerCase()).filter(e=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)))];
+      if(!emails.length){ alert('Neįvestas nė vienas teisingas el. pašto adresas.'); return; }
+      const nameFor=e=>{
+        if(a.esign_handover&&(a.esign_handover.email||'').toLowerCase()===e)return a.esign_handover.name||a.handover_person||'';
+        if(a.esign_receiver&&(a.esign_receiver.email||'').toLowerCase()===e)return a.esign_receiver.name||a.receiver_person||'';
+        return '';
+      };
+      try{
+        const { data:{ session } }=await sb.auth.getSession();
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/act-send-copy`,{
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${session.access_token}`, 'apikey':SUPABASE_ANON_KEY },
+          body:JSON.stringify({ act_id:id, recipients:emails.map(e=>({ email:e, name:nameFor(e) })) })
+        });
+        const r=await res.json();
+        if(!r.ok){ alert('Nepavyko išsiųsti: '+(r.error_code||'')+(r.detail?(' — '+r.detail):'')); return; }
+        alert('Akto kopija išsiųsta:\n'+r.sent.join('\n'));
+      }catch(err){ alert('Klaida: '+(err.message||String(err))); }
+    };
+
+    // ----- AKTO REGISTRAVIMAS GAUNAMŲ DOKUMENTŲ ŽURNALE -----
+    window.registerAct=async id=>{
+      const a=ACTS.find(x=>x.id===id); if(!a||!a.pdf_path)return;
+      if(!CURRENT.project_code){ alert('Bylos kortelėje (Pagrindinis) įveskite registracijos trumpinį (pvz. TOR) ir išsaugokite — be jo registruoti negalima.'); return; }
+      try{
+        const { data:{ session } }=await sb.auth.getSession();
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY}, body:JSON.stringify({ path:a.pdf_path }) });
+        const r=await res.json(); if(!r.url)throw new Error('Nepavyko gauti akto PDF failo.');
+        const blob=await (await fetch(r.url)).blob();
+        const fname=((a.act_no||'aktas').replace(/[^A-Za-z0-9._-]+/g,'_'))+'.pdf';
+        const file=new File([blob],fname,{ type:'application/pdf' });
+        // perjungiam į Dok. registravimą ir atidarom formą su prisegtu aktu
+        setTop('registry');
+        openRegModal('received');
+        REG_FILES=[file]; renderRegFiles();
+        $('regTitle').value=(ACT_LABELS[a.act_type]||'Perdavimo aktas')+(a.act_no?(' Nr. '+a.act_no):'');
+        $('regParty').value=a.handover_person||'';
+        if(a.act_date)$('regDate').value=a.act_date;
+        $('regMsg').innerHTML='<div class="hint">Prisegtas aktas '+esc(fname)+'. Patikrinkite duomenis ir spauskite „Registruoti".</div>';
+      }catch(err){ alert('Klaida: '+(err.message||String(err))); }
+    };
+
+    // ----- TURTO POZICIJŲ PERKĖLIMAS Į TURTO KORTELES -----
+    window.transferActAssets=async id=>{
+      const a=ACTS.find(x=>x.id===id); if(!a)return;
+      if(!confirm('Perkelti šio akto turto pozicijas į Turto korteles?\n\nSkiltyje „Turtas" bus sukurtos kortelės su akto duomenimis — jas atsidarę papildysite likusia informacija (kaina, nuotraukos ir kt.). Jau perkeltos pozicijos nebus dubliuojamos.'))return;
+      const res=await sb.rpc('transfer_act_assets_to_cards',{ p_act_id:id });
+      if(res.error){ alert('Klaida: '+res.error.message); return; }
+      if(res.data&&res.data.ok===false){ alert('Klaida: '+res.data.error_code); return; }
+      alert('Sukurta turto kortelių: '+res.data.created+(res.data.skipped?('\nPraleista (jau perkeltos anksčiau): '+res.data.skipped):'')+(res.data.created?'\n\nSkiltyje „Turtas" (pažymėta ⭐) atsidarykite korteles ir papildykite informaciją.':''));
+      updateAssetsStar(true);
+    };
+
+    window.lockAct=async id=>{
+      if(!confirm('Užrakinti aktą?\n\nUžrakintas aktas negalės būti koreguojamas ar trinamas, kol jo neatrakinsite (atrakinti gali užrakinęs administratorius arba superadministratorius).'))return;
+      const res=await sb.rpc('lock_insolvency_act',{ p_id:id });
+      if(res.error){ alert('Klaida: '+res.error.message); return; }
+      if(res.data&&res.data.ok===false){
+        alert(res.data.error_code==='no_signatures'?'Užrakinti galima tik kai aktą pasirašė bent viena šalis.':('Klaida: '+res.data.error_code));
+        return;
+      }
+      await loadActs();
+    };
+    window.unlockAct=async id=>{
+      if(!confirm('Atrakinti aktą? Jį vėl bus galima koreguoti.'))return;
+      const res=await sb.rpc('unlock_insolvency_act',{ p_id:id });
+      if(res.error){ alert('Klaida: '+res.error.message); return; }
+      if(res.data&&res.data.ok===false){
+        alert(res.data.error_code==='not_lock_owner'?'Atrakinti gali tik aktą užrakinęs administratorius arba superadministratorius.':('Klaida: '+res.data.error_code));
+        return;
+      }
+      await loadActs();
+    };
     window.editAct=id=>{
       const a=ACTS.find(x=>x.id===id); if(!a)return;
+      if(a.manual_locked){ alert('Aktas užrakintas administratoriaus — koreguoti negalima, kol jis neatrakintas.'); return; }
       const locked=a.status==='final'&&a.pdf_path;
       if(locked&&!IS_SUPERADMIN){ alert('Aktas užrakintas: PDF jau sugeneruotas. Koreguoti gali tik superadministratorius.'); return; }
       if(locked&&IS_SUPERADMIN&&!confirm('DĖMESIO: šis aktas yra galutinis ir jo PDF jau sugeneruotas.\n\nKoreguojant akto turinį jis nebesutaps su sugeneruotu PDF failu — pakoregavę BŪTINAI iš naujo sugeneruokite PDF.\n\nVeiksmas bus užfiksuotas veiklos žurnale. Tęsti?'))return;
@@ -2395,11 +2894,17 @@
     };
     window.delAct=async id=>{
       const a=ACTS.find(x=>x.id===id);
+      if(a&&a.manual_locked){ alert('Aktas užrakintas administratoriaus — ištrinti negalima, kol jis neatrakintas.'); return; }
       const locked=a&&a.status==='final'&&a.pdf_path;
       if(locked&&!IS_SUPERADMIN){ alert('Aktas užrakintas: PDF jau sugeneruotas. Ištrinti gali tik superadministratorius.'); return; }
       if(!confirm(locked?'DĖMESIO: trinamas GALUTINIS pasirašytas aktas su sugeneruotu PDF. Veiksmas bus užfiksuotas veiklos žurnale.\n\nIštrinti aktą?':'Ištrinti aktą?'))return;
       const res=await sb.rpc('delete_insolvency_act',{ p_id:id });
-      if(res.data&&res.data.ok===false){ alert(res.data.error_code==='act_locked'?'Aktas užrakintas — ištrinti gali tik superadministratorius.':('Klaida: '+res.data.error_code)); return; }
+      if(res.data&&res.data.ok===false){
+        const m=res.data.error_code==='act_locked'?'Aktas užrakintas — ištrinti gali tik superadministratorius.'
+          :res.data.error_code==='act_locked_manual'?'Aktas užrakintas administratoriaus — ištrinti negalima, kol jis neatrakintas.'
+          :('Klaida: '+res.data.error_code);
+        alert(m); return;
+      }
       await loadActs();
     };
 
@@ -2430,6 +2935,7 @@
       $('actMsg').innerHTML = (a.id && a.status==='final' && a.pdf_path)
         ? '<div style="background:#FEF3C7;border:1px solid #F59E0B;color:#92400E;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;">🔒 <b>Užrakintas galutinis aktas.</b> Koreguojate superadministratoriaus teisėmis — atlikę pakeitimus iš naujo sugeneruokite PDF, kad akto turinys ir PDF failas sutaptų. Veiksmas fiksuojamas veiklos žurnale.</div>'
         : '';
+      $('actLockBtn').style.display = a.id ? '' : 'none';
       if(!a.act_no){ const r=await sb.rpc('next_insolvency_act_no',{ p_case_id:CURRENT.id }); if(!r.error)$('actNo').value=r.data; }
       onActTypeChange();
       // parašai
@@ -2615,6 +3121,8 @@
       if(res.data&&res.data.ok===false){
         const msg = res.data.error_code==='act_locked'
           ? 'Aktas užrakintas: PDF jau sugeneruotas, todėl koreguoti gali tik superadministratorius.'
+          : res.data.error_code==='act_locked_manual'
+          ? 'Aktas užrakintas administratoriaus — koreguoti negalima, kol jis neatrakintas.'
           : res.data.error_code;
         $('actMsg').innerHTML='<div class="error">'+esc(msg)+'</div>'; return null;
       }
@@ -2622,6 +3130,17 @@
       return res.data.id;
     }
     $('actSaveDraft').onclick=async()=>{ const id=await saveAct('draft'); if(id)$('actMsg').innerHTML='<div class="success">Tarpinė informacija išsaugota.</div>'; };
+    $('actLockBtn').onclick=async()=>{
+      if(!confirm('Užrakinti aktą?\n\nUžrakintas aktas negalės būti koreguojamas ar trinamas, kol jo neatrakinsite (atrakinti gali užrakinęs administratorius arba superadministratorius).\n\nPastaba: užrakinti galima tik kai aktą pasirašė bent viena šalis.'))return;
+      const id=await saveAct(undefined); if(!id)return;
+      const res=await sb.rpc('lock_insolvency_act',{ p_id:id });
+      if(res.error){ $('actMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+      if(res.data&&res.data.ok===false){
+        $('actMsg').innerHTML='<div class="error">'+(res.data.error_code==='no_signatures'?'Užrakinti galima tik kai aktą pasirašė bent viena šalis (ekrane arba el. paštu).':esc(res.data.error_code))+'</div>';
+        return;
+      }
+      await loadActs();
+    };
 
     // ----- NUOTRAUKOS -----
     $('photoUploadBtn').onclick=()=>$('photoFile').click();
@@ -2718,7 +3237,7 @@
         const row=(l,r)=>`<tr><td style="${cell}">${l}</td><td style="width:4%;"></td><td style="${cell}">${r}</td></tr>`;
         body='<table style="width:100%;border-collapse:collapse;">'
           + row(`<div style="text-align:center;font-weight:bold;font-size:14px;">${esc(m.title2||'ACT OF ACCEPTANCE AND TRANSFER')}</div>${m.sub2?`<div style="text-align:center;font-size:12.5px;margin-top:4px;">${pre(m.sub2)}</div>`:''}`,
-                `<div style="text-align:center;font-weight:bold;font-size:14px;">PRIĖMIMO-PERDAVIMO AKTAS</div>${m.sub_lt?`<div style="text-align:center;font-size:12.5px;margin-top:4px;">${pre(m.sub_lt)}</div>`:''}`)
+                `<div style="text-align:center;font-weight:bold;font-size:14px;">${esc(ACT_TITLES.grouped||'PRIĖMIMO-PERDAVIMO AKTAS')}</div>${m.sub_lt?`<div style="text-align:center;font-size:12.5px;margin-top:4px;">${pre(m.sub_lt)}</div>`:''}`)
           + row(`Date: ${esc(p.act_date||'')}`,`Data: ${esc(p.act_date||'')}`)
           + (m.intro2||m.intro_lt?row(pre(m.intro2),pre(m.intro_lt)):'')
           + (m.groups||[]).map((g,i)=>row(
@@ -2728,7 +3247,7 @@
                                        `<div style="font-weight:bold;margin-top:8px;">Papildomos nuostatos</div><div style="margin-top:4px;">${pre(m.notes_lt)}</div>`):'')
           + '</table>';
       } else {
-        body=`<h2 style="text-align:center;font-size:16px;margin:16px 0 4px;">PRIĖMIMO-PERDAVIMO AKTAS</h2>`
+        body=`<h2 style="text-align:center;font-size:16px;margin:16px 0 4px;">${esc(ACT_TITLES.grouped||'PRIĖMIMO-PERDAVIMO AKTAS')}</h2>`
           + (m.sub_lt?`<div style="text-align:center;font-size:13px;margin-bottom:10px;">${pre(m.sub_lt)}</div>`:'')
           + (m.intro_lt?`<div style="font-size:13px;line-height:1.5;margin:10px 0;">${pre(m.intro_lt)}</div>`:'')
           + (m.groups||[]).map((g,i)=>`<div style="font-weight:bold;font-size:13px;margin-top:12px;">${esc(gTitle(g.t_lt,i))}</div><div style="font-size:13px;line-height:1.5;margin-top:4px;">${pre(g.b_lt)}</div>`).join('')
@@ -2774,7 +3293,18 @@
         <div style="font-weight:bold;">${esc(CURRENT.debtor_name||'')}</div>
         <div style="font-size:12px;">${CURRENT.debtor_code?('Įmonės kodas '+esc(CURRENT.debtor_code)):''}${CURRENT.debtor_code&&CURRENT.debtor_address?', ':''}${esc(CURRENT.debtor_address||'')}</div>
         <h2 style="text-align:center;font-size:16px;margin:16px 0;">${esc(ACT_TITLES[p.act_type]||'')}</h2>
-        <div style="font-size:13px;margin-bottom:10px;">Perdavėjas: ${esc(CURRENT.debtor_name||'')}${CURRENT.debtor_code?(', įmonės kodas '+esc(CURRENT.debtor_code)):''}${CURRENT.debtor_address?(', '+esc(CURRENT.debtor_address)):''}, perduodantis asmuo: <b>${esc(p.handover_person||'')}</b>. Perėmėjas: nemokumo administratoriaus įgaliotas asmuo <b>${esc(p.receiver_person||'')}</b>.</div>
+        <div style="font-size:13px;margin-bottom:10px;">${(()=>{
+          const cfg=ACT_CFG.find(t=>t.key===p.act_type);
+          if(cfg&&cfg.intro_text&&cfg.intro_text.trim()){
+            return esc(cfg.intro_text
+              .replace(/{{imone}}/g,CURRENT.debtor_name||'')
+              .replace(/{{imones_kodas}}/g,CURRENT.debtor_code||'')
+              .replace(/{{adresas}}/g,CURRENT.debtor_address||'')
+              .replace(/{{perdave}}/g,p.handover_person||'')
+              .replace(/{{pereme}}/g,p.receiver_person||'')).replace(/\n/g,'<br>');
+          }
+          return `Perdavėjas: ${esc(CURRENT.debtor_name||'')}${CURRENT.debtor_code?(', įmonės kodas '+esc(CURRENT.debtor_code)):''}${CURRENT.debtor_address?(', '+esc(CURRENT.debtor_address)):''}, perduodantis asmuo: <b>${esc(p.handover_person||'')}</b>. Perėmėjas: nemokumo administratoriaus įgaliotas asmuo <b>${esc(p.receiver_person||'')}</b>.`;
+        })()}</div>
         ${body}
         ${totalLine}
         <div style="margin-top:30px;">${sig('Perdavė:',p.handover_person,p.sig_handover,p.esign_handover)}<span style="display:inline-block;width:8%;"></span>${sig('Priėmė:',p.receiver_person,p.sig_receiver,p.esign_receiver)}</div>
@@ -2806,12 +3336,34 @@
         const canvas=await html2canvas(holder.firstElementChild,{ scale:2, backgroundColor:'#fff' });
         document.body.removeChild(holder);
         const { jsPDF }=window.jspdf; const pdf=new jsPDF('p','mm','a4');
-        const w=190, fullH=canvas.height*w/canvas.width, pageH=277;
-        const img=canvas.toDataURL('image/png');
-        if(fullH<=pageH){ pdf.addImage(img,'PNG',10,10,w,fullH); }
-        else { // daugiapuslapis: slenkam per aukštį
-          let pos=0;
-          while(pos<fullH){ if(pos>0)pdf.addPage(); pdf.addImage(img,'PNG',10,10-pos,w,fullH); pos+=pageH; }
+        // A4 paraštės pagal raštvedybos rekomendacijas: kairė 30 mm, dešinė 10 mm, viršus/apačia po 20 mm
+        const ML=30, MR=10, MT=20, MB=20;
+        const w=210-ML-MR;                       // turinio plotis 170 mm
+        const pageHmm=297-MT-MB;                 // turinio aukštis 257 mm
+        const pxPerMm=canvas.width/w;
+        const pagePx=Math.floor(pageHmm*pxPerMm);
+        const cctx=canvas.getContext('2d');
+        // ar eilutė (pikselių juosta) tuščia — kad pjūvis nekirstų teksto
+        const isBlankRow=y=>{
+          const d=cctx.getImageData(0,y,canvas.width,1).data;
+          for(let i=0;i<d.length;i+=16){ if(d[i+3]>10&&(d[i]<246||d[i+1]<246||d[i+2]<246))return false; }
+          return true;
+        };
+        let pos=0, firstPage=true;
+        while(pos<canvas.height){
+          let end=Math.min(pos+pagePx,canvas.height);
+          if(end<canvas.height){
+            let cut=end;
+            const minCut=pos+Math.floor(pagePx*0.55);
+            while(cut>minCut&&!isBlankRow(cut))cut--;
+            if(cut>minCut)end=cut;
+          }
+          const sliceH=end-pos;
+          const pc=document.createElement('canvas'); pc.width=canvas.width; pc.height=sliceH;
+          pc.getContext('2d').drawImage(canvas,0,pos,canvas.width,sliceH,0,0,canvas.width,sliceH);
+          if(!firstPage)pdf.addPage();
+          pdf.addImage(pc.toDataURL('image/png'),'PNG',ML,MT,w,sliceH/pxPerMm);
+          firstPage=false; pos=end;
         }
         const blob=pdf.output('blob');
         const fname=(p.act_no||'aktas').replace(/[^A-Za-z0-9._-]+/g,'_')+'.pdf';
