@@ -2109,14 +2109,15 @@
       const T=s=>fonts.unicode?String(s||''):deLT(s);
       const page=out.getPage(0);
       const pw=page.getWidth(), ph=page.getHeight();
-      const w=232, h=66, m=10, x=pw-w-m, y=ph-h-m;
-      const red=rgb(0.86,0.15,0.15);
-      page.drawRectangle({ x, y, width:w, height:h, color:rgb(1,1,1), opacity:0.9, borderColor:red, borderWidth:1.4 });
+      // žyma — 1/2 ankstesnio dydžio, juodos spalvos simboliai
+      const w=116, h=33, m=10, x=pw-w-m, y=ph-h-m;
+      const black=rgb(0,0,0);
+      page.drawRectangle({ x, y, width:w, height:h, color:rgb(1,1,1), opacity:0.9, borderColor:black, borderWidth:0.7 });
       const fit=(s,f,size,max)=>{ s=String(s||''); while(s.length>3&&f.widthOfTextAtSize(s,size)>max)s=s.slice(0,-2); return s; };
-      page.drawText(fit(T(meta.admName).toUpperCase(),fonts.bold,8.5,w-16),{ x:x+8, y:y+h-15, size:8.5, font:fonts.bold, color:red });
-      page.drawText('Reg. Nr.: '+meta.regNumber,{ x:x+8, y:y+h-29, size:9.5, font:fonts.bold, color:red });
-      page.drawText(T(meta.dateLabel)+': '+meta.dateStr,{ x:x+8, y:y+h-43, size:9, font:fonts.reg, color:red });
-      page.drawText(fit(T('Byla: '+(meta.caseName||'')),fonts.reg,8,w-16),{ x:x+8, y:y+h-56, size:8, font:fonts.reg, color:red });
+      page.drawText(fit(T(meta.admName).toUpperCase(),fonts.bold,4.3,w-8),{ x:x+4, y:y+h-7.5, size:4.3, font:fonts.bold, color:black });
+      page.drawText('Reg. Nr.: '+meta.regNumber,{ x:x+4, y:y+h-14.5, size:4.8, font:fonts.bold, color:black });
+      page.drawText(T(meta.dateLabel)+': '+meta.dateStr,{ x:x+4, y:y+h-21.5, size:4.5, font:fonts.reg, color:black });
+      page.drawText(fit(T('Byla: '+(meta.caseName||'')),fonts.reg,4,w-8),{ x:x+4, y:y+h-28, size:4, font:fonts.reg, color:black });
       const bytes=await out.save();
       return { blob:new Blob([new Uint8Array(bytes)],{ type:'application/pdf' }), pageCount:out.getPageCount() };
     }
@@ -2710,8 +2711,8 @@
       const blob=await (await fetch(fu.url)).blob();
       const file=new File([blob],(d.file_name||'dokumentas')+'.pdf',{ type:'application/pdf' });
       const { blob:regBlob, pageCount }=await buildRegisteredPdf([file],{ regNumber, dateStr:dateV, dateLabel:'Išsiųsta', admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
-      // 3) įkėlimas
-      const path=`${CURRENT.case_short_code}/registered/${regNumber}.pdf`;
+      // 3) įkėlimas — unikalus failo kelias, kad nutrūkęs ankstesnis bandymas niekada neblokuotų pakartojimo
+      const path=`${CURRENT.case_short_code}/registered/${regNumber.replace(/[^A-Za-z0-9._-]+/g,'_')}_${Date.now()}.pdf`;
       const up=await sb.storage.from('insolvency-docs').upload(path,regBlob,{ upsert:false, contentType:'application/pdf' });
       if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
       // 4) įrašas žurnale — laukai iš dokumento požymių
