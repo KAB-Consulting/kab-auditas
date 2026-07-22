@@ -377,6 +377,15 @@
         <div class="hint" style="margin-bottom:8px;"><b>Kompleksas</b> — turto pozicijos, veikiančios kaip visuma (pastatų kompleksas, įrengimų linija). <b>Priklausinys</b> — pozicija, priklausanti kitam turtui ar kompleksui (liftas, kondicionierius, sumontuotas įrengimas) — jos pardavimas atskirai sudėtingas. Priklausiniui galima (nebūtina) nurodyti konkrečią poziciją, kuriai jis priklauso. Vienoje grupėje gali būti ir kompleksų, ir priklausinių.</div>
         <div id="assetGroupsMsg"></div>
         <div id="assetGroupsList"></div>
+
+        <!-- PASTABOS IR PRIMINIMAI -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:26px 0 6px;">
+          <strong>🔔 Pastabos ir priminimai</strong>
+          <label style="font-size:12px;display:flex;gap:4px;align-items:center;"><input type="checkbox" id="remShowDone" style="width:auto;"> rodyti atliktus</label>
+        </div>
+        <div class="hint" style="margin-bottom:8px;">Pastabos su priminimo data prie turto pozicijų ir nuomos sutarčių. 🤖 — automatiniai priminimai: sukuriami patvirtinus sutartį (likus 30 d. iki pabaigos) ir pridėjus dokumentą su galiojimo data. Spalvos: <span style="color:#C0392B;font-weight:700;">raudona</span> — terminas praėjęs, <span style="color:#8A6D00;font-weight:700;">geltona</span> — liko ≤ 7 d. Paspauskite eilutę detalėms.</div>
+        <div id="remindersMsg"></div>
+        <div id="remindersTable"></div>
       </div>
 
       <!-- TURTO NUOMA -->
@@ -875,6 +884,15 @@
         <div class="sec-title">🔑 Nuoma</div>
         <div id="asLeaseInfo"></div>
       </div>
+      <div id="asRemSec" class="hidden">
+        <div class="sec-title">🔔 Pastabos ir priminimai</div>
+        <div id="asRemList" style="margin-bottom:8px;"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;background:#F6F8FB;border:1px solid var(--bd);border-radius:8px;padding:8px;">
+          <div style="flex:1;min-width:200px;"><label class="label">Pastaba</label><input id="asRemNote" class="input"></div>
+          <div><label class="label">Priminti (nebūtina)</label><input id="asRemDate" class="input" type="date"></div>
+          <button class="btn btn-sm" type="button" id="asRemAddBtn">+ Pridėti</button>
+        </div>
+      </div>
       <div id="assetMsg"></div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
         <button class="btn btn-ghost" id="assetCancel">Uždaryti</button>
@@ -990,6 +1008,16 @@
         </div>
       </div>
 
+      <div id="lsRemSec" class="hidden">
+        <div class="sec-title">🔔 Pastabos ir priminimai</div>
+        <div id="lsRemList" style="margin-bottom:8px;"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;background:#F6F8FB;border:1px solid var(--bd);border-radius:8px;padding:8px;">
+          <div style="flex:1;min-width:220px;"><label class="label">Pastaba</label><input id="lsRemNote" class="input" placeholder="pvz. draudimas galioja iki 2026-09-30 — priminti nuomininkui pratęsti"></div>
+          <div><label class="label">Priminti (nebūtina)</label><input id="lsRemDate" class="input" type="date"></div>
+          <button class="btn btn-sm" type="button" id="lsRemAddBtn">+ Pridėti</button>
+        </div>
+      </div>
+
       <div id="lsAcctSec" class="hidden">
         <div class="sec-title">Nuomos apskaita</div>
         <div id="lsAcctSummary" style="margin-bottom:10px;"></div>
@@ -1025,6 +1053,30 @@
         <button class="btn btn-gold hidden" id="lsConfirmBtn">✓ Patvirtinti sutartį</button>
         <button class="btn" id="lsSave">Išsaugoti</button>
       </div>
+    </div>
+  </div>
+
+  <!-- PASTABOS / PRIMINIMO DETALIŲ MODALĖ -->
+  <div id="remModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:580px;">
+      <h2>🔔 Pastaba / priminimas</h2>
+      <div id="remDetail" style="margin-bottom:10px;"></div>
+      <div id="remDoneWrap">
+        <div class="sec-title">Atžymėti kaip atliktą</div>
+        <div class="row">
+          <div><label class="label">Atlikimo data</label><input id="remDoneDate" class="input" type="date"></div>
+          <div><label class="label">Komentaras (nebūtina)</label><input id="remDoneNote" class="input" placeholder="pvz. draudimas pratęstas iki 2027-09-30"></div>
+        </div>
+        <button class="btn btn-sm" id="remDoneBtn">✓ Atžymėti atlikta</button>
+      </div>
+      <div class="sec-title">Nauja pastaba prie to paties objekto</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="flex:1;min-width:200px;"><label class="label">Pastaba</label><input id="remNewNote" class="input"></div>
+        <div><label class="label">Priminti (nebūtina)</label><input id="remNewDate" class="input" type="date"></div>
+        <button class="btn btn-sm" id="remNewBtn">+ Pridėti</button>
+      </div>
+      <div id="remMsg" style="margin-top:8px;"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn btn-ghost" id="remCancel">Uždaryti</button></div>
     </div>
   </div>
 
@@ -1223,6 +1275,8 @@
           body.perm-view #lsChAddBtn, body.perm-view #lsPayAddBtn, body.perm-view #lsPayFileBtn,
           body.perm-view [onclick*="lsChEdit"], body.perm-view [onclick*="lsChDel"], body.perm-view [onclick*="lsPayDel"],
           body.perm-view [onclick*="lsDepositMark"], body.perm-view [onclick*="lsDepositClear"], body.perm-view [onclick*="lsAddLateCharge"],
+          body.perm-view #lsRemAddBtn, body.perm-view #asRemAddBtn, body.perm-view #remDoneBtn, body.perm-view #remNewBtn,
+          body.perm-view [onclick*="remDel"], body.perm-view [onclick*="remReopen"],
           body.perm-view #emAssignBtn, body.perm-view #emIrrelevantBtn, body.perm-view #emUnreadBtn,
           body.perm-view [onclick*="setEmailStatus"], body.perm-view [onclick*="registerEmail"],
           body.perm-view [onclick*="openRegEdit"], body.perm-view #impMapApply, body.perm-view #impParseBtn,
@@ -2773,7 +2827,7 @@
       ASSETS=data||[]; renderAssets();
       updateAssetsStar(false);
       loadAssetGroups();
-      loadCaseLeases().then(()=>renderAssets());
+      loadCaseLeases().then(()=>{ renderAssets(); loadReminders().then(renderRemindersTable); });
     }
     // ⭐ ant „Turtas" tabo — yra naujų (nepapildytų) turto kortelių iš perdavimo aktų
     async function updateAssetsStar(fetchFresh){
@@ -2834,6 +2888,8 @@
       renderAsPhotos();
       $('asLeaseSec').classList.toggle('hidden',!id);
       if(id)$('asLeaseInfo').innerHTML=assetLeaseInfoHtml(id);
+      $('asRemSec').classList.toggle('hidden',!id);
+      $('asRemList').innerHTML=''; if(id)loadReminders().then(renderObjReminderLists);
       show('assetModal');
     };
     $('assetCancel').onclick=()=>hide('assetModal');
@@ -3131,6 +3187,7 @@
       if(!CURRENT||CURRENT.__new){ $('leasesTable').innerHTML='<div class="muted center" style="padding:24px;">Pirma išsaugokite bylos kortelę.</div>'; return; }
       if(!ASSETS.length){ try{ const r=await sb.from('insolvency_assets').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false}); ASSETS=r.data||[]; }catch(_){} }
       await loadCaseLeases();
+      loadReminders();
       renderLeases();
     }
     function leaseAssetsStr(l){
@@ -3250,6 +3307,7 @@
       $('lsConfirmBtn').classList.toggle('hidden',!(l&&st==='draft'));
       $('lsTerminateBtn').classList.toggle('hidden',!(l&&st==='active'));
       $('lsDocsSec').classList.toggle('hidden',!l);
+      $('lsRemSec').classList.toggle('hidden',!l);
       $('lsAcctSec').classList.toggle('hidden',!(l&&st!=='draft'));
       $('lsPdfBtn').classList.toggle('hidden',!l);
     }
@@ -3274,6 +3332,7 @@
       LEASE_DOCS=[]; if(l)loadLeaseDocs(l.id); else $('lsDocsList').innerHTML='';
       LEASE_CHARGES=[]; LEASE_PAYS=[]; LS_PAY_FILE=null; $('lsPayFileName').textContent='';
       if(l&&leaseEffSt(l)!=='draft')loadLeaseAcct(l.id);
+      $('lsRemList').innerHTML=''; if(l)loadReminders().then(renderObjReminderLists);
       $('lsMsg').innerHTML=l?'':'<div class="hint">Išsaugojus sutartį bus galima pridėti dokumentus ir ją patvirtinti.</div>';
       show('leaseModal');
     };
@@ -3328,6 +3387,7 @@
       $('lsMsg').innerHTML='<div class="success">✔ Sutartis patvirtinta. Žemiau — nuomos apskaita.</div>';
       try{ await logEvent('lease_confirmed',{ lease_id:id }); }catch(_){}
       loadLeaseAcct(id);
+      ensureLeaseEndReminder(LEASES.find(x=>x.id===id));
       renderLeases();
     };
     $('lsTerminateBtn').onclick=async()=>{
@@ -3358,6 +3418,13 @@
       if(!confirm('Šalinti dokumentą „'+(d?d.doc_label:'')+'“?'))return;
       if(d&&d.storage_path){ try{ await sb.storage.from('insolvency-docs').remove([d.storage_path]); }catch(_){} }
       await sb.from('insolvency_asset_lease_docs').delete().eq('id',id);
+      if(d&&d.valid_until){ // pašalinamas susijęs automatinis priminimas
+        try{
+          const rs=REMINDERS.filter(r=>r.lease_id===d.lease_id&&r.is_auto&&r.status==='open'&&(r.note||'').includes('„'+d.doc_label+'“')&&(r.note||'').includes('galioja iki '+d.valid_until));
+          for(const r of rs)await sb.from('insolvency_asset_reminders').delete().eq('id',r.id);
+          await loadReminders(); renderRemindersTable(); renderObjReminderLists();
+        }catch(_){}
+      }
       loadLeaseDocs($('lsId').value);
     };
     $('lsDocAddBtn').onclick=()=>{
@@ -3375,11 +3442,13 @@
         const path=`${CURRENT.case_short_code}/leases/${leaseId}/${Date.now()}_${safe}`;
         const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
         if(error)throw error;
+        const vu=$('lsDocValid').value||null;
         const ins=await sb.from('insolvency_asset_lease_docs').insert({ lease_id:leaseId, doc_label:label, storage_path:path, file_name:file.name,
-          valid_until:$('lsDocValid').value||null, created_by:CURRENT_UID });
+          valid_until:vu, created_by:CURRENT_UID });
         if(ins.error)throw ins.error;
-        $('lsMsg').innerHTML='<div class="success">Dokumentas pridėtas.</div>';
+        $('lsMsg').innerHTML='<div class="success">Dokumentas pridėtas.'+(vu?' Sukurtas automatinis priminimas dėl galiojimo pabaigos.':'')+'</div>';
         $('lsDocCustom').value=''; $('lsDocValid').value='';
+        if(vu)ensureDocValidReminder(leaseId,label,vu);
         loadLeaseDocs(leaseId);
       }catch(err){ $('lsMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
       finally{ e.target.value=''; }
@@ -3629,6 +3698,156 @@
         rel.map(l=>`<tr><td><a href="javascript:void(0)" onclick="hide('assetModal');setTop('assets');setTimeout(()=>{document.querySelectorAll('#subTabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.sub==='lease'));openPane('lease');openLeaseModal('${l.id}');},50);" style="color:var(--navy);font-weight:700;text-decoration:underline;">${esc(l.contract_no)}</a></td>
         <td style="white-space:nowrap;">${esc(l.lease_start||'—')} – ${l.lease_end?esc(l.lease_end):'neterm.'}</td>
         <td>${esc((l.tenant||{}).name||'—')}</td><td>${leasePriceStr(l)}</td><td>${leaseStBadge(l)}</td></tr>`).join('')+'</tbody></table>';
+    }
+
+    // ---------- PASTABOS IR PRIMINIMAI (3 etapas) ----------
+    let REMINDERS=[], REM_CURRENT=null;
+    const remAddDays=(iso,d)=>{ const dt=new Date(iso); dt.setDate(dt.getDate()+d); return dt.toISOString().slice(0,10); };
+    async function loadReminders(){
+      if(!CURRENT||CURRENT.__new){ REMINDERS=[]; return; }
+      try{ const r=await sb.from('insolvency_asset_reminders').select('*').eq('case_id',CURRENT.id).order('remind_on',{ ascending:true, nullsFirst:false }).order('created_at'); REMINDERS=r.data||[]; }catch(_){ REMINDERS=[]; }
+    }
+    function remUrgency(r){
+      if(r.status==='done')return'done';
+      if(!r.remind_on)return'none';
+      const today=new Date().toISOString().slice(0,10);
+      if(r.remind_on<today)return'over';
+      if(r.remind_on<=remAddDays(today,7))return'soon';
+      return'future';
+    }
+    function remObjStr(r){
+      const parts=[];
+      if(r.asset_id)parts.push('🏠 '+esc(assetNameById(r.asset_id)||'—'));
+      if(r.lease_id){ const l=LEASES.find(x=>x.id===r.lease_id); parts.push('🔑 sutartis '+esc(l?l.contract_no:'')); }
+      return parts.join(' · ')||'—';
+    }
+    function renderRemindersTable(){
+      const el=$('remindersTable'); if(!el)return;
+      const showDone=$('remShowDone').checked;
+      const rows=REMINDERS.filter(r=>showDone||r.status!=='done');
+      if(!rows.length){ el.innerHTML='<div class="muted" style="font-size:13px;">Pastabų nėra.</div>'; return; }
+      el.innerHTML='<table style="font-size:13px;"><thead><tr><th>Priminti</th><th>Objektas</th><th>Pastaba</th><th>Būsena</th><th></th></tr></thead><tbody>'+rows.map(r=>{
+        const u=remUrgency(r);
+        const style=u==='over'?'background:#FDECEA;':u==='soon'?'background:#FFF7E0;':'';
+        const dateHtml=r.remind_on?`<b style="${u==='over'?'color:#C0392B;':u==='soon'?'color:#8A6D00;':''}">${esc(r.remind_on)}</b>`:'<span class="muted">—</span>';
+        const st=r.status==='done'?'<span class="badge badge-green">Atlikta '+esc(r.done_at||'')+'</span>':'<span class="badge badge-gray">Aktyvi</span>';
+        const noteShort=(r.note||'').length>90?esc(r.note.slice(0,90))+'…':esc(r.note||'');
+        return `<tr style="cursor:pointer;${style}" onclick="openRemModal('${r.id}')" title="Paspauskite detalėms"><td style="white-space:nowrap;">${r.is_auto?'🤖 ':''}${dateHtml}</td><td>${remObjStr(r)}</td><td>${noteShort}</td><td>${st}</td>
+          <td style="text-align:right;" onclick="event.stopPropagation()"><button class="btn btn-sm btn-danger" onclick="remDel('${r.id}')" title="Šalinti">🗑</button></td></tr>`;
+      }).join('')+'</tbody></table>';
+    }
+    $('remShowDone').onchange=renderRemindersTable;
+    window.openRemModal=(id)=>{
+      const r=REMINDERS.find(x=>x.id===id); if(!r)return;
+      REM_CURRENT=r;
+      const u=remUrgency(r);
+      $('remDetail').innerHTML=`<div style="background:#F6F8FB;border:1px solid var(--bd);border-radius:8px;padding:10px 12px;">
+        <div style="font-size:14px;margin-bottom:6px;">${r.is_auto?'🤖 ':''}${esc(r.note||'')}</div>
+        <div class="muted" style="font-size:12px;">Objektas: ${remObjStr(r)}</div>
+        ${r.remind_on?`<div class="muted" style="font-size:12px;">Priminimo data: <b style="${u==='over'?'color:#C0392B;':u==='soon'?'color:#8A6D00;':''}">${esc(r.remind_on)}</b></div>`:''}
+        <div class="muted" style="font-size:12px;">Sukurta: ${fmtDate(r.created_at)}</div>
+        ${r.status==='done'?`<div style="font-size:12px;color:#1E7B3C;margin-top:4px;">✓ Atlikta ${esc(r.done_at||'')}${r.done_note?': '+esc(r.done_note):''} <button class="btn btn-sm btn-ghost" onclick="remReopen()" title="Grąžinti į aktyvias">↩</button></div>`:''}
+        <div style="margin-top:6px;">
+          ${r.lease_id?`<button class="btn btn-sm btn-ghost" onclick="hide('remModal');openLeaseModal('${r.lease_id}')">🔑 Atidaryti sutartį</button>`:''}
+          ${r.asset_id?`<button class="btn btn-sm btn-ghost" onclick="hide('remModal');openAssetModal('${r.asset_id}')">🏠 Atidaryti turto kortelę</button>`:''}
+        </div>
+      </div>`;
+      $('remDoneWrap').classList.toggle('hidden',r.status==='done');
+      $('remDoneDate').value=new Date().toISOString().slice(0,10); $('remDoneNote').value='';
+      $('remNewNote').value=''; $('remNewDate').value=''; $('remMsg').innerHTML='';
+      show('remModal');
+    };
+    $('remCancel').onclick=()=>hide('remModal');
+    $('remDoneBtn').onclick=async()=>{
+      if(!REM_CURRENT)return;
+      const { error }=await sb.from('insolvency_asset_reminders').update({ status:'done', done_at:$('remDoneDate').value||new Date().toISOString().slice(0,10), done_note:$('remDoneNote').value.trim()||null }).eq('id',REM_CURRENT.id);
+      if(error){ $('remMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      try{ await logEvent('reminder_done',{ id:REM_CURRENT.id }); }catch(_){}
+      await loadReminders(); renderRemindersTable(); renderObjReminderLists();
+      openRemModal(REM_CURRENT.id);
+    };
+    window.remReopen=async()=>{
+      if(!REM_CURRENT)return;
+      await sb.from('insolvency_asset_reminders').update({ status:'open', done_at:null, done_note:null }).eq('id',REM_CURRENT.id);
+      await loadReminders(); renderRemindersTable(); renderObjReminderLists(); openRemModal(REM_CURRENT.id);
+    };
+    $('remNewBtn').onclick=async()=>{
+      if(!REM_CURRENT)return;
+      const note=$('remNewNote').value.trim();
+      if(!note){ $('remMsg').innerHTML='<div class="error">Įrašykite pastabą.</div>'; return; }
+      const { error }=await sb.from('insolvency_asset_reminders').insert({ case_id:CURRENT.id, asset_id:REM_CURRENT.asset_id, lease_id:REM_CURRENT.lease_id, note, remind_on:$('remNewDate').value||null, created_by:CURRENT_UID });
+      if(error){ $('remMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      $('remNewNote').value=''; $('remNewDate').value='';
+      $('remMsg').innerHTML='<div class="success">Pastaba pridėta.</div>';
+      await loadReminders(); renderRemindersTable(); renderObjReminderLists();
+    };
+    window.remDel=async(id)=>{
+      const r=REMINDERS.find(x=>x.id===id);
+      if(!confirm('Šalinti pastabą?'+(r&&r.is_auto?' (automatinis priminimas)':'')))return;
+      await sb.from('insolvency_asset_reminders').delete().eq('id',id);
+      await loadReminders(); renderRemindersTable(); renderObjReminderLists();
+    };
+    function objRemListHtml(rs){
+      if(!rs.length)return'<div class="muted" style="font-size:12px;">Pastabų nėra.</div>';
+      return rs.map(r=>{
+        const u=remUrgency(r);
+        return `<div style="border:1px solid var(--bd);border-radius:6px;padding:6px 8px;margin-bottom:4px;font-size:12px;${u==='over'?'background:#FDECEA;':u==='soon'?'background:#FFF7E0;':r.status==='done'?'background:#F0FAF4;':''}">
+          ${r.is_auto?'🤖 ':''}${esc(r.note||'')}
+          ${r.remind_on?` <b>(priminti ${esc(r.remind_on)})</b>`:''}
+          ${r.status==='done'?` <span style="color:#1E7B3C;">✓ ${esc(r.done_at||'')}</span>`:` <button class="btn btn-sm btn-ghost" onclick="openRemModal('${r.id}')" title="Detalės / atžymėti atlikta">✎</button>`}
+          <button class="btn btn-sm btn-ghost" style="color:#C0392B;" onclick="remDel('${r.id}')" title="Šalinti">✕</button>
+        </div>`;
+      }).join('');
+    }
+    function renderObjReminderLists(){
+      const lid=$('lsId').value;
+      if(lid)$('lsRemList').innerHTML=objRemListHtml(REMINDERS.filter(r=>r.lease_id===lid));
+      const aid=$('assetId').value;
+      if(aid)$('asRemList').innerHTML=objRemListHtml(REMINDERS.filter(r=>r.asset_id===aid&&!r.lease_id));
+    }
+    $('lsRemAddBtn').onclick=async()=>{
+      const lid=$('lsId').value; if(!lid)return;
+      const note=$('lsRemNote').value.trim();
+      if(!note){ $('lsMsg').innerHTML='<div class="error">Įrašykite pastabą.</div>'; return; }
+      const { error }=await sb.from('insolvency_asset_reminders').insert({ case_id:CURRENT.id, lease_id:lid, note, remind_on:$('lsRemDate').value||null, created_by:CURRENT_UID });
+      if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      $('lsRemNote').value=''; $('lsRemDate').value='';
+      await loadReminders(); renderObjReminderLists(); renderRemindersTable();
+    };
+    $('asRemAddBtn').onclick=async()=>{
+      const aid=$('assetId').value; if(!aid)return;
+      const note=$('asRemNote').value.trim();
+      if(!note){ $('assetMsg').innerHTML='<div class="error">Įrašykite pastabą.</div>'; return; }
+      const { error }=await sb.from('insolvency_asset_reminders').insert({ case_id:CURRENT.id, asset_id:aid, note, remind_on:$('asRemDate').value||null, created_by:CURRENT_UID });
+      if(error){ $('assetMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      $('asRemNote').value=''; $('asRemDate').value='';
+      await loadReminders(); renderObjReminderLists(); renderRemindersTable();
+    };
+    // automatiniai priminimai (pasiūlymas Nr. 2)
+    async function ensureLeaseEndReminder(l){
+      if(!l||!l.lease_end)return;
+      const exists=REMINDERS.some(r=>r.lease_id===l.id&&r.is_auto&&r.status==='open'&&(r.note||'').includes('baigiasi'));
+      if(exists)return;
+      const today=new Date().toISOString().slice(0,10);
+      let ron=remAddDays(l.lease_end,-30); if(ron<today)ron=today;
+      try{
+        await sb.from('insolvency_asset_reminders').insert({ case_id:CURRENT.id, lease_id:l.id, is_auto:true,
+          note:'Nuomos sutartis Nr. '+(l.contract_no||'')+' baigiasi '+l.lease_end+' — įvertinkite pratęsimą arba turto grąžinimą.',
+          remind_on:ron, created_by:CURRENT_UID });
+        await loadReminders(); renderRemindersTable(); renderObjReminderLists();
+      }catch(_){}
+    }
+    async function ensureDocValidReminder(leaseId,label,validUntil){
+      if(!validUntil)return;
+      const l=LEASES.find(x=>x.id===leaseId)||{};
+      const today=new Date().toISOString().slice(0,10);
+      let ron=remAddDays(validUntil,-30); if(ron<today)ron=today;
+      try{
+        await sb.from('insolvency_asset_reminders').insert({ case_id:CURRENT.id, lease_id:leaseId, is_auto:true,
+          note:'Dokumentas „'+label+'“ (nuomos sutartis Nr. '+(l.contract_no||'')+') galioja iki '+validUntil+' — priminkite nuomininkui pratęsti.',
+          remind_on:ron, created_by:CURRENT_UID });
+        await loadReminders(); renderRemindersTable(); renderObjReminderLists();
+      }catch(_){}
     }
 
     // ---------- ŽURNALAS ----------
