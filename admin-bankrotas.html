@@ -106,6 +106,53 @@
         </div>
       </div>
       <div id="admGrid" class="grid"></div>
+
+      <!-- GAUTŲ LAIŠKŲ BUCKET -->
+      <div class="card" style="margin-top:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <strong>📥 Gautų laiškų dėžutė <span id="inboxCount" class="badge badge-gold" style="display:none;"></span></strong>
+          <div class="tabs" style="margin:0;">
+            <div class="tab active" data-inbox="active">Aktyvūs</div>
+            <div class="tab" data-inbox="irrelevant">Neaktualūs</div>
+          </div>
+        </div>
+        <div class="muted" style="font-size:12px;margin:6px 0 10px;">Laiškai, atsiųsti į sistemos dėžutę el. paštu. Neperskaityti — paryškinti. Priskirkite laišką projektui — bylos darbuotojas jį matys skiltyje „Dok. registravimas" ir užregistruos gaunamų arba siunčiamų žurnale.</div>
+        <div id="inboxMsg"></div>
+        <div id="inboxTable"></div>
+      </div>
+    </div>
+
+    <!-- LAIŠKO PERŽIŪROS MODALĖ -->
+    <div id="emailModal" class="modal-bg hidden">
+      <div class="modal" style="max-width:760px;">
+        <h2 id="emStat" style="font-size:16px;"></h2>
+        <input type="hidden" id="emId">
+        <div style="background:#F7F7F9;border:1px solid var(--bd);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:10px;">
+          <div><b>Tema:</b> <span id="emSubject"></span></div>
+          <div><b>Siuntėjas:</b> <span id="emFrom"></span></div>
+          <div><b>Gauta:</b> <span id="emDate"></span> · <b>Kam:</b> <span id="emTo"></span></div>
+        </div>
+        <div style="border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:10px;">
+          <iframe id="emBody" sandbox="" style="width:100%;height:260px;border:0;background:#fff;"></iframe>
+        </div>
+        <div id="emAtts" style="margin-bottom:10px;"></div>
+        <div style="background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:10px 12px;">
+          <label class="label" style="margin-top:0;">Priskirti projektui (bylai)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <select id="emCase" class="select" style="max-width:420px;"></select>
+            <button class="btn btn-sm" id="emAssignBtn">✔ Priskirti</button>
+          </div>
+          <div class="hint" style="margin-top:4px;">Priskyrus, bylos darbuotojas laišką matys skiltyje „Dok. registravimas" kaip užduotį registravimui.</div>
+        </div>
+        <div id="emMsg"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;justify-content:space-between;flex-wrap:wrap;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-ghost" id="emUnreadBtn">✉️ Žymėti neskaitytu</button>
+            <button class="btn btn-sm btn-ghost" id="emIrrelevantBtn">🚫 Į neaktualius</button>
+          </div>
+          <button class="btn btn-ghost" id="emCloseBtn">Uždaryti</button>
+        </div>
+      </div>
     </div>
 
     <!-- NUSTATYMAI (trynimas / šablonų tvarkymas) -->
@@ -334,6 +381,7 @@
 
       <!-- DOKUMENTŲ REGISTRAS (gaunami / siunčiami) -->
       <div id="paneRegistry" class="card hidden">
+        <div id="caseInboxTasks"></div>
         <div id="regCodeWarn" class="hidden" style="background:#FFF7E0;border:1px solid var(--gold);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
           <strong style="color:#8A6D00;">⚠ Nenustatytas registracijos trumpinys</strong>
           <div class="muted" style="font-size:12px;">Bylos kortelėje įveskite trumpinį (pvz. TOR) ir išsaugokite — be jo registracijos numeris (pvz. G26-TOR-001) negali būti suformuotas.</div>
@@ -995,7 +1043,9 @@
           body.perm-view [onclick*="delGroupItem"], body.perm-view [onclick*="addGroupItem"], body.perm-view #regNoOverrideWrap,
           body.perm-view #libUploadBtn, body.perm-view [onclick*="editLibraryDoc"], body.perm-view [onclick*="delLibraryDoc"],
           body.perm-view [onclick*="registerLibraryDoc"], body.perm-view #newDocKindBtn, body.perm-view [onclick*="saveDocKind"],
-          body.perm-view [onclick*="saveAssetGroup"], body.perm-view [onclick*="renameAssetGroup"]
+          body.perm-view [onclick*="saveAssetGroup"], body.perm-view [onclick*="renameAssetGroup"],
+          body.perm-view #emAssignBtn, body.perm-view #emIrrelevantBtn, body.perm-view #emUnreadBtn,
+          body.perm-view [onclick*="setEmailStatus"], body.perm-view [onclick*="registerEmail"]
           { display: none !important; }`;
         document.head.appendChild(st);
         document.body.classList.add('perm-view');
@@ -1123,6 +1173,7 @@
       if(a.error||t.error){ $('admGrid').innerHTML='<div class="error">Klaida: '+esc((a.error||t.error).message)+'</div>'; views('admListView'); return; }
       ADMINS=a.data||[]; TEMPLATES=t.data||[];
       renderAdmGrid(); views('admListView');
+      loadInbox();
     }
     function renderAdmGrid(){
       if(!ADMINS.length){ $('admGrid').innerHTML='<div class="muted" style="padding:20px;">Administratorių nėra. Sukurkite naują.</div>'; return; }
@@ -1134,6 +1185,188 @@
     }
     $('newAdmBtn').onclick=()=>openAdmModal(null);
     $('backToAdmins').onclick=()=>{ CURRENT_ADM=null; loadAdmins(); };
+
+    // ---------- GAUTŲ LAIŠKŲ BUCKET ----------
+    let INBOX=[], INBOX_TAB='active', ALL_CASES=[], CASE_INBOX=[];
+    async function loadInbox(){
+      try{
+        const [e,c]=await Promise.all([
+          sb.from('inbox_emails').select('*').order('received_at',{ascending:false}).limit(300),
+          sb.from('insolvency_cases').select('id,debtor_name,case_short_code,administrator_id')
+        ]);
+        INBOX=e.data||[]; ALL_CASES=c.data||[];
+      }catch(_){ INBOX=[]; }
+      renderInbox();
+    }
+    function caseLabel(id){
+      const c=ALL_CASES.find(x=>x.id===id); if(!c)return '—';
+      const adm=ADMINS.find(a=>a.id===c.administrator_id);
+      return (c.debtor_name||'—')+(c.case_short_code?(' ('+c.case_short_code+')'):'')+(adm?(' — '+adm.name):'');
+    }
+    function renderInbox(){
+      const el=$('inboxTable'); if(!el)return;
+      const rows=INBOX.filter(m=>INBOX_TAB==='irrelevant'?m.status==='irrelevant':m.status!=='irrelevant');
+      const newCount=INBOX.filter(m=>m.status!=='irrelevant'&&!m.is_read).length;
+      const cnt=$('inboxCount');
+      if(cnt){ cnt.style.display=newCount?'':'none'; cnt.textContent=newCount+' neskaityti'; }
+      if(!rows.length){ el.innerHTML='<div class="muted center" style="padding:14px;">'+(INBOX_TAB==='irrelevant'?'Neaktualių laiškų nėra.':'Laiškų nėra. Laiškai, atsiųsti į sistemos el. pašto dėžutę, atsiras čia.')+'</div>'; return; }
+      el.innerHTML='<table><thead><tr><th>Gauta</th><th>Siuntėjas</th><th>Tema</th><th>Priedai</th><th>Būsena</th><th></th></tr></thead><tbody>'+rows.map(m=>{
+        const bold=!m.is_read?'font-weight:700;':'';
+        const st=m.status==='registered'?'<span class="badge badge-green" title="Registruota žurnale">📓 '+esc(m.reg_number||'Registruota')+'</span>'
+          :m.status==='assigned'?'<span class="badge badge-gold" title="'+esc(caseLabel(m.assigned_case_id))+'">📌 Priskirta</span>'
+          :m.status==='irrelevant'?'<span class="badge badge-gray">Neaktualus</span>'
+          :'<span class="badge" style="background:#DBEAFE;color:#1E40AF;">Naujas</span>';
+        const na=(m.attachments||[]).filter(a=>a.ok!==false).length;
+        return `<tr>
+          <td class="muted" style="white-space:nowrap;${bold}">${fmtDate(m.received_at)}</td>
+          <td style="${bold}">${esc(m.from_name||m.from_email||'')}${m.from_name?'<div class="muted" style="font-size:11px;font-weight:400;">'+esc(m.from_email||'')+'</div>':''}</td>
+          <td style="${bold}">${esc(m.subject||'(be temos)')}${m.assigned_case_id?'<div class="muted" style="font-size:11px;font-weight:400;">→ '+esc(caseLabel(m.assigned_case_id))+'</div>':''}</td>
+          <td>${na||'—'}</td><td>${st}</td>
+          <td style="text-align:right;white-space:nowrap;">
+            <button class="btn btn-sm" onclick="openEmail('${m.id}')">👁 Peržiūrėti</button>
+            ${m.status==='irrelevant'?` <button class="btn btn-sm btn-ghost" onclick="setEmailStatus('${m.id}','new')" title="Grąžinti į aktyvius">↩️</button>`:''}
+          </td></tr>`;
+      }).join('')+'</tbody></table>';
+    }
+    document.querySelectorAll('[data-inbox]').forEach(t=>{ t.onclick=()=>{ document.querySelectorAll('[data-inbox]').forEach(x=>x.classList.remove('active')); t.classList.add('active'); INBOX_TAB=t.dataset.inbox; renderInbox(); }; });
+    window.setEmailStatus=async(id,status)=>{
+      const upd={ status };
+      if(status==='new'){ upd.assigned_case_id=null; upd.assigned_by=null; upd.assigned_at=null; }
+      const { error }=await sb.from('inbox_emails').update(upd).eq('id',id);
+      if(error){ $('inboxMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      await loadInbox();
+    };
+    window.openEmail=async id=>{
+      const m=INBOX.find(x=>x.id===id)||CASE_INBOX.find(x=>x.id===id); if(!m)return;
+      if(!ALL_CASES.length){ try{ const c=await sb.from('insolvency_cases').select('id,debtor_name,case_short_code,administrator_id'); ALL_CASES=c.data||[]; }catch(_){} }
+      $('emId').value=m.id;
+      $('emStat').textContent='📧 Laiškas'+(m.status==='registered'?(' — registruotas '+(m.reg_number||'')):m.status==='assigned'?' — priskirtas projektui':'');
+      $('emSubject').textContent=m.subject||'(be temos)';
+      $('emFrom').textContent=(m.from_name?m.from_name+' · ':'')+(m.from_email||'');
+      $('emDate').textContent=fmtDate(m.received_at);
+      $('emTo').textContent=m.to_email||'';
+      $('emBody').srcdoc=m.body_html||('<pre style="font-family:-apple-system,Arial,sans-serif;font-size:13px;white-space:pre-wrap;padding:10px;">'+esc(m.body_text||'(tuščias turinys)')+'</pre>');
+      $('emAtts').innerHTML=(m.attachments||[]).length
+        ? '<b style="font-size:13px;">Priedai:</b> '+(m.attachments||[]).map(a=>a.ok===false
+            ? `<span class="muted" style="font-size:12px;">${esc(a.name||'priedas')} (nepavyko parsisiųsti)</span>`
+            : `<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(a.path)}','${esc(a.name||'priedas')}')">📎 ${esc(a.name||'priedas')}</button>`).join(' ')
+        : '<span class="muted" style="font-size:12px;">Priedų nėra.</span>';
+      $('emCase').innerHTML=ALL_CASES.length?ALL_CASES.map(c=>`<option value="${c.id}" ${m.assigned_case_id===c.id?'selected':''}>${esc(caseLabel(c.id))}</option>`).join(''):'<option value="">— bylų nėra —</option>';
+      const done=m.status==='registered';
+      $('emAssignBtn').disabled=done; $('emIrrelevantBtn').disabled=done;
+      $('emMsg').innerHTML='';
+      show('emailModal');
+      if(!m.is_read){ try{ await sb.from('inbox_emails').update({ is_read:true }).eq('id',m.id); m.is_read=true; renderInbox(); }catch(_){} }
+    };
+    $('emCloseBtn').onclick=()=>hide('emailModal');
+    $('emUnreadBtn').onclick=async()=>{ const id=$('emId').value; await sb.from('inbox_emails').update({ is_read:false }).eq('id',id); hide('emailModal'); await loadInbox(); };
+    $('emIrrelevantBtn').onclick=async()=>{ const id=$('emId').value; if(!confirm('Perkelti laišką į neaktualius? Jį visada galėsite grąžinti.'))return; hide('emailModal'); await setEmailStatus(id,'irrelevant'); };
+    $('emAssignBtn').onclick=async()=>{
+      const id=$('emId').value, caseId=$('emCase').value;
+      if(!caseId){ $('emMsg').innerHTML='<div class="error">Pasirinkite bylą.</div>'; return; }
+      const { error }=await sb.from('inbox_emails').update({ status:'assigned', assigned_case_id:caseId, assigned_by:CURRENT_UID, assigned_at:new Date().toISOString() }).eq('id',id);
+      if(error){ $('emMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      try{ await sb.rpc('log_insolvency_event',{ p_case_id:caseId, p_action:'inbox_email_assigned', p_details:{ email_id:id } }); }catch(_){}
+      $('emMsg').innerHTML='<div class="success">Laiškas priskirtas: '+esc(caseLabel(caseId))+'. Bylos darbuotojas jį matys „Dok. registravimas" skiltyje.</div>';
+      await loadInbox();
+      if(CURRENT&&CURRENT.id===caseId)loadCaseInboxTasks();
+    };
+
+    // ---------- PRISKIRTI LAIŠKAI BYLOJE (registravimo užduotys) ----------
+    async function loadCaseInboxTasks(){
+      if(!CURRENT||CURRENT.__new||!CURRENT.id){ CASE_INBOX=[]; renderCaseInboxTasks(); return; }
+      try{
+        const { data }=await sb.from('inbox_emails').select('*').eq('assigned_case_id',CURRENT.id).eq('status','assigned').order('received_at');
+        CASE_INBOX=data||[];
+      }catch(_){ CASE_INBOX=[]; }
+      renderCaseInboxTasks();
+      const tab=document.querySelector('#topTabs .tab[data-top="registry"]');
+      if(tab)tab.innerHTML='🗂 Dok. registravimas'+(CASE_INBOX.length?' <span title="Priskirti laiškai laukia registravimo" style="color:#C9A961;font-weight:700;">📥'+CASE_INBOX.length+'</span>':'');
+    }
+    function renderCaseInboxTasks(){
+      const el=$('caseInboxTasks'); if(!el)return;
+      if(!CASE_INBOX.length){ el.innerHTML=''; return; }
+      el.innerHTML='<div style="background:#FFF9EC;border:1px solid var(--gold);border-radius:8px;padding:12px 14px;margin-bottom:14px;">'
+        +'<strong>📥 Priskirti laiškai registravimui ('+CASE_INBOX.length+')</strong>'
+        +CASE_INBOX.map(m=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid #EADFC5;padding:8px 0;margin-top:8px;">
+          <div style="flex:1;min-width:220px;"><b>${esc(m.subject||'(be temos)')}</b><div class="muted" style="font-size:12px;">${esc(m.from_name||m.from_email||'')} · ${fmtDate(m.received_at)} · priedų: ${(m.attachments||[]).filter(a=>a.ok!==false).length}</div></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-ghost" onclick="openEmail('${m.id}')" title="Peržiūrėti laišką">👁</button>
+            <button class="btn btn-sm" onclick="registerEmail('${m.id}','received')">📥 Registruoti gaunamų</button>
+            <button class="btn btn-sm btn-gold" onclick="registerEmail('${m.id}','sent')">📤 Registruoti siunčiamų</button>
+          </div></div>`).join('')+'</div>';
+    }
+    let REG_FROM_EMAIL=null;
+    function canvasToA4PdfBlob(canvas){
+      const { jsPDF }=window.jspdf; const pdf=new jsPDF('p','mm','a4');
+      const ML=30,MR=10,MT=20,MB=20,w=210-ML-MR,pageHmm=297-MT-MB;
+      const pxPerMm=canvas.width/w, pagePx=Math.floor(pageHmm*pxPerMm);
+      const cctx=canvas.getContext('2d');
+      const isBlank=y=>{ const d=cctx.getImageData(0,y,canvas.width,1).data; for(let i=0;i<d.length;i+=16){ if(d[i+3]>10&&(d[i]<246||d[i+1]<246||d[i+2]<246))return false; } return true; };
+      let pos=0,first=true;
+      while(pos<canvas.height){
+        let end=Math.min(pos+pagePx,canvas.height);
+        if(end<canvas.height){ let cut=end; const minCut=pos+Math.floor(pagePx*0.55); while(cut>minCut&&!isBlank(cut))cut--; if(cut>minCut)end=cut; }
+        const h=end-pos; const pc=document.createElement('canvas'); pc.width=canvas.width; pc.height=h;
+        pc.getContext('2d').drawImage(canvas,0,pos,canvas.width,h,0,0,canvas.width,h);
+        if(!first)pdf.addPage();
+        pdf.addImage(pc.toDataURL('image/png'),'PNG',ML,MT,w,h/pxPerMm);
+        first=false; pos=end;
+      }
+      return pdf.output('blob');
+    }
+    async function buildEmailCoverPdf(m,type){
+      const body=(m.body_text&&m.body_text.trim())?m.body_text
+        :(m.body_html?m.body_html.replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/[ \t]{3,}/g,' '):'');
+      const holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-9999px'; holder.style.top='0';
+      holder.innerHTML=`<div style="font-family:'Times New Roman',serif;color:#000;width:700px;padding:10px;background:#fff;">
+        <h2 style="text-align:center;font-size:15px;margin:4px 0 12px;">EL. LAIŠKO IŠRAŠAS</h2>
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+          <tr><td style="padding:4px 8px;border:1px solid #999;width:26%;"><b>${type==='received'?'Gauta':'Išsiųsta'}</b></td><td style="padding:4px 8px;border:1px solid #999;">${esc(fmtDate(m.received_at))}</td></tr>
+          <tr><td style="padding:4px 8px;border:1px solid #999;"><b>Siuntėjas</b></td><td style="padding:4px 8px;border:1px solid #999;">${esc((m.from_name?m.from_name+' · ':'')+(m.from_email||''))}</td></tr>
+          <tr><td style="padding:4px 8px;border:1px solid #999;"><b>Gavėjas</b></td><td style="padding:4px 8px;border:1px solid #999;">${esc(m.to_email||'')}</td></tr>
+          <tr><td style="padding:4px 8px;border:1px solid #999;"><b>Tema</b></td><td style="padding:4px 8px;border:1px solid #999;">${esc(m.subject||'')}</td></tr>
+          <tr><td style="padding:4px 8px;border:1px solid #999;"><b>Priedai</b></td><td style="padding:4px 8px;border:1px solid #999;">${esc((m.attachments||[]).filter(a=>a.ok!==false).map(a=>a.name).join('; ')||'—')}</td></tr>
+        </table>
+        <div style="font-size:12.5px;line-height:1.55;margin-top:12px;">${esc(body).replace(/\n/g,'<br>')}</div>
+      </div>`;
+      document.body.appendChild(holder);
+      const canvas=await html2canvas(holder.firstElementChild,{ scale:2, backgroundColor:'#fff' });
+      document.body.removeChild(holder);
+      return canvasToA4PdfBlob(canvas);
+    }
+    window.registerEmail=async(id,type)=>{
+      const m=CASE_INBOX.find(x=>x.id===id)||INBOX.find(x=>x.id===id); if(!m)return;
+      if(!CURRENT.project_code){ alert('Bylos kortelėje (Pagrindinis) įveskite registracijos trumpinį (pvz. TOR) ir išsaugokite.'); return; }
+      try{
+        // 1) laiško viršelis — pirmas registruojamo PDF lapas
+        const coverBlob=await buildEmailCoverPdf(m,type);
+        const files=[new File([coverBlob],'el_laisko_israsas.pdf',{ type:'application/pdf' })];
+        // 2) priedai (PDF/JPG/PNG jungiami; kiti formatai praleidžiami)
+        const mergeable=a=>/\.(pdf|jpe?g|png)$/i.test(a.name||'')||/^(application\/pdf|image\/(png|jpe?g))/i.test(a.content_type||'');
+        const skipped=[];
+        const { data:{ session } }=await sb.auth.getSession();
+        for(const a of (m.attachments||[])){
+          if(a.ok===false||!a.path)continue;
+          if(!mergeable(a)){ skipped.push(a.name||'priedas'); continue; }
+          try{
+            const r=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY}, body:JSON.stringify({ path:a.path }) });
+            const j=await r.json(); if(!j.url)continue;
+            const b=await (await fetch(j.url)).blob();
+            files.push(new File([b],a.name||'priedas.pdf',{ type:a.content_type||b.type }));
+          }catch(_){ skipped.push(a.name||'priedas'); }
+        }
+        // 3) registravimo forma su užpildytais duomenimis; priedų eiliškumas keičiamas ▲▼
+        setTop('registry');
+        openRegModal(type);
+        REG_FILES=files; renderRegFiles();
+        $('regTitle').value=m.subject||'El. laiškas';
+        $('regParty').value=m.from_name||m.from_email||'';
+        if(type==='received'&&m.received_at)$('regDate').value=String(m.received_at).slice(0,10);
+        REG_FROM_EMAIL={ id:m.id, type };
+        $('regMsg').innerHTML='<div class="hint">Laiško išrašas — pirmas lapas. Priedų eiliškumą galite keisti ▲▼.'+(skipped.length?(' <span style="color:#B45309;">Praleisti nejungiami formatai: '+esc(skipped.join(', '))+' (jungiami tik PDF/JPG/PNG).</span>'):'')+'</div>';
+      }catch(err){ alert('Klaida: '+(err.message||String(err))); }
+    };
 
     // ---------- LYGIS 2: ADMINISTRATORIAUS APLINKA ----------
     window.openWorkspace=async(admId)=>{
@@ -1222,7 +1455,7 @@
       document.querySelectorAll('#paneRegistry .tab').forEach(t=>t.classList.toggle('active',t.dataset.regtype==='received'));
       setTop('main'); setCardSaved(false);
       views('caseDetailView');
-      if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); loadContacts(); updateAssetsStar(true); }
+      if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); loadContacts(); updateAssetsStar(true); loadCaseInboxTasks(); }
       else { RECIPIENTS=[]; DOCUMENTS=[]; renderContacts(); }
     };
     function collectCard(){ const o={ administrator_id:CURRENT_ADM.id }; document.querySelectorAll('#cardForm [data-f]').forEach(el=>{ o[el.dataset.f]=el.type==='checkbox'?el.checked:el.value; }); return o; }
@@ -1289,7 +1522,7 @@
         });
         renderRecipients();
       }
-      if(key==='regjournal')loadRegistry();
+      if(key==='regjournal'){ loadRegistry(); loadCaseInboxTasks(); }
       if(key==='regnew')$('regCodeWarn2').classList.toggle('hidden', !!(CURRENT&&CURRENT.project_code));
       if(key==='library')loadLibrary();
       if(key==='acts')loadActs();
@@ -2035,6 +2268,7 @@
       $('regTitle').value=''; $('regParty').value=''; $('regNotes').value='';
       $('regDate').value=new Date().toISOString().slice(0,10);
       REG_FILES=[]; renderRegFiles(); $('regMsg').innerHTML='';
+      REG_FROM_EMAIL=null;
       $('regSubmit').disabled=false;
       fillPartySuggestions();
       show('regModal');
@@ -2167,6 +2401,14 @@
           throw new Error('Klaida: '+reg.data.error_code+hint);
         }
         hide('regModal');
+        // jei registruota iš gauto el. laiško — pažymim laišką registruotu
+        if(REG_FROM_EMAIL){
+          try{
+            await sb.from('inbox_emails').update({ status:'registered', reg_number:regNumber, reg_id:reg.data.id||null, reg_doc_type:type, is_read:true }).eq('id',REG_FROM_EMAIL.id);
+          }catch(_){}
+          REG_FROM_EMAIL=null;
+          loadCaseInboxTasks();
+        }
         await loadRegistry();
         alert('Dokumentas užregistruotas: '+regNumber);
       }catch(err){
