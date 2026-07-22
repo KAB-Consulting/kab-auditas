@@ -715,8 +715,20 @@
         </div>
         <div id="impAiMsg"></div>
       </div>
-      <label class="label">Arba įklijuokite (stulpeliai: <b>Vardas; Kodas; Reikalavimo suma; El.paštas; Telefonas; Adresas</b>)</label>
+      <!-- STULPELIŲ PRISKYRIMAS (mapinimas) -->
+      <div id="impMapBlock" class="hidden" style="margin:10px 0;background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:12px;">
+        <strong style="color:var(--navy);">Stulpelių priskyrimas</strong>
+        <div class="hint" style="margin:4px 0 8px;">Patikrinkite, kuris įkelto sąrašo stulpelis atitinka kurį sistemos lauką (galite pakeisti):</div>
+        <div id="impMapping"></div>
+        <div id="impPreview" style="margin-top:8px;overflow:auto;max-height:180px;"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-gold" id="impMapApply" type="button">✓ Taikyti priskyrimą</button>
+          <span id="impMapMsg" style="font-size:12px;"></span>
+        </div>
+      </div>
+      <label class="label">Arba įklijuokite iš Excel/Word (stulpeliai atskirti Tab arba ;)</label>
       <textarea id="impData" class="textarea" style="min-height:120px;font-family:monospace;" placeholder="UAB Pavyzdys; 123456789; 1000.00; info@pvz.lt; +37060000000; Gatvė 1, Vilnius"></textarea>
+      <div style="margin-top:6px;"><button class="btn btn-sm btn-ghost" id="impParseBtn" type="button">🔎 Atpažinti stulpelius</button></div>
       <div id="impMsg"></div>
       <!-- DUBLIŲ blokas (rodomas po patikros) -->
       <div id="impDupBlock" class="hidden" style="margin-top:14px;background:#FFF7E0;border:1px solid var(--gold);border-radius:8px;padding:12px;">
@@ -1071,7 +1083,7 @@
           body.perm-view [onclick*="saveAssetGroup"], body.perm-view [onclick*="renameAssetGroup"],
           body.perm-view #emAssignBtn, body.perm-view #emIrrelevantBtn, body.perm-view #emUnreadBtn,
           body.perm-view [onclick*="setEmailStatus"], body.perm-view [onclick*="registerEmail"],
-          body.perm-view [onclick*="openRegEdit"]
+          body.perm-view [onclick*="openRegEdit"], body.perm-view #impMapApply, body.perm-view #impParseBtn
           { display: none !important; }`;
         document.head.appendChild(st);
         document.body.classList.add('perm-view');
@@ -1709,17 +1721,84 @@
         const wb=XLSX.read(buf,{type:'array'});
         const ws=wb.Sheets[wb.SheetNames[0]];
         const matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-        const recs=rowsToRecipients(matrix.filter(r=>r.some(c=>String(c).trim())), $('impType').value);
-        if(!recs.length){ $('impSheetMsg').innerHTML='<div class="error">Nepavyko atpažinti eilučių. Patikrinkite, ar yra antraštė su „Vardas/Pavadinimas“.</div>'; return; }
-        IMPORT_ROWS=recs;
-        // parodom textarea peržiūrai (kad matytų ką importuos)
-        $('impData').value=recs.map(r=>[r.full_name,r.personal_code||'',r.claim_amount||'',r.email||'',r.phone||'',r.address||''].join('; ')).join('\n');
-        $('impSheetMsg').innerHTML='<div class="success">Atpažinta eilučių: '+recs.length+'. Peržiūrėkite žemiau ir spauskite „Tikrinti ir importuoti“.</div>';
+        openImpMapping(matrix);
       }catch(err){ $('impSheetMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
       finally{ e.target.value=''; }
     };
+
+    // --- STULPELIŲ PRISKYRIMAS (mapinimas su patvirtinimu — kaip aktuose) ---
+    let IMP_MATRIX=[], IMP_HEADERS=[], IMP_HASHEADER=false;
+    const IMP_FIELDS=[['full_name','Vardas / Pavadinimas *'],['personal_code','Kodas'],['claim_amount','Reikalavimo suma'],['email','El. paštas'],['phone','Telefonas'],['address','Adresas'],['position','Pareigos']];
+    function impGuess(h){
+      const n=(h||'').toString().toLowerCase();
+      if(/vardas|pavadinim|gav[eė]jas|kreditor|\bname\b/.test(n))return 'full_name';
+      if(/kodas|\bcode\b/.test(n))return 'personal_code';
+      if(/suma|reikalav|amount|claim/.test(n))return 'claim_amount';
+      if(/pa[šs]t|email|e-mail/.test(n))return 'email';
+      if(/telefon|phone|\btel\b/.test(n))return 'phone';
+      if(/adres|address|vietov/.test(n))return 'address';
+      if(/pareig|position/.test(n))return 'position';
+      return '';
+    }
+    function openImpMapping(matrix){
+      // ląstelėse esantys eilučių lūžiai (pvz. daugiaeilis adresas) suklijuojami kableliais — įrašai nebeskyla
+      IMP_MATRIX=(matrix||[]).map(r=>(r||[]).map(c=>String(c==null?'':c).replace(/\s*\r?\n\s*/g,', ').trim())).filter(r=>r.some(c=>c));
+      if(!IMP_MATRIX.length){ $('impSheetMsg').innerHTML='<div class="error">Duomenų nerasta.</div>'; return; }
+      const first=IMP_MATRIX[0];
+      IMP_HASHEADER=first.some(c=>impGuess(c));
+      IMP_HEADERS=IMP_HASHEADER?first:first.map((_,i)=>'Stulpelis '+(i+1));
+      const opts=k=>['<option value="">— nepriskirta —</option>'].concat(IMP_FIELDS.map(f=>`<option value="${f[0]}" ${k===f[0]?'selected':''}>${esc(f[1])}</option>`)).join('');
+      const fixedOrder=['full_name','personal_code','claim_amount','email','phone','address'];
+      $('impMapping').innerHTML=IMP_HEADERS.map((h,i)=>{
+        const guessed=IMP_HASHEADER?impGuess(h):(fixedOrder[i]||'');
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="min-width:150px;font-size:13px;"><b>${esc(h||('Stulpelis '+(i+1)))}</b></span> → <select class="select imap" data-ci="${i}" style="max-width:240px;">${opts(guessed)}</select></div>`;
+      }).join('');
+      renderImpPreview();
+      document.querySelectorAll('.imap').forEach(s=>s.onchange=renderImpPreview);
+      $('impMapMsg').textContent='';
+      $('impMapBlock').classList.remove('hidden');
+      $('impSheetMsg').innerHTML='<div class="hint">Rasta stulpelių: '+IMP_HEADERS.length+', duomenų eilučių: '+(IMP_MATRIX.length-(IMP_HASHEADER?1:0))+'. Patikrinkite priskyrimą žemiau.</div>';
+    }
+    function impCurrentMap(){ const map={}; document.querySelectorAll('.imap').forEach(s=>{ if(s.value)map[+s.dataset.ci]=s.value; }); return map; }
+    function renderImpPreview(){
+      const map=impCurrentMap();
+      const start=IMP_HASHEADER?1:0;
+      const rows=IMP_MATRIX.slice(start,start+5);
+      const cols=Object.entries(map);
+      if(!cols.length){ $('impPreview').innerHTML='<div class="muted" style="font-size:12px;">Nė vienas stulpelis nepriskirtas.</div>'; return; }
+      $('impPreview').innerHTML='<table style="font-size:12px;"><thead><tr>'+cols.map(([ci,f])=>'<th>'+esc((IMP_FIELDS.find(x=>x[0]===f)||[,f])[1])+'</th>').join('')+'</tr></thead><tbody>'+
+        rows.map(r=>'<tr>'+cols.map(([ci])=>'<td>'+esc(r[+ci]||'')+'</td>').join('')+'</tr>').join('')+'</tbody></table>'+
+        (IMP_MATRIX.length-start>5?'<div class="muted" style="font-size:11px;">… ir dar '+(IMP_MATRIX.length-start-5)+' eil.</div>':'');
+    }
+    $('impMapApply').onclick=()=>{
+      const map=impCurrentMap();
+      if(!Object.values(map).includes('full_name')){ $('impMapMsg').textContent='Bent vienas stulpelis turi būti priskirtas „Vardas / Pavadinimas".'; $('impMapMsg').style.color='#C0392B'; return; }
+      const start=IMP_HASHEADER?1:0;
+      const type=$('impType').value;
+      const out=[];
+      for(let i=start;i<IMP_MATRIX.length;i++){
+        const r=IMP_MATRIX[i]; const row={ recipient_type:type };
+        for(const ci in map){ const v=(r[+ci]||'').trim(); row[map[ci]]=v||null; }
+        if(!row.full_name)continue;
+        if(row.claim_amount!=null)row.claim_amount=parseFloat(String(row.claim_amount).replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||null;
+        out.push(row);
+      }
+      if(!out.length){ $('impMapMsg').textContent='Nerasta nė vienos eilutės su pavadinimu.'; $('impMapMsg').style.color='#C0392B'; return; }
+      IMPORT_ROWS=out;
+      $('impData').value='';
+      $('impMapMsg').textContent='✓ Priskirta. Paruošta importui: '+out.length+' eil. Spauskite „Tikrinti ir importuoti".';
+      $('impMapMsg').style.color='#046C4E';
+    };
+    $('impParseBtn').onclick=()=>{
+      const raw=$('impData').value.trim();
+      if(!raw){ $('impMsg').innerHTML='<div class="error">Įklijuokite duomenis.</div>'; return; }
+      const lines=raw.split('\n').map(l=>l.replace(/\r$/,'')).filter(l=>l.trim());
+      const sep=lines[0].includes('\t')?'\t':';';
+      openImpMapping(lines.map(l=>l.split(sep)));
+      $('impMsg').innerHTML='';
+    };
     function resetImportModal(){ $('impDupBlock').classList.add('hidden'); $('impDupList').innerHTML=''; DUP_PENDING=null; }
-    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; $('impAiMsg').innerHTML=''; $('impSheetMsg').innerHTML=''; IMPORT_ROWS=[]; $('impType').value=REC_TYPE; resetImportModal(); show('importModal'); };
+    $('importRecipientsBtn').onclick=()=>{ $('impData').value=''; $('impMsg').innerHTML=''; $('impAiMsg').innerHTML=''; $('impSheetMsg').innerHTML=''; IMPORT_ROWS=[]; $('impMapBlock').classList.add('hidden'); $('impMapping').innerHTML=''; $('impPreview').innerHTML=''; $('impType').value=REC_TYPE; resetImportModal(); show('importModal'); };
     $('impCancel').onclick=()=>hide('importModal');
     const norm=s=>(s||'').trim().toLowerCase().replace(/\s+/g,' ');
     // dublio paieška tarp esamų to paties tipo: pagal kodą (jei yra), kitaip pagal vardą
@@ -1730,14 +1809,20 @@
     }
     $('impSave').onclick=async()=>{
       const type=$('impType').value;
-      // textarea visada nugali (vartotojas galėjo redaguoti); tvarka: Vardas; Kodas; Suma; El.paštas; Tel; Adresas
-      const lines=$('impData').value.split('\n').map(l=>l.trim()).filter(Boolean);
-      if(!lines.length){ $('impMsg').innerHTML='<div class="error">Nėra duomenų.</div>'; return; }
-      const parsed=lines.map(l=>{ const p=l.split(/\t|;/).map(s=>s.trim());
-        return { recipient_type:type, full_name:p[0]||null, personal_code:p[1]||null,
-          claim_amount: p[2] ? parseFloat(String(p[2]).replace(',','.').replace(/[^0-9.]/g,''))||null : null,
-          email:p[3]||null, phone:p[4]||null, address:p[5]||null }; })
-        .filter(r=>r.full_name);
+      let parsed;
+      if(IMPORT_ROWS.length){
+        // per stulpelių priskyrimą paruošti įrašai (failas arba įklijuota + „Atpažinti stulpelius")
+        parsed=IMPORT_ROWS.map(r=>({ ...r, recipient_type:type }));
+      } else {
+        // senasis kelias: textarea fiksuota tvarka Vardas; Kodas; Suma; El.paštas; Tel; Adresas
+        const lines=$('impData').value.split('\n').map(l=>l.trim()).filter(Boolean);
+        if(!lines.length){ $('impMsg').innerHTML='<div class="error">Nėra duomenų. Įkelkite failą arba įklijuokite sąrašą.</div>'; return; }
+        parsed=lines.map(l=>{ const p=l.split(/\t|;/).map(s=>s.trim());
+          return { recipient_type:type, full_name:p[0]||null, personal_code:p[1]||null,
+            claim_amount: p[2] ? parseFloat(String(p[2]).replace(',','.').replace(/[^0-9.]/g,''))||null : null,
+            email:p[3]||null, phone:p[4]||null, address:p[5]||null }; })
+          .filter(r=>r.full_name);
+      }
       // atskiriam naujus nuo dublių
       const news=[], dups=[];
       parsed.forEach(row=>{ const ex=findExisting(row,type); if(ex)dups.push({row,existing:ex}); else news.push(row); });
