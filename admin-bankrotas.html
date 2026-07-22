@@ -990,9 +990,37 @@
         </div>
       </div>
 
+      <div id="lsAcctSec" class="hidden">
+        <div class="sec-title">Nuomos apskaita</div>
+        <div id="lsAcctSummary" style="margin-bottom:10px;"></div>
+        <strong style="font-size:13px;">Priskaitymai</strong>
+        <div class="hint" style="margin:2px 0 4px;">Nuomos mokestis generuojamas automatiškai kiekvienam mėnesiui (nepilni mėnesiai — proporcingai pagal dienas, sumą galima koreguoti ✎). Kitus mokesčius (komunalinius ir pan.) įrašykite pagal faktą.</div>
+        <div id="lsChargesTable" style="margin-bottom:8px;"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;background:#F6F8FB;border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:14px;">
+          <div><label class="label">Mėnuo</label><input id="lsChMonth" class="input" type="month"></div>
+          <div style="min-width:200px;flex:1;"><label class="label">Mokestis</label><input id="lsChLabel" class="input" placeholder="pvz. komunaliniai mokesčiai"></div>
+          <div style="max-width:130px;"><label class="label">Suma be PVM (€)</label><input id="lsChAmount" class="input" type="number" step="0.01"></div>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;margin-bottom:9px;"><input type="checkbox" id="lsChVat" style="width:auto;"> + PVM</label>
+          <button class="btn btn-sm" type="button" id="lsChAddBtn">+ Pridėti mokestį</button>
+        </div>
+        <strong style="font-size:13px;">Mokėjimai</strong>
+        <div id="lsPaysTable" style="margin:4px 0 8px;"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;background:#F6F8FB;border:1px solid var(--bd);border-radius:8px;padding:8px;">
+          <div><label class="label">Mokėjimo data</label><input id="lsPayDate" class="input" type="date"></div>
+          <div style="max-width:130px;"><label class="label">Suma (€)</label><input id="lsPayAmount" class="input" type="number" step="0.01"></div>
+          <div style="min-width:170px;flex:1;"><label class="label">Pastaba</label><input id="lsPayNote" class="input" placeholder="nebūtina"></div>
+          <input type="file" id="lsPayFile" class="hidden" accept="application/pdf,image/*">
+          <button class="btn btn-sm btn-ghost" type="button" id="lsPayFileBtn">📎 Dokumentas</button>
+          <span id="lsPayFileName" class="muted" style="font-size:12px;"></span>
+          <button class="btn btn-sm" type="button" id="lsPayAddBtn">+ Įrašyti mokėjimą</button>
+        </div>
+        <div id="lsDepositBlock" style="margin-top:12px;"></div>
+      </div>
+
       <div id="lsMsg" style="margin-top:10px;"></div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap;">
         <button class="btn btn-ghost" id="lsCancel">Uždaryti</button>
+        <button class="btn btn-gold hidden" id="lsPdfBtn">📄 Pažyma (PDF)</button>
         <button class="btn btn-danger hidden" id="lsTerminateBtn">✕ Nutraukti sutartį</button>
         <button class="btn btn-gold hidden" id="lsConfirmBtn">✓ Patvirtinti sutartį</button>
         <button class="btn" id="lsSave">Išsaugoti</button>
@@ -1192,6 +1220,9 @@
           body.perm-view #newLeaseBtn, body.perm-view #lsSave, body.perm-view #lsConfirmBtn, body.perm-view #lsTerminateBtn,
           body.perm-view #lsDocAddBtn, body.perm-view #lsAddItem, body.perm-view [onclick*="delLease"],
           body.perm-view [onclick*="delLeaseDoc"], body.perm-view [onclick*="lsItemDel"],
+          body.perm-view #lsChAddBtn, body.perm-view #lsPayAddBtn, body.perm-view #lsPayFileBtn,
+          body.perm-view [onclick*="lsChEdit"], body.perm-view [onclick*="lsChDel"], body.perm-view [onclick*="lsPayDel"],
+          body.perm-view [onclick*="lsDepositMark"], body.perm-view [onclick*="lsDepositClear"], body.perm-view [onclick*="lsAddLateCharge"],
           body.perm-view #emAssignBtn, body.perm-view #emIrrelevantBtn, body.perm-view #emUnreadBtn,
           body.perm-view [onclick*="setEmailStatus"], body.perm-view [onclick*="registerEmail"],
           body.perm-view [onclick*="openRegEdit"], body.perm-view #impMapApply, body.perm-view #impParseBtn,
@@ -3069,6 +3100,7 @@
 
     // ---------- NUOMA (turto nuomos submodulis) ----------
     let LEASES=[], LEASE_ITEMS=[], LEASE_DOCS=[], CPARTIES=[], LS_ITEMS=[];
+    let LEASE_CHARGES=[], LEASE_PAYS=[], LS_PAY_FILE=null;
     const LEASE_ST={ draft:'Juodraštis', active:'Galiojanti', ended:'Pasibaigusi', terminated:'Nutraukta' };
     function leaseEffSt(l){ return (l.status==='active'&&l.lease_end&&l.lease_end<new Date().toISOString().slice(0,10))?'ended':l.status; }
     function leaseStBadge(l){
@@ -3128,6 +3160,7 @@
             <td>${leaseStBadge(l)}</td>
             <td style="text-align:right;white-space:nowrap;">
               <button class="btn btn-sm btn-ghost" onclick="openLeaseModal('${l.id}')" title="Atidaryti / redaguoti">✎</button>
+              <button class="btn btn-sm btn-gold" onclick="leaseCardPdf('${l.id}')" title="Nuomos pažyma (PDF)">📄</button>
               ${leaseEffSt(l)==='draft'?`<button class="btn btn-sm btn-danger" onclick="delLease('${l.id}')" title="Ištrinti juodraštį">🗑</button>`:''}
             </td></tr>`;
         }).join('')+'</tbody></table>';
@@ -3217,6 +3250,8 @@
       $('lsConfirmBtn').classList.toggle('hidden',!(l&&st==='draft'));
       $('lsTerminateBtn').classList.toggle('hidden',!(l&&st==='active'));
       $('lsDocsSec').classList.toggle('hidden',!l);
+      $('lsAcctSec').classList.toggle('hidden',!(l&&st!=='draft'));
+      $('lsPdfBtn').classList.toggle('hidden',!l);
     }
     window.openLeaseModal=async(id)=>{
       if(CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; }
@@ -3237,6 +3272,8 @@
       renderLsItems();
       lsSetStatusUI(l);
       LEASE_DOCS=[]; if(l)loadLeaseDocs(l.id); else $('lsDocsList').innerHTML='';
+      LEASE_CHARGES=[]; LEASE_PAYS=[]; LS_PAY_FILE=null; $('lsPayFileName').textContent='';
+      if(l&&leaseEffSt(l)!=='draft')loadLeaseAcct(l.id);
       $('lsMsg').innerHTML=l?'':'<div class="hint">Išsaugojus sutartį bus galima pridėti dokumentus ir ją patvirtinti.</div>';
       show('leaseModal');
     };
@@ -3288,8 +3325,9 @@
       const { error }=await sb.from('insolvency_asset_leases').update({ status:'active', updated_at:new Date().toISOString() }).eq('id',id);
       if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
       await loadCaseLeases(); lsSetStatusUI(LEASES.find(x=>x.id===id));
-      $('lsMsg').innerHTML='<div class="success">✔ Sutartis patvirtinta.</div>';
+      $('lsMsg').innerHTML='<div class="success">✔ Sutartis patvirtinta. Žemiau — nuomos apskaita.</div>';
       try{ await logEvent('lease_confirmed',{ lease_id:id }); }catch(_){}
+      loadLeaseAcct(id);
       renderLeases();
     };
     $('lsTerminateBtn').onclick=async()=>{
@@ -3299,8 +3337,9 @@
       const { error }=await sb.from('insolvency_asset_leases').update({ status:'terminated', terminated_at:d, termination_reason:reason, updated_at:new Date().toISOString() }).eq('id',id);
       if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
       await loadCaseLeases(); lsSetStatusUI(LEASES.find(x=>x.id===id));
-      $('lsMsg').innerHTML='<div class="success">Sutartis nutraukta.</div>';
+      $('lsMsg').innerHTML='<div class="success">Sutartis nutraukta. Apskaita perskaičiuota iki nutraukimo datos.</div>';
       try{ await logEvent('lease_terminated',{ lease_id:id }); }catch(_){}
+      loadLeaseAcct(id);
       renderLeases();
     };
     // --- nuomos dokumentai ---
@@ -3345,6 +3384,243 @@
       }catch(err){ $('lsMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
       finally{ e.target.value=''; }
     };
+    // --- nuomos apskaita (2 etapas) ---
+    const chTotal=c=>Number(c.amount||0)+Number(c.vat_amount||0);
+    async function loadLeaseAcct(leaseId){
+      try{ await sb.rpc('ensure_lease_charges',{ p_lease_id:leaseId }); }catch(_){}
+      try{
+        const c=await sb.from('insolvency_asset_lease_charges').select('*').eq('lease_id',leaseId).order('period').order('created_at');
+        LEASE_CHARGES=c.data||[];
+        const p=await sb.from('insolvency_asset_lease_payments').select('*').eq('lease_id',leaseId).order('paid_date').order('created_at');
+        LEASE_PAYS=p.data||[];
+      }catch(_){ LEASE_CHARGES=[]; LEASE_PAYS=[]; }
+      renderLeaseAcct();
+    }
+    function leaseAllocation(){
+      const charges=LEASE_CHARGES.slice().sort((a,b)=>a.period<b.period?-1:a.period>b.period?1:0);
+      const linked={}; let free=0;
+      for(const p of LEASE_PAYS){ if(p.charge_id)linked[p.charge_id]=(linked[p.charge_id]||0)+Number(p.amount||0); else free+=Number(p.amount||0); }
+      const rows=charges.map(c=>{ const total=chTotal(c); return { c, total, paid:Math.min(linked[c.id]||0,total) }; });
+      for(const r of rows){ if(free<=0)break; const need=r.total-r.paid; if(need>0){ const use=Math.min(need,free); r.paid+=use; free-=use; } }
+      return { rows, freeLeft:free };
+    }
+    function lateInterestSum(){
+      const l=LEASES.find(x=>x.id===$('lsId').value);
+      if(!l||!l.late_interest_rate)return null;
+      const today=new Date(); let sum=0;
+      for(const r of leaseAllocation().rows){
+        const rem=r.total-r.paid; if(rem<=0.005)continue;
+        const per=new Date(r.c.period);
+        const due=new Date(per.getFullYear(),per.getMonth()+1,0); // mokėtina iki priskaitymo mėn. pabaigos
+        const days=Math.floor((today-due)/86400000); if(days<=0)continue;
+        sum+=rem*Number(l.late_interest_rate)/100*days;
+      }
+      return Math.round(sum*100)/100;
+    }
+    function renderLeaseAcct(){
+      const curMonth=new Date().toISOString().slice(0,7);
+      const alloc=leaseAllocation();
+      const totalCharged=alloc.rows.reduce((s,r)=>s+r.total,0);
+      const totalPaid=LEASE_PAYS.reduce((s,p)=>s+Number(p.amount||0),0);
+      const balance=totalCharged-totalPaid;
+      const late=lateInterestSum();
+      $('lsAcctSummary').innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="background:#F6F8FB;border:1px solid var(--bd);border-radius:8px;padding:8px 14px;"><div class="muted" style="font-size:11px;">Priskaičiuota (su PVM)</div><b>${fmtEur(totalCharged)}</b></div>
+        <div style="background:#F0FAF4;border:1px solid #CBE7D4;border-radius:8px;padding:8px 14px;"><div class="muted" style="font-size:11px;">Sumokėta</div><b>${fmtEur(totalPaid)}</b></div>
+        <div style="background:${balance>0.005?'#FDECEA':'#F6F8FB'};border:1px solid ${balance>0.005?'#F2C3BD':'var(--bd)'};border-radius:8px;padding:8px 14px;"><div class="muted" style="font-size:11px;">${balance<-0.005?'Permoka':'Likutis nesumokėtas'}</div><b style="${balance>0.005?'color:#C0392B;':''}">${fmtEur(Math.abs(balance))}</b></div>
+        ${late!=null?`<div style="background:#FFF7E0;border:1px solid var(--gold);border-radius:8px;padding:8px 14px;"><div class="muted" style="font-size:11px;">Delspinigiai (informaciniai)</div><b>${fmtEur(late)}</b>${late>0?' <button class="btn btn-sm btn-ghost" style="margin-left:6px;" onclick="lsAddLateCharge()" title="Įtraukti apskaičiuotus delspinigius kaip priskaitymą">➕ įtraukti</button>':''}</div>`:''}
+      </div>`;
+      // priskaitymai
+      if(!alloc.rows.length){ $('lsChargesTable').innerHTML='<div class="muted" style="font-size:12px;padding:6px 0;">Priskaitymų dar nėra.</div>'; }
+      else{
+        $('lsChargesTable').innerHTML='<table style="font-size:12px;"><thead><tr><th>Mėnuo</th><th>Mokestis</th><th>Suma</th><th>PVM</th><th>Iš viso</th><th>Sumokėta</th><th>Likutis</th><th></th></tr></thead><tbody>'+
+          alloc.rows.map(r=>{
+            const c=r.c, rem=r.total-r.paid;
+            const overdue=rem>0.005&&c.period.slice(0,7)<curMonth;
+            return `<tr${overdue?' style="background:#FDECEA;"':''}><td style="white-space:nowrap;">${esc(c.period.slice(0,7))}</td>
+              <td>${esc(c.label||c.kind)}${c.notes?'<div class="muted" style="font-size:11px;">'+esc(c.notes)+'</div>':''}</td>
+              <td>${fmtEur(c.amount)}</td><td>${Number(c.vat_amount||0)?fmtEur(c.vat_amount):'—'}</td><td><b>${fmtEur(r.total)}</b></td>
+              <td>${fmtEur(r.paid)}</td><td${rem>0.005?' style="color:#C0392B;font-weight:700;"':''}>${fmtEur(rem)}</td>
+              <td style="text-align:right;white-space:nowrap;">
+                <button class="btn btn-sm btn-ghost" onclick="lsChEdit('${c.id}')" title="Koreguoti sumą">✎</button>
+                ${c.kind!=='rent'?`<button class="btn btn-sm btn-danger" onclick="lsChDel('${c.id}')" title="Šalinti">🗑</button>`:''}
+              </td></tr>`;
+          }).join('')+'</tbody></table>'+(alloc.freeLeft>0.005?'<div class="hint" style="margin-top:4px;">Nepriskirta mokėjimų suma (permoka): '+fmtEur(alloc.freeLeft)+'</div>':'');
+      }
+      // mokėjimai
+      $('lsPaysTable').innerHTML=LEASE_PAYS.length?'<table style="font-size:12px;"><thead><tr><th>Data</th><th>Suma</th><th>Pastaba</th><th>Dokumentas</th><th></th></tr></thead><tbody>'+
+        LEASE_PAYS.map(p=>`<tr><td style="white-space:nowrap;">${esc(p.paid_date)}</td><td><b>${fmtEur(p.amount)}</b></td><td>${esc(p.notes||'')}</td>
+          <td>${p.storage_path?`<span style="cursor:pointer;" onclick="previewDoc('${esc(p.storage_path)}','Mokėjimo dokumentas')">📎 peržiūrėti</span>`:'—'}</td>
+          <td style="text-align:right;"><button class="btn btn-sm btn-danger" onclick="lsPayDel('${p.id}')" title="Šalinti mokėjimą">🗑</button></td></tr>`).join('')+'</tbody></table>':'<div class="muted" style="font-size:12px;padding:4px 0;">Mokėjimų dar nėra.</div>';
+      renderDepositBlock();
+    }
+    window.lsChEdit=async(id)=>{
+      const c=LEASE_CHARGES.find(x=>x.id===id); if(!c)return;
+      const nv=prompt('Nauja suma be PVM (€) — „'+(c.label||c.kind)+'“, '+c.period.slice(0,7)+':',c.amount);
+      if(nv===null||nv==='')return;
+      const l=LEASES.find(x=>x.id===$('lsId').value)||{};
+      const amt=Number(String(nv).replace(',','.'));
+      if(isNaN(amt)){ alert('Neteisinga suma.'); return; }
+      const note=((c.notes||'')+' Koreguota rankiniu būdu '+new Date().toISOString().slice(0,10)+'.').trim();
+      const { error }=await sb.from('insolvency_asset_lease_charges').update({ amount:amt, vat_amount:(c.kind==='rent'&&l.vat)||Number(c.vat_amount||0)>0?Math.round(amt*(l.vat_rate||21))/100:0, notes:note }).eq('id',id);
+      if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      loadLeaseAcct($('lsId').value);
+    };
+    window.lsChDel=async(id)=>{
+      const c=LEASE_CHARGES.find(x=>x.id===id);
+      if(!confirm('Šalinti priskaitymą „'+(c?(c.label||c.kind):'')+'“?'))return;
+      const { error }=await sb.from('insolvency_asset_lease_charges').delete().eq('id',id);
+      if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      loadLeaseAcct($('lsId').value);
+    };
+    $('lsChAddBtn').onclick=async()=>{
+      const leaseId=$('lsId').value; if(!leaseId)return;
+      const mo=$('lsChMonth').value, label=$('lsChLabel').value.trim(), amtV=$('lsChAmount').value;
+      if(!mo||!label||amtV===''){ $('lsMsg').innerHTML='<div class="error">Užpildykite mėnesį, mokesčio pavadinimą ir sumą.</div>'; return; }
+      const l=LEASES.find(x=>x.id===leaseId)||{};
+      const amt=Number(amtV);
+      const vamt=$('lsChVat').checked?Math.round(amt*(l.vat_rate||21))/100:0;
+      const { error }=await sb.from('insolvency_asset_lease_charges').insert({ lease_id:leaseId, period:mo+'-01', kind:'utility', label, amount:amt, vat_amount:vamt, is_auto:false, created_by:CURRENT_UID });
+      if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      $('lsChLabel').value=''; $('lsChAmount').value=''; $('lsChVat').checked=false;
+      $('lsMsg').innerHTML='<div class="success">Mokestis pridėtas.</div>';
+      loadLeaseAcct(leaseId);
+    };
+    window.lsAddLateCharge=async()=>{
+      const leaseId=$('lsId').value; const late=lateInterestSum();
+      if(!leaseId||!late||late<=0)return;
+      const today=new Date().toISOString().slice(0,10);
+      if(!confirm('Įtraukti apskaičiuotus delspinigius ('+fmtEur(late)+' iki '+today+') kaip priskaitymą? Suma fiksuojama ir toliau automatiškai nesikeis.'))return;
+      const { error }=await sb.from('insolvency_asset_lease_charges').insert({ lease_id:leaseId, period:today.slice(0,7)+'-01', kind:'other', label:'Delspinigiai iki '+today, amount:late, vat_amount:0, is_auto:false, notes:'Apskaičiuota automatiškai pagal sutarties delspinigių normą, įtraukta rankiniu patvirtinimu.', created_by:CURRENT_UID });
+      if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      loadLeaseAcct(leaseId);
+    };
+    $('lsPayFileBtn').onclick=()=>$('lsPayFile').click();
+    $('lsPayFile').onchange=e=>{ LS_PAY_FILE=e.target.files[0]||null; $('lsPayFileName').textContent=LS_PAY_FILE?LS_PAY_FILE.name:''; };
+    $('lsPayAddBtn').onclick=async()=>{
+      const leaseId=$('lsId').value; if(!leaseId)return;
+      const d=$('lsPayDate').value, amtV=$('lsPayAmount').value;
+      if(!d||amtV===''){ $('lsMsg').innerHTML='<div class="error">Įveskite mokėjimo datą ir sumą.</div>'; return; }
+      let path=null;
+      try{
+        if(LS_PAY_FILE){
+          const safe=LS_PAY_FILE.name.replace(/[^A-Za-z0-9._-]+/g,'_');
+          path=`${CURRENT.case_short_code}/leases/${leaseId}/payments/${Date.now()}_${safe}`;
+          const up=await sb.storage.from('insolvency-docs').upload(path,LS_PAY_FILE,{ upsert:true });
+          if(up.error)throw up.error;
+        }
+        const { error }=await sb.from('insolvency_asset_lease_payments').insert({ lease_id:leaseId, paid_date:d, amount:Number(amtV), storage_path:path, notes:$('lsPayNote').value.trim()||null, created_by:CURRENT_UID });
+        if(error)throw error;
+        $('lsPayDate').value=''; $('lsPayAmount').value=''; $('lsPayNote').value=''; LS_PAY_FILE=null; $('lsPayFile').value=''; $('lsPayFileName').textContent='';
+        $('lsMsg').innerHTML='<div class="success">Mokėjimas įrašytas.</div>';
+        try{ await logEvent('lease_payment_added',{ lease_id:leaseId, amount:Number(amtV) }); }catch(_){}
+        loadLeaseAcct(leaseId);
+      }catch(err){ $('lsMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+    };
+    window.lsPayDel=async(id)=>{
+      const p=LEASE_PAYS.find(x=>x.id===id);
+      if(!confirm('Šalinti mokėjimą '+(p?fmtEur(p.amount)+' ('+p.paid_date+')':'')+'?'))return;
+      if(p&&p.storage_path){ try{ await sb.storage.from('insolvency-docs').remove([p.storage_path]); }catch(_){} }
+      const { error }=await sb.from('insolvency_asset_lease_payments').delete().eq('id',id);
+      if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      loadLeaseAcct($('lsId').value);
+    };
+    // --- depozito ciklas (pasiūlymas Nr. 4) ---
+    function renderDepositBlock(){
+      const l=LEASES.find(x=>x.id===$('lsId').value), el=$('lsDepositBlock');
+      if(!l||!l.deposit){ el.innerHTML=''; return; }
+      if(l.deposit_returned_at){
+        el.innerHTML=`<div style="background:#F0FAF4;border:1px solid #CBE7D4;border-radius:8px;padding:8px 12px;font-size:13px;">
+          💶 Depozitas ${fmtEur(l.deposit_amount)} — <b>${l.deposit_return_kind==='uzskaitytas'?'užskaitytas skolai dengti':'grąžintas nuomininkui'}</b> ${esc(l.deposit_returned_at)}${l.deposit_return_note?' <span class="muted">('+esc(l.deposit_return_note)+')</span>':''}
+          <button class="btn btn-sm btn-ghost" onclick="lsDepositClear()" title="Atšaukti žymą">↩</button></div>`;
+      }else{
+        el.innerHTML=`<div style="background:#FFF7E0;border:1px solid var(--gold);border-radius:8px;padding:8px 12px;font-size:13px;">
+          💶 Depozitas ${fmtEur(l.deposit_amount)} — negrąžintas.
+          <button class="btn btn-sm" onclick="lsDepositMark('grazintas')">✓ Grąžintas</button>
+          <button class="btn btn-sm btn-ghost" onclick="lsDepositMark('uzskaitytas')">⇄ Užskaitytas skolai dengti</button></div>`;
+      }
+    }
+    window.lsDepositMark=async(kind)=>{
+      const id=$('lsId').value; if(!id)return;
+      const d=prompt(kind==='uzskaitytas'?'Užskaitymo data (YYYY-MM-DD):':'Grąžinimo data (YYYY-MM-DD):',new Date().toISOString().slice(0,10));
+      if(!d)return;
+      const note=prompt('Pastaba (nebūtina):','')||null;
+      const { error }=await sb.from('insolvency_asset_leases').update({ deposit_returned_at:d, deposit_return_kind:kind, deposit_return_note:note, updated_at:new Date().toISOString() }).eq('id',id);
+      if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      await loadCaseLeases(); renderDepositBlock();
+      try{ await logEvent('lease_deposit_'+kind,{ lease_id:id }); }catch(_){}
+    };
+    window.lsDepositClear=async()=>{
+      const id=$('lsId').value; if(!id||!confirm('Atšaukti depozito grąžinimo/užskaitymo žymą?'))return;
+      const { error }=await sb.from('insolvency_asset_leases').update({ deposit_returned_at:null, deposit_return_kind:null, deposit_return_note:null, updated_at:new Date().toISOString() }).eq('id',id);
+      if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      await loadCaseLeases(); renderDepositBlock();
+    };
+    // --- nuomos pažyma (PDF) ---
+    window.leaseCardPdf=async(id)=>{
+      const l=LEASES.find(x=>x.id===id); if(!l)return;
+      const lsSay=h=>{ $('lsMsg').innerHTML=h; $('leasesMsg').innerHTML=h; };
+      lsSay('<div class="muted">⏳ Generuojama pažyma…</div>');
+      try{
+        let docs=[];
+        try{ const r=await sb.from('insolvency_asset_lease_docs').select('*').eq('lease_id',id).order('created_at'); docs=r.data||[]; }catch(_){}
+        let charges=[],pays=[];
+        try{ const c=await sb.from('insolvency_asset_lease_charges').select('*').eq('lease_id',id).order('period'); charges=c.data||[]; }catch(_){}
+        try{ const p=await sb.from('insolvency_asset_lease_payments').select('*').eq('lease_id',id).order('paid_date'); pays=p.data||[]; }catch(_){}
+        const t=l.tenant||{};
+        const its=LEASE_ITEMS.filter(i=>i.lease_id===id);
+        const cell='border:1px solid #ccc;padding:5px;';
+        const itemsHtml=its.length?'<h3 style="margin:14px 0 6px;font-size:13px;">Nuomojamas turtas</h3><table style="width:100%;border-collapse:collapse;font-size:11px;"><tr><th style="'+cell+'">Pozicija</th><th style="'+cell+'">Kiekis</th><th style="'+cell+'">Būklės aprašymas</th></tr>'+
+          its.map(i=>`<tr><td style="${cell}">${esc(assetNameById(i.asset_id))}</td><td style="${cell}">${esc(String(i.quantity??''))} ${esc(i.unit||'')}</td><td style="${cell}">${esc(i.condition_notes||'—')}</td></tr>`).join('')+'</table>':'';
+        const docsHtml=docs.length?'<h3 style="margin:14px 0 6px;font-size:13px;">Pridėti dokumentai</h3><table style="width:100%;border-collapse:collapse;font-size:11px;">'+
+          docs.map(d=>`<tr><td style="${cell}">${esc(d.doc_label)}</td><td style="${cell}">${esc(d.file_name||'')}</td><td style="${cell}">${d.valid_until?'galioja iki '+esc(d.valid_until):''}</td></tr>`).join('')+'</table>':'';
+        let acctHtml='';
+        if(charges.length){
+          const linked={}; let free=0;
+          for(const p of pays){ if(p.charge_id)linked[p.charge_id]=(linked[p.charge_id]||0)+Number(p.amount||0); else free+=Number(p.amount||0); }
+          const rows=charges.map(c=>{ const total=Number(c.amount||0)+Number(c.vat_amount||0); return { c, total, paid:Math.min(linked[c.id]||0,total) }; });
+          for(const r of rows){ if(free<=0)break; const need=r.total-r.paid; if(need>0){ const use=Math.min(need,free); r.paid+=use; free-=use; } }
+          const tc=rows.reduce((s,r)=>s+r.total,0), tp=pays.reduce((s,p)=>s+Number(p.amount||0),0);
+          acctHtml='<h3 style="margin:14px 0 6px;font-size:13px;">Nuomos apskaita</h3><table style="width:100%;border-collapse:collapse;font-size:11px;"><tr><th style="'+cell+'">Mėnuo</th><th style="'+cell+'">Mokestis</th><th style="'+cell+'">Iš viso (€)</th><th style="'+cell+'">Sumokėta (€)</th><th style="'+cell+'">Likutis (€)</th></tr>'+
+            rows.map(r=>`<tr><td style="${cell}">${esc(r.c.period.slice(0,7))}</td><td style="${cell}">${esc(r.c.label||r.c.kind)}</td><td style="${cell}">${r.total.toFixed(2)}</td><td style="${cell}">${r.paid.toFixed(2)}</td><td style="${cell}${r.total-r.paid>0.005?'color:#C0392B;font-weight:700;':''}">${(r.total-r.paid).toFixed(2)}</td></tr>`).join('')+
+            `<tr><td colspan="2" style="${cell}font-weight:700;">IŠ VISO</td><td style="${cell}font-weight:700;">${tc.toFixed(2)}</td><td style="${cell}font-weight:700;">${tp.toFixed(2)}</td><td style="${cell}font-weight:700;">${(tc-tp).toFixed(2)}</td></tr></table>`;
+        }
+        const el=document.createElement('div');
+        el.style.cssText='position:fixed;left:-10000px;top:0;width:794px;background:#fff;padding:36px;font-family:Arial,sans-serif;color:#222;';
+        el.innerHTML=`
+          <div style="border-bottom:3px solid #0B1E3F;padding-bottom:8px;margin-bottom:12px;">
+            <div style="font-size:17px;font-weight:700;color:#0B1E3F;">PAŽYMA APIE TURTO NUOMĄ</div>
+            <div style="font-size:11px;color:#666;">${esc(CURRENT.debtor_name||'')} · byla ${esc(CURRENT.case_short_code||'')} · ${new Date().toISOString().slice(0,10)}</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <tr><td style="${cell}width:32%;"><b>Nuomos sutarties Nr.</b></td><td style="${cell}">${esc(l.contract_no||'')}${l.contract_date?' (sudaryta '+esc(l.contract_date)+')':''}</td></tr>
+            <tr><td style="${cell}"><b>Būsena</b></td><td style="${cell}">${esc(LEASE_ST[leaseEffSt(l)]||'')}${l.status==='terminated'?' ('+esc(l.terminated_at||'')+(l.termination_reason?', '+esc(l.termination_reason):'')+')':''}</td></tr>
+            <tr><td style="${cell}"><b>Nuomininkas</b></td><td style="${cell}">${esc(t.name||'—')}${t.reg_code?', kodas '+esc(t.reg_code):''}</td></tr>
+            <tr><td style="${cell}"><b>Adresas</b></td><td style="${cell}">${esc(t.reg_address||'—')}${t.business_address?'; veiklos: '+esc(t.business_address):''}</td></tr>
+            <tr><td style="${cell}"><b>Atstovas</b></td><td style="${cell}">${esc([t.rep_position,t.rep_name].filter(Boolean).join(' ')||'—')}${t.email?', '+esc(t.email):''}${t.phone?', '+esc(t.phone):''}</td></tr>
+            <tr><td style="${cell}"><b>Nuomos laikotarpis</b></td><td style="${cell}">${esc(l.lease_start||'—')} – ${l.lease_end?esc(l.lease_end):'neterminuota'}</td></tr>
+            <tr><td style="${cell}"><b>Nuomos kaina</b></td><td style="${cell}">${fmtEur(l.monthly_price)} / mėn.${l.vat?' + PVM '+(l.vat_rate||21)+'% ('+fmtEur(Math.round(Number(l.monthly_price||0)*(1+(l.vat_rate||21)/100)*100)/100)+' su PVM)':''}</td></tr>
+            <tr><td style="${cell}"><b>Depozitas</b></td><td style="${cell}">${l.deposit?fmtEur(l.deposit_amount)+(l.deposit_returned_at?' — '+(l.deposit_return_kind==='uzskaitytas'?'užskaitytas':'grąžintas')+' '+esc(l.deposit_returned_at):''):'nėra'}</td></tr>
+            ${l.late_interest_rate?`<tr><td style="${cell}"><b>Delspinigiai</b></td><td style="${cell}">${l.late_interest_rate} %/d.</td></tr>`:''}
+          </table>
+          ${itemsHtml}${docsHtml}${acctHtml}
+          <div style="margin-top:16px;font-size:10px;color:#888;">Pažyma suformuota sistemoje help.vvc.lt ${new Date().toLocaleString('lt-LT')}</div>`;
+        document.body.appendChild(el);
+        const canvas=await html2canvas(el,{ scale:2, backgroundColor:'#fff', useCORS:true });
+        document.body.removeChild(el);
+        const pdf=new jspdf.jsPDF('p','mm','a4');
+        const pw=210, ph=297, imgH=canvas.height*pw/canvas.width;
+        const img=canvas.toDataURL('image/jpeg',0.92);
+        let pos=0, remaining=imgH;
+        pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph;
+        while(remaining>0){ pdf.addPage(); pos-=ph; pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph; }
+        const safe=(l.contract_no||'nuoma').replace(/[^A-Za-z0-9._-]+/g,'_');
+        pdf.save('Nuomos_pazyma_'+safe+'.pdf');
+        lsSay('<div class="success">Pažyma sugeneruota ir atsisiųsta.</div>');
+        try{ await logEvent('lease_card_generated',{ contract_no:l.contract_no }); }catch(_){}
+      }catch(err){ lsSay('<div class="error">'+esc(err.message||String(err))+'</div>'); }
+    };
+    $('lsPdfBtn').onclick=()=>{ const id=$('lsId').value; if(id)leaseCardPdf(id); };
     // --- nuomos istorija turto kortelėje ---
     function assetLeaseInfoHtml(assetId){
       const rel=LEASE_ITEMS.filter(i=>i.asset_id===assetId).map(i=>LEASES.find(l=>l.id===i.lease_id)).filter(Boolean);
