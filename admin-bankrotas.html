@@ -901,6 +901,28 @@
     </div>
   </div>
 
+  <!-- REGISTRACIJOS KOREKCIJOS MODALĖ (data + eilės numeris) -->
+  <div id="regEditModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:460px;">
+      <h2>Koreguoti registraciją</h2>
+      <div class="muted" style="font-size:12px;margin-bottom:10px;" id="reInfo"></div>
+      <input type="hidden" id="reId">
+      <label class="label">Registracijos Nr. (keičiama tik eilės dalis)</label>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span id="rePrefix" style="font-weight:700;"></span>
+        <input id="reSeq" class="input" style="max-width:110px;" inputmode="numeric" placeholder="pvz. 015">
+      </div>
+      <label class="label">Registracijos data</label>
+      <input id="reDate" class="input" type="date" style="max-width:200px;">
+      <div class="hint" style="margin-top:8px;">Dublikato sistema nepraleis. Pakoregavus — registracijos žyma PDF dokumente atnaujinama automatiškai, korekcija fiksuojama veiklos žurnale.</div>
+      <div id="reMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="reCancel">Atšaukti</button>
+        <button class="btn" id="reSave">✔ Išsaugoti</button>
+      </div>
+    </div>
+  </div>
+
   <!-- BIBLIOTEKOS DOKUMENTO ĮKĖLIMO / POŽYMIŲ MODALĖ -->
   <div id="libDocModal" class="modal-bg hidden">
     <div class="modal" style="max-width:640px;">
@@ -949,9 +971,12 @@
       <h2 id="regModalTitle">Registruoti gaunamą dokumentą</h2>
       <div class="muted" style="margin-bottom:12px;">Bus suformuotas numeris <b id="regNumPreview">G26-…-…</b>, failai sujungti į vieną PDF ir pažymėti registracijos žyma.</div>
       <div id="regNoOverrideWrap" style="margin-bottom:10px;">
-        <label class="label">Registracijos Nr. (palikite tuščią — bus suteiktas automatiškai)</label>
-        <input id="regNoOverride" class="input" placeholder="pvz. G26-TOR-015" style="max-width:260px;">
-        <div class="hint">Numerį koreguoti gali administratorius (pilnos teisės) arba superadministratorius.</div>
+        <label class="label">Registracijos Nr. eilės numeris (palikite tuščią — bus suteiktas automatiškai)</label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="regNoPrefix" class="muted" style="font-weight:700;">G26-…-</span>
+          <input id="regNoOverride" class="input" placeholder="pvz. 015" style="max-width:110px;" inputmode="numeric">
+        </div>
+        <div class="hint">Keičiama tik eilės dalis — prefiksas fiksuotas. Dublikato sistema nepraleis. Koreguoti gali pilnų teisių administratorius arba superadministratorius.</div>
       </div>
       <input type="hidden" id="regType" value="received">
       <label class="label">Trumpas dokumento aprašymas *</label>
@@ -1045,7 +1070,8 @@
           body.perm-view [onclick*="registerLibraryDoc"], body.perm-view #newDocKindBtn, body.perm-view [onclick*="saveDocKind"],
           body.perm-view [onclick*="saveAssetGroup"], body.perm-view [onclick*="renameAssetGroup"],
           body.perm-view #emAssignBtn, body.perm-view #emIrrelevantBtn, body.perm-view #emUnreadBtn,
-          body.perm-view [onclick*="setEmailStatus"], body.perm-view [onclick*="registerEmail"]
+          body.perm-view [onclick*="setEmailStatus"], body.perm-view [onclick*="registerEmail"],
+          body.perm-view [onclick*="openRegEdit"]
           { display: none !important; }`;
         document.head.appendChild(st);
         document.body.classList.add('perm-view');
@@ -1362,9 +1388,9 @@
         REG_FILES=files; renderRegFiles();
         $('regTitle').value=m.subject||'El. laiškas';
         $('regParty').value=m.from_name||m.from_email||'';
-        if(type==='received'&&m.received_at)$('regDate').value=String(m.received_at).slice(0,10);
+        // data pagal nutylėjimą — šiandien (registravimo momentas); vartotojas gali pakoreguoti
         REG_FROM_EMAIL={ id:m.id, type };
-        $('regMsg').innerHTML='<div class="hint">Laiško išrašas — pirmas lapas. Priedų eiliškumą galite keisti ▲▼.'+(skipped.length?(' <span style="color:#B45309;">Praleisti nejungiami formatai: '+esc(skipped.join(', '))+' (jungiami tik PDF/JPG/PNG).</span>'):'')+'</div>';
+        $('regMsg').innerHTML='<div class="hint">Laiško išrašas — pirmas lapas. Priedų eiliškumą galite keisti ▲▼. <b>Laiškas realiai gautas: '+esc(fmtDate(m.received_at))+'</b> — jei registruojate kita data, pakoreguokite datos lauką aukščiau.'+(skipped.length?(' <span style="color:#B45309;">Praleisti nejungiami formatai: '+esc(skipped.join(', '))+' (jungiami tik PDF/JPG/PNG).</span>'):'')+'</div>';
       }catch(err){ alert('Klaida: '+(err.message||String(err))); }
     };
 
@@ -2243,8 +2269,92 @@
           <td>${esc(r.registration_date||'')}</td>
           <td>${esc(r.counterparty_name||'—')}</td>
           <td>${esc(r.document_title)}${r.notes?'<div class="muted" style="font-size:12px;">'+esc(r.notes)+'</div>':''}</td>
-          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')">👁</button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')">⬇️</button></td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')">👁</button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')">⬇️</button>${(PERM_LEVEL==='full'||IS_SUPERADMIN)?` <button class="btn btn-sm btn-ghost" title="Koreguoti registracijos datą / numerį" onclick="openRegEdit('${r.id}')">✎</button>`:''}</td>
         </tr>`).join('')+'</tbody></table>';
+    }
+
+    // --- REGISTRACIJOS KOREKCIJA (data + eilės numeris; tik full/superadmin) ---
+    window.openRegEdit=id=>{
+      const r=REGISTRATIONS.find(x=>x.id===id); if(!r)return;
+      if(!(PERM_LEVEL==='full'||IS_SUPERADMIN)){ alert('Koreguoti gali tik pilnų teisių administratorius arba superadministratorius.'); return; }
+      const prefix=r.registration_number.replace(/\d+$/,'');
+      const seq=(r.registration_number.match(/(\d+)$/)||[,''])[1];
+      $('reId').value=r.id;
+      $('rePrefix').textContent=prefix;
+      $('reSeq').value=seq;
+      $('reDate').value=r.registration_date||'';
+      $('reInfo').textContent=r.registration_number+' · '+(r.document_title||'');
+      $('reMsg').innerHTML='';
+      show('regEditModal');
+    };
+    $('reCancel').onclick=()=>hide('regEditModal');
+    $('reSave').onclick=async()=>{
+      const id=$('reId').value;
+      const r=REGISTRATIONS.find(x=>x.id===id); if(!r)return;
+      const seq=($('reSeq').value||'').trim();
+      const dateV=$('reDate').value;
+      if(!/^\d{1,5}$/.test(seq)){ $('reMsg').innerHTML='<div class="error">Eilės numeris turi būti tik skaičiai (pvz. 3 arba 015).</div>'; return; }
+      if(!dateV){ $('reMsg').innerHTML='<div class="error">Nurodykite registracijos datą.</div>'; return; }
+      const prefix=r.registration_number.replace(/\d+$/,'');
+      const oldSeq=(r.registration_number.match(/(\d+)$/)||[,''])[1];
+      const newNumber=prefix+seq.padStart(oldSeq.length||3,'0');
+      $('reSave').disabled=true;
+      $('reMsg').innerHTML='<div class="muted">⏳ Išsaugoma…</div>';
+      try{
+        // 1) žurnalo įrašo korekcija (DB apsauga: prefiksas + dublikatai)
+        const res=await sb.rpc('update_insolvency_registration',{ p_id:id, p:{ registration_number:newNumber, registration_date:dateV } });
+        if(res.error)throw new Error(res.error.message);
+        if(res.data&&res.data.ok===false){
+          const msgs={ duplicate_number:'Toks numeris jau užimtas — pasirinkite kitą eilės numerį.', bad_number_format:'Galima keisti tik eilės dalį — prefiksas turi likti '+prefix, forbidden:'Koreguoti gali tik pilnų teisių administratorius arba superadministratorius.' };
+          throw new Error(msgs[res.data.error_code]||('Klaida: '+res.data.error_code));
+        }
+        // 2) atnaujiname registracijos žymą PDF dokumente
+        $('reMsg').innerHTML='<div class="muted">⏳ Atnaujinama žyma PDF dokumente…</div>';
+        try{
+          await restampRegisteredPdf(r,newNumber,dateV);
+        }catch(e){
+          console.warn('restamp failed',e);
+          $('reMsg').innerHTML='<div class="error">Įrašas pakoreguotas, bet žymos PDF dokumente atnaujinti nepavyko ('+esc(e.message||String(e))+') — PDF liko su senais duomenimis.</div>';
+          $('reSave').disabled=false;
+          await loadRegistry();
+          return;
+        }
+        hide('regEditModal');
+        await loadRegistry();
+        alert('Registracija pakoreguota: '+newNumber+' ('+dateV+'). Žyma PDF dokumente atnaujinta.');
+      }catch(err){ $('reMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ $('reSave').disabled=false; }
+    };
+    async function restampRegisteredPdf(r,newNumber,dateV){
+      const { PDFDocument, rgb }=PDFLib;
+      const { data:{ session } }=await sb.auth.getSession();
+      const fr=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY}, body:JSON.stringify({ path:r.storage_path }) });
+      const fu=await fr.json(); if(!fu.url)throw new Error('Nepavyko gauti PDF failo.');
+      const bytes=new Uint8Array(await (await fetch(fu.url)).arrayBuffer());
+      const doc=await PDFDocument.load(bytes,{ ignoreEncryption:true });
+      const fonts=await getStampFonts(doc);
+      const T=s=>fonts.unicode?String(s||''):deLT(s);
+      const page=doc.getPage(0);
+      const pw=page.getWidth(), ph=page.getHeight();
+      // uždengiame seną žymą (dengiame didžiausio buvusio varianto plotą)
+      page.drawRectangle({ x:pw-250, y:ph-84, width:246, height:80, color:rgb(1,1,1) });
+      // nauja žyma (1/2 dydžio, juoda)
+      const w=116,h=33,m=10,x=pw-w-m,y=ph-h-m;
+      const black=rgb(0,0,0);
+      page.drawRectangle({ x, y, width:w, height:h, color:rgb(1,1,1), opacity:0.9, borderColor:black, borderWidth:0.7 });
+      const fit=(s,f,size,max)=>{ s=String(s||''); while(s.length>3&&f.widthOfTextAtSize(s,size)>max)s=s.slice(0,-2); return s; };
+      const dateLabel=r.doc_type==='received'?'Gauta':'Išsiųsta';
+      page.drawText(fit(T(CURRENT_ADM.name).toUpperCase(),fonts.bold,4.3,w-8),{ x:x+4, y:y+h-7.5, size:4.3, font:fonts.bold, color:black });
+      page.drawText('Reg. Nr.: '+newNumber,{ x:x+4, y:y+h-14.5, size:4.8, font:fonts.bold, color:black });
+      page.drawText(T(dateLabel)+': '+dateV,{ x:x+4, y:y+h-21.5, size:4.5, font:fonts.reg, color:black });
+      page.drawText(fit(T('Byla: '+(CURRENT.debtor_name||'')),fonts.reg,4,w-8),{ x:x+4, y:y+h-28, size:4, font:fonts.reg, color:black });
+      const outBytes=await doc.save();
+      const blob=new Blob([new Uint8Array(outBytes)],{ type:'application/pdf' });
+      const path=`${CURRENT.case_short_code}/registered/${newNumber.replace(/[^A-Za-z0-9._-]+/g,'_')}_${Date.now()}.pdf`;
+      const up=await sb.storage.from('insolvency-docs').upload(path,blob,{ upsert:false, contentType:'application/pdf' });
+      if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
+      const res2=await sb.rpc('update_insolvency_registration',{ p_id:r.id, p:{ storage_path:path } });
+      if(res2.error||(res2.data&&res2.data.ok===false))throw new Error('Nepavyko atnaujinti failo nuorodos.');
     }
     $('regSearch').oninput=renderRegistry;
     $('regNewReceived').onclick=()=>openRegModal('received');
@@ -2261,6 +2371,7 @@
       $('regDateLbl').textContent=rcv?'Gavimo data *':'Išsiuntimo data *';
       $('regPartyLbl').textContent=rcv?'Siuntėjas':'Gavėjas (adresatas)';
       $('regNumPreview').textContent=(rcv?'G':'S')+String(new Date().getFullYear()).slice(-2)+'-'+CURRENT.project_code+'-'+String((REGISTRATIONS.filter(r=>r.doc_type===type).length||0)+1).padStart(3,'0')+' (preliminarus)';
+      $('regNoPrefix').textContent=(rcv?'G':'S')+String(new Date().getFullYear()).slice(-2)+'-'+(CURRENT.project_code||'…')+'-';
       $('regNoOverride').value='';
       const canOverride=(PERM_LEVEL==='full'||IS_SUPERADMIN);
       $('regNoOverride').disabled=!canOverride;
@@ -2367,9 +2478,13 @@
       $('regSubmit').disabled=true;
       $('regMsg').innerHTML='<div class="muted">⏳ Formuojamas registracijos numeris…</div>';
       try{
-        // 1) registracijos numeris (automatinis arba admin/superadmin įvestas)
-        let regNumber=($('regNoOverride').value||'').trim();
-        if(regNumber&&!(PERM_LEVEL==='full'||IS_SUPERADMIN)) regNumber='';
+        // 1) registracijos numeris (automatinis arba admin/superadmin įvesta eilės dalis)
+        let regNumber='';
+        const seqIn=($('regNoOverride').value||'').trim();
+        if(seqIn&&(PERM_LEVEL==='full'||IS_SUPERADMIN)){
+          if(!/^\d{1,5}$/.test(seqIn))throw new Error('Eilės numeris turi būti tik skaičiai (pvz. 15).');
+          regNumber=(type==='received'?'G':'S')+String(new Date().getFullYear()).slice(-2)+'-'+CURRENT.project_code+'-'+seqIn.padStart(3,'0');
+        }
         if(!regNumber){
           const nr=await sb.rpc('generate_insolvency_reg_number',{ p_case_id:CURRENT.id, p_doc_type:type });
           if(nr.error)throw new Error(nr.error.message);
