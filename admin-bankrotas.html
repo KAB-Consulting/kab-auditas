@@ -553,6 +553,16 @@
           <div id="photoMsg"></div>
           <div id="photoGrid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
 
+          <!-- dokumentų priedai (PDF / Word / Excel) -->
+          <div class="sec-title" style="margin-top:18px;">Dokumentų priedai (PDF / Word / Excel — prijungiami akto PDF gale)</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <input type="file" id="actFileInput" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple class="hidden">
+            <button class="btn btn-sm btn-ghost" id="actFileBtn" type="button">📎 Pridėti dokumentus</button>
+          </div>
+          <div class="hint" style="margin-bottom:6px;">PDF priedai prijungiami prie akto PDF kaip puslapiai. Word/Excel failai saugomi prie akto, o akto tekste nurodomi tik jų pavadinimai (priedų sąraše).</div>
+          <div id="actFileMsg"></div>
+          <div id="actFileList"></div>
+
           <!-- parašai -->
           <div class="sec-title" style="margin-top:18px;">Parašai</div>
           <div class="hint" style="margin-bottom:8px;">Pasirašyti galima ekrane (touch pad / pelė) arba išsiųsti šaliai nuorodą el. paštu — gavėjas patvirtina tapatybę 6 skaitmenų kodu ir pasirašo nuotoliniu būdu.</div>
@@ -1083,7 +1093,8 @@
           body.perm-view [onclick*="saveAssetGroup"], body.perm-view [onclick*="renameAssetGroup"],
           body.perm-view #emAssignBtn, body.perm-view #emIrrelevantBtn, body.perm-view #emUnreadBtn,
           body.perm-view [onclick*="setEmailStatus"], body.perm-view [onclick*="registerEmail"],
-          body.perm-view [onclick*="openRegEdit"], body.perm-view #impMapApply, body.perm-view #impParseBtn
+          body.perm-view [onclick*="openRegEdit"], body.perm-view #impMapApply, body.perm-view #impParseBtn,
+          body.perm-view #actFileBtn, body.perm-view [onclick*="delActFile"]
           { display: none !important; }`;
         document.head.appendChild(st);
         document.body.classList.add('perm-view');
@@ -3392,7 +3403,10 @@
       $('actHandover').value=a.handover_person||'';
       $('actReceiver').value=a.receiver_person|| (CURRENT_ADM&&CURRENT_ADM.authorized_person)||'';
       ACT_ROWS = Array.isArray(a.rows)&&a.rows.length ? a.rows.slice() : [];
-      ACT_PHOTOS = Array.isArray(a.photos) ? a.photos.slice() : [];
+      const allAtt = Array.isArray(a.photos) ? a.photos.slice() : [];
+      ACT_PHOTOS = allAtt.filter(x=>x.kind!=='file');
+      ACT_FILES = allAtt.filter(x=>x.kind==='file');
+      renderActFiles(); $('actFileMsg').innerHTML='';
       $('pasteBlock').classList.add('hidden'); $('pasteData').value=''; $('pasteMapBlock').classList.add('hidden'); $('pasteMsg').innerHTML='';
       renderPhotos();
       const m=a.meta||{};
@@ -3583,7 +3597,7 @@
               groups:GROUPED.filter(g=>g.t_lt||g.b_lt||g.t2||g.b2),
               notes_lt:$('gNotesLt').value, notes2:$('gNotes2').value
             }:{},
-        photos: ACT_PHOTOS,
+        photos: [...ACT_PHOTOS, ...ACT_FILES],
         sig_handover:sigData('sigHandover'), sig_receiver:sigData('sigReceiver'), status
       };
     }
@@ -3644,6 +3658,63 @@
       $('photoGrid').innerHTML=cells.join('');
     }
     window.delPhoto=i=>{ ACT_PHOTOS.splice(i,1); renderPhotos(); };
+
+    // ----- DOKUMENTŲ PRIEDAI (PDF / Word / Excel) -----
+    let ACT_FILES=[];
+    $('actFileBtn').onclick=()=>{ if(!CURRENT||CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; } $('actFileInput').click(); };
+    $('actFileInput').onchange=async e=>{
+      const files=Array.from(e.target.files||[]); e.target.value='';
+      if(!files.length)return;
+      $('actFileMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
+      try{
+        for(const file of files){
+          if(!/\.(pdf|docx?|xlsx?)$/i.test(file.name)){ $('actFileMsg').innerHTML='<div class="error">Praleistas '+esc(file.name)+' — palaikomi PDF, Word (doc/docx), Excel (xls/xlsx).</div>'; continue; }
+          const safe=deLT(file.name).replace(/[^A-Za-z0-9._-]+/g,'_');
+          const path=`${CURRENT.case_short_code}/act_files/${Date.now()}_${Math.random().toString(36).slice(2,7)}_${safe}`;
+          const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true, contentType:file.type||'application/octet-stream' });
+          if(error)throw error;
+          ACT_FILES.push({ kind:'file', path, name:file.name, size:file.size });
+        }
+        renderActFiles();
+        $('actFileMsg').innerHTML='<div class="success">Priedai pridėti. Nepamirškite išsaugoti akto.</div>';
+      }catch(err){ $('actFileMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+    };
+    function actFileIcon(name){ return /\.pdf$/i.test(name)?'📕':/\.docx?$/i.test(name)?'📘':/\.xlsx?$/i.test(name)?'📗':'📄'; }
+    function renderActFiles(){
+      const el=$('actFileList'); if(!el)return;
+      el.innerHTML=ACT_FILES.length?ACT_FILES.map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--bd);border-radius:6px;margin-bottom:4px;">
+        <span>${actFileIcon(f.name)}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(f.name)}${/\.pdf$/i.test(f.name||'')?'':' <span class="muted" style="font-size:11px;">(akte — tik pavadinimas)</span>'}</span>
+        ${f.size?'<span class="muted" style="font-size:11px;">'+(f.size/1024/1024).toFixed(2)+' MB</span>':''}
+        <button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(f.path)}','${esc(f.name)}')" title="Peržiūrėti / atsisiųsti">👁</button>
+        <button class="btn btn-sm btn-danger" onclick="delActFile(${i})">✕</button>
+      </div>`).join(''):'<div class="muted" style="font-size:12px;">Dokumentų priedų nėra.</div>';
+    }
+    window.delActFile=i=>{ ACT_FILES.splice(i,1); renderActFiles(); };
+
+    // priedų prijungimas prie akto PDF (pdf-lib); prijungiami tik PDF — Word/Excel akte nurodomi tik pavadinimu
+    async function mergeActAttachments(actBlob){
+      const { PDFDocument }=PDFLib;
+      const merged=await PDFDocument.load(await actBlob.arrayBuffer());
+      const { data:{ session } }=await sb.auth.getSession();
+      const skipped=[];
+      const fetchPath=async p=>{
+        const r=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY}, body:JSON.stringify({ path:p }) });
+        const j=await r.json(); if(!j.url)throw new Error('url');
+        return new Uint8Array(await (await fetch(j.url)).arrayBuffer());
+      };
+      for(const f of ACT_FILES){
+        // prijungiami tik PDF; Word/Excel akte nurodomi tik pavadinimu (priedų sąraše) — be konvertavimo
+        if(!/\.pdf$/i.test(f.name||f.path))continue;
+        try{
+          const bytes=await fetchPath(f.path);
+          const src=await PDFDocument.load(bytes,{ ignoreEncryption:true });
+          (await merged.copyPages(src,src.getPageIndices())).forEach(pg=>merged.addPage(pg));
+        }catch(_){ skipped.push(f.name); }
+      }
+      const outBytes=await merged.save();
+      return { blob:new Blob([new Uint8Array(outBytes)],{ type:'application/pdf' }), skipped };
+    }
 
     // ----- COPY/PASTE su auto-mapping -----
     let PASTE_MATRIX=[], PASTE_HEADERS=[];
@@ -3733,6 +3804,7 @@
         <div style="font-weight:bold;">${esc(CURRENT.debtor_name||'')}</div>
         <div style="font-size:12px;">${CURRENT.debtor_code?('Įmonės kodas '+esc(CURRENT.debtor_code)):''}${CURRENT.debtor_code&&CURRENT.debtor_address?', ':''}${esc(CURRENT.debtor_address||'')}</div>
         <div style="margin-top:12px;">${body}</div>
+        ${(()=>{ const fl=(p.photos||[]).filter(f=>f.kind==='file'); return fl.length?`<div style="font-size:12.5px;margin-top:12px;"><b>Priedai${bi?' / Annexes':''}:</b> ${fl.map((f,i)=>(i+1)+') '+esc(f.name)).join('; ')}</div>`:''; })()}
         <div style="margin-top:30px;">${sig(lblH,p.handover_person,p.sig_handover,p.esign_handover)}<span style="display:inline-block;width:8%;"></span>${sig(lblR,p.receiver_person,p.sig_receiver,p.esign_receiver)}</div>
         ${photosHtml}
       </div>`;
@@ -3780,6 +3852,7 @@
         })()}</div>
         ${body}
         ${totalLine}
+        ${(()=>{ const fl=(p.photos||[]).filter(f=>f.kind==='file'); return fl.length?`<div style="font-size:12.5px;margin-top:12px;"><b>Priedai:</b> ${fl.map((f,i)=>(i+1)+') '+esc(f.name)).join('; ')}</div>`:''; })()}
         <div style="margin-top:30px;">${sig('Perdavė:',p.handover_person,p.sig_handover,p.esign_handover)}<span style="display:inline-block;width:8%;"></span>${sig('Priėmė:',p.receiver_person,p.sig_receiver,p.esign_receiver)}</div>
         ${photosHtml}
       </div>`;
@@ -3838,7 +3911,16 @@
           pdf.addImage(pc.toDataURL('image/png'),'PNG',ML,MT,w,sliceH/pxPerMm);
           firstPage=false; pos=end;
         }
-        const blob=pdf.output('blob');
+        let blob=pdf.output('blob');
+        // PDF priedai prijungiami akto gale (Word/Excel — tik pavadinimai priedų sąraše)
+        if(ACT_FILES.some(f=>/\.pdf$/i.test(f.name||f.path))){
+          $('actMsg').innerHTML='<div class="muted">⏳ Prijungiami PDF priedai…</div>';
+          const mr=await mergeActAttachments(blob);
+          blob=mr.blob;
+          if(mr.skipped.length){
+            $('actMsg').innerHTML='<div class="error">Šių PDF priedų nepavyko prijungti: '+esc(mr.skipped.join(', '))+'. Aktas sugeneruotas be jų.</div>';
+          }
+        }
         const fname=(p.act_no||'aktas').replace(/[^A-Za-z0-9._-]+/g,'_')+'.pdf';
         const path=`${CURRENT.case_short_code}/acts/${Date.now()}_${fname}`;
         const { error }=await sb.storage.from('insolvency-docs').upload(path,blob,{ contentType:'application/pdf', upsert:true });
