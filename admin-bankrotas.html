@@ -46,6 +46,7 @@
     .field-ai { border-color:var(--gold)!important; background:#FFFDF5; }
     .hint { font-size:12px; color:var(--gray); margin-top:3px; }
     .sec-title { color:var(--navy); font-size:15px; font-weight:700; margin:18px 0 4px; border-bottom:1px solid var(--bd); padding-bottom:5px; }
+    body.perm-cred-nodelete [onclick*="delCreditor"], body.perm-cred-nodelete [onclick*="delAcc"], body.perm-cred-nodelete [onclick*="delClaim"], body.perm-cred-nodelete [onclick*="delCourtOrder"], body.perm-cred-nodelete [onclick*="delClaimFile"], body.perm-cred-nodelete [onclick*="delClaimRegLink"] { display:none !important; }
     .adm-card { border:1px solid var(--bd); border-radius:10px; padding:18px; cursor:pointer; transition:.15s; }
     .adm-card:hover { border-color:var(--gold); box-shadow:0 2px 8px rgba(0,0,0,.08); }
     .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
@@ -166,6 +167,7 @@
         <div class="tab active" data-set="admins">🏢 Administratoriai</div>
         <div class="tab" data-set="cases">📁 Bylos</div>
         <div class="tab" data-set="templates">📄 Šablonai</div>
+        <div class="tab hidden" data-set="users" id="setUsersTab">👤 Vartotojai ir teisės</div>
       </div>
       <div class="card" id="setAdmins"><div id="setAdminsList"></div></div>
       <div class="card hidden" id="setCases">
@@ -195,6 +197,18 @@
         </div>
         <div class="hint" style="margin-bottom:10px;">Tipai, iš kurių renkamasi įkeliant dokumentą į biblioteką (Sutartis, Įgaliojimas, Aktas ir kt.). Galite pridėti naujų arba pervadinti / išjungti esamus — pakeitimai galioja visose bylose.</div>
         <div id="setDocKinds"></div>
+      </div>
+      <div class="card hidden" id="setUsers">
+        <div style="display:flex;gap:18px;flex-wrap:wrap;">
+          <div style="flex:0 0 260px;min-width:220px;">
+            <strong>Vartotojai</strong>
+            <div class="hint" style="margin-bottom:6px;">Pasirinkite vartotoją ir priskirkite teises.</div>
+            <div id="accUsersList"></div>
+          </div>
+          <div style="flex:1;min-width:340px;">
+            <div id="accUserPanel"><div class="muted">Pasirinkite vartotoją kairėje, kad valdytumėte jo teises.</div></div>
+          </div>
+        </div>
       </div>
       <div id="settingsMsg"></div>
     </div>
@@ -1626,7 +1640,7 @@
     const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const show = id => $(id).classList.remove('hidden');
     const hide = id => $(id).classList.add('hidden');
-    function views(v){ ['loginView','loadingView','admListView','workspaceView','caseDetailView','settingsView'].forEach(x=>hide(x)); show(v); }
+    function views(v){ ['loginView','loadingView','admListView','workspaceView','caseDetailView','settingsView'].forEach(x=>hide(x)); show(v); if(v!=='caseDetailView'&&typeof isGranular==='function'&&isGranular()){ document.body.classList.remove('perm-cred-nodelete'); document.body.classList.add('perm-view'); } }
 
     let ADMINS=[], TEMPLATES=[], PERSONS=[], CASES=[], CURRENT_ADM=null, CURRENT=null, RECIPIENTS=[], DOCUMENTS=[];
     let REGISTRATIONS=[], CONTACTS=[], REG_TYPE='received';
@@ -1643,8 +1657,11 @@
       }catch(e){ PERM_LEVEL = 'none'; }
 
       if (PERM_LEVEL === 'none'){
-        document.body.innerHTML = '<div style="max-width:480px;margin:15vh auto;text-align:center;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0B1E3F;"><h2>⛔ Prieiga negalima</h2><p style="color:#6B7280;">Jūsų paskyra neturi prieigos prie šio modulio. Kreipkitės į administratorių.</p><a href="admin.html" style="color:#C9A961;font-weight:600;text-decoration:none;">← Grįžti į pagrindinį</a></div>';
-      } else if (PERM_LEVEL === 'view'){
+        let __gr=false; try{ const g=await sb.rpc('has_bankrotas_access'); __gr=(g.data===true); }catch(_){}
+        if(!__gr){ document.body.innerHTML = '<div style="max-width:480px;margin:15vh auto;text-align:center;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0B1E3F;"><h2>⛔ Prieiga negalima</h2><p style="color:#6B7280;">Jūsų paskyra neturi prieigos prie šio modulio. Kreipkitės į administratorių.</p><a href="admin.html" style="color:#C9A961;font-weight:600;text-decoration:none;">← Grįžti į pagrindinį</a></div>'; return 'none'; }
+        PERM_LEVEL='view'; USER_HAS_RULES=true;
+      }
+      if (PERM_LEVEL === 'view'){
         const st = document.createElement('style');
         st.textContent = `
           body.perm-view #newAdmBtn, body.perm-view #newTplBtn, body.perm-view #editAdmBtn, body.perm-view #newCaseBtn,
@@ -1690,7 +1707,13 @@
           body.perm-view #emAssignBtn, body.perm-view #emIrrelevantBtn, body.perm-view #emUnreadBtn,
           body.perm-view [onclick*="setEmailStatus"], body.perm-view [onclick*="registerEmail"],
           body.perm-view [onclick*="openRegEdit"], body.perm-view #impMapApply, body.perm-view #impParseBtn,
-          body.perm-view #actFileBtn, body.perm-view [onclick*="delActFile"]
+          body.perm-view #actFileBtn, body.perm-view [onclick*="delActFile"],
+          body.perm-view #credNewBtn, body.perm-view #credImportBtn, body.perm-view #credStdBtn, body.perm-view #accNewBtn, body.perm-view #claimNewBtn,
+          body.perm-view [onclick*="openCredModal"], body.perm-view [onclick*="delCreditor"], body.perm-view [onclick*="openAccModal"], body.perm-view [onclick*="delAcc"],
+          body.perm-view [onclick*="openClaimModal"], body.perm-view [onclick*="delClaim"], body.perm-view [onclick*="openCourtOrderModal"], body.perm-view [onclick*="delCourtOrder"],
+          body.perm-view [onclick*="openAdjustModal"], body.perm-view [onchange*="onReconDecision"], body.perm-view [onclick*="courtMark"], body.perm-view [onclick*="setPriority"],
+          body.perm-view #credSave, body.perm-view #accSave, body.perm-view #clmSave, body.perm-view #clmSaveStay, body.perm-view #decSave, body.perm-view #coSave, body.perm-view #adjSave, body.perm-view #credImpDoBtn,
+          body.perm-view #clmDocFileBtn, body.perm-view #clmRegAddBtn
           { display: none !important; }`;
         document.head.appendChild(st);
         document.body.classList.add('perm-view');
@@ -2099,7 +2122,9 @@
       $('cardMsg').innerHTML=''; $('aiMsg').innerHTML=''; $('ctMsg').innerHTML='';
       REG_TYPE='received'; REGISTRATIONS=[]; CONTACTS=[]; ASSETS=[]; CREDITORS=[]; CRED_ACC=[]; CLAIMS=[]; CORDERS=[];
       document.querySelectorAll('#paneRegistry .tab').forEach(t=>t.classList.toggle('active',t.dataset.regtype==='received'));
-      setTop('main'); setCardSaved(false);
+      if(id){ await loadAccessMap(id); } applyTopTabVisibility();
+      let __ft='main'; const __vis=[...document.querySelectorAll('#topTabs .tab:not(.hidden)')]; if(__vis.length&&!__vis.some(x=>x.dataset.top==='main'))__ft=__vis[0].dataset.top;
+      setTop(__ft); setCardSaved(false);
       views('caseDetailView');
       if(id){ await loadRecipients(); await loadDocuments(); renderDocTemplates(); renderDocPersons(); loadContacts(); updateAssetsStar(true); loadCaseInboxTasks(); }
       else { RECIPIENTS=[]; DOCUMENTS=[]; renderContacts(); }
@@ -2182,6 +2207,7 @@
       if(key==='credClaims')loadCreditorsModule('claims');
       if(key==='credRecon')loadCreditorsModule('recon');
       if(key==='credCourt')loadCreditorsModule('court');
+      applySubmoduleGuard();
     }
     document.querySelectorAll('#topTabs .tab').forEach(t=>{ t.onclick=()=>setTop(t.dataset.top); });
 
@@ -2741,7 +2767,8 @@
     async function openSettings(){
       views('settingsView'); $('settingsMsg').innerHTML='';
       document.querySelectorAll('#settingsView .tab').forEach(t=>t.classList.toggle('active',t.dataset.set==='admins'));
-      ['setAdmins'].forEach(show); ['setCases','setTemplates'].forEach(hide);
+      $('setUsersTab').classList.toggle('hidden',!IS_SUPERADMIN);
+      ['setAdmins'].forEach(show); ['setCases','setTemplates','setUsers'].forEach(hide);
       await renderSetAdmins();
     }
     document.querySelectorAll('#settingsView .tab').forEach(t=>{
@@ -2751,9 +2778,11 @@
         $('setAdmins').classList.toggle('hidden',s!=='admins');
         $('setCases').classList.toggle('hidden',s!=='cases');
         $('setTemplates').classList.toggle('hidden',s!=='templates');
+        $('setUsers').classList.toggle('hidden',s!=='users');
         if(s==='admins')await renderSetAdmins();
         if(s==='cases')await renderSetCases();
         if(s==='templates')await renderSetTemplates();
+        if(s==='users')await openAccessUsers();
       };
     });
     // --- administratoriai ---
@@ -5903,7 +5932,8 @@
     const CLAIM_ST_COLOR={ received:'#6B7280', to_approve:'#1E7A34', to_approve_partial:'#8A6D00', rejected:'#C0392B',
       approved:'#0B6E2E', approved_partial:'#0B6E2E', not_approved:'#C0392B' };
     function stBadge(s){ return `<span style="background:${CLAIM_ST_COLOR[s]||'#6B7280'};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;white-space:nowrap;">${CLAIM_ST[s]||s}</span>`; }
-    function credCanEdit(){ return PERM_LEVEL==='full'||IS_SUPERADMIN; }
+    function credCanEdit(){ if(IS_SUPERADMIN)return true; const l=(ACCESS_MAP&&ACCESS_MAP.creditors)||PERM_LEVEL; return l==='edit'||l==='full'; }
+    function credCanDelete(){ if(IS_SUPERADMIN)return true; const l=(ACCESS_MAP&&ACCESS_MAP.creditors)||PERM_LEVEL; return l==='full'; }
 
     async function loadCreditorsModule(view){
       CRED_VIEW=view||CRED_VIEW;
@@ -6006,7 +6036,7 @@
       await credLog(id?'creditor_updated':'creditor_created',{ id:outId, name });
       return outId;
     }
-    window.delCreditor=async(id)=>{ if(!credCanEdit())return; if(!confirm('Pašalinti kreditorių su visais jo apskaitos įrašais ir reikalavimais?'))return;
+    window.delCreditor=async(id)=>{ if(!credCanDelete())return; if(!confirm('Pašalinti kreditorių su visais jo apskaitos įrašais ir reikalavimais?'))return;
       await sb.from('insolvency_creditors').delete().eq('id',id); await loadCreditorsModule(); };
 
     // Standartiniai kreditoriai
@@ -6101,7 +6131,7 @@
       if(err){ $('accMsg').innerHTML='<div class="error">'+esc(err.message)+'</div>'; return; }
       hide('accModal'); await loadCreditorsModule('acc');
     }
-    window.delAcc=async(id)=>{ if(!credCanEdit())return; if(!confirm('Pašalinti apskaitos įrašą?'))return; await sb.from('insolvency_creditor_accounting').delete().eq('id',id); await loadCreditorsModule('acc'); };
+    window.delAcc=async(id)=>{ if(!credCanDelete())return; if(!confirm('Pašalinti apskaitos įrašą?'))return; await sb.from('insolvency_creditor_accounting').delete().eq('id',id); await loadCreditorsModule('acc'); };
 
     // ---------- ETAPAS 2: GAUTI REIKALAVIMAI ----------
     const RECV_VIA={ post:'Paštu', email:'El. paštu', epp:'EPP', delivered:'Įteikta', other:'Kita' };
@@ -6168,7 +6198,7 @@
       else { $('clmId').value=outId; }
       return outId;
     }
-    window.delClaim=async(id)=>{ if(!credCanEdit())return; if(!confirm('Pašalinti reikalavimą?'))return; await sb.from('insolvency_creditor_claims').delete().eq('id',id); await loadCreditorsModule('claims'); };
+    window.delClaim=async(id)=>{ if(!credCanDelete())return; if(!confirm('Pašalinti reikalavimą?'))return; await sb.from('insolvency_creditor_claims').delete().eq('id',id); await loadCreditorsModule('claims'); };
 
     // Reikalavimo failai
     async function loadClaimFiles(claimId){ try{ const r=await sb.from('insolvency_claim_files').select('*').eq('claim_id',claimId).order('created_at'); CRED_CLAIM_FILES=r.data||[]; }catch(_){ CRED_CLAIM_FILES=[]; } renderClaimFiles(); }
@@ -6407,7 +6437,7 @@
       if(err){ $('coMsg').innerHTML='<div class="error">'+esc(err.message)+'</div>'; return; }
       hide('courtOrderModal'); await loadCreditorsModule('court');
     }
-    window.delCourtOrder=async(id)=>{ if(!credCanEdit())return; if(!confirm('Pašalinti nutartį? (reikalavimų būsenos nekeičiamos)'))return; await sb.from('insolvency_court_orders').delete().eq('id',id); await loadCreditorsModule('court'); };
+    window.delCourtOrder=async(id)=>{ if(!credCanDelete())return; if(!confirm('Pašalinti nutartį? (reikalavimų būsenos nekeičiamos)'))return; await sb.from('insolvency_court_orders').delete().eq('id',id); await loadCreditorsModule('court'); };
     // Tikslinimas (JANĮ 44)
     window.openAdjustModal=(id)=>{ if(!credCanEdit())return; const c=CLAIMS.find(x=>x.id===id); if(!c)return;
       $('adjClaimId').value=id; $('adjModalTitle').textContent='Tikslinti reikalavimą — '+credName(c.creditor_id);
@@ -6502,6 +6532,83 @@
       $('adjFile')&&$('adjFile').addEventListener('change',()=>{ const f=$('adjFile').files[0]; $('adjFileName').textContent=f?f.name:''; });
       b('credImpCancel',()=>hide('credImportModal')); b('credImpPreviewBtn',previewCredImport); b('credImpDoBtn',doCredImport);
     }
+
+    // ========================================================================
+    // GRANULIARIŲ TEISIŲ TAIKYMAS (submodulis × byla/departamentas/globaliai)
+    // ========================================================================
+    let ACCESS_MAP={}, ACCESS_ROLE='user', USER_HAS_RULES=false;
+    const SUBMODULE_OF={ main:'case_card', registry:'doc_registry', creditors:'creditors', debtors:'debtors', docs:'documents', assets:'assets', acts:'acts' };
+    const SUBMOD_LABELS={ all:'Visi submoduliai', case_card:'Bylos kortelė ir žurnalas', doc_registry:'Dokumentų registravimas', creditors:'Kreditorių valdymas', debtors:'Debitoriai', documents:'Dokumentų rengimas', assets:'Turtas (nuoma / pardavimas)', acts:'Perdavimo aktai' };
+    const LVL_LABELS={ view:'Peržiūra + ataskaitos', edit:'Redagavimas (be trynimo)', full:'Visos teisės (su trynimu)' };
+    function subLevel(sm){ if(IS_SUPERADMIN)return 'full'; const l=ACCESS_MAP&&ACCESS_MAP[sm]; return l||(PERM_LEVEL||'none'); }
+    function isGranular(){ return USER_HAS_RULES && !IS_SUPERADMIN; }
+    async function loadAccessMap(caseId){
+      if(IS_SUPERADMIN){ ACCESS_MAP={}; ACCESS_ROLE='superadmin'; return; }
+      try{ const r=await sb.rpc('bankrotas_access_map',{ p_case_id:caseId }); ACCESS_MAP=r.data||{}; ACCESS_ROLE=ACCESS_MAP._role||'user'; if(ACCESS_MAP._has_rules)USER_HAS_RULES=true; }
+      catch(_){ ACCESS_MAP={}; }
+    }
+    function applyTopTabVisibility(){
+      document.querySelectorAll('#topTabs .tab').forEach(t=>{ const sm=SUBMODULE_OF[t.dataset.top]; if(!sm)return;
+        t.classList.toggle('hidden', isGranular() && subLevel(sm)==='none'); });
+    }
+    function applySubmoduleGuard(){
+      if(!isGranular())return;
+      const sm=SUBMODULE_OF[TOP]||'case_card'; const lvl=subLevel(sm);
+      document.body.classList.remove('perm-view','perm-cred-nodelete');
+      if(lvl==='view'||lvl==='none') document.body.classList.add('perm-view');
+      else if(lvl==='edit') document.body.classList.add('perm-cred-nodelete');
+    }
+
+    // ---------- VARTOTOJŲ IR TEISIŲ VALDYMAS (Nustatymai, tik superadmin) ----------
+    let ACCESS_USERS=[], ACC_ADMINS=[], ACC_CASES=[], ACC_SEL_USER=null;
+    async function openAccessUsers(){
+      const r=await sb.rpc('list_access_users'); ACCESS_USERS=(r.data&&r.data.users)||[];
+      if(!ACC_ADMINS.length){ try{ const a=await sb.from('insolvency_administrators').select('id,name').order('name'); ACC_ADMINS=a.data||[]; }catch(_){}}
+      try{ const c=await sb.from('insolvency_cases').select('id,debtor_name,case_short_code,administrator_id').order('debtor_name'); ACC_CASES=c.data||[]; }catch(_){}
+      renderAccUsersList();
+    }
+    function renderAccUsersList(){
+      const el=$('accUsersList'); if(!el)return;
+      el.innerHTML=ACCESS_USERS.map(u=>`<div class="tab" style="display:block;text-align:left;margin-bottom:4px;${ACC_SEL_USER===u.id?'background:var(--gold);color:var(--navy);':''}" onclick="selAccUser('${u.id}')">${esc(u.full_name||u.email)}<div style="font-size:11px;opacity:.85;">${esc(u.email)} · ${u.role==='superadmin'?'superadmin':((u.rule_count||0)+' taisyklės'+(u.legacy?' · legacy '+u.legacy:''))}</div></div>`).join('');
+    }
+    window.selAccUser=async(id)=>{ ACC_SEL_USER=id; renderAccUsersList();
+      const u=ACCESS_USERS.find(x=>x.id===id);
+      const r=await sb.rpc('list_access_rules',{ p_user:id }); const rules=(r.data&&r.data.rules)||[]; renderAccPanel(u,rules); };
+    function renderAccPanel(u,rules){
+      const el=$('accUserPanel'); if(!el)return;
+      if(!u){ el.innerHTML='<div class="muted">Pasirinkite vartotoją.</div>'; return; }
+      if(u.role==='superadmin'){ el.innerHTML='<strong>'+esc(u.full_name||u.email)+'</strong><div class="muted" style="margin-top:6px;">Superadministratorius turi visas teises visuose submoduliuose ir bylose. Teisės nekonfigūruojamos.</div>'; return; }
+      const subOpts=Object.keys(SUBMOD_LABELS).map(k=>`<option value="${k}">${SUBMOD_LABELS[k]}</option>`).join('');
+      const lvlOpts=Object.keys(LVL_LABELS).map(k=>`<option value="${k}">${LVL_LABELS[k]}</option>`).join('');
+      let html=`<strong>${esc(u.full_name||u.email)}</strong> <span class="muted">(${esc(u.email)})</span>`;
+      html+=`<div class="hint" style="margin:4px 0 10px;">Bazinis (legacy) modulio lygis: <b>${u.legacy||'nėra'}</b>. Priskyrus bent vieną taisyklę taikomas granuliarus modelis. Tiksliausia taisyklė laimi: <b>byla &gt; departamentas &gt; globaliai</b>, o toje pačioje apimtyje <b>konkretus submodulis &gt; visi</b>.</div>`;
+      html+=`<div style="background:#F6F8FB;border:1px solid var(--bd);border-radius:8px;padding:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="min-width:160px;"><label class="label">Apimtis</label>
+          <select id="accScopeType" class="select" onchange="accScopeChange()">
+            <option value="global">Visos bylos (globaliai)</option>
+            <option value="department">Nemokumo įmonė (departamentas)</option>
+            <option value="case">Atskira byla</option></select></div>
+        <div id="accTargetWrap" style="min-width:200px;flex:1;"></div>
+        <div style="min-width:190px;"><label class="label">Submodulis</label><select id="accSub" class="select">${subOpts}</select></div>
+        <div style="min-width:190px;"><label class="label">Lygis</label><select id="accLvl" class="select">${lvlOpts}</select></div>
+        <button class="btn btn-sm" onclick="addAccRule()">+ Priskirti</button></div>`;
+      html+=`<div id="accRuleMsg" style="margin:8px 0;"></div>`;
+      if(rules.length){ html+='<table style="margin-top:6px;"><thead><tr><th>Apimtis</th><th>Submodulis</th><th>Lygis</th><th></th></tr></thead><tbody>'+
+        rules.map(r=>`<tr><td>${r.scope_type==='global'?'Visos bylos':((r.scope_type==='department'?'Įmonė: ':'Byla: ')+esc(r.scope_name||'—'))}</td>
+          <td>${esc(SUBMOD_LABELS[r.submodule]||r.submodule)}</td><td>${esc(LVL_LABELS[r.level]||r.level)}</td>
+          <td style="text-align:right;"><button class="btn btn-sm btn-danger" onclick="delAccRule('${r.id}')">✕</button></td></tr>`).join('')+'</tbody></table>'; }
+      else html+='<div class="muted" style="margin-top:8px;">Taisyklių dar nepriskirta — vartotojui taikomas bazinis (legacy) lygis.</div>';
+      el.innerHTML=html; accScopeChange();
+    }
+    window.accScopeChange=()=>{ const t=$('accScopeType').value, w=$('accTargetWrap'); if(!w)return;
+      if(t==='global'){ w.innerHTML='<label class="label">&nbsp;</label><div class="muted" style="font-size:12px;padding-top:8px;">Taikoma visoms byloms</div>'; }
+      else if(t==='department'){ w.innerHTML='<label class="label">Nemokumo įmonė</label><select id="accTarget" class="select">'+ACC_ADMINS.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')+'</select>'; }
+      else { w.innerHTML='<label class="label">Byla</label><select id="accTarget" class="select">'+ACC_CASES.map(c=>`<option value="${c.id}">${esc(c.debtor_name||c.case_short_code)}</option>`).join('')+'</select>'; } };
+    window.addAccRule=async()=>{ const t=$('accScopeType').value, target=$('accTarget')?$('accTarget').value:null;
+      const r=await sb.rpc('set_access_rule',{ p_user:ACC_SEL_USER, p_scope_type:t, p_scope_id:(t==='global'?null:target), p_submodule:$('accSub').value, p_level:$('accLvl').value });
+      if(r.error||(r.data&&r.data.ok===false)){ $('accRuleMsg').innerHTML='<div class="error">Klaida: '+esc((r.error&&r.error.message)||(r.data&&r.data.error_code)||'')+'</div>'; return; }
+      await openAccessUsers(); await selAccUser(ACC_SEL_USER); };
+    window.delAccRule=async(id)=>{ if(!confirm('Pašalinti teisių taisyklę?'))return; await sb.rpc('delete_access_rule',{ p_id:id }); await openAccessUsers(); await selAccUser(ACC_SEL_USER); };
 
     bindCredButtons();
     boot();
