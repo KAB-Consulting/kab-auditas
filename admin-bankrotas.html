@@ -458,6 +458,75 @@
         <div id="registryTable"></div>
       </div>
 
+      <!-- ============ KREDITORIŲ VALDYMO MODULIS ============ -->
+      <div id="paneCredRegistry" class="card hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div><strong>💼 Kreditorių registras</strong>
+            <div class="muted" style="font-size:12px;">Vienas įrašas kiekvienam kreditoriui. Skolos pagal apskaitą, gauti reikalavimai ir teismo nutartys susiejami su tuo pačiu kreditoriumi (JANĮ 41–44, 94–95 str.).</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-ghost" id="credStdBtn">➕ Standartiniai (VMI/Sodra/GF)</button>
+            <button class="btn btn-sm btn-ghost" id="credImportBtn">⬆️ Masinis importas</button>
+            <button class="btn btn-sm" id="credNewBtn">+ Naujas kreditorius</button>
+          </div>
+        </div>
+        <input id="credRegSearch" class="input" placeholder="Paieška: pavadinimas / kodas / el. paštas…" style="margin-bottom:10px;">
+        <div id="credRegistryMsg"></div>
+        <div id="credRegistryBody"></div>
+      </div>
+
+      <div id="paneCredAcc" class="card hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div><strong>📒 Skolos pagal įmonės apskaitą</strong>
+            <div class="muted" style="font-size:12px;">1 etapas — vadovo pateiktas kreditorių sąrašas. Pagrindinė skola, delspinigiai ir baudos laikomi atskirai.</div></div>
+          <button class="btn btn-sm" id="accNewBtn">+ Naujas apskaitos įrašas</button>
+        </div>
+        <div id="credAccMsg"></div>
+        <div id="credAccBody"></div>
+      </div>
+
+      <div id="paneCredClaims" class="card hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div><strong>📥 Gauti kreditoriniai reikalavimai</strong>
+            <div class="muted" style="font-size:12px;">2 etapas — kreditorių pateikti finansiniai reikalavimai. Pagrindinė skola (I tenkinimo etapas) ir netesybos/palūkanos (II etapas) laikomos atskirai.</div></div>
+          <button class="btn btn-sm" id="claimNewBtn">+ Naujas reikalavimas</button>
+        </div>
+        <input id="credClaimSearch" class="input" placeholder="Paieška pagal kreditorių…" style="margin-bottom:10px;">
+        <div id="credClaimsMsg"></div>
+        <div id="credClaimsBody"></div>
+      </div>
+
+      <div id="paneCredRecon" class="card hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div><strong>⚖️ Sutikrinimas ir sprendimai</strong>
+            <div class="muted" style="font-size:12px;">3 etapas — apskaitos ir gautų reikalavimų palyginimas, nuokrypiai, sprendimai teikti tvirtinti / netvirtinti.</div></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <select id="credReconFilter" class="select" style="max-width:210px;">
+              <option value="">Visi kreditoriai</option><option value="match">Sutampa</option><option value="diff">Nesutampa</option>
+              <option value="notrecv">Negauta (yra apskaitoje)</option><option value="claimonly">Tik reikalavimas</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+          <button class="btn btn-sm btn-gold" id="reconExpAppXlsx">⬇️ Tvirtinami (XLSX)</button>
+          <button class="btn btn-sm btn-ghost" id="reconExpAppPdf">📄 Tvirtinami (PDF)</button>
+          <button class="btn btn-sm btn-danger" id="reconExpRejXlsx">⬇️ Netvirtinami (XLSX)</button>
+          <button class="btn btn-sm btn-ghost" id="reconExpRejPdf">📄 Netvirtinami (PDF)</button>
+        </div>
+        <div id="credReconMsg"></div>
+        <div id="credReconBody"></div>
+      </div>
+
+      <div id="paneCredCourt" class="card hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div><strong>🏛️ Teismo nutartys, eilės ir galutinis sąrašas</strong>
+            <div class="muted" style="font-size:12px;">4–5 etapai — reikalavimų tvirtinimas teismo nutartimi, tikslinimas (44 str.), eilių priskyrimas (94 str.) ir galutinis kreditorių sąrašas su balsų dalimi.</div></div>
+          <button class="btn btn-sm btn-ghost" id="credAvntBtn">⬇️ AVNT suvestinė (XLSX)</button>
+        </div>
+        <div id="credCourtMsg"></div>
+        <div id="credCourtBody"></div>
+        <div id="credFinalBody"></div>
+      </div>
+
       <!-- DOKUMENTŲ BIBLIOTEKA (galutiniai PDF + priedų biblioteka) -->
       <div id="paneLibrary" class="card hidden">
         <div class="tabs" style="margin-bottom:14px;">
@@ -1348,6 +1417,200 @@
     </div>
   </div>
 
+  <!-- KREDITORIAUS MODALĖ -->
+  <div id="credModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:720px;">
+      <h2 id="credModalTitle">Naujas kreditorius</h2>
+      <input type="hidden" id="credId">
+      <div class="row">
+        <div style="max-width:200px;"><label class="label">Tipas</label>
+          <select id="credKind" class="select"><option value="legal">Juridinis asmuo</option><option value="person">Fizinis asmuo</option></select></div>
+        <div><label class="label">Iš kontrahentų žinyno (nebūtina)</label>
+          <select id="credCpSelect" class="select"><option value="">— naujas / be žinyno —</option></select></div>
+      </div>
+      <div class="row">
+        <div><label class="label">Pavadinimas / vardas pavardė *</label><input id="credName" class="input"></div>
+        <div style="max-width:220px;"><label class="label">Identifikacinis kodas</label><input id="credCode" class="input"></div>
+      </div>
+      <label class="label">Adresas</label><input id="credAddress" class="input">
+      <div class="row">
+        <div><label class="label">El. paštas</label><input id="credEmail" class="input" type="email"></div>
+        <div><label class="label">Telefonas</label><input id="credPhone" class="input"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;margin:8px 0;font-size:13px;"><input type="checkbox" id="credSecured" style="width:auto;"> Reikalavimas užtikrintas įkeitimu / hipoteka</label>
+      <label style="display:flex;align-items:center;gap:6px;margin:8px 0;font-size:13px;"><input type="checkbox" id="credRepChk" style="width:auto;"> Kreditorių atstovauja atstovas (juridinis asmuo / teisinis atstovas)</label>
+      <div id="credRepBox" class="hidden" style="background:#F6F8FB;border:1px solid var(--bd);border-radius:8px;padding:10px;">
+        <div class="row">
+          <div style="max-width:200px;"><label class="label">Atstovo tipas</label>
+            <select id="credRepType" class="select"><option value="">—</option><option value="vadovas">Vadovas</option><option value="igaliotas">Įgaliotas asmuo</option><option value="advokatas">Advokatas</option><option value="kita">Kita</option></select></div>
+          <div><label class="label">Pareigos</label><input id="credRepPos" class="input"></div>
+        </div>
+        <div class="row">
+          <div><label class="label">Vardas pavardė</label><input id="credRepName" class="input"></div>
+          <div><label class="label">El. paštas</label><input id="credRepEmail" class="input"></div>
+          <div style="max-width:180px;"><label class="label">Telefonas</label><input id="credRepPhone" class="input"></div>
+        </div>
+      </div>
+      <label class="label">Pastabos</label><textarea id="credNotes" class="textarea" style="min-height:44px;"></textarea>
+      <div id="credMsg" style="margin-top:8px;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;"><button class="btn btn-ghost" id="credCancel">Atšaukti</button><button class="btn" id="credSave">Išsaugoti</button></div>
+    </div>
+  </div>
+
+  <!-- APSKAITOS ĮRAŠO MODALĖ -->
+  <div id="accModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:560px;">
+      <h2 id="accModalTitle">Naujas apskaitos įrašas</h2>
+      <input type="hidden" id="accId">
+      <label class="label">Kreditorius *</label><select id="accCredSelect" class="select"></select>
+      <label class="label">Skolos pagrindas</label><select id="accBasis" class="select"></select>
+      <div class="row">
+        <div><label class="label">Pagrindinė skola (€)</label><input id="accPrincipal" class="input" type="number" step="0.01"></div>
+        <div><label class="label">Delspinigiai (€)</label><input id="accLate" class="input" type="number" step="0.01"></div>
+        <div><label class="label">Baudos (€)</label><input id="accFines" class="input" type="number" step="0.01"></div>
+      </div>
+      <div style="text-align:right;font-weight:700;margin-top:6px;">Viso: <span id="accTotal">0,00 €</span></div>
+      <label class="label">Pastaba</label><input id="accNote" class="input" placeholder="pvz. sąskaitų Nr., laikotarpis">
+      <div id="accMsg" style="margin-top:8px;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;"><button class="btn btn-ghost" id="accCancel">Atšaukti</button><button class="btn" id="accSave">Išsaugoti</button></div>
+    </div>
+  </div>
+
+  <!-- REIKALAVIMO MODALĖ -->
+  <div id="claimModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:820px;">
+      <h2 id="clmModalTitle">Naujas kreditorinis reikalavimas</h2>
+      <input type="hidden" id="clmId">
+      <div class="row">
+        <div><label class="label">Kreditorius *</label><select id="clmCredSelect" class="select"></select>
+          <div class="hint">Nėra sąraše? Sukurkite jį Registro skirtuke, tada grįžkite čia.</div></div>
+      </div>
+      <div class="row">
+        <div style="max-width:180px;"><label class="label">Gavimo data</label><input id="clmReceived" class="input" type="date"></div>
+        <div style="max-width:180px;"><label class="label">Pateikimo būdas</label>
+          <select id="clmVia" class="select"><option value="email">El. paštu</option><option value="post">Paštu</option><option value="epp">EPP</option><option value="delivered">Įteikta</option><option value="other">Kita</option></select></div>
+        <div><label class="label">Reikalavimo pagrindas</label><select id="clmBasis" class="select"></select></div>
+      </div>
+      <div class="sec-title">Reikalaujamos sumos</div>
+      <div class="row">
+        <div><label class="label">Pagrindinė skola (€)</label><input id="clmPrincipal" class="input" type="number" step="0.01"></div>
+        <div><label class="label">Delspinigiai (€)</label><input id="clmLate" class="input" type="number" step="0.01"></div>
+        <div><label class="label">Palūkanos (€)</label><input id="clmInterest" class="input" type="number" step="0.01"></div>
+        <div><label class="label">Baudos (€)</label><input id="clmFines" class="input" type="number" step="0.01"></div>
+      </div>
+      <div style="text-align:right;font-size:13px;margin-top:4px;">Netesybos/palūkanos: <b id="clmNetTotal">0,00 €</b> · Viso: <b id="clmTotal">0,00 €</b></div>
+      <label style="display:flex;align-items:center;gap:6px;margin:8px 0;font-size:13px;"><input type="checkbox" id="clmSecured" style="width:auto;"> Reikalavimas užtikrintas (įkeitimas / hipoteka)</label>
+      <div id="clmSecuredNoteWrap" class="hidden"><label class="label">Užtikrinimo aprašymas</label><input id="clmSecuredNote" class="input"></div>
+      <label class="label">Pastabos</label><textarea id="clmNotes" class="textarea" style="min-height:40px;"></textarea>
+
+      <div id="clmDocsSec" class="hidden">
+        <div class="sec-title">Dokumentai (reikalavimas, sąskaitos, sutartys ir kt.)</div>
+        <div id="clmDocsList" style="margin-bottom:6px;"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:180px;"><label class="label">Dokumento pavadinimas</label><input id="clmDocLabel" class="input" placeholder="pvz. Kreditorinis reikalavimas"></div>
+          <input type="file" id="clmDocFile" class="hidden">
+          <button class="btn btn-sm" type="button" id="clmDocFileBtn">📎 Pridėti dokumentą</button>
+        </div>
+      </div>
+
+      <div id="clmRegSec" class="hidden">
+        <div class="sec-title">Susiejimas su dokumentų registracijos žurnalu</div>
+        <div id="clmRegList" style="margin-bottom:6px;"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:220px;"><label class="label">Registruotas gautas dokumentas</label><select id="clmRegSelect" class="select"></select></div>
+          <button class="btn btn-sm btn-ghost" type="button" id="clmRegAddBtn">🔗 Susieti</button>
+        </div>
+      </div>
+
+      <div id="clmMsg" style="margin-top:10px;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="clmCancel">Uždaryti</button>
+        <button class="btn btn-ghost" id="clmSaveStay">💾 Išsaugoti ir pridėti dokumentus</button>
+        <button class="btn" id="clmSave">Išsaugoti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPRENDIMO MODALĖ (netvirtinama / iš dalies) -->
+  <div id="decisionModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:600px;">
+      <h2 id="decModalTitle">Sprendimas</h2>
+      <input type="hidden" id="decClaimId"><input type="hidden" id="decStatus">
+      <div class="hint" id="decHint" style="margin-bottom:8px;"></div>
+      <div id="decSumsWrap" class="hidden">
+        <div class="sec-title">Teikiamos tvirtinti sumos</div>
+        <div class="row">
+          <div><label class="label">Pagrindinė (€)</label><input id="decPrincipal" class="input" type="number" step="0.01"></div>
+          <div><label class="label">Delspinigiai (€)</label><input id="decLate" class="input" type="number" step="0.01"></div>
+          <div><label class="label">Palūkanos (€)</label><input id="decInterest" class="input" type="number" step="0.01"></div>
+          <div><label class="label">Baudos (€)</label><input id="decFines" class="input" type="number" step="0.01"></div>
+        </div>
+      </div>
+      <label class="label">Nesutikimo motyvai *</label>
+      <textarea id="decNote" class="textarea" style="min-height:80px;" placeholder="Dėl kokių priežasčių visa apimtimi ar iš dalies netvirtinama — bus perkelta į argumentus teismui."></textarea>
+      <div id="decMsg" style="margin-top:8px;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;"><button class="btn btn-ghost" id="decCancel">Atšaukti</button><button class="btn" id="decSave">Išsaugoti sprendimą</button></div>
+    </div>
+  </div>
+
+  <!-- TEISMO NUTARTIES MODALĖ -->
+  <div id="courtOrderModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:600px;">
+      <h2 id="coModalTitle">Nauja teismo nutartis</h2>
+      <input type="hidden" id="coId">
+      <div class="row">
+        <div><label class="label">Teismas</label><input id="coCourt" class="input"></div>
+        <div style="max-width:180px;"><label class="label">Nutarties data *</label><input id="coDate" class="input" type="date"></div>
+      </div>
+      <label class="label">Bylos Nr.</label><input id="coCaseNo" class="input">
+      <label class="label">Aprašymas</label><textarea id="coDesc" class="textarea" style="min-height:44px;" placeholder="pvz. Patvirtinti kreditorių reikalavimai"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+        <input type="file" id="coFile" class="hidden" accept="application/pdf,image/*">
+        <button class="btn btn-sm btn-ghost" type="button" id="coFileBtn">📎 Nutarties failas (PDF)</button>
+        <span id="coFileName" class="muted" style="font-size:12px;"></span>
+      </div>
+      <div id="coMsg" style="margin-top:8px;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;"><button class="btn btn-ghost" id="coCancel">Atšaukti</button><button class="btn" id="coSave">Išsaugoti</button></div>
+    </div>
+  </div>
+
+  <!-- TIKSLINIMO MODALĖ (JANĮ 44 str.) -->
+  <div id="adjustModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:600px;">
+      <h2 id="adjModalTitle">Tikslinti reikalavimą</h2>
+      <input type="hidden" id="adjClaimId">
+      <div class="hint" style="margin-bottom:8px;">Patikslintos patvirtintos sumos (pvz. po Garantinio fondo išmokų, ginčų ar naujos nutarties). Visa pakeitimų istorija išsaugoma.</div>
+      <div class="row">
+        <div><label class="label">Pagrindinė (€)</label><input id="adjPrincipal" class="input" type="number" step="0.01"></div>
+        <div><label class="label">Delspinigiai (€)</label><input id="adjLate" class="input" type="number" step="0.01"></div>
+        <div><label class="label">Palūkanos (€)</label><input id="adjInterest" class="input" type="number" step="0.01"></div>
+        <div><label class="label">Baudos (€)</label><input id="adjFines" class="input" type="number" step="0.01"></div>
+      </div>
+      <label class="label">Tikslinimo pagrindas *</label>
+      <input id="adjNote" class="input" placeholder="pvz. Garantinio fondo išmoka darbuotojams / teismo nutartis Nr. …">
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+        <input type="file" id="adjFile" class="hidden" accept="application/pdf,image/*">
+        <button class="btn btn-sm btn-ghost" type="button" id="adjFileBtn">📎 Pagrindžiantis dokumentas</button>
+        <span id="adjFileName" class="muted" style="font-size:12px;"></span>
+      </div>
+      <div id="adjMsg" style="margin-top:8px;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;"><button class="btn btn-ghost" id="adjCancel">Atšaukti</button><button class="btn" id="adjSave">Tikslinti</button></div>
+    </div>
+  </div>
+
+  <!-- MASINIO IMPORTO MODALĖ -->
+  <div id="credImportModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:820px;">
+      <h2>Masinis kreditorių importas</h2>
+      <div class="hint" style="margin-bottom:8px;">Įklijuokite iš Excel (stulpelių tvarka): <b>Pavadinimas · Kodas · Adresas · El. paštas · Pagrindinė · Delspinigiai · Baudos · Pagrindas</b>. Kiekviena eilutė — vienas kreditorius su apskaitos įrašu. Esami (pagal kodą) papildomi nauju apskaitos įrašu.</div>
+      <textarea id="credImpText" class="textarea" style="min-height:160px;font-family:monospace;font-size:12px;" placeholder="UAB Pavyzdys	300123456	Vilniaus g. 1	info@pvz.lt	1200.50	80	100	Paslaugos"></textarea>
+      <div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-sm btn-ghost" id="credImpPreviewBtn">👁 Peržiūrėti</button></div>
+      <div id="credImpMsg"></div>
+      <div id="credImpPreview" style="max-height:260px;overflow:auto;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;"><button class="btn btn-ghost" id="credImpCancel">Atšaukti</button><button class="btn" id="credImpDoBtn">✔ Importuoti</button></div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -1834,7 +2097,7 @@
       REC_TYPE='employee'; ENRICHED={};
       document.querySelectorAll('#paneRecipients .tab[data-rtype]').forEach(t=>t.classList.toggle('active',t.dataset.rtype==='employee'));
       $('cardMsg').innerHTML=''; $('aiMsg').innerHTML=''; $('ctMsg').innerHTML='';
-      REG_TYPE='received'; REGISTRATIONS=[]; CONTACTS=[]; ASSETS=[];
+      REG_TYPE='received'; REGISTRATIONS=[]; CONTACTS=[]; ASSETS=[]; CREDITORS=[]; CRED_ACC=[]; CLAIMS=[]; CORDERS=[];
       document.querySelectorAll('#paneRegistry .tab').forEach(t=>t.classList.toggle('active',t.dataset.regtype==='received'));
       setTop('main'); setCardSaved(false);
       views('caseDetailView');
@@ -1863,16 +2126,16 @@
     const TOP_TABS={
       main:      [['card','📋 Bylos kortelė'],['log','🕓 Žurnalas']],
       registry:  [['regnew','➕ Registruoti'],['regjournal','📓 Reg. žurnalas']],
-      creditors: [['creditors','💼 Kreditorių sąrašas']],
+      creditors: [['credRegistry','💼 Registras'],['credAcc','📒 Apskaitos duomenys'],['credClaims','📥 Gauti reikalavimai'],['credRecon','⚖️ Sutikrinimas'],['credCourt','🏛️ Tvirtinimas']],
       debtors:   [['debtors','💰 Debitoriai']],
       docs:      [['recipients','👥 Gavėjai'],['documents','⚙️ Generavimas'],['library','📚 Biblioteka'],['dispatch','📤 Siuntimas ir sąrašai']],
       assets:    [['assets','🏠 Turto sąrašas'],['lease','🔑 Nuoma'],['sale','🛒 Pardavimas']],
       acts:      [['acts','📝 Perdavimo aktai']]
     };
     const PANE_OF={ card:'paneCard', log:'paneLog', regnew:'paneRegNew', regjournal:'paneRegistry',
-      creditors:'paneRecipients', debtors:'paneDebtors', recipients:'paneRecipients', documents:'paneDocuments',
+      credRegistry:'paneCredRegistry', credAcc:'paneCredAcc', credClaims:'paneCredClaims', credRecon:'paneCredRecon', credCourt:'paneCredCourt', debtors:'paneDebtors', recipients:'paneRecipients', documents:'paneDocuments',
       library:'paneLibrary', dispatch:'paneDispatch', assets:'paneAssets', lease:'paneLease', sale:'paneSale', acts:'paneActs' };
-    const ALL_PANES=['paneCard','paneLog','paneRegNew','paneRegistry','paneRecipients','paneDebtors','paneDocuments','paneLibrary','paneDispatch','paneAssets','paneLease','paneSale','paneActs'];
+    const ALL_PANES=['paneCard','paneLog','paneRegNew','paneRegistry','paneRecipients','paneDebtors','paneDocuments','paneLibrary','paneDispatch','paneAssets','paneLease','paneSale','paneActs','paneCredRegistry','paneCredAcc','paneCredClaims','paneCredRecon','paneCredCourt'];
     let TOP='main';
     function setTop(top){
       TOP=top;
@@ -1914,6 +2177,11 @@
       if(key==='assets')loadAssets();
       if(key==='lease')loadLeases();
       if(key==='sale')loadSales();
+      if(key==='credRegistry')loadCreditorsModule('registry');
+      if(key==='credAcc')loadCreditorsModule('acc');
+      if(key==='credClaims')loadCreditorsModule('claims');
+      if(key==='credRecon')loadCreditorsModule('recon');
+      if(key==='credCourt')loadCreditorsModule('court');
     }
     document.querySelectorAll('#topTabs .tab').forEach(t=>{ t.onclick=()=>setTop(t.dataset.top); });
 
@@ -5607,6 +5875,635 @@
       finally{ $('actGenPdf').disabled=false; }
     };
 
+    // ========================================================================
+    // KREDITORIŲ VALDYMO MODULIS (JANĮ 41–44, 94–95 str.)
+    // Etapai 1–6: registras+apskaita, gauti reikalavimai, sutikrinimas,
+    // teismo nutartys/tvirtinimas, eilės+galutinis sąrašas, praplėtimai.
+    // ========================================================================
+    let CBASES=[], CREDITORS=[], CRED_ACC=[], CLAIMS=[], CORDERS=[];
+    let CRED_CLAIM_FILES=[], CRED_CLAIM_REGLINKS=[], CRED_VIEW='registry';
+    const eur = v => fmtEur(v);
+    const num = v => (v==null||v==='')?0:Number(v);
+    function credById(id){ const c=CREDITORS.find(x=>x.id===id); return c||null; }
+    function credName(id){ const c=credById(id); return c?c.name:'—'; }
+    function accForCreditor(cid){ return CRED_ACC.filter(a=>a.creditor_id===cid); }
+    function claimsForCreditor(cid){ return CLAIMS.filter(c=>c.creditor_id===cid); }
+    function accTotals(cid){ const r=accForCreditor(cid);
+      return { principal:r.reduce((s,x)=>s+num(x.principal),0),
+               net:r.reduce((s,x)=>s+num(x.late_fees)+num(x.fines),0) }; }
+    function claimTotals(cid){ const r=claimsForCreditor(cid);
+      return { principal:r.reduce((s,x)=>s+num(x.principal),0),
+               net:r.reduce((s,x)=>s+num(x.late_fees)+num(x.interest)+num(x.fines),0) }; }
+    function apprTotals(cid){ const r=claimsForCreditor(cid);
+      return { principal:r.reduce((s,x)=>s+num(x.approved_principal),0),
+               net:r.reduce((s,x)=>s+num(x.approved_late_fees)+num(x.approved_interest)+num(x.approved_fines),0) }; }
+    function basisLabel(k){ const b=CBASES.find(x=>x.key===k); return b?b.label:(k||'—'); }
+    const CLAIM_ST={ received:'Gautas', to_approve:'Teikiamas tvirtinti', to_approve_partial:'Teikiamas iš dalies',
+      rejected:'Netvirtinamas', approved:'Patvirtintas teismo', approved_partial:'Patvirtintas iš dalies', not_approved:'Nepatvirtintas teismo' };
+    const CLAIM_ST_COLOR={ received:'#6B7280', to_approve:'#1E7A34', to_approve_partial:'#8A6D00', rejected:'#C0392B',
+      approved:'#0B6E2E', approved_partial:'#0B6E2E', not_approved:'#C0392B' };
+    function stBadge(s){ return `<span style="background:${CLAIM_ST_COLOR[s]||'#6B7280'};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;white-space:nowrap;">${CLAIM_ST[s]||s}</span>`; }
+    function credCanEdit(){ return PERM_LEVEL==='full'||IS_SUPERADMIN; }
+
+    async function loadCreditorsModule(view){
+      CRED_VIEW=view||CRED_VIEW;
+      if(!CURRENT||CURRENT.__new){ CREDITORS=[];CRED_ACC=[];CLAIMS=[];CORDERS=[]; renderCredView(CRED_VIEW); return; }
+      if(!CBASES.length){ try{ const r=await sb.from('insolvency_claim_bases').select('*').eq('is_active',true).order('sort_order'); CBASES=r.data||[]; }catch(_){}}
+      try{ const cr=await sb.from('insolvency_creditors').select('*').eq('case_id',CURRENT.id).order('created_at'); CREDITORS=cr.data||[]; }catch(_){ CREDITORS=[]; }
+      const ids=CREDITORS.map(c=>c.id);
+      if(ids.length){ try{ const ac=await sb.from('insolvency_creditor_accounting').select('*').in('creditor_id',ids); CRED_ACC=ac.data||[]; }catch(_){ CRED_ACC=[]; } } else CRED_ACC=[];
+      try{ const cl=await sb.from('insolvency_creditor_claims').select('*').eq('case_id',CURRENT.id).order('created_at'); CLAIMS=cl.data||[]; }catch(_){ CLAIMS=[]; }
+      try{ const co=await sb.from('insolvency_court_orders').select('*').eq('case_id',CURRENT.id).order('order_date'); CORDERS=co.data||[]; }catch(_){ CORDERS=[]; }
+      renderCredView(CRED_VIEW);
+    }
+    function renderCredView(v){
+      ({registry:renderCredRegistry, acc:renderCredAcc, claims:renderCredClaims, recon:renderCredRecon, court:renderCredCourt}[v]||renderCredRegistry)();
+    }
+    async function credLog(action,details){ try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:action, p_details:details||{} }); }catch(_){}}
+
+    // ---------- ETAPAS 1: REGISTRAS + DASHBOARD ----------
+    function credDashboard(){
+      let accP=0,accN=0,clP=0,clN=0,apP=0,apN=0,rejSum=0,notRecv=0,secSum=0,apI=0,apII=0;
+      CREDITORS.forEach(c=>{ const a=accTotals(c.id); accP+=a.principal; accN+=a.net;
+        const cl=claimTotals(c.id); clP+=cl.principal; clN+=cl.net;
+        const ap=apprTotals(c.id); apP+=ap.principal; apN+=ap.net;
+        if(!claimsForCreditor(c.id).length && (a.principal+a.net)>0) notRecv+=a.principal+a.net;
+      });
+      CLAIMS.forEach(cl=>{ if(cl.status==='rejected'||cl.status==='not_approved') rejSum+=num(cl.principal)+num(cl.late_fees)+num(cl.interest)+num(cl.fines);
+        if(cl.secured) secSum+=num(cl.approved_principal||cl.principal);
+        const apt=num(cl.approved_principal)+num(cl.approved_late_fees)+num(cl.approved_interest)+num(cl.approved_fines);
+        if(cl.priority==='I')apI+=apt; else if(cl.priority==='II')apII+=apt; });
+      const tile=(l,v,c)=>`<div style="background:#fff;border:1px solid var(--bd);border-radius:10px;padding:10px 12px;min-width:140px;flex:1;">
+        <div style="font-size:11px;color:var(--gray);">${l}</div><div style="font-size:17px;font-weight:700;color:${c||'var(--navy)'};">${v}</div></div>`;
+      return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+        ${tile('Kreditorių',CREDITORS.length)}
+        ${tile('Pagal apskaitą (viso)',eur(accP+accN))}
+        ${tile('Gauta reikalavimų (viso)',eur(clP+clN))}
+        ${tile('Patvirtinta (viso)',eur(apP+apN),'#0B6E2E')}
+        ${tile('I eilė / II eilė',eur(apI)+' / '+eur(apII))}
+        ${tile('Užtikrinti',eur(secSum))}
+        ${tile('Ginčijama / netvirtinama',eur(rejSum),'#C0392B')}
+        ${tile('Negauta (pagal apskaitą)',eur(notRecv),'#8A6D00')}
+      </div>`;
+    }
+    function renderCredRegistry(){
+      const el=$('credRegistryBody'); if(!el)return;
+      const q=($('credRegSearch')&&$('credRegSearch').value||'').toLowerCase().trim();
+      const rows=CREDITORS.filter(c=>!q||[c.name,c.id_code,c.email].some(v=>(v||'').toLowerCase().includes(q)));
+      let html=credDashboard();
+      if(!rows.length){ html+='<div class="muted center" style="padding:20px;">Kreditorių sąrašas tuščias. Pridėkite kreditorių arba įkelkite apskaitos sąrašą.</div>'; el.innerHTML=html; return; }
+      html+='<table><thead><tr><th>Kreditorius</th><th>Kodas</th><th>Tipas</th><th>Kilmė</th><th style="text-align:right;">Apskaita</th><th style="text-align:right;">Reikalavimas</th><th style="text-align:right;">Patvirtinta</th><th></th></tr></thead><tbody>';
+      rows.forEach(c=>{ const a=accTotals(c.id), cl=claimTotals(c.id), ap=apprTotals(c.id);
+        const hasClaim=claimsForCreditor(c.id).length>0;
+        html+=`<tr><td><b>${esc(c.name)}</b>${c.secured?' 🔒':''}${c.rep&&c.rep.name?`<div style="font-size:11px;color:#666;">atst.: ${esc(c.rep.name)}</div>`:''}</td>
+          <td>${esc(c.id_code||'—')}</td><td>${c.kind==='person'?'Fiz.':'Jur.'}</td>
+          <td>${c.origin==='claim_only'?'<span style="color:#8A6D00;">tik reikalavimas</span>':'apskaita'}</td>
+          <td style="text-align:right;">${eur(a.principal+a.net)}</td>
+          <td style="text-align:right;">${hasClaim?eur(cl.principal+cl.net):'<span class="muted">—</span>'}</td>
+          <td style="text-align:right;">${(ap.principal+ap.net)>0?eur(ap.principal+ap.net):'<span class="muted">—</span>'}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="openCredModal('${c.id}')">✎</button> <button class="btn btn-sm btn-danger" onclick="delCreditor('${c.id}')">✕</button></td></tr>`;
+      });
+      html+='</tbody></table>';
+      el.innerHTML=html;
+    }
+
+    // Kreditoriaus modalė
+    function fillCredCpSelect(sel){
+      const s=$('credCpSelect'); if(!s)return;
+      s.innerHTML='<option value="">— naujas / be žinyno —</option>'+CPARTIES.map(c=>`<option value="${c.id}">${esc(c.name)}${c.reg_code?' ('+esc(c.reg_code)+')':''}</option>`).join('');
+      s.value=sel||'';
+    }
+    window.openCredModal=async(id)=>{
+      if(!id&&!credCanEdit())return;
+      if(!CPARTIES.length){ await loadCounterparties(); }
+      const c=id?credById(id):{};
+      $('credId').value=id||''; $('credModalTitle').textContent=id?'Redaguoti kreditorių':'Naujas kreditorius';
+      $('credKind').value=c.kind||'legal'; $('credName').value=c.name||''; $('credCode').value=c.id_code||'';
+      $('credAddress').value=c.address||''; $('credEmail').value=c.email||''; $('credPhone').value=c.phone||'';
+      $('credNotes').value=c.notes||''; $('credSecured') && ($('credSecured').checked=!!c.secured);
+      const rep=c.rep||{}; $('credRepChk').checked=!!(rep&&(rep.name||rep.position||c.kind==='legal'&&id));
+      $('credRepType').value=rep.type||''; $('credRepPos').value=rep.position||''; $('credRepName').value=rep.name||'';
+      $('credRepEmail').value=rep.email||''; $('credRepPhone').value=rep.phone||'';
+      credRepToggle(); fillCredCpSelect(c.counterparty_id||'');
+      $('credMsg').innerHTML=''; show('credModal');
+    };
+    function credRepToggle(){ $('credRepBox').classList.toggle('hidden',!$('credRepChk').checked); }
+    async function saveCreditorRow(){
+      const id=$('credId').value;
+      const name=$('credName').value.trim();
+      if(!name){ $('credMsg').innerHTML='<div class="error">Įveskite pavadinimą / vardą pavardę.</div>'; return null; }
+      const rep=$('credRepChk').checked?{ type:$('credRepType').value||null, position:$('credRepPos').value.trim()||null,
+        name:$('credRepName').value.trim()||null, email:$('credRepEmail').value.trim()||null, phone:$('credRepPhone').value.trim()||null }:null;
+      const row={ kind:$('credKind').value, name, id_code:$('credCode').value.trim()||null, address:$('credAddress').value.trim()||null,
+        email:$('credEmail').value.trim()||null, phone:$('credPhone').value.trim()||null, notes:$('credNotes').value.trim()||null,
+        secured:$('credSecured')?$('credSecured').checked:false,
+        counterparty_id:($('credCpSelect').value||null), rep, updated_at:new Date().toISOString() };
+      let outId=id;
+      if(id){ const { error }=await sb.from('insolvency_creditors').update(row).eq('id',id); if(error){ $('credMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return null; } }
+      else { row.case_id=CURRENT.id; row.origin='accounting'; row.created_by=CURRENT_UID;
+        const r=await sb.from('insolvency_creditors').insert(row).select().single();
+        if(r.error){ $('credMsg').innerHTML='<div class="error">'+esc(r.error.message)+'</div>'; return null; } outId=r.data.id; }
+      await credLog(id?'creditor_updated':'creditor_created',{ id:outId, name });
+      return outId;
+    }
+    window.delCreditor=async(id)=>{ if(!credCanEdit())return; if(!confirm('Pašalinti kreditorių su visais jo apskaitos įrašais ir reikalavimais?'))return;
+      await sb.from('insolvency_creditors').delete().eq('id',id); await loadCreditorsModule(); };
+
+    // Standartiniai kreditoriai
+    const STD_CREDITORS=[
+      { name:'Valstybinė mokesčių inspekcija prie LR FM', id_code:'188659752', kind:'legal', address:'Vasario 16-osios g. 15, Vilnius', email:'vmi@vmi.lt', basis:'mokesciai' },
+      { name:'Valstybinio socialinio draudimo fondo valdyba (Sodra)', id_code:'191630223', kind:'legal', address:'Konstitucijos pr. 12, Vilnius', email:'info@sodra.lt', basis:'soc_draudimas' },
+      { name:'Užimtumo tarnyba prie LR SADM (Garantinis fondas)', id_code:'190766619', kind:'legal', address:'Geležinio Vilko g. 3A, Vilnius', email:'info@uzt.lt', basis:'darbo_uzmokestis' }
+    ];
+    async function addStdCreditors(){
+      if(!credCanEdit())return;
+      let added=0;
+      for(const s of STD_CREDITORS){
+        if(CREDITORS.some(c=>c.id_code===s.id_code))continue;
+        await sb.from('insolvency_creditors').insert({ case_id:CURRENT.id, kind:s.kind, name:s.name, id_code:s.id_code,
+          address:s.address, email:s.email, origin:'accounting', created_by:CURRENT_UID }); added++;
+      }
+      await credLog('std_creditors_added',{ added });
+      await loadCreditorsModule('registry');
+      $('credRegistryMsg').innerHTML='<div class="success">Pridėta standartinių kreditorių: '+added+'.</div>';
+    }
+
+    // Masinis importas
+    function openCredImport(){ if(!credCanEdit())return; $('credImpText').value=''; $('credImpMsg').innerHTML=''; $('credImpPreview').innerHTML=''; show('credImportModal'); }
+    function parseCredImport(){
+      const raw=$('credImpText').value.trim(); if(!raw){ $('credImpMsg').innerHTML='<div class="error">Įklijuokite duomenis.</div>'; return null; }
+      const lines=raw.split(/\r?\n/).filter(l=>l.trim());
+      const rows=lines.map(l=>{ const p=l.split('\t'); const money=x=>{ const n=parseFloat(String(x||'').replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; };
+        return { name:(p[0]||'').trim(), id_code:(p[1]||'').trim(), address:(p[2]||'').trim(), email:(p[3]||'').trim(),
+          principal:money(p[4]), late_fees:money(p[5]), fines:money(p[6]), basis_key:mapBasis((p[7]||'').trim()) };
+      }).filter(r=>r.name);
+      return rows;
+    }
+    function mapBasis(txt){ if(!txt)return null; const t=txt.toLowerCase();
+      const hit=CBASES.find(b=>b.label.toLowerCase()===t||b.key===t); if(hit)return hit.key;
+      if(t.includes('darbo'))return 'darbo_uzmokestis'; if(t.includes('mokes'))return 'mokesciai';
+      if(t.includes('paslaug'))return 'paslaugos'; if(t.includes('prek'))return 'prekes'; if(t.includes('paskol'))return 'paskolos';
+      return 'kita'; }
+    function previewCredImport(){
+      const rows=parseCredImport(); if(!rows)return;
+      if(!rows.length){ $('credImpMsg').innerHTML='<div class="error">Neatpažinta nė viena eilutė.</div>'; return; }
+      $('credImpMsg').innerHTML='<div class="muted">Atpažinta eilučių: '+rows.length+'</div>';
+      $('credImpPreview').innerHTML='<table><thead><tr><th>Pavadinimas</th><th>Kodas</th><th>Pagr.</th><th>Delsp.</th><th>Baudos</th><th>Pagrindas</th></tr></thead><tbody>'+
+        rows.slice(0,30).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.id_code)}</td><td style="text-align:right;">${eur(r.principal)}</td><td style="text-align:right;">${eur(r.late_fees)}</td><td style="text-align:right;">${eur(r.fines)}</td><td>${esc(basisLabel(r.basis_key))}</td></tr>`).join('')+
+        '</tbody></table>'+(rows.length>30?'<div class="muted">…ir dar '+(rows.length-30)+'</div>':'');
+    }
+    async function doCredImport(){
+      const rows=parseCredImport(); if(!rows||!rows.length){ $('credImpMsg').innerHTML='<div class="error">Nėra ką importuoti.</div>'; return; }
+      $('credImpMsg').innerHTML='<div class="muted">Importuojama…</div>';
+      const { data, error }=await sb.rpc('import_creditors_bulk',{ p_case_id:CURRENT.id, p_rows:rows });
+      if(error){ $('credImpMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      if(data&&data.ok===false){ $('credImpMsg').innerHTML='<div class="error">Klaida: '+esc(data.error_code)+'</div>'; return; }
+      await credLog('creditors_imported',{ created:data.created, merged:data.merged });
+      hide('credImportModal'); await loadCreditorsModule('registry');
+      $('credRegistryMsg').innerHTML='<div class="success">Importuota: sukurta '+data.created+', papildyta '+data.merged+' kreditorių.</div>';
+    }
+
+    // ---------- ETAPAS 1: APSKAITOS DUOMENYS ----------
+    function renderCredAcc(){
+      const el=$('credAccBody'); if(!el)return;
+      if(!CREDITORS.length){ el.innerHTML='<div class="muted center" style="padding:20px;">Nėra kreditorių. Pradėkite nuo Registro.</div>'; return; }
+      let tot={p:0,l:0,f:0};
+      let html='<table><thead><tr><th>Kreditorius</th><th>Pagrindas</th><th style="text-align:right;">Pagrindinė</th><th style="text-align:right;">Delspinigiai</th><th style="text-align:right;">Baudos</th><th style="text-align:right;">Viso</th><th></th></tr></thead><tbody>';
+      CRED_ACC.forEach(a=>{ tot.p+=num(a.principal); tot.l+=num(a.late_fees); tot.f+=num(a.fines);
+        const t=num(a.principal)+num(a.late_fees)+num(a.fines);
+        html+=`<tr><td>${esc(credName(a.creditor_id))}</td><td>${esc(basisLabel(a.basis_key))}</td>
+          <td style="text-align:right;">${eur(a.principal)}</td><td style="text-align:right;">${eur(a.late_fees)}</td>
+          <td style="text-align:right;">${eur(a.fines)}</td><td style="text-align:right;font-weight:600;">${eur(t)}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="openAccModal('${a.id}')">✎</button> <button class="btn btn-sm btn-danger" onclick="delAcc('${a.id}')">✕</button></td></tr>`;
+      });
+      html+=`<tr style="background:#F6F8FB;font-weight:700;"><td colspan="2">VISO</td><td style="text-align:right;">${eur(tot.p)}</td><td style="text-align:right;">${eur(tot.l)}</td><td style="text-align:right;">${eur(tot.f)}</td><td style="text-align:right;">${eur(tot.p+tot.l+tot.f)}</td><td></td></tr>`;
+      html+='</tbody></table>';
+      if(!CRED_ACC.length)html='<div class="muted center" style="padding:20px;">Apskaitos įrašų nėra. Pridėkite ranka arba per masinį importą (Registras).</div>';
+      el.innerHTML=html;
+    }
+    function fillAccCredSelect(sel){ const s=$('accCredSelect'); s.innerHTML=CREDITORS.map(c=>`<option value="${c.id}">${esc(c.name)}${c.id_code?' ('+esc(c.id_code)+')':''}</option>`).join(''); if(sel)s.value=sel; }
+    function fillBasisSelect(id,sel){ const s=$(id); s.innerHTML='<option value="">— pasirinkti —</option>'+CBASES.map(b=>`<option value="${b.key}">${esc(b.label)}</option>`).join(''); if(sel)s.value=sel; }
+    window.openAccModal=(id)=>{ if(!credCanEdit())return;
+      if(!CREDITORS.length){ alert('Pirma pridėkite kreditorių.'); return; }
+      const a=id?CRED_ACC.find(x=>x.id===id):{}; $('accId').value=id||'';
+      $('accModalTitle').textContent=id?'Redaguoti apskaitos įrašą':'Naujas apskaitos įrašas';
+      fillAccCredSelect(a.creditor_id); fillBasisSelect('accBasis',a.basis_key);
+      $('accPrincipal').value=a.principal??''; $('accLate').value=a.late_fees??''; $('accFines').value=a.fines??''; $('accNote').value=a.note||'';
+      $('accMsg').innerHTML=''; accRecalc(); show('accModal'); };
+    function accRecalc(){ const t=num($('accPrincipal').value)+num($('accLate').value)+num($('accFines').value); $('accTotal').textContent=eur(t); }
+    async function saveAcc(){
+      const id=$('accId').value; const cid=$('accCredSelect').value; if(!cid){ $('accMsg').innerHTML='<div class="error">Pasirinkite kreditorių.</div>'; return; }
+      const row={ creditor_id:cid, basis_key:$('accBasis').value||null, principal:num($('accPrincipal').value),
+        late_fees:num($('accLate').value), fines:num($('accFines').value), note:$('accNote').value.trim()||null, updated_at:new Date().toISOString() };
+      let err;
+      if(id){ ({error:err}=await sb.from('insolvency_creditor_accounting').update(row).eq('id',id)); }
+      else { row.created_by=CURRENT_UID; ({error:err}=await sb.from('insolvency_creditor_accounting').insert(row)); }
+      if(err){ $('accMsg').innerHTML='<div class="error">'+esc(err.message)+'</div>'; return; }
+      hide('accModal'); await loadCreditorsModule('acc');
+    }
+    window.delAcc=async(id)=>{ if(!credCanEdit())return; if(!confirm('Pašalinti apskaitos įrašą?'))return; await sb.from('insolvency_creditor_accounting').delete().eq('id',id); await loadCreditorsModule('acc'); };
+
+    // ---------- ETAPAS 2: GAUTI REIKALAVIMAI ----------
+    const RECV_VIA={ post:'Paštu', email:'El. paštu', epp:'EPP', delivered:'Įteikta', other:'Kita' };
+    function renderCredClaims(){
+      const el=$('credClaimsBody'); if(!el)return;
+      const q=($('credClaimSearch')&&$('credClaimSearch').value||'').toLowerCase().trim();
+      // registruotų, dar nesusietų gautų dokumentų priminimas
+      let note='';
+      const rows=CLAIMS.filter(c=>{ const nm=credName(c.creditor_id).toLowerCase(); return !q||nm.includes(q); });
+      let html='';
+      const late=CURRENT&&CURRENT.creditor_claim_deadline?('Reikalavimų pateikimo terminas byloje: <b>'+esc(CURRENT.creditor_claim_deadline)+'</b>'):'Bylos kortelėje nenustatytas reikalavimų pateikimo terminas (nustatę matysite vėlavimo žymas).';
+      html+='<div class="muted" style="margin-bottom:8px;font-size:12px;">'+late+'</div>';
+      if(!rows.length){ html+='<div class="muted center" style="padding:20px;">Gautų reikalavimų nėra. Paspauskite „+ Naujas reikalavimas".</div>'; el.innerHTML=html; return; }
+      html+='<table><thead><tr><th>Kreditorius</th><th>Gauta</th><th>Būdas</th><th style="text-align:right;">Pagrindinė</th><th style="text-align:right;">Netesybos/palūk.</th><th style="text-align:right;">Viso</th><th>Būsena</th><th></th></tr></thead><tbody>';
+      rows.forEach(c=>{ const net=num(c.late_fees)+num(c.interest)+num(c.fines); const tot=num(c.principal)+net;
+        html+=`<tr><td><b>${esc(credName(c.creditor_id))}</b>${c.secured?' 🔒':''}</td>
+          <td>${c.received_date?esc(c.received_date):'—'}${c.is_late?' <span title="Pateikta praleidus terminą" style="color:#C0392B;">⏰</span>':''}</td>
+          <td>${RECV_VIA[c.received_via]||'—'}</td>
+          <td style="text-align:right;">${eur(c.principal)}</td><td style="text-align:right;">${eur(net)}</td>
+          <td style="text-align:right;font-weight:600;">${eur(tot)}</td><td>${stBadge(c.status)}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="openClaimModal('${c.id}')">✎</button> <button class="btn btn-sm btn-danger" onclick="delClaim('${c.id}')">✕</button></td></tr>`;
+      });
+      html+='</tbody></table>';
+      el.innerHTML=html;
+    }
+    function fillClaimCredSelect(sel){ const s=$('clmCredSelect'); s.innerHTML='<option value="">— pasirinkti kreditorių —</option>'+CREDITORS.map(c=>`<option value="${c.id}">${esc(c.name)}${c.id_code?' ('+esc(c.id_code)+')':''}</option>`).join(''); if(sel)s.value=sel; }
+    window.openClaimModal=async(id)=>{
+      if(!id&&!credCanEdit())return;
+      const c=id?CLAIMS.find(x=>x.id===id):{}; $('clmId').value=id||'';
+      $('clmModalTitle').textContent=id?'Reikalavimas — '+credName(c.creditor_id):'Naujas kreditorinis reikalavimas';
+      fillClaimCredSelect(c.creditor_id); fillBasisSelect('clmBasis',c.basis_key);
+      $('clmReceived').value=c.received_date||new Date().toISOString().slice(0,10);
+      $('clmVia').value=c.received_via||'email';
+      $('clmPrincipal').value=c.principal??''; $('clmLate').value=c.late_fees??''; $('clmInterest').value=c.interest??''; $('clmFines').value=c.fines??'';
+      $('clmSecured').checked=!!c.secured; $('clmSecuredNote').value=c.secured_note||''; clmSecToggle();
+      $('clmNotes').value=c.notes||''; clmRecalc(); $('clmMsg').innerHTML='';
+      // dokumentai + reg. žurnalo ryšys tik po išsaugojimo
+      $('clmDocsSec').classList.toggle('hidden',!id); $('clmRegSec').classList.toggle('hidden',!id);
+      if(id){ await loadClaimFiles(id); await loadClaimRegLinks(id); }
+      show('claimModal');
+    };
+    function clmSecToggle(){ $('clmSecuredNoteWrap').classList.toggle('hidden',!$('clmSecured').checked); }
+    function clmRecalc(){ const net=num($('clmLate').value)+num($('clmInterest').value)+num($('clmFines').value); const tot=num($('clmPrincipal').value)+net;
+      $('clmNetTotal').textContent=eur(net); $('clmTotal').textContent=eur(tot); }
+    async function saveClaim(closeAfter){
+      const id=$('clmId').value; const cid=$('clmCredSelect').value;
+      if(!cid){ $('clmMsg').innerHTML='<div class="error">Pasirinkite kreditorių (arba sukurkite jį Registre).</div>'; return null; }
+      const recv=$('clmReceived').value||null;
+      let isLate=false; if(recv&&CURRENT.creditor_claim_deadline){ isLate=recv>CURRENT.creditor_claim_deadline; }
+      const row={ creditor_id:cid, basis_key:$('clmBasis').value||null, received_date:recv, received_via:$('clmVia').value||null, is_late:isLate,
+        principal:num($('clmPrincipal').value), late_fees:num($('clmLate').value), interest:num($('clmInterest').value), fines:num($('clmFines').value),
+        secured:$('clmSecured').checked, secured_note:$('clmSecured').checked?($('clmSecuredNote').value.trim()||null):null,
+        notes:$('clmNotes').value.trim()||null, updated_at:new Date().toISOString() };
+      let outId=id;
+      if(id){ const { error }=await sb.from('insolvency_creditor_claims').update(row).eq('id',id); if(error){ $('clmMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return null; } }
+      else { row.case_id=CURRENT.id; row.status='received'; row.created_by=CURRENT_UID;
+        const r=await sb.from('insolvency_creditor_claims').insert(row).select().single();
+        if(r.error){ $('clmMsg').innerHTML='<div class="error">'+esc(r.error.message)+'</div>'; return null; } outId=r.data.id;
+        // naujas kreditorius pagal reikalavimą — pažymim origin, jei apskaitoje jo nebuvo
+        if(!accForCreditor(cid).length){ const cc=credById(cid); if(cc&&cc.origin!=='claim_only'&&!CLAIMS.some(x=>x.creditor_id===cid)){ /* liks accounting */ } }
+      }
+      await credLog(id?'claim_updated':'claim_created',{ id:outId, creditor:credName(cid) });
+      if(closeAfter){ hide('claimModal'); await loadCreditorsModule('claims'); }
+      else { $('clmId').value=outId; }
+      return outId;
+    }
+    window.delClaim=async(id)=>{ if(!credCanEdit())return; if(!confirm('Pašalinti reikalavimą?'))return; await sb.from('insolvency_creditor_claims').delete().eq('id',id); await loadCreditorsModule('claims'); };
+
+    // Reikalavimo failai
+    async function loadClaimFiles(claimId){ try{ const r=await sb.from('insolvency_claim_files').select('*').eq('claim_id',claimId).order('created_at'); CRED_CLAIM_FILES=r.data||[]; }catch(_){ CRED_CLAIM_FILES=[]; } renderClaimFiles(); }
+    function renderClaimFiles(){ const el=$('clmDocsList'); if(!el)return;
+      el.innerHTML=CRED_CLAIM_FILES.length?CRED_CLAIM_FILES.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--bd);border-radius:6px;margin-bottom:4px;">
+        <span style="font-size:13px;">📄 ${esc(f.label||f.storage_path.split('/').pop())}</span>
+        <span style="white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="dlClaimFile('${esc(f.storage_path)}')">⬇️</button> <button class="btn btn-sm btn-danger" onclick="delClaimFile('${f.id}','${esc(f.storage_path)}')">✕</button></span></div>`).join(''):'<div class="muted" style="font-size:12px;">Dokumentų nepridėta.</div>'; }
+    async function addClaimFile(){
+      const id=$('clmId').value; if(!id){ alert('Pirma išsaugokite reikalavimą.'); return; }
+      const f=$('clmDocFile').files[0]; if(!f)return;
+      const path=`claims/${id}/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`;
+      const { error }=await sb.storage.from('insolvency-docs').upload(path,f,{ upsert:true });
+      if(error){ $('clmMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      await sb.from('insolvency_claim_files').insert({ claim_id:id, label:$('clmDocLabel').value.trim()||f.name, storage_path:path, uploaded_by:CURRENT_UID });
+      $('clmDocFile').value=''; $('clmDocLabel').value=''; await loadClaimFiles(id);
+    }
+    window.dlClaimFile=async(path)=>{ const { data }=await sb.storage.from('insolvency-docs').createSignedUrl(path,120); if(data&&data.signedUrl)window.open(data.signedUrl,'_blank'); };
+    window.delClaimFile=async(id,path)=>{ if(!confirm('Pašalinti failą?'))return; try{ await sb.storage.from('insolvency-docs').remove([path]); }catch(_){} await sb.from('insolvency_claim_files').delete().eq('id',id); await loadClaimFiles($('clmId').value); };
+
+    // Ryšys su dok. registracijos žurnalu
+    async function loadClaimRegLinks(claimId){ try{ const r=await sb.from('insolvency_claim_reg_links').select('*').eq('claim_id',claimId); CRED_CLAIM_REGLINKS=r.data||[]; }catch(_){ CRED_CLAIM_REGLINKS=[]; }
+      // reg. žurnalo pasirinkimai (gauti dokumentai)
+      if(!REGISTRATIONS.length){ try{ const rr=await sb.from('insolvency_doc_registrations').select('*').eq('case_id',CURRENT.id).order('registration_date',{ascending:false}); REGISTRATIONS=rr.data||[]; }catch(_){} }
+      renderClaimRegLinks(); }
+    function renderClaimRegLinks(){ const el=$('clmRegList'); if(!el)return;
+      const recv=REGISTRATIONS.filter(r=>r.doc_type==='received');
+      const sel=$('clmRegSelect'); if(sel)sel.innerHTML='<option value="">— pasirinkti registruotą dokumentą —</option>'+recv.map(r=>`<option value="${r.id}">${esc(r.registration_number)} · ${esc(r.document_title||'')}</option>`).join('');
+      const linked=CRED_CLAIM_REGLINKS.map(l=>{ const r=REGISTRATIONS.find(x=>x.id===l.reg_id); return { l, r }; });
+      el.innerHTML=linked.length?linked.map(({l,r})=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--bd);border-radius:6px;margin-bottom:4px;">
+        <span style="font-size:13px;">📓 ${r?esc(r.registration_number)+' · '+esc(r.document_title||''):'(pašalintas)'}</span>
+        <span style="white-space:nowrap;">${r?`<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')">👁</button> `:''}<button class="btn btn-sm btn-danger" onclick="delClaimRegLink('${l.id}')">✕</button></span></div>`).join(''):'<div class="muted" style="font-size:12px;">Nesusieta su registruotais dokumentais.</div>'; }
+    async function addClaimRegLink(){ const id=$('clmId').value; const reg=$('clmRegSelect').value; if(!id||!reg)return;
+      const { error }=await sb.from('insolvency_claim_reg_links').insert({ claim_id:id, reg_id:reg });
+      if(error){ $('clmMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; } await loadClaimRegLinks(id); }
+    window.delClaimRegLink=async(id)=>{ await sb.from('insolvency_claim_reg_links').delete().eq('id',id); await loadClaimRegLinks($('clmId').value); };
+
+    // ---------- ETAPAS 3: SUTIKRINIMAS ----------
+    function credRowClass(dP,dN){ return ''; }
+    function deltaCell(v){ if(Math.abs(v)<0.005)return `<td style="text-align:right;color:#1E7A34;">0,00 €</td>`;
+      const col=v>0?'#C0392B':'#8A6D00'; const sign=v>0?'+':''; return `<td style="text-align:right;color:${col};font-weight:600;">${sign}${eur(v)}</td>`; }
+    function renderCredRecon(){
+      const el=$('credReconBody'); if(!el)return;
+      const filt=($('credReconFilter')&&$('credReconFilter').value)||'';
+      if(!CREDITORS.length){ el.innerHTML='<div class="muted center" style="padding:20px;">Nėra duomenų sutikrinimui.</div>'; return; }
+      let html='<div class="hint" style="margin-bottom:8px;">Nuokrypiai pagrindinės skolos ir netesybų dalyse rodomi atskirai (JANĮ 95 str. — dengiama skirtingais etapais). Prie kiekvieno reikalavimo pažymėkite sprendimą; netvirtinant privaloma nurodyti motyvus.</div>';
+      html+='<table style="font-size:12.5px;"><thead><tr><th>Kreditorius</th><th style="text-align:right;">Apsk. pagr.</th><th style="text-align:right;">Apsk. netes.</th><th style="text-align:right;">Reik. pagr.</th><th style="text-align:right;">Reik. netes.</th><th style="text-align:right;">Δ pagr.</th><th style="text-align:right;">Δ netes.</th><th>Sprendimas</th><th></th></tr></thead><tbody>';
+      let shown=0;
+      CREDITORS.forEach(c=>{
+        const a=accTotals(c.id); const claims=claimsForCreditor(c.id);
+        const hasClaim=claims.length>0; const cl=claimTotals(c.id);
+        const dP=cl.principal-a.principal, dN=cl.net-a.net;
+        const match=hasClaim&&Math.abs(dP)<0.005&&Math.abs(dN)<0.005;
+        let cat = !hasClaim?'notrecv':(match?'match':'diff');
+        if(filt==='match'&&cat!=='match')return; if(filt==='diff'&&cat!=='diff')return;
+        if(filt==='notrecv'&&cat!=='notrecv')return; if(filt==='claimonly'&&(a.principal+a.net)>0)return;
+        shown++;
+        // sprendimo select rodomas tik jei yra reikalavimas
+        const cId=claims[0]?claims[0].id:'';
+        const st=claims[0]?claims[0].status:'';
+        let decCell='<span class="muted">—</span>';
+        if(hasClaim){ decCell=`<select class="select" style="min-width:150px;padding:4px;font-size:12px;" onchange="onReconDecision('${cId}',this.value)">
+          ${['received','to_approve','to_approve_partial','rejected'].map(s=>`<option value="${s}"${st===s?' selected':''}>${CLAIM_ST[s]}</option>`).join('')}
+          ${['approved','approved_partial','not_approved'].includes(st)?`<option value="${st}" selected>${CLAIM_ST[st]}</option>`:''}
+        </select>`; }
+        html+=`<tr><td><b>${esc(c.name)}</b>${!hasClaim?' <span style="color:#8A6D00;font-size:11px;">(negauta)</span>':''}${claims[0]&&claims[0].objection_note?`<div style="font-size:11px;color:#C0392B;" title="${esc(claims[0].objection_note)}">✎ motyvai įrašyti</div>`:''}</td>
+          <td style="text-align:right;">${eur(a.principal)}</td><td style="text-align:right;">${eur(a.net)}</td>
+          <td style="text-align:right;">${hasClaim?eur(cl.principal):'—'}</td><td style="text-align:right;">${hasClaim?eur(cl.net):'—'}</td>
+          ${hasClaim?deltaCell(dP):'<td></td>'}${hasClaim?deltaCell(dN):'<td></td>'}
+          <td>${decCell}</td>
+          <td style="text-align:right;">${hasClaim?`<button class="btn btn-sm btn-ghost" onclick="openClaimModal('${cId}')">👁</button>`:''}</td></tr>`;
+      });
+      html+='</tbody></table>';
+      if(!shown)html+='<div class="muted center" style="padding:16px;">Pagal filtrą įrašų nėra.</div>';
+      el.innerHTML=html;
+    }
+    window.onReconDecision=async(claimId,status)=>{
+      if(!credCanEdit())return;
+      const c=CLAIMS.find(x=>x.id===claimId); if(!c)return;
+      if(status==='to_approve'){
+        const upd={ status, submit_principal:num(c.principal), submit_late_fees:num(c.late_fees), submit_interest:num(c.interest), submit_fines:num(c.fines), objection_note:null };
+        await sb.from('insolvency_creditor_claims').update(upd).eq('id',claimId);
+        await sb.from('insolvency_claim_history').insert({ claim_id:claimId, change_kind:'decision', new:{ status }, basis_note:'Teikiamas tvirtinti', changed_by:CURRENT_UID });
+        await loadCreditorsModule('recon');
+      } else if(status==='to_approve_partial'||status==='rejected'){
+        openDecisionModal(claimId,status);
+      } else { await sb.from('insolvency_creditor_claims').update({ status }).eq('id',claimId); await loadCreditorsModule('recon'); }
+    };
+    function openDecisionModal(claimId,status){
+      const c=CLAIMS.find(x=>x.id===claimId); if(!c)return;
+      $('decClaimId').value=claimId; $('decStatus').value=status;
+      $('decModalTitle').textContent=(status==='rejected'?'Netvirtinamas':'Teikiamas iš dalies')+' — '+credName(c.creditor_id);
+      const partial=status==='to_approve_partial';
+      $('decSumsWrap').classList.toggle('hidden',!partial);
+      $('decPrincipal').value=c.submit_principal??c.principal??0; $('decLate').value=c.submit_late_fees??c.late_fees??0;
+      $('decInterest').value=c.submit_interest??c.interest??0; $('decFines').value=c.submit_fines??c.fines??0;
+      $('decNote').value=c.objection_note||''; $('decMsg').innerHTML='';
+      $('decHint').textContent=partial?'Įveskite teikiamas tvirtinti sumas; netvirtinama dalis — likutis iki reikalavimo sumos.':'Nurodykite, dėl kokių priežasčių reikalavimas netvirtinamas (motyvai bus perkelti į argumentus teismui).';
+      show('decisionModal');
+    }
+    async function saveDecision(){
+      const id=$('decClaimId').value, status=$('decStatus').value;
+      const note=$('decNote').value.trim();
+      if(!note){ $('decMsg').innerHTML='<div class="error">Įrašykite nesutikimo motyvus.</div>'; return; }
+      const upd={ status, objection_note:note };
+      if(status==='to_approve_partial'){ upd.submit_principal=num($('decPrincipal').value); upd.submit_late_fees=num($('decLate').value);
+        upd.submit_interest=num($('decInterest').value); upd.submit_fines=num($('decFines').value); }
+      else { upd.submit_principal=0; upd.submit_late_fees=0; upd.submit_interest=0; upd.submit_fines=0; }
+      const { error }=await sb.from('insolvency_creditor_claims').update(upd).eq('id',id);
+      if(error){ $('decMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      await sb.from('insolvency_claim_history').insert({ claim_id:id, change_kind:'decision', new:{ status, objection_note:note }, basis_note:'Sprendimas dėl teikimo tvirtinti', changed_by:CURRENT_UID });
+      hide('decisionModal'); await loadCreditorsModule('recon');
+    }
+
+    // ---------- ETAPAS 3/5: SĄRAŠŲ EKSPORTAS ----------
+    function submitSums(c){ return { p:num(c.submit_principal!=null?c.submit_principal:c.principal), l:num(c.submit_late_fees!=null?c.submit_late_fees:c.late_fees),
+      i:num(c.submit_interest!=null?c.submit_interest:c.interest), f:num(c.submit_fines!=null?c.submit_fines:c.fines) }; }
+    function credExportLists(kind,fmt){
+      // kind: 'approve' (teikiami tvirtinti) | 'reject' (netvirtinami)
+      const isApp=kind==='approve';
+      const rowsData=CLAIMS.filter(c=> isApp ? (c.status==='to_approve'||c.status==='to_approve_partial') : (c.status==='rejected'||c.status==='to_approve_partial') );
+      if(!rowsData.length){ $('credReconMsg').innerHTML='<div class="error">Nėra '+(isApp?'teikiamų tvirtinti':'netvirtinamų')+' reikalavimų. Pažymėkite sprendimus sutikrinimo lentelėje.</div>'; return; }
+      const head = isApp ? ['Kreditorius','Kodas','Pagrindinė','Delspinigiai','Palūkanos','Baudos','Viso','Eilė']
+                         : ['Kreditorius','Kodas','Pateikta suma','Teikiama tvirtinti','Ginčijama/netvirtinama','Motyvai'];
+      const aoa=[head];
+      rowsData.forEach(c=>{ const cr=credById(c.creditor_id)||{}; const s=submitSums(c);
+        if(isApp){ aoa.push([credName(c.creditor_id), cr.id_code||'', s.p, s.l, s.i, s.f, s.p+s.l+s.i+s.f, c.priority||'']); }
+        else { const submitted=num(c.principal)+num(c.late_fees)+num(c.interest)+num(c.fines); const teik=s.p+s.l+s.i+s.f;
+          aoa.push([credName(c.creditor_id), cr.id_code||'', submitted, teik, submitted-teik, c.objection_note||'']); }
+      });
+      const title=isApp?'Tvirtinami_reikalavimai':'Netvirtinami_reikalavimai';
+      if(fmt==='xlsx'){ const ws=XLSX.utils.aoa_to_sheet(aoa); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,isApp?'Tvirtinami':'Netvirtinami'); XLSX.writeFile(wb,title+'_'+(CURRENT.case_short_code||'byla')+'.xlsx'); }
+      else { credTableToPdf(title.replace(/_/g,' '), aoa); }
+      credLog('claim_list_exported',{ kind, fmt, count:rowsData.length });
+    }
+    function credTableToPdf(title,aoa){
+      const money=new Set(); // indeksai su sumomis nustatom pagal antraštę
+      aoa[0].forEach((h,i)=>{ if(/suma|pagrindin|delsp|palūk|baud|viso|tvirtin|ginčij/i.test(h))money.add(i); });
+      const th=aoa[0].map(h=>`<th style="border:1px solid #999;padding:4px 6px;background:#0B1E3F;color:#fff;font-size:11px;">${esc(h)}</th>`).join('');
+      const tr=aoa.slice(1).map(r=>'<tr>'+r.map((v,i)=>`<td style="border:1px solid #999;padding:4px 6px;font-size:11px;${money.has(i)?'text-align:right;':''}">${money.has(i)&&typeof v==='number'?eur(v):esc(String(v))}</td>`).join('')+'</tr>').join('');
+      const holder=document.createElement('div');
+      holder.style.cssText='position:fixed;left:-9999px;top:0;width:1000px;background:#fff;padding:24px;font-family:Arial,sans-serif;color:#0B1E3F;';
+      holder.innerHTML=`<div style="font-size:16px;font-weight:700;margin-bottom:4px;">${esc(title)}</div>
+        <div style="font-size:12px;color:#555;margin-bottom:10px;">${esc(CURRENT.debtor_name||'')} · byla ${esc(CURRENT.case_short_code||'')} · ${new Date().toISOString().slice(0,10)}</div>
+        <table style="border-collapse:collapse;width:100%;"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table>`;
+      document.body.appendChild(holder);
+      html2canvas(holder.firstElementChild?holder:holder,{ scale:2, backgroundColor:'#fff' }).then(canvas=>{
+        const pdf=new jspdf.jsPDF('p','mm','a4'); const pw=210, ml=10, cw=pw-ml*2;
+        const imgH=canvas.height*cw/canvas.width; const ph=297; let pos=10, remaining=imgH;
+        const img=canvas.toDataURL('image/jpeg',0.92);
+        pdf.addImage(img,'JPEG',ml,pos,cw,imgH); remaining-=(ph-pos);
+        while(remaining>0){ pdf.addPage(); pos=10-(imgH-remaining); pdf.addImage(img,'JPEG',ml,pos,cw,imgH); remaining-=(ph-10); }
+        pdf.save(title.replace(/\s/g,'_')+'_'+(CURRENT.case_short_code||'byla')+'.pdf');
+        document.body.removeChild(holder);
+      }).catch(e=>{ document.body.removeChild(holder); alert('PDF klaida: '+e.message); });
+    }
+
+    // ---------- ETAPAS 4: TEISMO NUTARTYS + TVIRTINIMAS ----------
+    function renderCredCourt(){
+      const el=$('credCourtBody'); if(!el)return;
+      let html='';
+      // Nutarčių registras
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 6px;"><strong style="font-size:13px;">Teismo nutartys</strong><button class="btn btn-sm" onclick="openCourtOrderModal()">+ Nauja nutartis</button></div>';
+      if(CORDERS.length){ html+='<table style="margin-bottom:14px;"><thead><tr><th>Data</th><th>Teismas</th><th>Bylos Nr.</th><th>Aprašymas</th><th></th></tr></thead><tbody>'+
+        CORDERS.map(o=>`<tr><td>${esc(o.order_date)}</td><td>${esc(o.court_name||'—')}</td><td>${esc(o.case_no||'—')}</td><td>${esc(o.description||'')}</td>
+          <td style="text-align:right;white-space:nowrap;">${o.storage_path?`<button class="btn btn-sm btn-ghost" onclick="dlClaimFile('${esc(o.storage_path)}')">📄</button> `:''}<button class="btn btn-sm btn-ghost" onclick="openCourtOrderModal('${o.id}')">✎</button> <button class="btn btn-sm btn-danger" onclick="delCourtOrder('${o.id}')">✕</button></td></tr>`).join('')+'</tbody></table>'; }
+      else html+='<div class="muted" style="font-size:12px;margin-bottom:12px;">Nutarčių dar neįregistruota.</div>';
+      // Reikalavimai su žymėjimu
+      const rows=CLAIMS.filter(c=>['to_approve','to_approve_partial','approved','approved_partial','not_approved','rejected'].includes(c.status));
+      html+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;"><strong style="font-size:13px;flex:1;">Reikalavimų tvirtinimas</strong>'+
+        '<button class="btn btn-sm btn-gold" onclick="courtMark(\'approved\')">✓ Pažymėti patvirtintais</button>'+
+        '<button class="btn btn-sm btn-danger" onclick="courtMark(\'not_approved\')">✕ Pažymėti nepatvirtintais</button>'+
+        '<button class="btn btn-sm btn-ghost" onclick="setPriority(\'I\')">I eilė</button>'+
+        '<button class="btn btn-sm btn-ghost" onclick="setPriority(\'II\')">II eilė</button></div>';
+      if(!rows.length){ html+='<div class="muted center" style="padding:16px;">Nėra teikiamų/patvirtintų reikalavimų. Pirma pažymėkite sprendimus Sutikrinime.</div>'; el.innerHTML=html; renderCredFinal(); return; }
+      html+='<table style="font-size:12.5px;"><thead><tr><th style="width:26px;"><input type="checkbox" id="courtAll"></th><th>Kreditorius</th><th style="text-align:right;">Teikiama/patvirtinta</th><th>Eilė</th><th>Būsena</th><th>Nutartis</th><th></th></tr></thead><tbody>';
+      rows.forEach(c=>{ const s=submitSums(c); const teik=s.p+s.l+s.i+s.f;
+        const appr=num(c.approved_principal)+num(c.approved_late_fees)+num(c.approved_interest)+num(c.approved_fines);
+        const isAppr=['approved','approved_partial'].includes(c.status);
+        const ord=CORDERS.find(o=>o.id===c.court_order_id);
+        html+=`<tr><td><input type="checkbox" class="court-cb" value="${c.id}"></td>
+          <td><b>${esc(credName(c.creditor_id))}</b></td>
+          <td style="text-align:right;">${eur(isAppr?appr:teik)}</td>
+          <td>${c.priority?('<b>'+c.priority+' eilė</b>'):'<span class="muted">—</span>'}</td>
+          <td>${stBadge(c.status)}</td>
+          <td style="font-size:11px;">${ord?esc(ord.order_date+(ord.case_no?' · '+ord.case_no:'')):'—'}</td>
+          <td style="text-align:right;white-space:nowrap;">${isAppr?`<button class="btn btn-sm btn-ghost" title="Tikslinti (JANĮ 44 str.)" onclick="openAdjustModal('${c.id}')">✎ tikslinti</button>`:''}</td></tr>`;
+      });
+      html+='</tbody></table>';
+      el.innerHTML=html;
+      const all=$('courtAll'); if(all)all.onclick=()=>document.querySelectorAll('.court-cb').forEach(cb=>cb.checked=all.checked);
+      renderCredFinal();
+    }
+    function courtSelected(){ return Array.from(document.querySelectorAll('.court-cb:checked')).map(cb=>cb.value); }
+    window.courtMark=async(mode)=>{
+      if(!credCanEdit())return; const ids=courtSelected();
+      if(!ids.length){ $('credCourtMsg').innerHTML='<div class="error">Pažymėkite bent vieną reikalavimą.</div>'; return; }
+      if(!CORDERS.length){ $('credCourtMsg').innerHTML='<div class="error">Pirma įregistruokite teismo nutartį.</div>'; return; }
+      const ord=await pickCourtOrder(); if(!ord)return;
+      const { data, error }=await sb.rpc('apply_court_order',{ p_order_id:ord, p_claim_ids:ids, p_mode:mode });
+      if(error){ $('credCourtMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      if(data&&data.ok===false){ $('credCourtMsg').innerHTML='<div class="error">Klaida: '+esc(data.error_code)+'</div>'; return; }
+      await credLog('claims_court_marked',{ mode, count:data.updated });
+      await loadCreditorsModule('court'); $('credCourtMsg').innerHTML='<div class="success">Pažymėta reikalavimų: '+data.updated+'.</div>';
+    };
+    function pickCourtOrder(){
+      return new Promise(res=>{
+        const opts=CORDERS.map(o=>`${o.order_date}${o.case_no?' · '+o.case_no:''}${o.court_name?' · '+o.court_name:''}`);
+        let msg='Pasirinkite teismo nutartį (įveskite numerį):\n'+CORDERS.map((o,i)=>`${i+1}. ${opts[i]}`).join('\n');
+        const v=prompt(msg,'1'); if(!v){ res(null); return; }
+        const idx=parseInt(v,10)-1; if(idx>=0&&idx<CORDERS.length)res(CORDERS[idx].id); else res(null);
+      });
+    }
+    window.setPriority=async(pr)=>{
+      if(!credCanEdit())return; const ids=courtSelected();
+      if(!ids.length){ $('credCourtMsg').innerHTML='<div class="error">Pažymėkite bent vieną reikalavimą.</div>'; return; }
+      const { data, error }=await sb.rpc('set_claims_priority',{ p_claim_ids:ids, p_priority:pr });
+      if(error){ $('credCourtMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      await credLog('claims_priority_set',{ priority:pr, count:data.updated });
+      await loadCreditorsModule('court'); $('credCourtMsg').innerHTML='<div class="success">'+pr+' eilei priskirta: '+data.updated+'.</div>';
+    };
+    // Nutarties modalė
+    window.openCourtOrderModal=(id)=>{ if(!credCanEdit())return; const o=id?CORDERS.find(x=>x.id===id):{}; $('coId').value=id||'';
+      $('coModalTitle').textContent=id?'Redaguoti nutartį':'Nauja teismo nutartis';
+      $('coCourt').value=o.court_name||CURRENT.court||''; $('coDate').value=o.order_date||new Date().toISOString().slice(0,10);
+      $('coCaseNo').value=o.case_no||CURRENT.civil_case_no||''; $('coDesc').value=o.description||''; $('coFileName').textContent=o.storage_path?'Įkeltas':''; $('coFile').value='';
+      $('coMsg').innerHTML=''; show('courtOrderModal'); };
+    async function saveCourtOrder(){
+      const id=$('coId').value; if(!$('coDate').value){ $('coMsg').innerHTML='<div class="error">Įveskite nutarties datą.</div>'; return; }
+      let path=null; const f=$('coFile').files[0];
+      if(f){ path=`court/${CURRENT.id}/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`; const { error }=await sb.storage.from('insolvency-docs').upload(path,f,{ upsert:true }); if(error){ $('coMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; } }
+      const row={ court_name:$('coCourt').value.trim()||null, order_date:$('coDate').value, case_no:$('coCaseNo').value.trim()||null, description:$('coDesc').value.trim()||null };
+      if(path)row.storage_path=path;
+      let err;
+      if(id){ ({error:err}=await sb.from('insolvency_court_orders').update(row).eq('id',id)); }
+      else { row.case_id=CURRENT.id; row.created_by=CURRENT_UID; ({error:err}=await sb.from('insolvency_court_orders').insert(row)); }
+      if(err){ $('coMsg').innerHTML='<div class="error">'+esc(err.message)+'</div>'; return; }
+      hide('courtOrderModal'); await loadCreditorsModule('court');
+    }
+    window.delCourtOrder=async(id)=>{ if(!credCanEdit())return; if(!confirm('Pašalinti nutartį? (reikalavimų būsenos nekeičiamos)'))return; await sb.from('insolvency_court_orders').delete().eq('id',id); await loadCreditorsModule('court'); };
+    // Tikslinimas (JANĮ 44)
+    window.openAdjustModal=(id)=>{ if(!credCanEdit())return; const c=CLAIMS.find(x=>x.id===id); if(!c)return;
+      $('adjClaimId').value=id; $('adjModalTitle').textContent='Tikslinti reikalavimą — '+credName(c.creditor_id);
+      $('adjPrincipal').value=c.approved_principal??c.principal??0; $('adjLate').value=c.approved_late_fees??c.late_fees??0;
+      $('adjInterest').value=c.approved_interest??c.interest??0; $('adjFines').value=c.approved_fines??c.fines??0;
+      $('adjNote').value=''; $('adjFile').value=''; $('adjFileName').textContent=''; $('adjMsg').innerHTML=''; show('adjustModal'); };
+    async function saveAdjust(){
+      const id=$('adjClaimId').value; const note=$('adjNote').value.trim();
+      if(!note){ $('adjMsg').innerHTML='<div class="error">Nurodykite tikslinimo pagrindą.</div>'; return; }
+      let docPath=null; const f=$('adjFile').files[0];
+      if(f){ docPath=`claims/${id}/adj_${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`; const { error }=await sb.storage.from('insolvency-docs').upload(docPath,f,{ upsert:true }); if(error){ $('adjMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; } }
+      const { data, error }=await sb.rpc('adjust_claim',{ p_claim_id:id, p_principal:num($('adjPrincipal').value), p_late_fees:num($('adjLate').value),
+        p_interest:num($('adjInterest').value), p_fines:num($('adjFines').value), p_basis_note:note, p_doc_path:docPath });
+      if(error){ $('adjMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      if(data&&data.ok===false){ $('adjMsg').innerHTML='<div class="error">Klaida: '+esc(data.error_code)+'</div>'; return; }
+      await credLog('claim_adjusted',{ claim_id:id, note });
+      hide('adjustModal'); await loadCreditorsModule('court');
+    }
+
+    // ---------- ETAPAS 5: GALUTINIS SĄRAŠAS + BALSŲ % ----------
+    function renderCredFinal(){
+      const el=$('credFinalBody'); if(!el)return;
+      const appr=CLAIMS.filter(c=>['approved','approved_partial'].includes(c.status));
+      if(!appr.length){ el.innerHTML='<div class="muted" style="font-size:12px;padding:8px;">Galutinis sąrašas bus suformuotas patvirtinus reikalavimus teismo nutartimi.</div>'; return; }
+      const grand=appr.reduce((s,c)=>s+num(c.approved_principal)+num(c.approved_late_fees)+num(c.approved_interest)+num(c.approved_fines),0);
+      let html='<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px;"><strong style="font-size:13px;">Galutinis kreditorių sąrašas (balsavimui ir tenkinimui)</strong>'+
+        '<span><button class="btn btn-sm btn-ghost" onclick="exportFinal(\'xlsx\')">⬇️ XLSX</button> <button class="btn btn-sm btn-ghost" onclick="exportFinal(\'pdf\')">⬇️ PDF</button></span></div>';
+      html+='<table style="font-size:12px;"><thead><tr><th>Kreditorius</th><th>Eilė</th><th style="text-align:right;">Pagrindinė (I et.)</th><th style="text-align:right;">Netesybos/palūk. (II et.)</th><th style="text-align:right;">Viso</th><th style="text-align:right;">Balsų %</th></tr></thead><tbody>';
+      appr.forEach(c=>{ const p=num(c.approved_principal); const net=num(c.approved_late_fees)+num(c.approved_interest)+num(c.approved_fines);
+        const tot=p+net; const pct=grand>0?(tot/grand*100):0;
+        html+=`<tr><td>${esc(credName(c.creditor_id))}${c.secured?' 🔒':''}</td><td>${c.priority||'—'}</td>
+          <td style="text-align:right;">${eur(p)}</td><td style="text-align:right;">${eur(net)}</td>
+          <td style="text-align:right;font-weight:600;">${eur(tot)}</td><td style="text-align:right;">${pct.toFixed(2)} %</td></tr>`;
+      });
+      html+=`<tr style="background:#F6F8FB;font-weight:700;"><td colspan="4">VISO PATVIRTINTA</td><td style="text-align:right;">${eur(grand)}</td><td style="text-align:right;">100 %</td></tr></tbody></table>`;
+      el.innerHTML=html;
+    }
+    function exportFinal(fmt){
+      const appr=CLAIMS.filter(c=>['approved','approved_partial'].includes(c.status));
+      if(!appr.length)return;
+      const grand=appr.reduce((s,c)=>s+num(c.approved_principal)+num(c.approved_late_fees)+num(c.approved_interest)+num(c.approved_fines),0);
+      const aoa=[['Kreditorius','Kodas','Eilė','Pagrindinė (I et.)','Netesybos/palūk. (II et.)','Viso','Balsų %']];
+      appr.forEach(c=>{ const cr=credById(c.creditor_id)||{}; const p=num(c.approved_principal); const net=num(c.approved_late_fees)+num(c.approved_interest)+num(c.approved_fines);
+        const tot=p+net; aoa.push([credName(c.creditor_id), cr.id_code||'', c.priority||'', p, net, tot, grand>0?(tot/grand*100).toFixed(2)+' %':'']); });
+      if(fmt==='xlsx'){ const ws=XLSX.utils.aoa_to_sheet(aoa); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Galutinis sąrašas'); XLSX.writeFile(wb,'Kreditoriu_sarasas_'+(CURRENT.case_short_code||'byla')+'.xlsx'); }
+      else credTableToPdf('Galutinis kreditorių sąrašas', aoa);
+      credLog('final_list_exported',{ fmt, count:appr.length });
+    }
+
+    // ---------- ETAPAS 6: AVNT eksportas + kreditoriaus pažyma ----------
+    function exportAvnt(){
+      // AVNT ataskaitoms pritaikyta patvirtintų reikalavimų suvestinė
+      const appr=CLAIMS.filter(c=>['approved','approved_partial'].includes(c.status));
+      if(!appr.length){ $('credCourtMsg').innerHTML='<div class="error">Nėra patvirtintų reikalavimų AVNT suvestinei.</div>'; return; }
+      const aoa=[['Kreditorius','Identifikacinis kodas','Kreditoriaus tipas','Eilė','Užtikrintas','Pagrindinė skola','Delspinigiai','Palūkanos','Baudos','Viso patvirtinta','Teismo nutartis','Nutarties data']];
+      appr.forEach(c=>{ const cr=credById(c.creditor_id)||{}; const ord=CORDERS.find(o=>o.id===c.court_order_id)||{};
+        aoa.push([credName(c.creditor_id), cr.id_code||'', cr.kind==='person'?'Fizinis asmuo':'Juridinis asmuo', c.priority||'', c.secured?'Taip':'Ne',
+          num(c.approved_principal), num(c.approved_late_fees), num(c.approved_interest), num(c.approved_fines),
+          num(c.approved_principal)+num(c.approved_late_fees)+num(c.approved_interest)+num(c.approved_fines),
+          ord.case_no||'', ord.order_date||'']); });
+      const ws=XLSX.utils.aoa_to_sheet(aoa); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'AVNT patvirtinti');
+      XLSX.writeFile(wb,'AVNT_kreditoriai_'+(CURRENT.case_short_code||'byla')+'.xlsx');
+      credLog('avnt_exported',{ count:appr.length });
+    }
+
+    // ---------- Sub-tabų perjungimas kreditorių modulyje ----------
+    function bindCredButtons(){
+      const b=(id,fn)=>{ const el=$(id); if(el)el.onclick=fn; };
+      b('credNewBtn',()=>openCredModal(null)); b('credImportBtn',openCredImport); b('credStdBtn',addStdCreditors);
+      b('credRegSearch'); const rs=$('credRegSearch'); if(rs)rs.oninput=renderCredRegistry;
+      b('accNewBtn',()=>openAccModal(null));
+      b('claimNewBtn',()=>openClaimModal(null)); const cs=$('credClaimSearch'); if(cs)cs.oninput=renderCredClaims;
+      const rf=$('credReconFilter'); if(rf)rf.onchange=renderCredRecon;
+      b('reconExpAppXlsx',()=>credExportLists('approve','xlsx')); b('reconExpAppPdf',()=>credExportLists('approve','pdf'));
+      b('reconExpRejXlsx',()=>credExportLists('reject','xlsx')); b('reconExpRejPdf',()=>credExportLists('reject','pdf'));
+      b('credAvntBtn',exportAvnt);
+      // modalų mygtukai
+      b('credCancel',()=>hide('credModal')); b('credRepChk',credRepToggle);
+      $('credRepChk')&&$('credRepChk').addEventListener('change',credRepToggle);
+      b('credSave',async()=>{ const id=await saveCreditorRow(); if(id){ hide('credModal'); await loadCreditorsModule(CRED_VIEW); } });
+      b('accCancel',()=>hide('accModal')); b('accSave',saveAcc);
+      ['accPrincipal','accLate','accFines'].forEach(x=>{ const e=$(x); if(e)e.oninput=accRecalc; });
+      b('clmCancel',()=>hide('claimModal')); b('clmSave',()=>saveClaim(true)); b('clmSaveStay',()=>saveClaim(false));
+      ['clmPrincipal','clmLate','clmInterest','clmFines'].forEach(x=>{ const e=$(x); if(e)e.oninput=clmRecalc; });
+      b('clmSecured',clmSecToggle); $('clmSecured')&&$('clmSecured').addEventListener('change',clmSecToggle);
+      b('clmDocFileBtn',()=>$('clmDocFile').click()); $('clmDocFile')&&$('clmDocFile').addEventListener('change',addClaimFile);
+      b('clmRegAddBtn',addClaimRegLink);
+      b('decCancel',()=>hide('decisionModal')); b('decSave',saveDecision);
+      b('coCancel',()=>hide('courtOrderModal')); b('coSave',saveCourtOrder); b('coFileBtn',()=>$('coFile').click());
+      $('coFile')&&$('coFile').addEventListener('change',()=>{ const f=$('coFile').files[0]; $('coFileName').textContent=f?f.name:''; });
+      b('adjCancel',()=>hide('adjustModal')); b('adjSave',saveAdjust); b('adjFileBtn',()=>$('adjFile').click());
+      $('adjFile')&&$('adjFile').addEventListener('change',()=>{ const f=$('adjFile').files[0]; $('adjFileName').textContent=f?f.name:''; });
+      b('credImpCancel',()=>hide('credImportModal')); b('credImpPreviewBtn',previewCredImport); b('credImpDoBtn',doCredImport);
+    }
+
+    bindCredButtons();
     boot();
   </script>
 </body>
