@@ -1705,6 +1705,8 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.2/dist/docx-preview.min.js"></script>
   <script>
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
@@ -2072,6 +2074,20 @@
         first=false; pos=end;
       }
       return pdf.output('blob');
+    }
+    // Sugeneruoto DOCX (blankas+turinys) atvaizdavimas į PDF NARŠYKLĖJE (be Gotenberg) — docx-preview → html2canvas → canvasToA4PdfBlob
+    async function docxBlobToPdf(arrayBuffer){
+      if(!(window.docx&&window.docx.renderAsync)) throw new Error('docx-preview biblioteka neįkelta.');
+      const holder=document.createElement('div');
+      holder.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff;z-index:-1;';
+      document.body.appendChild(holder);
+      try{
+        await window.docx.renderAsync(arrayBuffer, holder, null, { className:'docx', inWrapper:true, ignoreWidth:false, ignoreHeight:true, breakPages:true, renderHeaders:true, renderFooters:true, useBase64URL:true });
+        await new Promise(r=>setTimeout(r,350)); // paveikslėliai/šriftai
+        const target=holder.querySelector('.docx-wrapper')||holder;
+        const canvas=await html2canvas(target,{ scale:2, backgroundColor:'#fff', useCORS:true });
+        return canvasToA4PdfBlob(canvas);
+      } finally { holder.remove(); }
     }
     async function buildEmailCoverPdf(m,type){
       const body=(m.body_text&&m.body_text.trim())?m.body_text
@@ -5344,15 +5360,32 @@
     $('pdfGenerate').onclick=async()=>{
       const withAtt=document.querySelector('input[name="pdfAtt"]:checked').value==='yes';
       const paths=withAtt ? Array.from(document.querySelectorAll('.pdf-att-cb:checked')).map(cb=>cb.value) : [];
-      $('pdfMsg').innerHTML='<div class="muted">⏳ Konvertuojama į PDF…</div>'; $('pdfGenerate').disabled=true;
+      $('pdfGenerate').disabled=true;
       try{
+        const doc=(DOCUMENTS||[]).find(d=>d.id===PDF_DOC_ID);
+        if(!doc||!doc.docx_path) throw new Error('Nerastas sugeneruotas DOCX.');
         const { data:{ session } } = await sb.auth.getSession();
+        // 1) parsisiunčiam sugeneruotą DOCX (signed URL)
+        $('pdfMsg').innerHTML='<div class="muted">⏳ Ruošiamas PDF naršyklėje (1/3: DOCX)…</div>';
+        const uRes=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+          body:JSON.stringify({ path:doc.docx_path })});
+        const ur=await uRes.json(); if(!ur.success||!ur.url) throw new Error('Nepavyko gauti DOCX nuorodos.');
+        const docxBuf=await (await fetch(ur.url)).arrayBuffer();
+        // 2) atvaizduojam DOCX → PDF NARŠYKLĖJE (be Gotenberg)
+        $('pdfMsg').innerHTML='<div class="muted">⏳ Ruošiamas PDF naršyklėje (2/3: atvaizdavimas)…</div>';
+        const pdfBlob=await docxBlobToPdf(docxBuf);
+        // 3) įkeliam paruoštą PDF; edge funkcija prijungia priedus (pdf-lib) ir užregistruoja
+        $('pdfMsg').innerHTML='<div class="muted">⏳ Ruošiamas PDF naršyklėje (3/3: išsaugojimas)…</div>';
+        const tmpPath=`${CURRENT.case_short_code}/pdf_tmp/${Date.now()}_main.pdf`;
+        const upl=await sb.storage.from('insolvency-docs').upload(tmpPath,pdfBlob,{ contentType:'application/pdf', upsert:true });
+        if(upl.error) throw upl.error;
         const res=await fetch(`${SUPABASE_URL}/functions/v1/convert-and-merge-pdf`,{
           method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
-          body:JSON.stringify({ document_id:PDF_DOC_ID, attachment_paths:paths })});
+          body:JSON.stringify({ document_id:PDF_DOC_ID, main_pdf_path:tmpPath, attachment_paths:paths })});
         const r=await res.json();
         if(!r.success){
-          const hint=r.error==='gotenberg_not_configured'?' — PDF konvertavimo servisas dar nesukonfigūruotas (GOTENBERG_URL).':r.error==='convert_failed'?' — konvertavimo klaida.':'';
+          const hint=r.error==='convert_failed'?' — priedų sujungimo klaida.':r.error==='main_pdf_download_failed'?' — nepavyko įkelti paruošto PDF.':'';
           $('pdfMsg').innerHTML='<div class="error">Klaida: '+esc(r.error||'')+hint+'</div>'; return;
         }
         $('pdfMsg').innerHTML='<div class="success">PDF sugeneruotas: '+esc(r.file_name)+'. Rasite Dokumentų bibliotekoje.</div>';
