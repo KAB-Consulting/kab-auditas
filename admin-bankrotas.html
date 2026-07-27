@@ -1101,6 +1101,15 @@
         <div><label style="display:flex;align-items:center;gap:6px;margin-top:26px;font-size:13px;"><input type="checkbox" id="lsDeposit" style="width:auto;"> Depozitas yra</label></div>
         <div id="lsDepositWrap" class="hidden"><label class="label">Depozito suma (€)</label><input id="lsDepositAmount" class="input" type="number" step="0.01"></div>
       </div>
+      <label class="label">Atsiskaitomoji sąskaita (į kurią mokamas nuomos mokestis ir depozitas)</label>
+      <select id="lsPayAcctKind" class="select"></select>
+      <div class="hint" style="margin-top:4px;">Pagal nutylėjimą — bylos kaupiamoji (administravimo) sąskaita. Jei reikia, pasirinkite veiklos sąskaitą arba įrašykite kitą. Ši sąskaita įrašoma į generuojamą nuomos sutartį.</div>
+      <div id="lsPayAcctCustomWrap" class="hidden">
+        <div class="row">
+          <div><label class="label">Sąskaitos Nr. (IBAN)</label><input id="lsPayAcctIban" class="input" placeholder="LT..."></div>
+          <div><label class="label">Bankas</label><input id="lsPayBank" class="input"></div>
+        </div>
+      </div>
 
       <div class="sec-title">Nuomojamas turtas</div>
       <div class="hint" style="margin-bottom:6px;">Pozicijos pasirenkamos iš bylos Turto registro. Jei pozicija tuo pačiu laikotarpiu jau nuomojama pagal kitą galiojančią sutartį — rodomas įspėjimas, bet nuoma keliems nuomininkams galima.</div>
@@ -3888,6 +3897,19 @@
     $('lsCpDiff').onchange=()=>$('lsCpBusAddrWrap').classList.toggle('hidden',!$('lsCpDiff').checked);
     $('lsVat').onchange=()=>$('lsVatRateWrap').classList.toggle('hidden',!$('lsVat').checked);
     $('lsDeposit').onchange=()=>$('lsDepositWrap').classList.toggle('hidden',!$('lsDeposit').checked);
+    // atsiskaitomosios sąskaitos pasirinkimas (numatyta — bylos kaupiamoji sąskaita)
+    function fillLeasePayAcctSelect(l){
+      const dep=CURRENT.deposit_account_iban?('Kaupiamoji sąskaita — '+CURRENT.deposit_account_iban+(CURRENT.deposit_bank_name?' ('+CURRENT.deposit_bank_name+')':'')):'Kaupiamoji sąskaita — (nenurodyta bylos kortelėje)';
+      const opts=[['deposit',dep+' — numatyta']];
+      if(CURRENT.business_account_iban)opts.push(['business','Veiklos sąskaita — '+CURRENT.business_account_iban+(CURRENT.business_bank_name?' ('+CURRENT.business_bank_name+')':'')]);
+      opts.push(['custom','Kita sąskaita (įrašyti ranka)…']);
+      const kind=(l&&l.payment_account_kind)||'deposit';
+      $('lsPayAcctKind').innerHTML=opts.map(([v,t])=>`<option value="${v}"${v===kind?' selected':''}>${esc(t)}</option>`).join('');
+      $('lsPayAcctIban').value=l?(l.payment_account_iban||''):'';
+      $('lsPayBank').value=l?(l.payment_bank_name||''):'';
+      $('lsPayAcctCustomWrap').classList.toggle('hidden',$('lsPayAcctKind').value!=='custom');
+    }
+    $('lsPayAcctKind').onchange=()=>$('lsPayAcctCustomWrap').classList.toggle('hidden',$('lsPayAcctKind').value!=='custom');
     $('lsDocLabel').onchange=()=>$('lsDocCustomWrap').classList.toggle('hidden',$('lsDocLabel').value!=='custom');
     // --- nuomos modalė ---
     function lsSetStatusUI(l){
@@ -3919,6 +3941,7 @@
       $('lsVat').checked=l?!!l.vat:false; $('lsVatRate').value=l?(l.vat_rate??21):21; $('lsVatRateWrap').classList.toggle('hidden',!$('lsVat').checked);
       $('lsDeposit').checked=l?!!l.deposit:false; $('lsDepositAmount').value=l?(l.deposit_amount??''):''; $('lsDepositWrap').classList.toggle('hidden',!$('lsDeposit').checked);
       $('lsLateRate').value=l?(l.late_interest_rate??''):'';
+      fillLeasePayAcctSelect(l);
       $('lsSpecial').value=l?(l.special_conditions||''):'';
       LS_PHOTO_SEL=l&&Array.isArray(l.condition_photos)?l.condition_photos.slice():[];
       LS_LOCKED=!!(l&&l.signed);
@@ -3959,6 +3982,9 @@
         vat:$('lsVat').checked, vat_rate:Number($('lsVatRate').value)||21,
         deposit:$('lsDeposit').checked, deposit_amount:$('lsDeposit').checked&&$('lsDepositAmount').value!==''?Number($('lsDepositAmount').value):null,
         late_interest_rate:$('lsLateRate').value===''?null:Number($('lsLateRate').value),
+        payment_account_kind:$('lsPayAcctKind').value||'deposit',
+        payment_account_iban:$('lsPayAcctKind').value==='custom'?($('lsPayAcctIban').value.trim()||null):null,
+        payment_bank_name:$('lsPayAcctKind').value==='custom'?($('lsPayBank').value.trim()||null):null,
         special_conditions:$('lsSpecial').value.trim()||null, condition_photos:LS_PHOTO_SEL,
         updated_at:new Date().toISOString() };
       let id=curId, res;
@@ -5101,7 +5127,13 @@
         const rd=CURRENT.ruling_date?(CURRENT.ruling_date+' '):'';
         const cn=CURRENT.civil_case_no?(' civilinėje byloje Nr. '+CURRENT.civil_case_no):'';
         const nutartis=court+' '+rd+'nutartimi'+cn;
-        const saskaita=CURRENT.deposit_account_iban?(CURRENT.deposit_account_iban+(CURRENT.deposit_bank_name?', '+CURRENT.deposit_bank_name:'')):'____________________ (nurodyti bylos kortelėje – Kaupiamosios sąskaitos Nr.)';
+        // atsiskaitomoji sąskaita pagal sutartyje pasirinktą tipą (numatyta — kaupiamoji)
+        const pk=(isLease&&obj.payment_account_kind)||'deposit';
+        let acctIban='', acctBank='';
+        if(pk==='business'){ acctIban=CURRENT.business_account_iban||''; acctBank=CURRENT.business_bank_name||''; }
+        else if(pk==='custom'){ acctIban=obj.payment_account_iban||''; acctBank=obj.payment_bank_name||''; }
+        else { acctIban=CURRENT.deposit_account_iban||''; acctBank=CURRENT.deposit_bank_name||''; }
+        const saskaita=acctIban?(acctIban+(acctBank?', '+acctBank:'')):'____________________ (nurodyti bylos kortelėje – Kaupiamosios sąskaitos Nr.)';
         const spec=isLease&&obj.special_conditions&&obj.special_conditions.trim()?obj.special_conditions.trim():'Papildomų specialiųjų sąlygų nėra.';
         const map={
           sutarties_nr:obj.contract_no||'',
@@ -5129,7 +5161,7 @@
         const lblL=isLease?'NUOMOTOJAS':'PARDAVĖJAS', lblR=isLease?'NUOMININKAS':'PIRKĖJAS';
         const landlordReq='<b>'+esc(CURRENT.debtor_name||'—')+'</b><br>Juridinio asmens kodas '+esc(CURRENT.debtor_code||'—')+'<br>Adresas: '+esc(CURRENT.debtor_address||'—')
           +'<br>Nemokumo administratorius: '+esc(adm.name||'—')+'<br>Įgaliotas asmuo: '+esc(igaliotas_asmuo)
-          +(CURRENT.deposit_account_iban?'<br>Atsiskaitomoji sąsk.: '+esc(saskaita):'')
+          +(acctIban?'<br>Atsiskaitomoji sąsk.: '+esc(saskaita):'')
           +'<div style="margin-top:18px;">'+sigCell(isLease?obj.sig_landlord:null)+'</div>';
         const tenantReq='<b>'+esc(t.name||'—')+'</b>'+(t.reg_code?'<br>Kodas: '+esc(t.reg_code):'')
           +'<br>Adresas: '+esc(t.reg_address||t.business_address||'—')
@@ -5241,7 +5273,7 @@
     $('lsContractBtn').onclick=()=>contractPdf('lease');
     $('slContractBtn').onclick=()=>contractPdf('sale');
     // ---------- NUOMOS SUTARTIES PASIRAŠYMAS IR UŽRAKINIMAS ----------
-    const LEASE_LOCK_INPUTS=['lsContractNo','lsContractDate','lsCpSelect','lsCpName','lsCpCode','lsCpRegAddr','lsCpDiff','lsCpBusAddr','lsCpRepPos','lsCpRepName','lsCpEmail','lsCpPhone','lsStart','lsEnd','lsPrice','lsVat','lsVatRate','lsDeposit','lsDepositAmount','lsLateRate','lsSpecial','lsDocLabel','lsDocCustom','lsDocValid'];
+    const LEASE_LOCK_INPUTS=['lsContractNo','lsContractDate','lsCpSelect','lsCpName','lsCpCode','lsCpRegAddr','lsCpDiff','lsCpBusAddr','lsCpRepPos','lsCpRepName','lsCpEmail','lsCpPhone','lsStart','lsEnd','lsPrice','lsVat','lsVatRate','lsDeposit','lsDepositAmount','lsLateRate','lsPayAcctKind','lsPayAcctIban','lsPayBank','lsSpecial','lsDocLabel','lsDocCustom','lsDocValid'];
     function applyLeaseLock(locked){
       LEASE_LOCK_INPUTS.forEach(x=>{ const e=$(x); if(e)e.disabled=locked; });
       ['lsAddItem','lsDocAddBtn'].forEach(x=>{ const e=$(x); if(e)e.classList.toggle('hidden',locked); });
