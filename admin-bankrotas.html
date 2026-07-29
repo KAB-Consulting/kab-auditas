@@ -4668,7 +4668,9 @@
     function applySaleLock(locked){
       SALE_LOCK_INPUTS.forEach(x=>{ const e=$(x); if(e)e.disabled=locked; });
       const add=$('slAddItem'); if(add)add.classList.toggle('hidden',locked);
-      if(locked)$('slSave').classList.add('hidden');
+      // Saugoti galima, kol pardavimas nepasirašytas ir nuosavybė neperduota.
+      const s=SALES.find(x=>x.id===$('slId').value);
+      $('slSave').classList.toggle('hidden', locked || !!(s&&s.ownership_transferred));
     }
     function renderSaleSignSection(s){
       const sec=$('slSignSec'); if(!sec)return;
@@ -5277,7 +5279,9 @@
     function applyLeaseLock(locked){
       LEASE_LOCK_INPUTS.forEach(x=>{ const e=$(x); if(e)e.disabled=locked; });
       ['lsAddItem','lsDocAddBtn'].forEach(x=>{ const e=$(x); if(e)e.classList.toggle('hidden',locked); });
-      if(locked){ $('lsSave').classList.add('hidden'); $('lsConfirmBtn').classList.add('hidden'); }
+      // Saugoti galima, kol sutartis nepasirašyta; pasirašius (sistemoje ar įkėlus kopiją) — užrakinama.
+      $('lsSave').classList.toggle('hidden',locked);
+      if(locked)$('lsConfirmBtn').classList.add('hidden');
     }
     function renderLeaseSignSection(l){
       const sec=$('lsSignSec'); if(!sec)return;
