@@ -468,7 +468,15 @@
           </div>
           <button class="btn" id="newRegBtn">➕ Registruoti dokumentą</button>
         </div>
-        <input id="regSearch" class="input" placeholder="Paieška: Nr., aprašymas, siuntėjas/gavėjas…" style="margin-bottom:10px;">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <input id="regSearch" class="input" placeholder="Paieška: Nr., aprašymas, siuntėjas/gavėjas…" style="flex:1;min-width:200px;">
+          <select id="regCatFilter" class="select" style="max-width:200px;">
+            <option value="">Visos kategorijos</option>
+            <option value="creditors">Kreditoriai</option><option value="debtors">Debitoriai</option>
+            <option value="acts">Aktai</option><option value="assets">Turtas</option>
+            <option value="court">Teismas</option><option value="other">Kita</option>
+          </select>
+        </div>
         <div id="registryTable"></div>
       </div>
 
@@ -579,7 +587,6 @@
             <button class="btn btn-sm" id="newActBtn">+ Naujas aktas</button>
           </div>
           <div id="actsTable"></div>
-          <input type="file" id="actSignFile" class="hidden" accept="application/pdf">
         </div>
 
         <!-- AKTO REDAKTORIUS -->
@@ -991,16 +998,6 @@
           <input type="file" id="asPhotoCam" accept="image/*" capture="environment" class="hidden">
           <button class="btn btn-sm btn-ghost" id="asPhotoUploadBtn" type="button">🖼 Įkelti nuotraukas</button>
           <button class="btn btn-sm btn-ghost" id="asPhotoCamBtn" type="button">📷 Fotografuoti</button>
-          <button class="btn btn-sm btn-ghost hidden" id="asActPhotoBtn" type="button" title="Pridėti fotofiksacijas iš perdavimo akto, iš kurio sukurta ši kortelė">📎 Pridėti akto fotofiksacijas</button>
-        </div>
-        <div id="asActPhotoPicker" class="hidden" style="border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:8px;background:#F6F8FB;">
-          <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Perdavimo akto fotofiksacijos — pažymėkite, kurias pridėti prie šios turto kortelės:</div>
-          <div id="asActPhotoList"></div>
-          <div id="asActPhotoMsg" style="font-size:12px;margin-top:6px;"></div>
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <button class="btn btn-sm" type="button" id="asActPhotoAdd">✓ Pridėti pažymėtas</button>
-            <button class="btn btn-sm btn-ghost" type="button" id="asActPhotoClose">Uždaryti</button>
-          </div>
         </div>
         <div id="asPhotoGrid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
       </div>
@@ -1111,30 +1108,11 @@
         <div><label style="display:flex;align-items:center;gap:6px;margin-top:26px;font-size:13px;"><input type="checkbox" id="lsDeposit" style="width:auto;"> Depozitas yra</label></div>
         <div id="lsDepositWrap" class="hidden"><label class="label">Depozito suma (€)</label><input id="lsDepositAmount" class="input" type="number" step="0.01"></div>
       </div>
-      <label class="label">Atsiskaitomoji sąskaita (į kurią mokamas nuomos mokestis ir depozitas)</label>
-      <select id="lsPayAcctKind" class="select"></select>
-      <div class="hint" style="margin-top:4px;">Pagal nutylėjimą — bylos kaupiamoji (administravimo) sąskaita. Jei reikia, pasirinkite veiklos sąskaitą arba įrašykite kitą. Ši sąskaita įrašoma į generuojamą nuomos sutartį.</div>
-      <div id="lsPayAcctCustomWrap" class="hidden">
-        <div class="row">
-          <div><label class="label">Sąskaitos Nr. (IBAN)</label><input id="lsPayAcctIban" class="input" placeholder="LT..."></div>
-          <div><label class="label">Bankas</label><input id="lsPayBank" class="input"></div>
-        </div>
-      </div>
 
       <div class="sec-title">Nuomojamas turtas</div>
       <div class="hint" style="margin-bottom:6px;">Pozicijos pasirenkamos iš bylos Turto registro. Jei pozicija tuo pačiu laikotarpiu jau nuomojama pagal kitą galiojančią sutartį — rodomas įspėjimas, bet nuoma keliems nuomininkams galima.</div>
       <div id="lsItems"></div>
       <button class="btn btn-sm btn-ghost" type="button" id="lsAddItem">+ Pridėti poziciją</button>
-
-      <div id="lsPhotosSec" class="hidden">
-        <div class="sec-title">🖼 Turto būklės fotofiksacija (į nuomos sutartį)</div>
-        <div class="hint" style="margin-bottom:6px;">Pažymėtos nuotraukos iš pasirinktų turto pozicijų kortelių bus pridėtos prie generuojamos nuomos sutarties kaip priedas „Turto būklės fotofiksacija". Nuotraukos įkeliamos turto kortelėje (Turtas → pozicija → Fotofiksacija).</div>
-        <div id="lsPhotosList"></div>
-      </div>
-
-      <div class="sec-title">Papildomos specialiosios sąlygos</div>
-      <div class="hint" style="margin-bottom:6px;">Čia surašytos sąlygos bus automatiškai įterptos į generuojamą nuomos sutartį atskiru punktu (9 skyrius). Jei paliksite tuščią, sutartyje bus nurodyta, kad papildomų specialiųjų sąlygų nėra.</div>
-      <textarea id="lsSpecial" class="textarea" style="min-height:60px;" placeholder="pvz. Nuomininkas įsipareigoja apdrausti Turtą savo lėšomis; leidžiama laikyti tik ... ; draudžiama ..."></textarea>
 
       <div id="lsDocsSec" class="hidden">
         <div class="sec-title">Dokumentai (draudimo polisai, defektiniai aktai, leidimai, pažymos ir kt.)</div>
@@ -1188,22 +1166,9 @@
         <div id="lsDepositBlock" style="margin-top:12px;"></div>
       </div>
 
-      <div id="lsSignSec" class="hidden">
-        <div class="sec-title">✍ Sutarties pasirašymas</div>
-        <div id="lsSignStatus" style="margin-bottom:8px;"></div>
-        <div id="lsSignActions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <button class="btn btn-sm btn-gold" type="button" id="lsSignInternalBtn">✍ Pasirašyti sistemoje (ekrane)</button>
-          <input type="file" id="lsSignFile" class="hidden" accept="application/pdf">
-          <button class="btn btn-sm btn-ghost" type="button" id="lsSignExternalBtn">📎 Įkelti pasirašytą kopiją (PDF)</button>
-          <span class="muted" style="font-size:12px;">Pasirašius kortelė užrakinama (redaguojamos lieka tik pastabos, priminimai ir apskaita).</span>
-        </div>
-      </div>
-
       <div id="lsMsg" style="margin-top:10px;"></div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap;">
         <button class="btn btn-ghost" id="lsCancel">Uždaryti</button>
-        <button class="btn btn-ghost hidden" id="lsSignedCopyBtn">📄 Pasirašyta kopija</button>
-        <button class="btn btn-ghost hidden" id="lsUnlockBtn">🔓 Atrakinti</button>
         <button class="btn btn-ghost hidden" id="lsContractBtn">📝 Sutartis (PDF)</button>
         <button class="btn btn-gold hidden" id="lsPdfBtn">📄 Pažyma (PDF)</button>
         <button class="btn btn-danger hidden" id="lsTerminateBtn">✕ Nutraukti sutartį</button>
@@ -1296,52 +1261,13 @@
         <div id="slTransferWrap" style="margin-top:12px;"></div>
       </div>
 
-      <div id="slSignSec" class="hidden">
-        <div class="sec-title">✍ Sutarties pasirašymas</div>
-        <div id="slSignStatus" style="margin-bottom:8px;"></div>
-        <div id="slSignActions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <input type="file" id="slSignFile" class="hidden" accept="application/pdf">
-          <button class="btn btn-sm btn-gold" type="button" id="slSignExternalBtn">📎 Įkelti pasirašytą sutartį (PDF)</button>
-          <span class="muted" style="font-size:12px;">Įkėlus pasirašytą sutartį, ji pažymima kaip pasirašyta ir kortelė užrakinama.</span>
-        </div>
-      </div>
-
       <div id="slMsg" style="margin-top:10px;"></div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap;">
         <button class="btn btn-ghost" id="slCancel">Uždaryti</button>
-        <button class="btn btn-ghost hidden" id="slSignedCopyBtn">📄 Pasirašyta kopija</button>
-        <button class="btn btn-ghost hidden" id="slUnlockBtn">🔓 Atrakinti</button>
         <button class="btn btn-ghost hidden" id="slContractBtn">📝 Sutartis (PDF)</button>
         <button class="btn btn-gold hidden" id="slXlsxBtn">📊 XLSX apskaitai</button>
         <button class="btn btn-gold hidden" id="slPdfBtn">📄 Kortelė (PDF)</button>
         <button class="btn" id="slSave">Išsaugoti</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- NUOMOS SUTARTIES PASIRAŠYMO (VIDINIO) MODALĖ -->
-  <div id="leaseSignModal" class="modal-bg hidden">
-    <div class="modal" style="max-width:740px;">
-      <h2>✍ Nuomos sutarties pasirašymas sistemoje</h2>
-      <div class="hint" style="margin-bottom:10px;">Abi šalys pasirašo žemiau (pele arba pirštu). Patvirtinus, sistema sugeneruoja pasirašytą sutartį su abiejų šalių parašais, ją įkelia į kortelę ir kortelę užrakina.</div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:280px;">
-          <strong style="font-size:13px;">Nuomotojas</strong>
-          <label class="label">Pasirašančio asmens vardas pavardė</label><input id="lsSigLName" class="input">
-          <canvas id="lsSigLandlord" width="340" height="130" style="border:1px solid var(--bd);border-radius:6px;width:100%;background:#fff;touch-action:none;margin-top:4px;"></canvas>
-          <button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('lsSigLandlord')">Išvalyti parašą</button>
-        </div>
-        <div style="flex:1;min-width:280px;">
-          <strong style="font-size:13px;">Nuomininkas</strong>
-          <label class="label">Pasirašančio asmens vardas pavardė</label><input id="lsSigTName" class="input">
-          <canvas id="lsSigTenant" width="340" height="130" style="border:1px solid var(--bd);border-radius:6px;width:100%;background:#fff;touch-action:none;margin-top:4px;"></canvas>
-          <button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('lsSigTenant')">Išvalyti parašą</button>
-        </div>
-      </div>
-      <div id="lsSignModalMsg" style="margin-top:8px;"></div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
-        <button class="btn btn-ghost" id="lsSignModalCancel">Atšaukti</button>
-        <button class="btn btn-gold" id="lsSignModalConfirm">✓ Patvirtinti pasirašymą ir užrakinti</button>
       </div>
     </div>
   </div>
@@ -1496,6 +1422,13 @@
           <datalist id="regPartyList"></datalist>
         </div>
       </div>
+      <label class="label">Kategorija (dokumentui lengviau rasti)</label>
+      <select id="regCategory" class="select">
+        <option value="">— nenurodyta —</option>
+        <option value="creditors">Kreditoriai</option><option value="debtors">Debitoriai</option>
+        <option value="acts">Aktai</option><option value="assets">Turtas</option>
+        <option value="court">Teismas</option><option value="other">Kita</option>
+      </select>
       <label class="label">Pastabos</label>
       <textarea id="regNotes" class="textarea" style="min-height:50px;"></textarea>
       <label class="label">Dokumento failai * (PDF / JPG / PNG — sujungiami nurodyta tvarka)</label>
@@ -1588,64 +1521,70 @@
     </div>
   </div>
 
-  <!-- REIKALAVIMO MODALĖ -->
+  <!-- REIKALAVIMO MODALĖ (v3: darbo aplinka su dokumentų peržiūra) -->
   <div id="claimModal" class="modal-bg hidden">
-    <div class="modal" style="max-width:820px;">
+    <div class="modal" style="max-width:1320px;width:97vw;">
       <h2 id="clmModalTitle">Naujas kreditorinis reikalavimas</h2>
       <input type="hidden" id="clmId">
-      <div class="row">
-        <div><label class="label">Kreditorius *</label>
-          <div style="display:flex;gap:6px;"><select id="clmCredSelect" class="select" style="flex:1;"></select>
-          <button type="button" class="btn btn-sm btn-ghost" id="clmNewCredBtn" title="Įvesti naują kreditorių neišeinant iš šios kortelės">+ Naujas</button></div>
-          <div class="hint">Nerandate sąraše? Spauskite „+ Naujas" — kortelė bus išsaugota bendrame registre ir iškart pasirinkta.</div></div>
-      </div>
-      <div id="clmCredInfo" style="margin:6px 0;"></div>
-      <div class="row">
-        <div style="max-width:180px;"><label class="label">Gavimo data</label><input id="clmReceived" class="input" type="date"></div>
-        <div style="max-width:180px;"><label class="label">Pateikimo būdas</label>
-          <select id="clmVia" class="select"><option value="email">El. paštu</option><option value="post">Paštu</option><option value="epp">EPP</option><option value="delivered">Įteikta</option><option value="other">Kita</option></select></div>
-        <div><label class="label">Reikalavimo pagrindas</label><select id="clmBasis" class="select"></select></div>
-      </div>
-      <div class="sec-title">Reikalaujamos sumos</div>
-      <div id="clmAccInfo" style="margin-bottom:6px;"></div>
-      <div class="row">
-        <div><label class="label">Pagrindinė skola (€)</label><input id="clmPrincipal" class="input" type="number" step="0.01"></div>
-        <div><label class="label">Delspinigiai (€)</label><input id="clmLate" class="input" type="number" step="0.01"></div>
-        <div><label class="label">Palūkanos (€)</label><input id="clmInterest" class="input" type="number" step="0.01"></div>
-        <div><label class="label">Baudos (€)</label><input id="clmFines" class="input" type="number" step="0.01"></div>
-        <div><label class="label">Bendra suma (€)</label><input id="clmTotalInput" class="input" type="number" step="0.01"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:12px;margin-top:2px;">
-        <span class="muted" style="max-width:60%;">Įveskite komponentus — bendra suma skaičiuojama automatiškai; arba įveskite bendrą sumą ir netesybas — pagrindinė skola apskaičiuojama kaip likutis.</span>
-        <span>Netesybos/palūkanos: <b id="clmNetTotal">0,00 €</b> · Viso: <b id="clmTotal">0,00 €</b></span>
-      </div>
-      <label style="display:flex;align-items:center;gap:6px;margin:8px 0;font-size:13px;"><input type="checkbox" id="clmSecured" style="width:auto;"> Reikalavimas užtikrintas (įkeitimas / hipoteka)</label>
-      <div id="clmSecuredNoteWrap" class="hidden"><label class="label">Užtikrinimo aprašymas</label><input id="clmSecuredNote" class="input"></div>
-      <label class="label">Pastabos</label><textarea id="clmNotes" class="textarea" style="min-height:40px;"></textarea>
+      <div style="display:flex;gap:14px;align-items:stretch;flex-wrap:wrap;">
+        <!-- KAIRĖ: forma -->
+        <div style="flex:1 1 460px;min-width:360px;max-height:76vh;overflow:auto;padding-right:4px;">
+          <div class="row">
+            <div><label class="label">Kreditorius *</label>
+              <div style="display:flex;gap:6px;"><select id="clmCredSelect" class="select" style="flex:1;"></select>
+              <button type="button" class="btn btn-sm btn-ghost" id="clmNewCredBtn" title="Įvesti naują kreditorių neišeinant">+ Naujas</button></div>
+              <div class="hint">Nerandate? Spauskite „+ Naujas" — kortelė išsaugoma bendrame registre ir iškart pasirenkama.</div></div>
+          </div>
+          <div id="clmCredInfo" style="margin:6px 0;"></div>
+          <div class="row">
+            <div style="max-width:170px;"><label class="label">Gavimo data</label><input id="clmReceived" class="input" type="date"></div>
+            <div style="max-width:170px;"><label class="label">Pateikimo būdas</label>
+              <select id="clmVia" class="select"><option value="email">El. paštu</option><option value="post">Paštu</option><option value="epp">EPP</option><option value="delivered">Įteikta</option><option value="other">Kita</option></select></div>
+            <div><label class="label">Reikalavimo pagrindas</label><select id="clmBasis" class="select"></select></div>
+          </div>
+          <div class="sec-title">Reikalaujamos sumos</div>
+          <div id="clmAccInfo" style="margin-bottom:6px;"></div>
+          <div class="row">
+            <div><label class="label">Pagrindinė (€)</label><input id="clmPrincipal" class="input" type="number" step="0.01"></div>
+            <div><label class="label">Delspinigiai (€)</label><input id="clmLate" class="input" type="number" step="0.01"></div>
+            <div><label class="label">Palūkanos (€)</label><input id="clmInterest" class="input" type="number" step="0.01"></div>
+            <div><label class="label">Baudos (€)</label><input id="clmFines" class="input" type="number" step="0.01"></div>
+            <div><label class="label">Bendra suma (€)</label><input id="clmTotalInput" class="input" type="number" step="0.01"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:12px;margin-top:2px;">
+            <span class="muted" style="max-width:55%;">Komponentai → bendra suma skaičiuojama automatiškai; arba įveskite bendrą sumą ir netesybas — pagrindinė apskaičiuojama kaip likutis.</span>
+            <span>Netesybos/palūk.: <b id="clmNetTotal">0,00 €</b> · Viso: <b id="clmTotal">0,00 €</b></span>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;margin:8px 0;font-size:13px;"><input type="checkbox" id="clmSecured" style="width:auto;"> Reikalavimas užtikrintas (įkeitimas / hipoteka)</label>
+          <div id="clmSecuredNoteWrap" class="hidden"><label class="label">Užtikrinimo aprašymas</label><input id="clmSecuredNote" class="input"></div>
+          <label class="label">Pastabos</label><textarea id="clmNotes" class="textarea" style="min-height:40px;"></textarea>
 
-      <div id="clmDocsSec" class="hidden">
-        <div class="sec-title">Dokumentai (reikalavimas, sąskaitos, sutartys ir kt.)</div>
-        <div id="clmDocsList" style="margin-bottom:6px;"></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;">
-          <div style="flex:1;min-width:180px;"><label class="label">Dokumento pavadinimas</label><input id="clmDocLabel" class="input" placeholder="pvz. Kreditorinis reikalavimas"></div>
-          <input type="file" id="clmDocFile" class="hidden">
-          <button class="btn btn-sm" type="button" id="clmDocFileBtn">📎 Pridėti dokumentą</button>
+          <div class="sec-title">Dokumentai</div>
+          <div class="hint" style="margin-bottom:6px;">Įkelkite dokumentą iš įrenginio arba pasirinkite iš registracijos žurnalo — jį iškart matysite dešinėje ir galėsite skaityti pildydami reikalavimą.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-bottom:6px;">
+            <input type="file" id="clmDocFile" class="hidden" accept="application/pdf,image/*">
+            <button class="btn btn-sm" type="button" id="clmDocFileBtn2">📎 Įkelti iš įrenginio</button>
+            <div style="flex:1;min-width:180px;"><select id="clmRegSelect" class="select"></select></div>
+            <button class="btn btn-sm btn-ghost" type="button" id="clmRegAddBtn2">📓 Iš žurnalo</button>
+          </div>
+          <div id="clmDocsUnified"></div>
+        </div>
+        <!-- DEŠINĖ: dokumento peržiūra -->
+        <div style="flex:1 1 560px;min-width:340px;display:flex;flex-direction:column;max-height:76vh;">
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
+            <strong style="font-size:13px;">📄 Dokumento peržiūra</strong>
+            <select id="clmViewerSelect" class="select" style="flex:1;min-width:150px;font-size:12px;"></select>
+            <button class="btn btn-sm btn-ghost" type="button" id="clmViewerOpen" title="Atidaryti naujame lange">↗</button>
+          </div>
+          <div id="clmViewer" style="flex:1;min-height:420px;border:1px solid var(--bd);border-radius:8px;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center;">
+            <div class="muted" style="padding:24px;text-align:center;font-size:13px;">Dokumentas bus rodomas čia.<br>Įkelkite iš įrenginio arba pasirinkite iš registracijos žurnalo kairėje.</div>
+          </div>
         </div>
       </div>
-
-      <div id="clmRegSec" class="hidden">
-        <div class="sec-title">Susiejimas su dokumentų registracijos žurnalu</div>
-        <div id="clmRegList" style="margin-bottom:6px;"></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;">
-          <div style="flex:1;min-width:220px;"><label class="label">Registruotas gautas dokumentas</label><select id="clmRegSelect" class="select"></select></div>
-          <button class="btn btn-sm btn-ghost" type="button" id="clmRegAddBtn">🔗 Susieti</button>
-        </div>
-      </div>
-
       <div id="clmMsg" style="margin-top:10px;"></div>
-      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;flex-wrap:wrap;">
         <button class="btn btn-ghost" id="clmCancel">Uždaryti</button>
-        <button class="btn btn-ghost" id="clmSaveStay">💾 Išsaugoti ir pridėti dokumentus</button>
+        <button class="btn btn-ghost" id="clmSaveStay">💾 Išsaugoti (likti)</button>
         <button class="btn" id="clmSave">Išsaugoti</button>
       </div>
     </div>
@@ -1741,7 +1680,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-07-23-r7';
+    const APP_VERSION='2026-07-23-r8';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -1790,7 +1729,7 @@
           body.perm-view #photoUploadBtn, body.perm-view #photoCamBtn, body.perm-view #actSaveDraft, body.perm-view #actGenPdf,
           body.perm-view #admBlankBtn, body.perm-view #addPersonBtn, body.perm-view #admSave, body.perm-view #recSave,
           body.perm-view #impFileBtn, body.perm-view #impSheetBtn, body.perm-view #impSave, body.perm-view #pdfAttUploadBtn, body.perm-view #pdfGenerate,
-          body.perm-view #ntSave, body.perm-view #asPhotoUploadBtn, body.perm-view #asPhotoCamBtn, body.perm-view #asActPhotoBtn, body.perm-view #asActPhotoAdd, body.perm-view #assetSave, body.perm-view #priceSave,
+          body.perm-view #ntSave, body.perm-view #asPhotoUploadBtn, body.perm-view #asPhotoCamBtn, body.perm-view #assetSave, body.perm-view #priceSave,
           body.perm-view [onclick*="clearSig"], body.perm-view [onclick*="delRecipient"], body.perm-view [onclick*="editRecipient"],
           body.perm-view [onclick*="delPerson"], body.perm-view [onclick*="delAdmin"], body.perm-view [onclick*="delCase"],
           body.perm-view [onclick*="renameTpl"], body.perm-view [onclick*="delTpl"], body.perm-view [onclick*="editContact"],
@@ -1802,7 +1741,7 @@
           body.perm-view [onclick*="openSigModal"], body.perm-view [onclick*="delGroup"], body.perm-view [onclick*="moveGroup"],
           body.perm-view #gAddGroupBtn, body.perm-view #gIntroTplBtn,
           body.perm-view [onclick*="lockAct"], body.perm-view [onclick*="unlockAct"], body.perm-view #actLockBtn,
-          body.perm-view [onclick*="sendActCopy"], body.perm-view [onclick*="registerAct"], body.perm-view [onclick*="transferActAssets"], body.perm-view [onclick*="uploadSignedAct"],
+          body.perm-view [onclick*="sendActCopy"], body.perm-view [onclick*="registerAct"], body.perm-view [onclick*="transferActAssets"],
           body.perm-view [onclick*="saveActType"], body.perm-view #newAssetGroupBtn, body.perm-view [onclick*="delAssetGroup"],
           body.perm-view [onclick*="delGroupItem"], body.perm-view [onclick*="addGroupItem"], body.perm-view #regNoOverrideWrap,
           body.perm-view #libUploadBtn, body.perm-view [onclick*="editLibraryDoc"], body.perm-view [onclick*="delLibraryDoc"],
@@ -1816,12 +1755,9 @@
           body.perm-view [onclick*="lsDepositMark"], body.perm-view [onclick*="lsDepositClear"], body.perm-view [onclick*="lsAddLateCharge"],
           body.perm-view #lsRemAddBtn, body.perm-view #asRemAddBtn, body.perm-view #remDoneBtn, body.perm-view #remNewBtn,
           body.perm-view [onclick*="remDel"], body.perm-view [onclick*="remReopen"],
-          body.perm-view #lsSignInternalBtn, body.perm-view #lsSignExternalBtn, body.perm-view #lsUnlockBtn,
-          body.perm-view #lsSignModalConfirm,
           body.perm-view #newSaleBtn, body.perm-view #slSave, body.perm-view #slAddItem, body.perm-view #slPayAddBtn,
           body.perm-view #slPayFileBtn, body.perm-view [onclick*="delSale"], body.perm-view [onclick*="slItemDel"],
           body.perm-view [onclick*="slPayDel"], body.perm-view [onclick*="slDoTransfer"], body.perm-view [onclick*="slUndoTransfer"],
-          body.perm-view #slSignExternalBtn, body.perm-view #slUnlockBtn,
           body.perm-view [onclick*="openSaleModal"],
           body.perm-view [onclick*="saveContractTpl"], body.perm-view #remDigestBtn,
           body.perm-view #emAssignBtn, body.perm-view #emIrrelevantBtn, body.perm-view #emUnreadBtn,
@@ -2101,7 +2037,7 @@
         const h=end-pos; const pc=document.createElement('canvas'); pc.width=canvas.width; pc.height=h;
         pc.getContext('2d').drawImage(canvas,0,pos,canvas.width,h,0,0,canvas.width,h);
         if(!first)pdf.addPage();
-        pdf.addImage(pc.toDataURL('image/jpeg',0.8),'JPEG',ML,MT,w,h/pxPerMm);
+        pdf.addImage(pc.toDataURL('image/png'),'PNG',ML,MT,w,h/pxPerMm);
         first=false; pos=end;
       }
       return pdf.output('blob');
@@ -2122,7 +2058,7 @@
         <div style="font-size:12.5px;line-height:1.55;margin-top:12px;">${esc(body).replace(/\n/g,'<br>')}</div>
       </div>`;
       document.body.appendChild(holder);
-      const canvas=await html2canvas(holder.firstElementChild,{ scale:1.7, backgroundColor:'#fff' });
+      const canvas=await html2canvas(holder.firstElementChild,{ scale:2, backgroundColor:'#fff' });
       document.body.removeChild(holder);
       return canvasToA4PdfBlob(canvas);
     }
@@ -3352,13 +3288,13 @@
           admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
         // 3) įkėlimas į Storage (be perrašymo — registruoti PDF nekeičiami)
         $('regMsg').innerHTML='<div class="muted">⏳ Įkeliamas dokumentas…</div>';
-        const path=`${CURRENT.case_short_code}/registered/${regNumber}.pdf`;
-        const up=await sb.storage.from('insolvency-docs').upload(path,blob,{ upsert:false, contentType:'application/pdf' });
+        const path=`${CURRENT.case_short_code}/registered/${regNumber.replace(/[^A-Za-z0-9._-]+/g,'_')}_${Date.now()}.pdf`;
+        const up=await sb.storage.from('insolvency-docs').upload(path,blob,{ upsert:true, contentType:'application/pdf' });
         if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
         // 4) įrašas žurnale (+ auditas RPC viduje)
         const reg=await sb.rpc('register_insolvency_document',{ p:{
           case_id:CURRENT.id, registration_number:regNumber, doc_type:type, registration_date:dateV,
-          document_title:title, counterparty_name:party, notes:$('regNotes').value.trim(),
+          document_title:title, counterparty_name:party, notes:$('regNotes').value.trim(), category:($('regCategory')?$('regCategory').value:null)||null,
           storage_path:path, file_size:blob.size, page_count:pageCount,
           original_files_metadata:REG_FILES.map(f=>({ name:f.name, size:f.size, type:f.type })) } });
         if(reg.error)throw new Error(reg.error.message);
@@ -3384,7 +3320,7 @@
     };
 
     // ---------- TURTAS ----------
-    let ASSETS=[], AS_PHOTOS=[], AS_SRC_ACT=null, AS_ACT_PHOTOS=[];
+    let ASSETS=[], AS_PHOTOS=[];
     const AS_CAT={ realestate:'Nekilnojamas', movable:'Kilnojamas', inventory:'Atsargos', vehicle:'Transportas', intangible:'Nematerialus', other:'Kita' };
     const AS_ST={ in_stock:'Apskaitytas', for_sale:'Parduodamas', sold:'Parduotas', written_off:'Nurašytas', transferred:'Perduotas' };
     const fmtEur=v=>(v==null||v==='')?'—':Number(v).toLocaleString('lt-LT',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
@@ -3452,10 +3388,7 @@
       $('asStatus').value=(a.status&&a.status!=='sold')?a.status:'in_stock';
       $('asNotes').value=a.notes||''; $('assetMsg').innerHTML='';
       AS_PHOTOS=(a.photos||[]).slice();
-      AS_SRC_ACT=a.source_act_id||null; AS_ACT_PHOTOS=[];
       $('assetPhotoSec').classList.toggle('hidden',!id);
-      $('asActPhotoBtn').classList.toggle('hidden',!(id&&AS_SRC_ACT));
-      $('asActPhotoPicker').classList.add('hidden');
       renderAsPhotos();
       $('asLeaseSec').classList.toggle('hidden',!id);
       if(id)$('asLeaseInfo').innerHTML=assetLeaseInfoHtml(id);
@@ -3475,49 +3408,6 @@
       await sb.from('insolvency_assets').update({ photos:AS_PHOTOS, updated_at:new Date().toISOString() }).eq('id',id);
       loadAssets();
     }
-    // --- fotofiksacijų perkėlimas iš perdavimo akto į turto kortelę ---
-    $('asActPhotoBtn').onclick=async()=>{
-      if(!AS_SRC_ACT)return;
-      $('asActPhotoBtn').disabled=true;
-      try{
-        const { data:act }=await sb.from('insolvency_acts').select('photos').eq('id',AS_SRC_ACT).maybeSingle();
-        AS_ACT_PHOTOS=(act&&Array.isArray(act.photos)?act.photos:[]).filter(x=>x&&x.path&&x.kind!=='file');
-        if(!AS_ACT_PHOTOS.length){ $('asActPhotoList').innerHTML='<div class="muted" style="font-size:12px;">Prie perdavimo akto fotofiksacijų nėra.</div>'; }
-        else{
-          $('asActPhotoList').innerHTML='<div style="display:flex;flex-direction:column;gap:4px;">'+AS_ACT_PHOTOS.map((p,i)=>`<label style="display:flex;align-items:center;gap:6px;font-size:12px;">
-            <input type="checkbox" class="asActPhotoChk" data-i="${i}" style="width:auto;" checked>
-            🖼 ${esc(p.name||('akto foto '+(i+1)))}
-            <span style="cursor:pointer;" title="Peržiūrėti" onclick="previewDoc('${esc(p.path)}','${esc(p.name||'Akto nuotrauka')}')">👁</span>
-          </label>`).join('')+'</div>';
-        }
-        $('asActPhotoMsg').innerHTML=''; $('asActPhotoPicker').classList.remove('hidden');
-      }catch(err){ $('assetMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
-      finally{ $('asActPhotoBtn').disabled=false; }
-    };
-    $('asActPhotoClose').onclick=()=>$('asActPhotoPicker').classList.add('hidden');
-    $('asActPhotoAdd').onclick=async()=>{
-      const id=$('assetId').value; if(!id)return;
-      const idxs=[...document.querySelectorAll('.asActPhotoChk')].filter(c=>c.checked).map(c=>+c.dataset.i);
-      if(!idxs.length){ $('asActPhotoMsg').innerHTML='<span style="color:#C0392B;">Pažymėkite bent vieną nuotrauką.</span>'; return; }
-      $('asActPhotoMsg').innerHTML='⏳ Kopijuojama…';
-      let ok=0, fail=0;
-      for(const i of idxs){
-        const ph=AS_ACT_PHOTOS[i]; if(!ph)continue;
-        try{
-          const url=await fetchSignedUrlBytes(ph.path);
-          const blob=await (await fetch(url)).blob();
-          const safe=(ph.name||'foto').replace(/[^A-Za-z0-9._-]+/g,'_');
-          const newPath=`${CURRENT.case_short_code}/assets/${id}/${Date.now()}_akt_${safe}`;
-          const upo=await sb.storage.from('insolvency-docs').upload(newPath,blob,{ upsert:true });
-          if(upo.error)throw upo.error;
-          AS_PHOTOS.push({ path:newPath, name:ph.name||'Akto nuotrauka' });
-          ok++;
-        }catch(_){ fail++; }
-      }
-      await saveAsPhotos(); renderAsPhotos();
-      $('asActPhotoMsg').innerHTML='<span style="color:#046C4E;">Pridėta nuotraukų: '+ok+'.'+(fail?' Nepavyko: '+fail+'.':'')+'</span>';
-      if(ok)setTimeout(()=>$('asActPhotoPicker').classList.add('hidden'),1200);
-    };
     $('asPhotoUploadBtn').onclick=()=>$('asPhotoFile').click();
     $('asPhotoCamBtn').onclick=()=>$('asPhotoCam').click();
     async function handleAssetPhotos(e){
@@ -3753,11 +3643,11 @@
           </table>
           ${histHtml}${photosHtml}`;
         document.body.appendChild(el);
-        const canvas=await html2canvas(el,{ scale:1.7, backgroundColor:'#fff', useCORS:true });
+        const canvas=await html2canvas(el,{ scale:2, backgroundColor:'#fff', useCORS:true });
         document.body.removeChild(el);
         const pdf=new jspdf.jsPDF('p','mm','a4');
         const pw=210, ph=297, imgH=canvas.height*pw/canvas.width;
-        const img=canvas.toDataURL('image/jpeg',0.8);
+        const img=canvas.toDataURL('image/jpeg',0.92);
         let pos=0, remaining=imgH;
         pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph;
         while(remaining>0){ pdf.addPage(); pos-=ph; pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph; }
@@ -3770,7 +3660,7 @@
 
     // ---------- NUOMA (turto nuomos submodulis) ----------
     let LEASES=[], LEASE_ITEMS=[], LEASE_DOCS=[], CPARTIES=[], LS_ITEMS=[];
-    let LEASE_CHARGES=[], LEASE_PAYS=[], LS_PAY_FILE=null, LS_PHOTO_SEL=[], LS_LOCKED=false;
+    let LEASE_CHARGES=[], LEASE_PAYS=[], LS_PAY_FILE=null;
     const LEASE_ST={ draft:'Juodraštis', active:'Galiojanti', ended:'Pasibaigusi', terminated:'Nutraukta' };
     function leaseEffSt(l){ return (l.status==='active'&&l.lease_end&&l.lease_end<new Date().toISOString().slice(0,10))?'ended':l.status; }
     function leaseStBadge(l){
@@ -3869,12 +3759,6 @@
       return res;
     }
     function renderLsItems(){
-      if(LS_LOCKED){
-        $('lsItems').innerHTML=LS_ITEMS.filter(i=>i.asset_id).map((it,i)=>`<div style="border:1px solid var(--bd);border-radius:8px;padding:8px 10px;margin-bottom:6px;background:#F6F8FB;font-size:13px;">
-          <b>${i+1}. ${esc(assetNameById(it.asset_id))}</b>${it.quantity?' — '+esc(String(it.quantity))+' '+esc(it.unit||''):''}${it.condition_notes?'<div class="muted" style="font-size:12px;">Būklė: '+esc(it.condition_notes)+'</div>':''}</div>`).join('')||'<div class="muted" style="font-size:13px;">Pozicijų nėra.</div>';
-        renderLsPhotos();
-        return;
-      }
       $('lsItems').innerHTML=LS_ITEMS.map((it,i)=>{
         const ov=it.asset_id?lsOverlapsFor(it.asset_id,$('lsId').value||null):[];
         const warn=ov.length?`<div style="background:#FFF7E0;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;font-size:12px;margin-top:4px;">⚠ Šis turtas nuomojamas pagal sutartį ${ov.map(l=>'Nr. '+esc(l.contract_no)+' ('+esc((l.tenant||{}).name||'—')+(l.lease_end?', iki '+esc(l.lease_end):', neterminuota')+')').join('; ')}. Nuoma keliems nuomininkams galima — įsitikinkite, kad tikrai norite nuomoti.</div>`:'';
@@ -3891,7 +3775,6 @@
           ${warn}
         </div>`;
       }).join('')||'<div class="muted" style="font-size:13px;margin-bottom:6px;">Pozicijų dar nėra — spauskite „+ Pridėti poziciją".</div>';
-      renderLsPhotos();
     }
     window.lsItemSet=(i,k,v)=>{
       if(!LS_ITEMS[i])return;
@@ -3907,30 +3790,6 @@
     };
     window.lsItemDel=(i)=>{ LS_ITEMS.splice(i,1); renderLsItems(); };
     $('lsAddItem').onclick=()=>{ LS_ITEMS.push({ asset_id:'', quantity:'', unit:'', condition_notes:'' }); renderLsItems(); };
-    // turto būklės fotofiksacijos parinkimas į sutartį (iš turto kortelių)
-    function lsAvailablePhotos(){
-      const ids=[...new Set(LS_ITEMS.filter(i=>i.asset_id).map(i=>i.asset_id))];
-      const out=[];
-      ids.forEach(aid=>{ const a=ASSETS.find(x=>x.id===aid); if(a&&Array.isArray(a.photos))a.photos.forEach(p=>{ if(p&&p.path)out.push({ path:p.path, name:p.name||'', asset:a.name }); }); });
-      return out;
-    }
-    function renderLsPhotos(){
-      const sec=$('lsPhotosSec'), list=$('lsPhotosList'); if(!sec)return;
-      const photos=lsAvailablePhotos();
-      LS_PHOTO_SEL=LS_PHOTO_SEL.filter(sp=>photos.some(p=>p.path===sp.path));
-      if(!photos.length){ sec.classList.add('hidden'); list.innerHTML=''; return; }
-      sec.classList.remove('hidden');
-      list.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:6px;">'+photos.map((p,i)=>`<label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;border:1px solid var(--bd);border-radius:6px;padding:5px 8px;background:#FAFBFD;">
-        <input type="checkbox" style="width:auto;" ${LS_PHOTO_SEL.some(x=>x.path===p.path)?'checked':''} ${LS_LOCKED?'disabled':''} onchange="lsTogglePhoto('${esc(p.path)}',this.checked)">
-        🖼 ${esc(p.asset)} — ${esc(p.name||('foto '+(i+1)))}
-        <span style="cursor:pointer;" title="Peržiūrėti" onclick="previewDoc('${esc(p.path)}','${esc(p.name||'Nuotrauka')}')">👁</span>
-      </label>`).join('')+'</div>';
-    }
-    window.lsTogglePhoto=(path,on)=>{
-      const all=lsAvailablePhotos(); const p=all.find(x=>x.path===path); if(!p)return;
-      if(on){ if(!LS_PHOTO_SEL.some(x=>x.path===path))LS_PHOTO_SEL.push({ path:p.path, name:p.name }); }
-      else LS_PHOTO_SEL=LS_PHOTO_SEL.filter(x=>x.path!==path);
-    };
     $('lsStart').onchange=renderLsItems; $('lsEnd').onchange=renderLsItems;
     // --- kontrahentų žinynas ---
     function fillCpSelect(selId){
@@ -3953,19 +3812,6 @@
     $('lsCpDiff').onchange=()=>$('lsCpBusAddrWrap').classList.toggle('hidden',!$('lsCpDiff').checked);
     $('lsVat').onchange=()=>$('lsVatRateWrap').classList.toggle('hidden',!$('lsVat').checked);
     $('lsDeposit').onchange=()=>$('lsDepositWrap').classList.toggle('hidden',!$('lsDeposit').checked);
-    // atsiskaitomosios sąskaitos pasirinkimas (numatyta — bylos kaupiamoji sąskaita)
-    function fillLeasePayAcctSelect(l){
-      const dep=CURRENT.deposit_account_iban?('Kaupiamoji sąskaita — '+CURRENT.deposit_account_iban+(CURRENT.deposit_bank_name?' ('+CURRENT.deposit_bank_name+')':'')):'Kaupiamoji sąskaita — (nenurodyta bylos kortelėje)';
-      const opts=[['deposit',dep+' — numatyta']];
-      if(CURRENT.business_account_iban)opts.push(['business','Veiklos sąskaita — '+CURRENT.business_account_iban+(CURRENT.business_bank_name?' ('+CURRENT.business_bank_name+')':'')]);
-      opts.push(['custom','Kita sąskaita (įrašyti ranka)…']);
-      const kind=(l&&l.payment_account_kind)||'deposit';
-      $('lsPayAcctKind').innerHTML=opts.map(([v,t])=>`<option value="${v}"${v===kind?' selected':''}>${esc(t)}</option>`).join('');
-      $('lsPayAcctIban').value=l?(l.payment_account_iban||''):'';
-      $('lsPayBank').value=l?(l.payment_bank_name||''):'';
-      $('lsPayAcctCustomWrap').classList.toggle('hidden',$('lsPayAcctKind').value!=='custom');
-    }
-    $('lsPayAcctKind').onchange=()=>$('lsPayAcctCustomWrap').classList.toggle('hidden',$('lsPayAcctKind').value!=='custom');
     $('lsDocLabel').onchange=()=>$('lsDocCustomWrap').classList.toggle('hidden',$('lsDocLabel').value!=='custom');
     // --- nuomos modalė ---
     function lsSetStatusUI(l){
@@ -3978,9 +3824,6 @@
       $('lsAcctSec').classList.toggle('hidden',!(l&&st!=='draft'));
       $('lsPdfBtn').classList.toggle('hidden',!l);
       $('lsContractBtn').classList.toggle('hidden',!l);
-      LS_LOCKED=!!(l&&l.signed);
-      applyLeaseLock(LS_LOCKED);
-      renderLeaseSignSection(l);
     }
     window.openLeaseModal=async(id)=>{
       if(CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; }
@@ -3997,10 +3840,6 @@
       $('lsVat').checked=l?!!l.vat:false; $('lsVatRate').value=l?(l.vat_rate??21):21; $('lsVatRateWrap').classList.toggle('hidden',!$('lsVat').checked);
       $('lsDeposit').checked=l?!!l.deposit:false; $('lsDepositAmount').value=l?(l.deposit_amount??''):''; $('lsDepositWrap').classList.toggle('hidden',!$('lsDeposit').checked);
       $('lsLateRate').value=l?(l.late_interest_rate??''):'';
-      fillLeasePayAcctSelect(l);
-      $('lsSpecial').value=l?(l.special_conditions||''):'';
-      LS_PHOTO_SEL=l&&Array.isArray(l.condition_photos)?l.condition_photos.slice():[];
-      LS_LOCKED=!!(l&&l.signed);
       LS_ITEMS=l?LEASE_ITEMS.filter(i=>i.lease_id===l.id).map(i=>({ asset_id:i.asset_id, quantity:i.quantity??'', unit:i.unit||'', condition_notes:i.condition_notes||'' })):[];
       renderLsItems();
       lsSetStatusUI(l);
@@ -4038,10 +3877,6 @@
         vat:$('lsVat').checked, vat_rate:Number($('lsVatRate').value)||21,
         deposit:$('lsDeposit').checked, deposit_amount:$('lsDeposit').checked&&$('lsDepositAmount').value!==''?Number($('lsDepositAmount').value):null,
         late_interest_rate:$('lsLateRate').value===''?null:Number($('lsLateRate').value),
-        payment_account_kind:$('lsPayAcctKind').value||'deposit',
-        payment_account_iban:$('lsPayAcctKind').value==='custom'?($('lsPayAcctIban').value.trim()||null):null,
-        payment_bank_name:$('lsPayAcctKind').value==='custom'?($('lsPayBank').value.trim()||null):null,
-        special_conditions:$('lsSpecial').value.trim()||null, condition_photos:LS_PHOTO_SEL,
         updated_at:new Date().toISOString() };
       let id=curId, res;
       if(id){ res=await sb.from('insolvency_asset_leases').update(row).eq('id',id); }
@@ -4091,7 +3926,7 @@
       $('lsDocsList').innerHTML=LEASE_DOCS.length?LEASE_DOCS.map(d=>`<div style="border:1px solid var(--bd);border-radius:6px;padding:5px 8px;display:inline-flex;align-items:center;gap:6px;font-size:12px;margin:0 6px 6px 0;">
         <b>${esc(d.doc_label)}</b>${d.valid_until?' <span class="muted">(iki '+esc(d.valid_until)+')</span>':''}
         ${d.storage_path?`<span style="cursor:pointer;" title="Peržiūrėti" onclick="previewDoc('${esc(d.storage_path)}','${esc(d.file_name||d.doc_label)}')">👁 ${esc(d.file_name||'failas')}</span>`:''}
-        ${LS_LOCKED?'':`<span style="cursor:pointer;color:#C0392B;" title="Šalinti" onclick="delLeaseDoc('${d.id}')">✕</span>`}</div>`).join(''):'<span class="muted" style="font-size:12px;">Dokumentų dar nėra.</span>';
+        <span style="cursor:pointer;color:#C0392B;" title="Šalinti" onclick="delLeaseDoc('${d.id}')">✕</span></div>`).join(''):'<span class="muted" style="font-size:12px;">Dokumentų dar nėra.</span>';
     }
     window.delLeaseDoc=async(id)=>{
       const d=LEASE_DOCS.find(x=>x.id===id);
@@ -4355,11 +4190,11 @@
           ${itemsHtml}${docsHtml}${acctHtml}
           <div style="margin-top:16px;font-size:10px;color:#888;">Pažyma suformuota sistemoje help.vvc.lt ${new Date().toLocaleString('lt-LT')}</div>`;
         document.body.appendChild(el);
-        const canvas=await html2canvas(el,{ scale:1.7, backgroundColor:'#fff', useCORS:true });
+        const canvas=await html2canvas(el,{ scale:2, backgroundColor:'#fff', useCORS:true });
         document.body.removeChild(el);
         const pdf=new jspdf.jsPDF('p','mm','a4');
         const pw=210, ph=297, imgH=canvas.height*pw/canvas.width;
-        const img=canvas.toDataURL('image/jpeg',0.8);
+        const img=canvas.toDataURL('image/jpeg',0.92);
         let pos=0, remaining=imgH;
         pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph;
         while(remaining>0){ pdf.addPage(); pos-=ph; pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph; }
@@ -4531,7 +4366,7 @@
     }
 
     // ---------- PARDAVIMAS (turto pardavimo submodulis, 4 etapas) ----------
-    let SALES=[], SALE_ITEMS=[], SALE_PAYS=[], SL_ITEMS=[], SL_PAY_FILE=null, SL_LOCKED=false;
+    let SALES=[], SALE_ITEMS=[], SALE_PAYS=[], SL_ITEMS=[], SL_PAY_FILE=null;
     const SALE_METHODS={ varzytynes:'Viešos varžytynės', aukcionas:'Aukcionas', viesas_pardavimas:'Viešas pardavimas', pasiulymas:'Pasiūlymas', laisvas_pardavimas:'Laisvas pardavimas' };
     const saleTotal=s=>{ const p=Number(s.price||0); return s.vat?Math.round(p*(1+(Number(s.vat_rate)||21)/100)*100)/100:p; };
     const salePaid=s=>s.paid?saleTotal(s):SALE_PAYS.filter(p=>p.sale_id===s.id).reduce((t,p)=>t+Number(p.amount||0),0);
@@ -4608,11 +4443,6 @@
       return '<option value="">— pasirinkite turtą —</option>'+avail.map(a=>`<option value="${a.id}"${a.id===sel?' selected':''}>${esc(a.name)}${a.location?' ('+esc(a.location)+')':''}</option>`).join('');
     }
     function renderSlItems(){
-      if(SL_LOCKED){
-        $('slItems').innerHTML=SL_ITEMS.filter(i=>i.asset_id).map((it,i)=>`<div style="border:1px solid var(--bd);border-radius:8px;padding:8px 10px;margin-bottom:6px;background:#F6F8FB;font-size:13px;">
-          <b>${i+1}. ${esc(assetNameById(it.asset_id))}</b>${it.quantity?' — '+esc(String(it.quantity))+' '+esc(it.unit||''):''}${it.item_price!=null&&it.item_price!==''?' — '+fmtEur(it.item_price):''}</div>`).join('')||'<div class="muted" style="font-size:13px;">Pozicijų nėra.</div>';
-        return;
-      }
       $('slItems').innerHTML=SL_ITEMS.map((it,i)=>{
         const a=it.asset_id?ASSETS.find(x=>x.id===it.asset_id):null;
         const priceHint=a&&a.current_price!=null?`<div class="hint" style="margin-top:2px;">💶 Galiojanti kaina Turto modulyje: <b>${fmtEur(a.current_price)}</b></div>`:'';
@@ -4716,65 +4546,7 @@
       $('slXlsxBtn').classList.toggle('hidden',!s);
       $('slContractBtn').classList.toggle('hidden',!s);
       $('slSave').classList.toggle('hidden',!!(s&&s.ownership_transferred));
-      SL_LOCKED=!!(s&&s.signed);
-      applySaleLock(SL_LOCKED);
-      renderSaleSignSection(s);
     }
-    const SALE_LOCK_INPUTS=['slContractNo','slDate','slCpSelect','slCpName','slCpCode','slCpRegAddr','slCpDiff','slCpBusAddr','slCpRepPos','slCpRepName','slCpEmail','slCpPhone','slPrice','slVat','slVatRate','slPaymentDue','slPaid','slPaidDate','slMethod','slMethodNote','slAucDate','slAucUrl','slAucStart'];
-    function applySaleLock(locked){
-      SALE_LOCK_INPUTS.forEach(x=>{ const e=$(x); if(e)e.disabled=locked; });
-      const add=$('slAddItem'); if(add)add.classList.toggle('hidden',locked);
-      // Saugoti galima, kol pardavimas nepasirašytas ir nuosavybė neperduota.
-      const s=SALES.find(x=>x.id===$('slId').value);
-      $('slSave').classList.toggle('hidden', locked || !!(s&&s.ownership_transferred));
-    }
-    function renderSaleSignSection(s){
-      const sec=$('slSignSec'); if(!sec)return;
-      if(!s){ sec.classList.add('hidden'); return; }
-      sec.classList.remove('hidden');
-      const canUnlock=(PERM_LEVEL==='full'||IS_SUPERADMIN);
-      if(s.signed){
-        $('slSignStatus').innerHTML='<div style="background:#F0FAF4;border:1px solid #CBE7D4;border-radius:8px;padding:8px 12px;font-size:13px;">🔒 <b>Sutartis pasirašyta</b> — įkelta pasirašyta kopija'+(s.signed_at?', '+new Date(s.signed_at).toLocaleString('lt-LT'):'')+'. Kortelė užrakinta — redaguojami lieka tik mokėjimai ir nuosavybės perdavimas.</div>';
-        $('slSignActions').classList.add('hidden');
-      } else {
-        $('slSignStatus').innerHTML='<div class="hint">Įkelkite pasirašytą pardavimo sutartį — ji bus pažymėta kaip pasirašyta, o kortelė užrakinama.</div>';
-        $('slSignActions').classList.remove('hidden');
-      }
-      $('slSignedCopyBtn').classList.toggle('hidden',!(s.signed&&s.signed_copy_path));
-      $('slUnlockBtn').classList.toggle('hidden',!(s.signed&&canUnlock));
-    }
-    $('slSignExternalBtn').onclick=()=>{ const id=$('slId').value; if(!id){ $('slMsg').innerHTML='<div class="error">Pirma išsaugokite pardavimą.</div>'; return; } $('slSignFile').click(); };
-    $('slSignFile').onchange=async(e)=>{
-      const id=$('slId').value; if(!id||!e.target.files.length){ e.target.value=''; return; }
-      if(!confirm('Įkelti pasirašytą pardavimo sutartį ir pažymėti kaip pasirašytą? Kortelė bus užrakinta.')){ e.target.value=''; return; }
-      const file=e.target.files[0];
-      $('slMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
-      try{
-        const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
-        const path=`${CURRENT.case_short_code}/sales/${id}/signed/${Date.now()}_${safe}`;
-        const up=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
-        if(up.error)throw up.error;
-        const nowIso=new Date().toISOString();
-        const { error }=await sb.from('insolvency_asset_sales').update({ signed:true, signed_method:'external', signed_at:nowIso, signed_copy_path:path, updated_at:nowIso }).eq('id',id);
-        if(error)throw error;
-        $('slMsg').innerHTML='<div class="success">✔ Pasirašyta sutartis įkelta, kortelė užrakinta.</div>';
-        try{ await logEvent('sale_signed',{ sale_id:id, method:'external' }); }catch(_){}
-        await loadCaseSales();
-        const s=SALES.find(x=>x.id===id); SL_LOCKED=!!(s&&s.signed);
-        renderSlItems(); slSetStatusUI(s); renderSales();
-      }catch(err){ $('slMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
-      finally{ e.target.value=''; }
-    };
-    $('slSignedCopyBtn').onclick=async()=>{ const id=$('slId').value; const s=SALES.find(x=>x.id===id); if(!s||!s.signed_copy_path)return; try{ const url=await fetchSignedUrlBytes(s.signed_copy_path); window.open(url,'_blank'); }catch(err){ $('slMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; } };
-    $('slUnlockBtn').onclick=async()=>{
-      const id=$('slId').value; if(!id)return;
-      if(!confirm('Atrakinti pardavimo kortelę redagavimui? Pasirašymo žyma bus panaikinta (įkelta kopija lieka istorijai).'))return;
-      const { error }=await sb.from('insolvency_asset_sales').update({ signed:false, updated_at:new Date().toISOString() }).eq('id',id);
-      if(error){ $('slMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
-      try{ await logEvent('sale_unlocked',{ sale_id:id }); }catch(_){}
-      await loadCaseSales(); openSaleModal(id);
-      $('slMsg').innerHTML='<div class="success">Kortelė atrakinta redagavimui.</div>';
-    };
     window.openSaleModal=async(id,presetAssetId)=>{
       if(CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; }
       await loadCounterparties();
@@ -4798,7 +4570,6 @@
       $('slAucWrap').classList.toggle('hidden',!['varzytynes','aukcionas'].includes($('slMethod').value));
       SL_ITEMS=s?SALE_ITEMS.filter(i=>i.sale_id===s.id).map(i=>({ asset_id:i.asset_id, quantity:i.quantity??'', unit:i.unit||'', item_price:i.item_price??'' })):
         (presetAssetId?[(()=>{ const a=ASSETS.find(x=>x.id===presetAssetId)||{}; return { asset_id:presetAssetId, quantity:a.quantity??'', unit:a.unit||'vnt.', item_price:'' }; })()]:[]);
-      SL_LOCKED=!!(s&&s.signed);
       renderSlItems();
       slSetStatusUI(s);
       SL_PAY_FILE=null; $('slPayFileName').textContent='';
@@ -4991,11 +4762,11 @@
           ${itemsHtml}${paysHtml}
           <div style="margin-top:16px;font-size:10px;color:#888;">Kortelė suformuota sistemoje help.vvc.lt ${new Date().toLocaleString('lt-LT')}</div>`;
         document.body.appendChild(el);
-        const canvas=await html2canvas(el,{ scale:1.7, backgroundColor:'#fff', useCORS:true });
+        const canvas=await html2canvas(el,{ scale:2, backgroundColor:'#fff', useCORS:true });
         document.body.removeChild(el);
         const pdf=new jspdf.jsPDF('p','mm','a4');
         const pw=210, ph=297, imgH=canvas.height*pw/canvas.width;
-        const img=canvas.toDataURL('image/jpeg',0.8);
+        const img=canvas.toDataURL('image/jpeg',0.92);
         let pos=0, remaining=imgH;
         pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph;
         while(remaining>0){ pdf.addPage(); pos-=ph; pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph; }
@@ -5151,53 +4922,27 @@
       msg.textContent='✓ Išsaugota'; msg.style.color='#046C4E';
       try{ const { data }=await sb.from('insolvency_contract_templates').select('*'); CONTRACT_TPLS=data||[]; }catch(_){}
     };
-    async function __contractBlobBody(kind,isLease,id,obj,tpl){
+    async function contractPdf(kind){
+      const isLease=kind==='lease';
+      const id=isLease?$('lsId').value:$('slId').value; if(!id)return;
+      const obj=isLease?LEASES.find(x=>x.id===id):SALES.find(x=>x.id===id); if(!obj)return;
+      const say=h=>{ $(isLease?'lsMsg':'slMsg').innerHTML=h; };
+      say('<div class="muted">⏳ Generuojama sutartis…</div>');
+      try{
+        const { data:tpl }=await sb.from('insolvency_contract_templates').select('*').eq('kind',kind).maybeSingle();
+        if(!tpl){ say('<div class="error">Šablonas nerastas — patikrinkite Nustatymai → Šablonai.</div>'); return; }
         const t=isLease?(obj.tenant||{}):(obj.buyer||{});
         const items=isLease?LEASE_ITEMS.filter(i=>i.lease_id===id):SALE_ITEMS.filter(i=>i.sale_id===id);
-        // turtas: nuomai — pilna techninė specifikacija + būklės aprašymas; pardavimui — trumpiau su kaina
-        const turtas=items.map((i,idx)=>{
-          const a=ASSETS.find(x=>x.id===i.asset_id)||{};
-          if(isLease){
-            const parts=[];
-            if(AS_CAT[a.category])parts.push('kategorija: '+AS_CAT[a.category]);
-            if(i.quantity)parts.push('kiekis: '+i.quantity+' '+(i.unit||''));
-            if(a.location)parts.push('buvimo vieta: '+a.location);
-            if(a.description)parts.push('techniniai duomenys / požymiai (įsk. valst. Nr., identifikatorius): '+a.description);
-            if(i.condition_notes)parts.push('būklės aprašymas: '+i.condition_notes);
-            return (idx+1)+'. '+(a.name||'—')+(parts.length?'. '+parts.join('; ')+'.':'.');
-          }
-          return '- '+(a.name||'—')+(i.quantity?', '+i.quantity+' '+(i.unit||''):'')+(i.item_price!=null&&i.item_price!==''?' — '+Number(i.item_price).toFixed(2)+' EUR':'');
-        }).join('\n');
+        const turtas=items.map(i=>{ const a=ASSETS.find(x=>x.id===i.asset_id)||{}; return '- '+(a.name||'—')+(i.quantity?', '+i.quantity+' '+(i.unit||''):'')+(isLease&&i.condition_notes?' ('+i.condition_notes+')':'')+(!isLease&&i.item_price!=null&&i.item_price!==''?' — '+Number(i.item_price).toFixed(2)+' EUR':''); }).join('\n');
         const price=Number((isLease?obj.monthly_price:obj.price)||0);
         const rate=Number(obj.vat_rate)||21;
         const vatSum=Math.round(price*rate)/100;
         const totalSum=Math.round((price+vatSum)*100)/100;
         const pvm=obj.vat?('Papildomai taikomas '+rate+' % PVM ('+vatSum.toFixed(2)+' EUR), iš viso su PVM — '+totalSum.toFixed(2)+' EUR'+(isLease?'/mėn.':'.')):'PVM netaikomas.';
-        // Nuomotojas / administratorius / teismo nutartis / atsiskaitymo sąskaita
-        const adm=CURRENT_ADM||{};
-        const admParts=[adm.name||'—'];
-        if(adm.code)admParts.push('juridinio asmens kodas '+adm.code);
-        if(adm.address)admParts.push('buveinės adresas '+adm.address);
-        const administratorius=admParts.join(', ');
-        const person=CURRENT.admin_person_id?(PERSONS||[]).find(p=>p.id===CURRENT.admin_person_id):null;
-        const igaliotas_asmuo=person?(person.full_name+(person.position?', '+person.position:'')):((adm.authorized_person&&adm.authorized_person.trim())||'____________________');
-        const court=CURRENT.court||'teismo';
-        const rd=CURRENT.ruling_date?(CURRENT.ruling_date+' '):'';
-        const cn=CURRENT.civil_case_no?(' civilinėje byloje Nr. '+CURRENT.civil_case_no):'';
-        const nutartis=court+' '+rd+'nutartimi'+cn;
-        // atsiskaitomoji sąskaita pagal sutartyje pasirinktą tipą (numatyta — kaupiamoji)
-        const pk=(isLease&&obj.payment_account_kind)||'deposit';
-        let acctIban='', acctBank='';
-        if(pk==='business'){ acctIban=CURRENT.business_account_iban||''; acctBank=CURRENT.business_bank_name||''; }
-        else if(pk==='custom'){ acctIban=obj.payment_account_iban||''; acctBank=obj.payment_bank_name||''; }
-        else { acctIban=CURRENT.deposit_account_iban||''; acctBank=CURRENT.deposit_bank_name||''; }
-        const saskaita=acctIban?(acctIban+(acctBank?', '+acctBank:'')):'____________________ (nurodyti bylos kortelėje – Kaupiamosios sąskaitos Nr.)';
-        const spec=isLease&&obj.special_conditions&&obj.special_conditions.trim()?obj.special_conditions.trim():'Papildomų specialiųjų sąlygų nėra.';
         const map={
           sutarties_nr:obj.contract_no||'',
           sutarties_data:(isLease?obj.contract_date:obj.sale_date)||new Date().toISOString().slice(0,10),
-          imone:CURRENT.debtor_name||'', imones_kodas:CURRENT.debtor_code||'—', imones_adresas:CURRENT.debtor_address||'—',
-          administratorius:administratorius, administratorius_trumpai:adm.name||'—', igaliotas_asmuo:igaliotas_asmuo, nutartis:nutartis, saskaita:saskaita, spec_salygos:spec,
+          imone:CURRENT.debtor_name||'', imones_kodas:CURRENT.debtor_code||'—',
           nuomininkas:t.name||'', pirkejas:t.name||'',
           nuomininko_kodas:t.reg_code?', į. k. '+t.reg_code:'', pirkejo_kodas:t.reg_code?', į. k. '+t.reg_code:'',
           nuomininko_adresas:t.business_address||t.reg_address||'—', pirkejo_adresas:t.business_address||t.reg_address||'—',
@@ -5206,240 +4951,32 @@
           kaina:price.toFixed(2), pvm:pvm,
           nuomos_pradzia:obj.lease_start||'—', nuomos_pabaiga:obj.lease_end||'neterminuota',
           depozitas:isLease?(obj.deposit?Number(obj.deposit_amount||0).toFixed(2)+' EUR':'netaikomas'):'',
-          delspinigiai:isLease?(obj.late_interest_rate?obj.late_interest_rate+' % už kiekvieną uždelstą dieną nuo laiku nesumokėtos sumos':'0,05 % už kiekvieną uždelstą dieną nuo laiku nesumokėtos sumos'):'',
+          delspinigiai:isLease?(obj.late_interest_rate?obj.late_interest_rate+' %/d. nuo laiku nesumokėtos sumos':'netaikomi'):'',
           mokejimo_terminas:!isLease?(obj.payment_due||'Sutartyje nustatyta tvarka'):'',
           pardavimo_budas:!isLease?((SALE_METHODS[obj.sale_method]||'—')+(obj.sale_method_note?' ('+obj.sale_method_note+')':'')):''
         };
         let body=tpl.body;
         for(const k in map)body=body.split('{{'+k+'}}').join(map[k]);
-        // ŠALIŲ REKVIZITAI IR PARAŠAI — dvi atskiros skiltys (lentelė)
-        const sigCell=(sig)=> (sig&&sig.data)
-          ? '<img src="'+sig.data+'" style="height:46px;display:block;"><div style="border-top:1px solid #000;width:75%;margin-top:2px;font-size:10px;color:#333;">'+esc(sig.name||'')+(sig.at?' · '+new Date(sig.at).toLocaleDateString('lt-LT'):'')+'</div>'
-          : '<div style="margin-top:36px;border-top:1px solid #000;width:75%;font-size:10px;color:#555;">(parašas)</div>';
-        const lblL=isLease?'NUOMOTOJAS':'PARDAVĖJAS', lblR=isLease?'NUOMININKAS':'PIRKĖJAS';
-        const landlordReq='<b>'+esc(CURRENT.debtor_name||'—')+'</b><br>Juridinio asmens kodas '+esc(CURRENT.debtor_code||'—')+'<br>Adresas: '+esc(CURRENT.debtor_address||'—')
-          +'<br>Nemokumo administratorius: '+esc(adm.name||'—')+'<br>Įgaliotas asmuo: '+esc(igaliotas_asmuo)
-          +(acctIban?'<br>Atsiskaitomoji sąsk.: '+esc(saskaita):'')
-          +'<div style="margin-top:18px;">'+sigCell(isLease?obj.sig_landlord:null)+'</div>';
-        const tenantReq='<b>'+esc(t.name||'—')+'</b>'+(t.reg_code?'<br>Kodas: '+esc(t.reg_code):'')
-          +'<br>Adresas: '+esc(t.reg_address||t.business_address||'—')
-          +(t.email?'<br>El. paštas: '+esc(t.email):'')+(t.phone?'<br>Tel.: '+esc(t.phone):'')
-          +'<div style="margin-top:18px;">'+sigCell(isLease?obj.sig_tenant:null)+'</div>';
-        const reqHtml='<table style="width:100%;border-collapse:collapse;margin-top:34px;font-size:12px;">'
-          +'<tr><td style="border:1px solid #000;width:50%;text-align:center;padding:6px;font-weight:700;">'+lblL+'</td>'
-          +'<td style="border:1px solid #000;width:50%;text-align:center;padding:6px;font-weight:700;">'+lblR+'</td></tr>'
-          +'<tr><td style="border:1px solid #000;padding:12px;vertical-align:top;">'+landlordReq+'</td>'
-          +'<td style="border:1px solid #000;padding:12px;vertical-align:top;">'+tenantReq+'</td></tr></table>';
-        // pagrindinis dokumentas (A4 su raštvedybos paraštėmis, puslapiavimas)
         const el=document.createElement('div');
-        const elCss='position:fixed;left:-10000px;top:0;width:700px;background:#fff;font-family:Arial,sans-serif;color:#111;font-size:12.5px;line-height:1.5;';
-        el.style.cssText=elCss;
-        el.innerHTML='<div style="white-space:pre-wrap;">'+esc(body)+'</div>'+reqHtml;
-        document.body.appendChild(el); await imagesReady(el);
-        const pdf=new jspdf.jsPDF('p','mm','a4');
-        await paintContractEl(pdf, el, true);
+        el.style.cssText='position:fixed;left:-10000px;top:0;width:794px;background:#fff;padding:60px 50px;font-family:Arial,sans-serif;color:#111;font-size:12.5px;line-height:1.55;white-space:pre-wrap;';
+        el.textContent=body;
+        document.body.appendChild(el);
+        const canvas=await html2canvas(el,{ scale:2, backgroundColor:'#fff' });
         document.body.removeChild(el);
-        // PRIEDAS Nr. 1 — turto būklės fotofiksacija (nauju lapu po parašų)
-        if(isLease&&Array.isArray(obj.condition_photos)&&obj.condition_photos.length){
-          const imgs=[];
-          for(const ph of obj.condition_photos){ try{ const url=await fetchSignedUrlBytes(ph.path); const blob=await (await fetch(url)).blob(); const durl=await new Promise(ok=>{ const fr=new FileReader(); fr.onload=()=>ok(fr.result); fr.readAsDataURL(blob); }); imgs.push({ src:durl, name:ph.name }); }catch(_){} }
-          if(imgs.length){ const pel=document.createElement('div'); pel.style.cssText=elCss; pel.innerHTML='<div style="font-weight:700;font-size:13px;margin-bottom:10px;">PRIEDAS Nr. 1. Turto būklės fotofiksacija</div><div style="display:flex;flex-wrap:wrap;gap:10px;">'+imgs.map(p=>'<div style="width:320px;"><img src="'+p.src+'" style="width:320px;border:1px solid #ccc;">'+(p.name?'<div style="font-size:10px;color:#666;">'+esc(p.name)+'</div>':'')+'</div>').join('')+'</div>'; document.body.appendChild(pel); await imagesReady(pel); await paintContractEl(pdf, pel, false); document.body.removeChild(pel); }
-        }
-        let blob=pdf.output('blob'); let skipped=[];
-        // PRIEDAI — nuomos kortelės dokumentai (PDF prijungiami puslapiais, paveikslėliai nauju lapu)
-        if(isLease){
-          let docs=[];
-          try{ const r=await sb.from('insolvency_asset_lease_docs').select('*').eq('lease_id',id).order('created_at'); docs=(r.data||[]).filter(d=>d.storage_path).map(d=>({ path:d.storage_path, name:d.file_name||d.doc_label })); }catch(_){}
-          if(docs.length){ const mr=await mergeContractDocs(blob, docs); blob=mr.blob; skipped=mr.skipped; }
-        }
-        // puslapių numeracija antraštėje
-        blob=await addContractPageNumbers(blob);
-        return { blob, obj, isLease, skipped };
-      }
-      // A4 dažymas su raštvedybos paraštėmis (30/10/20/20) ir protingu puslapiavimu
-      async function paintContractEl(pdf, el, onExistingPage){
-        const canvas=await html2canvas(el,{ scale:1.7, backgroundColor:'#fff', useCORS:true });
-        const ML=30,MR=10,MT=22,MB=18, w=210-ML-MR, pageHmm=297-MT-MB;
-        const pxPerMm=canvas.width/w, pagePx=Math.floor(pageHmm*pxPerMm), cctx=canvas.getContext('2d');
-        const isBlankRow=y=>{ const d=cctx.getImageData(0,y,canvas.width,1).data; for(let i=0;i<d.length;i+=16){ if(d[i+3]>10&&(d[i]<246||d[i+1]<246||d[i+2]<246))return false; } return true; };
-        let pos=0, first=true;
-        while(pos<canvas.height){
-          let end=Math.min(pos+pagePx,canvas.height);
-          if(end<canvas.height){ let cut=end; const minCut=pos+Math.floor(pagePx*0.5); while(cut>minCut&&!isBlankRow(cut))cut--; if(cut>minCut)end=cut; }
-          const sliceH=end-pos, pc=document.createElement('canvas'); pc.width=canvas.width; pc.height=sliceH;
-          pc.getContext('2d').drawImage(canvas,0,pos,canvas.width,sliceH,0,0,canvas.width,sliceH);
-          if(!(first&&onExistingPage))pdf.addPage();
-          pdf.addImage(pc.toDataURL('image/jpeg',0.8),'JPEG',ML,MT,w,sliceH/pxPerMm);
-          first=false; pos=end;
-        }
-      }
-      async function imagesReady(el){ await new Promise(res=>{ const im=el.querySelectorAll('img'); let n=im.length; if(!n)return res(); im.forEach(x=>{ if(x.complete)return (--n<=0&&res()); x.onload=x.onerror=()=>{ if(--n<=0)res(); }; }); }); }
-      async function fetchSignedUrlBytes(path){
-        const { data:{ session } }=await sb.auth.getSession();
-        const r=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{ method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY}, body:JSON.stringify({ path }) });
-        const j=await r.json(); if(!j.url)throw new Error('Nepavyko gauti failo nuorodos.'); return j.url;
-      }
-      async function addContractPageNumbers(blob){
-        try{
-          const { PDFDocument, rgb }=PDFLib;
-          const doc=await PDFDocument.load(await blob.arrayBuffer(),{ ignoreEncryption:true });
-          const fonts=await getStampFonts(doc); const T=s=>fonts.unicode?String(s):deLT(s);
-          const pages=doc.getPages(), N=pages.length;
-          pages.forEach((pg,i)=>{ const wpt=pg.getWidth(), hpt=pg.getHeight(), txt=T('Lapas '+(i+1)+' iš '+N), size=8, tw=fonts.reg.widthOfTextAtSize(txt,size); pg.drawText(txt,{ x:wpt-28.35-tw, y:hpt-42, size, font:fonts.reg, color:rgb(0.35,0.35,0.35) }); });
-          return new Blob([new Uint8Array(await doc.save())],{ type:'application/pdf' });
-        }catch(_){ return blob; }
-      }
-      async function mergeContractDocs(blob, docs){
-        const skipped=[];
-        try{
-          const { PDFDocument }=PDFLib;
-          const merged=await PDFDocument.load(await blob.arrayBuffer(),{ ignoreEncryption:true });
-          for(const d of docs){
-            const nm=(d.name||d.path||'').toLowerCase();
-            try{
-              const url=await fetchSignedUrlBytes(d.path);
-              const bytes=new Uint8Array(await (await fetch(url)).arrayBuffer());
-              if(/\.pdf$/.test(nm)){ const src=await PDFDocument.load(bytes,{ ignoreEncryption:true }); (await merged.copyPages(src,src.getPageIndices())).forEach(p=>merged.addPage(p)); }
-              else if(/\.png$/.test(nm)){ const img=await merged.embedPng(bytes); const pg=merged.addPage([595.28,841.89]); const s=Math.min((595.28-80)/img.width,(841.89-120)/img.height,1); pg.drawImage(img,{ x:40, y:841.89-60-img.height*s, width:img.width*s, height:img.height*s }); }
-              else if(/\.jpe?g$/.test(nm)){ const img=await merged.embedJpg(bytes); const pg=merged.addPage([595.28,841.89]); const s=Math.min((595.28-80)/img.width,(841.89-120)/img.height,1); pg.drawImage(img,{ x:40, y:841.89-60-img.height*s, width:img.width*s, height:img.height*s }); }
-              else skipped.push(d.name||d.path);
-            }catch(_){ skipped.push(d.name||d.path); }
-          }
-          return { blob:new Blob([new Uint8Array(await merged.save())],{ type:'application/pdf' }), skipped };
-        }catch(_){ return { blob, skipped }; }
-      }
-      async function buildContractBlob(kind){
-        const isLease=kind==='lease';
-        const id=isLease?$('lsId').value:$('slId').value; if(!id)return null;
-        const obj=isLease?LEASES.find(x=>x.id===id):SALES.find(x=>x.id===id); if(!obj)return null;
-        const { data:tpl }=await sb.from('insolvency_contract_templates').select('*').eq('kind',kind).maybeSingle();
-        if(!tpl)throw new Error('Šablonas nerastas — patikrinkite Nustatymai → Šablonai.');
-        return await __contractBlobBody(kind,isLease,id,obj,tpl);
-      }
-      async function contractPdf(kind){
-        const isLease=kind==='lease';
-        const say=h=>{ $(isLease?'lsMsg':'slMsg').innerHTML=h; };
-        say('<div class="muted">⏳ Generuojama sutartis…</div>');
-        try{
-          const r=await buildContractBlob(kind); if(!r)return;
-          const safe=((r.obj.contract_no)||'sutartis').replace(/[^A-Za-z0-9._-]+/g,'_');
-          const url=URL.createObjectURL(r.blob); const a=document.createElement('a'); a.href=url; a.download=(isLease?'Nuomos_sutartis_':'Pirkimo-pardavimo_sutartis_')+safe+'.pdf'; a.click(); URL.revokeObjectURL(url);
-          say('<div class="success">Sutartis sugeneruota ir atsisiųsta.'+(r.skipped&&r.skipped.length?' Nepavyko prijungti priedų: '+esc(r.skipped.join(', '))+'.':'')+' Teksto šablonas koreguojamas: Nustatymai → Šablonai.</div>');
-          try{ await logEvent(isLease?'lease_contract_generated':'sale_contract_generated',{ contract_no:r.obj.contract_no }); }catch(_){}
-        }catch(err){ say('<div class="error">'+esc(err.message||String(err))+'</div>'); }
-      }
+        const pdf=new jspdf.jsPDF('p','mm','a4');
+        const pw=210, ph=297, imgH=canvas.height*pw/canvas.width;
+        const img=canvas.toDataURL('image/jpeg',0.92);
+        let pos=0, remaining=imgH;
+        pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph;
+        while(remaining>0){ pdf.addPage(); pos-=ph; pdf.addImage(img,'JPEG',0,pos,pw,imgH); remaining-=ph; }
+        const safe=(obj.contract_no||'sutartis').replace(/[^A-Za-z0-9._-]+/g,'_');
+        pdf.save((isLease?'Nuomos_sutartis_':'Pirkimo-pardavimo_sutartis_')+safe+'.pdf');
+        say('<div class="success">Sutartis sugeneruota ir atsisiųsta. Teksto šablonas koreguojamas: Nustatymai → Šablonai.</div>');
+        try{ await logEvent(isLease?'lease_contract_generated':'sale_contract_generated',{ contract_no:obj.contract_no }); }catch(_){}
+      }catch(err){ say('<div class="error">'+esc(err.message||String(err))+'</div>'); }
+    }
     $('lsContractBtn').onclick=()=>contractPdf('lease');
     $('slContractBtn').onclick=()=>contractPdf('sale');
-    // ---------- NUOMOS SUTARTIES PASIRAŠYMAS IR UŽRAKINIMAS ----------
-    const LEASE_LOCK_INPUTS=['lsContractNo','lsContractDate','lsCpSelect','lsCpName','lsCpCode','lsCpRegAddr','lsCpDiff','lsCpBusAddr','lsCpRepPos','lsCpRepName','lsCpEmail','lsCpPhone','lsStart','lsEnd','lsPrice','lsVat','lsVatRate','lsDeposit','lsDepositAmount','lsLateRate','lsPayAcctKind','lsPayAcctIban','lsPayBank','lsSpecial','lsDocLabel','lsDocCustom','lsDocValid'];
-    function applyLeaseLock(locked){
-      LEASE_LOCK_INPUTS.forEach(x=>{ const e=$(x); if(e)e.disabled=locked; });
-      ['lsAddItem','lsDocAddBtn'].forEach(x=>{ const e=$(x); if(e)e.classList.toggle('hidden',locked); });
-      // Saugoti galima, kol sutartis nepasirašyta; pasirašius (sistemoje ar įkėlus kopiją) — užrakinama.
-      $('lsSave').classList.toggle('hidden',locked);
-      if(locked)$('lsConfirmBtn').classList.add('hidden');
-    }
-    function renderLeaseSignSection(l){
-      const sec=$('lsSignSec'); if(!sec)return;
-      if(!l){ sec.classList.add('hidden'); return; }
-      sec.classList.remove('hidden');
-      const canUnlock=(PERM_LEVEL==='full'||IS_SUPERADMIN);
-      if(l.signed){
-        const method=l.signed_method==='internal'?'pasirašyta sistemoje (parašai ekrane)':'įkelta kitur pasirašyta kopija';
-        $('lsSignStatus').innerHTML='<div style="background:#F0FAF4;border:1px solid #CBE7D4;border-radius:8px;padding:8px 12px;font-size:13px;">🔒 <b>Sutartis pasirašyta</b> — '+esc(method)+(l.signed_at?', '+new Date(l.signed_at).toLocaleString('lt-LT'):'')+'. Kortelė užrakinta — redaguojamos lieka tik pastabos/priminimai ir apskaita.</div>';
-        $('lsSignActions').classList.add('hidden');
-      } else {
-        $('lsSignStatus').innerHTML='<div class="hint">Sutartis dar nepasirašyta. Pasirašykite sistemoje (abi šalys ekrane) arba įkelkite kitur pasirašytą PDF kopiją. Pasirašius kortelė užrakinama.</div>';
-        $('lsSignActions').classList.remove('hidden');
-      }
-      $('lsSignedCopyBtn').classList.toggle('hidden',!(l.signed&&l.signed_copy_path));
-      $('lsUnlockBtn').classList.toggle('hidden',!(l.signed&&canUnlock));
-    }
-    async function afterLeaseSigned(id){
-      await loadCaseLeases();
-      const l=LEASES.find(x=>x.id===id);
-      LS_LOCKED=!!(l&&l.signed);
-      renderLsItems(); renderLsDocs();
-      lsSetStatusUI(l);
-      renderLeases();
-    }
-    $('lsSignInternalBtn').onclick=()=>{
-      const id=$('lsId').value; if(!id){ $('lsMsg').innerHTML='<div class="error">Pirma išsaugokite sutartį.</div>'; return; }
-      const l=LEASES.find(x=>x.id===id); if(!l)return;
-      const t=l.tenant||{};
-      const p=CURRENT.admin_person_id?(PERSONS||[]).find(x=>x.id===CURRENT.admin_person_id):null;
-      $('lsSigLName').value=p?p.full_name:((CURRENT_ADM&&CURRENT_ADM.authorized_person)||'');
-      $('lsSigTName').value=t.rep_name||t.name||'';
-      $('lsSignModalMsg').innerHTML='';
-      show('leaseSignModal');
-      setupSig('lsSigLandlord'); clearSig('lsSigLandlord');
-      setupSig('lsSigTenant'); clearSig('lsSigTenant');
-    };
-    $('lsSignModalCancel').onclick=()=>hide('leaseSignModal');
-    $('lsSignModalConfirm').onclick=async()=>{
-      const id=$('lsId').value; if(!id)return;
-      const lname=$('lsSigLName').value.trim(), tname=$('lsSigTName').value.trim();
-      const ldata=sigData('lsSigLandlord'), tdata=sigData('lsSigTenant');
-      if(!ldata||!tdata){ $('lsSignModalMsg').innerHTML='<div class="error">Turi pasirašyti abi šalys.</div>'; return; }
-      if(!lname||!tname){ $('lsSignModalMsg').innerHTML='<div class="error">Įveskite abiejų pasirašančių asmenų vardus.</div>'; return; }
-      $('lsSignModalMsg').innerHTML='<div class="muted">⏳ Pasirašoma ir generuojama sutartis…</div>';
-      const nowIso=new Date().toISOString();
-      const cur=LEASES.find(x=>x.id===id);
-      const upd={ sig_landlord:{ data:ldata, name:lname, at:nowIso }, sig_tenant:{ data:tdata, name:tname, at:nowIso },
-        signed:true, signed_method:'internal', signed_at:nowIso, updated_at:nowIso };
-      if(cur&&cur.status==='draft')upd.status='active';
-      try{
-        const { error }=await sb.from('insolvency_asset_leases').update(upd).eq('id',id);
-        if(error)throw error;
-        await loadCaseLeases();
-        const r=await buildContractBlob('lease');
-        if(r&&r.blob){
-          const path=`${CURRENT.case_short_code}/leases/${id}/signed/${Date.now()}_pasirasyta_sutartis.pdf`;
-          const up=await sb.storage.from('insolvency-docs').upload(path,r.blob,{ contentType:'application/pdf', upsert:true });
-          if(!up.error)await sb.from('insolvency_asset_leases').update({ signed_copy_path:path }).eq('id',id);
-        }
-        hide('leaseSignModal');
-        $('lsMsg').innerHTML='<div class="success">✔ Sutartis pasirašyta sistemoje ir užrakinta. Pasirašytą sutartį rasite mygtuku „Pasirašyta kopija".</div>';
-        try{ await logEvent('lease_signed',{ lease_id:id, method:'internal' }); }catch(_){}
-        await afterLeaseSigned(id);
-      }catch(err){ $('lsSignModalMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
-    };
-    $('lsSignExternalBtn').onclick=()=>{ const id=$('lsId').value; if(!id){ $('lsMsg').innerHTML='<div class="error">Pirma išsaugokite sutartį.</div>'; return; } $('lsSignFile').click(); };
-    $('lsSignFile').onchange=async(e)=>{
-      const id=$('lsId').value; if(!id||!e.target.files.length){ e.target.value=''; return; }
-      if(!confirm('Pažymėti sutartį kaip pasirašytą ir įkelti pasirašytą kopiją? Kortelė bus užrakinta.')){ e.target.value=''; return; }
-      const file=e.target.files[0];
-      $('lsMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
-      try{
-        const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
-        const path=`${CURRENT.case_short_code}/leases/${id}/signed/${Date.now()}_${safe}`;
-        const up=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
-        if(up.error)throw up.error;
-        const nowIso=new Date().toISOString();
-        const cur=LEASES.find(x=>x.id===id);
-        const upd={ signed:true, signed_method:'external', signed_at:nowIso, signed_copy_path:path, updated_at:nowIso };
-        if(cur&&cur.status==='draft')upd.status='active';
-        const { error }=await sb.from('insolvency_asset_leases').update(upd).eq('id',id);
-        if(error)throw error;
-        $('lsMsg').innerHTML='<div class="success">✔ Pasirašyta kopija įkelta, sutartis pažymėta kaip pasirašyta ir užrakinta.</div>';
-        try{ await logEvent('lease_signed',{ lease_id:id, method:'external' }); }catch(_){}
-        await afterLeaseSigned(id);
-      }catch(err){ $('lsMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
-      finally{ e.target.value=''; }
-    };
-    $('lsSignedCopyBtn').onclick=async()=>{
-      const id=$('lsId').value; const l=LEASES.find(x=>x.id===id); if(!l||!l.signed_copy_path)return;
-      try{ const url=await fetchSignedUrlBytes(l.signed_copy_path); window.open(url,'_blank'); }catch(err){ $('lsMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
-    };
-    $('lsUnlockBtn').onclick=async()=>{
-      const id=$('lsId').value; if(!id)return;
-      if(!confirm('Atrakinti sutartį redagavimui? Pasirašymo žyma bus panaikinta (parašai ir įkelta kopija lieka istorijai). Naudokite tik klaidos atveju.'))return;
-      const { error }=await sb.from('insolvency_asset_leases').update({ signed:false, updated_at:new Date().toISOString() }).eq('id',id);
-      if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
-      try{ await logEvent('lease_unlocked',{ lease_id:id }); }catch(_){}
-      await loadCaseLeases(); openLeaseModal(id);
-      $('lsMsg').innerHTML='<div class="success">Sutartis atrakinta redagavimui.</div>';
-    };
     // ---------- PRIMINIMŲ SANTRAUKA EL. PAŠTU (6 etapas) ----------
     $('remDigestBtn').onclick=async()=>{
       if(!confirm('Išsiųsti pradelstų ir artėjančių (7 d.) priminimų santrauką administratoriams el. paštu?\n\nSantrauka taip pat siunčiama automatiškai kiekvieną rytą.'))return;
@@ -5775,40 +5312,11 @@
           const sendBtn = isFinalPdf ? `<button class="btn btn-sm btn-ghost" title="Siųsti akto kopiją šalims el. paštu (saugi nuoroda)" onclick="sendActCopy('${a.id}')">📧</button> ` : '';
           const regBtn = isFinalPdf ? `<button class="btn btn-sm btn-ghost" title="Registruoti aktą gaunamų dokumentų žurnale" onclick="registerAct('${a.id}')">📑</button> ` : '';
           const transferBtn = ASSET_ACT_TYPES.includes(a.act_type) ? `<button class="btn btn-sm btn-ghost" title="Perkelti akto turto pozicijas į Turto korteles" onclick="transferActAssets('${a.id}')">📦</button> ` : '';
-          // fiziškai pasirašyto akto įkėlimas (uždaro veiksmą kaip atliktą)
-          const physSigned = !!a.signed_copy_path;
-          const signBadge = physSigned ? ' <span class="badge badge-green" title="Įkelta fiziškai pasirašyto akto kopija'+(a.signed_at?' ('+new Date(a.signed_at).toLocaleDateString('lt-LT')+')':'')+'">✔ Pasirašyta (kopija)</span>' : '';
-          const uploadSignBtn = (isFinalPdf && !physSigned) ? `<button class="btn btn-sm btn-gold" title="Įkelti fiziniais parašais pasirašytą aktą (PDF) ir užbaigti veiksmą" onclick="uploadSignedAct('${a.id}')">📎 Įkelti pasirašytą</button> ` : '';
-          const signedCopyBtn = physSigned ? `<button class="btn btn-sm btn-ghost" title="Peržiūrėti įkeltą pasirašytą kopiją" onclick="previewDoc('${esc(a.signed_copy_path)}','${esc(a.act_no||'Pasirašytas aktas')}')">📄 Pasirašyta kopija</button> ` : '';
-          return `<tr><td class="muted">${esc(a.act_date||'')}</td><td>${esc(a.act_no||'')}</td><td>${esc(ACT_LABELS[a.act_type]||ACT_TITLES[a.act_type]||a.act_type)}</td><td>${statusHtml}${signBadge}</td><td style="text-align:right;white-space:nowrap;">${a.pdf_path?`<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(a.pdf_path)}','${esc(a.act_no||'Aktas')}')">👁 PDF</button> `:''}${uploadSignBtn}${signedCopyBtn}${sendBtn}${regBtn}${transferBtn}${lockBtn}${unlockBtn}${editBtn}${delBtn}</td></tr>`;
+          return `<tr><td class="muted">${esc(a.act_date||'')}</td><td>${esc(a.act_no||'')}</td><td>${esc(ACT_LABELS[a.act_type]||ACT_TITLES[a.act_type]||a.act_type)}</td><td>${statusHtml}</td><td style="text-align:right;white-space:nowrap;">${a.pdf_path?`<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(a.pdf_path)}','${esc(a.act_no||'Aktas')}')">👁 PDF</button> `:''}${sendBtn}${regBtn}${transferBtn}${lockBtn}${unlockBtn}${editBtn}${delBtn}</td></tr>`;
         }).join('')+'</tbody></table>';
     }
     $('newActBtn').onclick=()=>openActEditor(null);
     $('backToActs').onclick=()=>loadActs();
-    // ----- FIZIŠKAI PASIRAŠYTO AKTO ĮKĖLIMAS (uždaro veiksmą kaip atliktą) -----
-    let ACT_SIGN_ID=null;
-    window.uploadSignedAct=id=>{
-      const a=ACTS.find(x=>x.id===id); if(!a)return;
-      if(a.manual_locked&&!(IS_SUPERADMIN||a.manual_locked_by===CURRENT_UID)){ alert('Aktas užrakintas — įkelti gali tik jį užrakinęs administratorius arba superadministratorius.'); return; }
-      if(!confirm('Įkelti fiziniais parašais pasirašytą aktą (PDF)?\n\nĮkėlus, aktas bus pažymėtas kaip pasirašytas ir užrakintas — veiksmas užbaigtas.'))return;
-      ACT_SIGN_ID=id; $('actSignFile').value=''; $('actSignFile').click();
-    };
-    $('actSignFile').onchange=async(e)=>{
-      const id=ACT_SIGN_ID; if(!id||!e.target.files.length){ e.target.value=''; return; }
-      const a=ACTS.find(x=>x.id===id), file=e.target.files[0];
-      try{
-        const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
-        const path=`${CURRENT.case_short_code}/acts/signed/${Date.now()}_${safe}`;
-        const up=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
-        if(up.error)throw up.error;
-        const nowIso=new Date().toISOString();
-        const { error }=await sb.from('insolvency_acts').update({ signed_copy_path:path, signed_at:nowIso, signed_method:'physical', manual_locked:true, manual_locked_by:CURRENT_UID, manual_locked_at:nowIso, updated_at:nowIso }).eq('id',id);
-        if(error)throw error;
-        try{ await logEvent('act_signed_copy_uploaded',{ act_id:id, act_no:a?a.act_no:null }); }catch(_){}
-        loadActs();
-      }catch(err){ alert('Klaida įkeliant pasirašytą aktą: '+(err.message||err)); }
-      finally{ e.target.value=''; ACT_SIGN_ID=null; }
-    };
     // ----- AKTO KOPIJOS SIUNTIMAS ŠALIMS (saugi nuoroda) -----
     window.sendActCopy=async id=>{
       const a=ACTS.find(x=>x.id===id); if(!a)return;
@@ -6399,7 +5907,7 @@
         }
         const holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-9999px'; holder.style.top='0';
         holder.innerHTML=actHtml(p); document.body.appendChild(holder);
-        const canvas=await html2canvas(holder.firstElementChild,{ scale:1.7, backgroundColor:'#fff' });
+        const canvas=await html2canvas(holder.firstElementChild,{ scale:2, backgroundColor:'#fff' });
         document.body.removeChild(holder);
         const { jsPDF }=window.jspdf; const pdf=new jsPDF('p','mm','a4');
         // A4 paraštės pagal raštvedybos rekomendacijas: kairė 30 mm, dešinė 10 mm, viršus/apačia po 20 mm
@@ -6428,7 +5936,7 @@
           const pc=document.createElement('canvas'); pc.width=canvas.width; pc.height=sliceH;
           pc.getContext('2d').drawImage(canvas,0,pos,canvas.width,sliceH,0,0,canvas.width,sliceH);
           if(!firstPage)pdf.addPage();
-          pdf.addImage(pc.toDataURL('image/jpeg',0.8),'JPEG',ML,MT,w,sliceH/pxPerMm);
+          pdf.addImage(pc.toDataURL('image/png'),'PNG',ML,MT,w,sliceH/pxPerMm);
           firstPage=false; pos=end;
         }
         let blob=pdf.output('blob');
@@ -6894,10 +6402,10 @@
         <div style="font-size:12px;color:#555;margin-bottom:10px;">${esc(CURRENT.debtor_name||'')} · byla ${esc(CURRENT.case_short_code||'')} · ${new Date().toISOString().slice(0,10)}</div>
         <table style="border-collapse:collapse;width:100%;"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table>`;
       document.body.appendChild(holder);
-      html2canvas(holder.firstElementChild?holder:holder,{ scale:1.7, backgroundColor:'#fff' }).then(canvas=>{
+      html2canvas(holder.firstElementChild?holder:holder,{ scale:2, backgroundColor:'#fff' }).then(canvas=>{
         const pdf=new jspdf.jsPDF('p','mm','a4'); const pw=210, ml=10, cw=pw-ml*2;
         const imgH=canvas.height*cw/canvas.width; const ph=297; let pos=10, remaining=imgH;
-        const img=canvas.toDataURL('image/jpeg',0.8);
+        const img=canvas.toDataURL('image/jpeg',0.92);
         pdf.addImage(img,'JPEG',ml,pos,cw,imgH); remaining-=(ph-pos);
         while(remaining>0){ pdf.addPage(); pos=10-(imgH-remaining); pdf.addImage(img,'JPEG',ml,pos,cw,imgH); remaining-=(ph-10); }
         pdf.save(title.replace(/\s/g,'_')+'_'+(CURRENT.case_short_code||'byla')+'.pdf');
@@ -7462,9 +6970,404 @@
       return h;
     }
 
+    // ========================================================================
+    // r8: Dokumentų kategorijos registre + reikalavimo kortelė su dokumentų peržiūra
+    // ========================================================================
+    const DOC_CATS=[['creditors','Kreditoriai'],['debtors','Debitoriai'],['acts','Aktai'],['assets','Turtas'],['court','Teismas'],['other','Kita']];
+    const DOC_CATS_MAP=Object.fromEntries(DOC_CATS);
+
+    // --- Registro peržiūra su kategorija + filtru (perrašo bazinę) ---
+    function renderRegistry(){
+      $('cntRegG').textContent=REGISTRATIONS.filter(r=>r.doc_type==='received').length;
+      $('cntRegS').textContent=REGISTRATIONS.filter(r=>r.doc_type==='sent').length;
+      const rcv=REG_TYPE==='received';
+      $('regListTitle').textContent=rcv?'Gaunamų dokumentų žurnalas':'Siunčiamų dokumentų žurnalas';
+      const q=($('regSearch').value||'').toLowerCase();
+      const cat=($('regCatFilter')&&$('regCatFilter').value)||'';
+      const rows=REGISTRATIONS.filter(r=>r.doc_type===REG_TYPE)
+        .filter(r=>!cat||r.category===cat)
+        .filter(r=>!q||[r.registration_number,r.document_title,r.counterparty_name].some(v=>(v||'').toLowerCase().includes(q)));
+      if(!rows.length){ $('registryTable').innerHTML='<div class="muted center" style="padding:24px;">'+(rcv?'Gaunamų':'Siunčiamų')+' dokumentų'+(cat?' kategorijoje „'+esc(DOC_CATS_MAP[cat]||cat)+'"':'')+' nerasta.</div>'; return; }
+      $('registryTable').innerHTML='<table><thead><tr><th>Reg. Nr.</th><th>'+(rcv?'Gavimo data':'Išsiuntimo data')+'</th><th>Kategorija</th><th>'+(rcv?'Siuntėjas':'Gavėjas')+'</th><th>Aprašymas</th><th></th></tr></thead><tbody>'+
+        rows.map(r=>`<tr>
+          <td><a href="javascript:void(0)" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')" style="color:var(--navy);font-weight:700;text-decoration:underline;">${esc(r.registration_number)}</a></td>
+          <td>${esc(r.registration_date||'')}</td>
+          <td>${r.category?('<span style="background:#EEF2F7;border:1px solid var(--bd);border-radius:10px;padding:1px 8px;font-size:11px;">'+esc(DOC_CATS_MAP[r.category]||r.category)+'</span>'):'<span class="muted">—</span>'}</td>
+          <td>${esc(r.counterparty_name||'—')}</td>
+          <td>${esc(r.document_title)}${r.notes?'<div class="muted" style="font-size:12px;">'+esc(r.notes)+'</div>':''}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')">👁</button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')">⬇️</button>${(PERM_LEVEL==='full'||IS_SUPERADMIN)?` <button class="btn btn-sm btn-ghost" title="Koreguoti" onclick="openRegEdit('${r.id}')">✎</button>`:''}</td>
+        </tr>`).join('')+'</tbody></table>';
+    }
+
+    // ---- Reikalavimo kortelė su dokumentų darbo aplinka ----
+    let CLM_DRAFT_ID=null, CLM_PENDING_FILES=[], CLM_PENDING_REGLINKS=[], CLM_VIEW_ITEMS=[];
+    function isImgPath(p){ return /\.(png|jpe?g|gif|webp|bmp)$/i.test(p||''); }
+    async function clmSignedUrl(path){ try{ const { data }=await sb.storage.from('insolvency-docs').createSignedUrl(path,600); return data&&data.signedUrl; }catch(_){ return null; } }
+    async function clmViewDoc(path){
+      const el=$('clmViewer'); if(!el||!path)return;
+      el.innerHTML='<div class="muted" style="padding:20px;">⏳ Kraunama…</div>';
+      const url=await clmSignedUrl(path);
+      if(!url){ el.innerHTML='<div class="error" style="padding:20px;">Nepavyko atidaryti dokumento.</div>'; return; }
+      el.dataset.url=url;
+      el.style.display='block';
+      if(isImgPath(path)) el.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:contain;display:block;">`;
+      else el.innerHTML=`<iframe src="${url}#toolbar=1&navpanes=0" style="width:100%;height:100%;border:0;display:block;"></iframe>`;
+      const sel=$('clmViewerSelect'); if(sel){ const i=CLM_VIEW_ITEMS.findIndex(x=>x.path===path); if(i>=0)sel.value=String(i); }
+    }
+    function currentClaimDocs(){
+      const items=[];
+      (CRED_CLAIM_FILES||[]).forEach(f=>items.push({kind:'file',label:f.label||f.storage_path.split('/').pop(),path:f.storage_path,id:f.id,date:(f.created_at||'').slice(0,10)}));
+      CLM_PENDING_FILES.forEach(f=>items.push({kind:'file',label:f.label,path:f.storage_path,date:(f.created_at||'').slice(0,10),pending:true}));
+      (CRED_CLAIM_REGLINKS||[]).forEach(l=>{ const r=(REGISTRATIONS||[]).find(x=>x.id===l.reg_id); if(r)items.push({kind:'reg',label:r.registration_number+' · '+(r.document_title||''),path:r.storage_path,linkId:l.id}); });
+      CLM_PENDING_REGLINKS.forEach(reg=>{ const r=(REGISTRATIONS||[]).find(x=>x.id===reg); if(r)items.push({kind:'reg',label:r.registration_number+' · '+(r.document_title||''),path:r.storage_path,pendingReg:reg,pending:true}); });
+      return items;
+    }
+    function renderClaimDocs(){
+      CLM_VIEW_ITEMS=currentClaimDocs();
+      const el=$('clmDocsUnified');
+      if(el) el.innerHTML=CLM_VIEW_ITEMS.length?CLM_VIEW_ITEMS.map((d,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--bd);border-radius:6px;margin-bottom:4px;">
+        <span style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%;">${d.kind==='reg'?'📓':'📄'} ${esc(d.label)}${d.date?` <span style="font-size:11px;color:#888;">· ${d.date}</span>`:''}${d.pending?' <span style="font-size:11px;color:#8A6D00;">(neišsaugota)</span>':''}</span>
+        <span style="white-space:nowrap;"><button class="btn btn-sm btn-gold" type="button" onclick="clmViewIdx(${i})">👁 Skaityti</button> <button class="btn btn-sm btn-danger" type="button" onclick="clmDocRemove(${i})">✕</button></span></div>`).join(''):'<div class="muted" style="font-size:12px;">Dokumentų nepridėta.</div>';
+      const sel=$('clmViewerSelect'); if(sel) sel.innerHTML=CLM_VIEW_ITEMS.length?CLM_VIEW_ITEMS.map((d,i)=>`<option value="${i}">${esc(d.label)}</option>`).join(''):'<option value="">— nėra dokumentų —</option>';
+    }
+    window.clmViewIdx=(i)=>{ const d=CLM_VIEW_ITEMS[i]; if(d)clmViewDoc(d.path); };
+    window.clmDocRemove=async(i)=>{ const d=CLM_VIEW_ITEMS[i]; if(!d)return;
+      if(d.pending){
+        if(d.kind==='file'){ try{ await sb.storage.from('insolvency-docs').remove([d.path]); }catch(_){} CLM_PENDING_FILES=CLM_PENDING_FILES.filter(f=>f.storage_path!==d.path); }
+        else CLM_PENDING_REGLINKS=CLM_PENDING_REGLINKS.filter(r=>r!==d.pendingReg);
+      } else {
+        if(d.kind==='file'){ if(!confirm('Pašalinti failą?'))return; try{ await sb.storage.from('insolvency-docs').remove([d.path]); }catch(_){} await sb.from('insolvency_claim_files').delete().eq('id',d.id); CRED_CLAIM_FILES=(CRED_CLAIM_FILES||[]).filter(f=>f.id!==d.id); }
+        else { await sb.from('insolvency_claim_reg_links').delete().eq('id',d.linkId); CRED_CLAIM_REGLINKS=(CRED_CLAIM_REGLINKS||[]).filter(l=>l.id!==d.linkId); }
+      }
+      renderClaimDocs();
+      const el=$('clmViewer'); if(el&&!CLM_VIEW_ITEMS.length){ el.dataset.url=''; el.innerHTML='<div class="muted" style="padding:24px;text-align:center;font-size:13px;">Dokumentas bus rodomas čia.</div>'; }
+    };
+    async function clmAddDeviceFile(){
+      const f=$('clmDocFile').files[0]; if(!f)return;
+      const draft=$('clmId').value||CLM_DRAFT_ID; if(!draft)return;
+      const path=`claims/${draft}/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`;
+      $('clmMsg').innerHTML='<div class="muted">⏳ Įkeliama…</div>';
+      const { error }=await sb.storage.from('insolvency-docs').upload(path,f,{ upsert:true });
+      if(error){ $('clmMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      if($('clmId').value){ await sb.from('insolvency_claim_files').insert({ claim_id:$('clmId').value, label:f.name, storage_path:path, uploaded_by:CURRENT_UID }); await loadClaimFiles($('clmId').value); }
+      else CLM_PENDING_FILES.push({ label:f.name, storage_path:path, created_at:new Date().toISOString() });
+      $('clmDocFile').value=''; $('clmMsg').innerHTML='';
+      renderClaimDocs(); clmViewDoc(path);
+    }
+    async function fillClmRegSelect(){
+      if(!REGISTRATIONS.length){ try{ const rr=await sb.from('insolvency_doc_registrations').select('*').eq('case_id',CURRENT.id).order('registration_date',{ascending:false}); REGISTRATIONS=rr.data||[]; }catch(_){} }
+      const recv=REGISTRATIONS.filter(r=>r.doc_type==='received');
+      const sel=$('clmRegSelect'); if(sel)sel.innerHTML='<option value="">— iš registracijos žurnalo —</option>'+
+        recv.map(r=>`<option value="${r.id}">${esc(r.registration_number)} · ${esc(r.document_title||'')}${r.category?' ['+esc(DOC_CATS_MAP[r.category]||r.category)+']':''}</option>`).join('');
+    }
+    async function clmAddRegLink2(){
+      const reg=$('clmRegSelect').value; if(!reg)return;
+      if($('clmId').value){ const { error }=await sb.from('insolvency_claim_reg_links').insert({ claim_id:$('clmId').value, reg_id:reg }); if(error){ $('clmMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; } await loadClaimRegLinks($('clmId').value); }
+      else { if(!CLM_PENDING_REGLINKS.includes(reg))CLM_PENDING_REGLINKS.push(reg); }
+      const r=(REGISTRATIONS||[]).find(x=>x.id===reg);
+      renderClaimDocs(); if(r)clmViewDoc(r.storage_path);
+    }
+
+    window.openClaimModal=async(id)=>{
+      if(!id&&!credCanEdit()){ if(typeof alert==='function')alert('Neturite teisės kurti reikalavimų šioje byloje.'); return; }
+      const c=id?CLAIMS.find(x=>x.id===id):{}; $('clmId').value=id||'';
+      CLM_PENDING_FILES=[]; CLM_PENDING_REGLINKS=[]; CRED_CLAIM_FILES=[]; CRED_CLAIM_REGLINKS=[];
+      CLM_DRAFT_ID = id || ((typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('tmp-'+Date.now()));
+      $('clmModalTitle').textContent=id?('Reikalavimas — '+credName(c.creditor_id)):'Naujas kreditorinis reikalavimas';
+      fillClaimCredSelect(c.creditor_id); fillBasisSelect('clmBasis',c.basis_key);
+      $('clmReceived').value=c.received_date||new Date().toISOString().slice(0,10);
+      $('clmVia').value=c.received_via||'email';
+      $('clmPrincipal').value=c.principal??''; $('clmLate').value=c.late_fees??''; $('clmInterest').value=c.interest??''; $('clmFines').value=c.fines??'';
+      const tot=num(c.principal)+num(c.late_fees)+num(c.interest)+num(c.fines); $('clmTotalInput')&&($('clmTotalInput').value=(id&&tot)?tot.toFixed(2):'');
+      $('clmSecured').checked=!!c.secured; $('clmSecuredNote').value=c.secured_note||''; clmSecToggle();
+      $('clmNotes').value=c.notes||''; clmRecalcDisplay(); $('clmMsg').innerHTML='';
+      renderClaimCreditorInfo(); renderClaimAccInfo();
+      await fillClmRegSelect();
+      if(id){ await loadClaimFiles(id); await loadClaimRegLinks(id); }
+      const vw=$('clmViewer'); if(vw){ vw.dataset.url=''; vw.innerHTML='<div class="muted" style="padding:24px;text-align:center;font-size:13px;">Dokumentas bus rodomas čia.<br>Įkelkite iš įrenginio arba pasirinkite iš registracijos žurnalo kairėje.</div>'; }
+      renderClaimDocs();
+      if(CLM_VIEW_ITEMS.length)clmViewDoc(CLM_VIEW_ITEMS[0].path);
+      show('claimModal');
+    };
+    async function saveClaim(closeAfter){
+      const id=$('clmId').value; const cid=$('clmCredSelect').value;
+      if(!cid){ $('clmMsg').innerHTML='<div class="error">Pasirinkite kreditorių arba sukurkite naują („+ Naujas").</div>'; return null; }
+      const recv=$('clmReceived').value||null;
+      let isLate=false; if(recv&&CURRENT.creditor_claim_deadline){ isLate=recv>CURRENT.creditor_claim_deadline; }
+      const row={ creditor_id:cid, basis_key:$('clmBasis').value||null, received_date:recv, received_via:$('clmVia').value||null, is_late:isLate,
+        principal:num($('clmPrincipal').value), late_fees:num($('clmLate').value), interest:num($('clmInterest').value), fines:num($('clmFines').value),
+        secured:$('clmSecured').checked, secured_note:$('clmSecured').checked?($('clmSecuredNote').value.trim()||null):null,
+        notes:$('clmNotes').value.trim()||null, updated_at:new Date().toISOString() };
+      let outId=id;
+      if(id){ const { error }=await sb.from('insolvency_creditor_claims').update(row).eq('id',id); if(error){ $('clmMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return null; } }
+      else { row.id=CLM_DRAFT_ID; row.case_id=CURRENT.id; row.status='received'; row.created_by=CURRENT_UID;
+        const r=await sb.from('insolvency_creditor_claims').insert(row).select().single();
+        if(r.error){ $('clmMsg').innerHTML='<div class="error">'+esc(r.error.message)+'</div>'; return null; } outId=r.data.id;
+        if(CLM_PENDING_FILES.length){ await sb.from('insolvency_claim_files').insert(CLM_PENDING_FILES.map(f=>({ claim_id:outId, label:f.label, storage_path:f.storage_path, uploaded_by:CURRENT_UID }))); }
+        if(CLM_PENDING_REGLINKS.length){ await sb.from('insolvency_claim_reg_links').insert(CLM_PENDING_REGLINKS.map(reg=>({ claim_id:outId, reg_id:reg }))); }
+        CLM_PENDING_FILES=[]; CLM_PENDING_REGLINKS=[];
+      }
+      await credLog(id?'claim_updated':'claim_created',{ id:outId, creditor:credName(cid) });
+      if(closeAfter){ hide('claimModal'); await loadCreditorsModule('claims'); }
+      else { $('clmId').value=outId; CLM_DRAFT_ID=outId; await loadClaimFiles(outId); await loadClaimRegLinks(outId); renderClaimDocs(); $('clmMsg').innerHTML='<div class="success">Reikalavimas išsaugotas.</div>'; }
+      return outId;
+    }
+
+    function initClaimV3(){
+      // openRegModal wrapper — atstato kategoriją
+      if(typeof openRegModal==='function'){ const _o=openRegModal; openRegModal=function(t){ _o(t); const e=$('regCategory'); if(e)e.value=''; }; window.openRegModal=openRegModal; }
+      $('clmDocFileBtn2')&&($('clmDocFileBtn2').onclick=()=>$('clmDocFile').click());
+      $('clmDocFile')&&$('clmDocFile').addEventListener('change',clmAddDeviceFile);
+      $('clmRegAddBtn2')&&($('clmRegAddBtn2').onclick=clmAddRegLink2);
+      $('clmViewerSelect')&&($('clmViewerSelect').onchange=function(){ const i=parseInt(this.value,10); if(!isNaN(i)&&CLM_VIEW_ITEMS[i])clmViewDoc(CLM_VIEW_ITEMS[i].path); });
+      $('clmViewerOpen')&&($('clmViewerOpen').onclick=()=>{ const u=$('clmViewer').dataset.url; if(u)window.open(u,'_blank'); });
+      $('regCatFilter')&&($('regCatFilter').onchange=renderRegistry);
+    }
+
+    // ========================================================================
+    // r9: Registracijų priežiūra — anuliavimas / trynimas / atkūrimas (tik superadmin)
+    // ========================================================================
+    let REG_SHOW_VOIDED=true, REG_MAINT=false, REG_DELETED=[], RM_TARGET=null;
+
+    function regVoidBadge(r){
+      return r && r.voided_at
+        ? ' <span class="badge" title="'+esc(r.void_reason||'')+'" style="background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;">ANULIUOTA</span>'
+        : '';
+    }
+
+    // --- registro peržiūra su anuliuotų žyma (perrašo r8 versiją) ---
+    function renderRegistry(){
+      $('cntRegG').textContent=REGISTRATIONS.filter(r=>r.doc_type==='received').length;
+      $('cntRegS').textContent=REGISTRATIONS.filter(r=>r.doc_type==='sent').length;
+      if(REG_MAINT){ renderRegMaint(); return; }
+      const rcv=REG_TYPE==='received';
+      $('regListTitle').textContent=rcv?'Gaunamų dokumentų žurnalas':'Siunčiamų dokumentų žurnalas';
+      const q=($('regSearch').value||'').toLowerCase();
+      const cat=($('regCatFilter')&&$('regCatFilter').value)||'';
+      const rows=REGISTRATIONS.filter(r=>r.doc_type===REG_TYPE)
+        .filter(r=>REG_SHOW_VOIDED||!r.voided_at)
+        .filter(r=>!cat||r.category===cat)
+        .filter(r=>!q||[r.registration_number,r.document_title,r.counterparty_name].some(v=>(v||'').toLowerCase().includes(q)));
+      if(!rows.length){ $('registryTable').innerHTML='<div class="muted center" style="padding:24px;">'+(rcv?'Gaunamų':'Siunčiamų')+' dokumentų'+(cat?' kategorijoje „'+esc(DOC_CATS_MAP[cat]||cat)+'"':'')+' nerasta.</div>'; return; }
+      $('registryTable').innerHTML='<table><thead><tr><th>Reg. Nr.</th><th>'+(rcv?'Gavimo data':'Išsiuntimo data')+'</th><th>Kategorija</th><th>'+(rcv?'Siuntėjas':'Gavėjas')+'</th><th>Aprašymas</th><th></th></tr></thead><tbody>'+
+        rows.map(r=>`<tr${r.voided_at?' style="opacity:.62;"':''}>
+          <td><a href="javascript:void(0)" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')" style="color:var(--navy);font-weight:700;${r.voided_at?'text-decoration:line-through;':'text-decoration:underline;'}">${esc(r.registration_number)}</a>${regVoidBadge(r)}</td>
+          <td>${esc(r.registration_date||'')}</td>
+          <td>${r.category?('<span style="background:#EEF2F7;border:1px solid var(--bd);border-radius:10px;padding:1px 8px;font-size:11px;">'+esc(DOC_CATS_MAP[r.category]||r.category)+'</span>'):'<span class="muted">—</span>'}</td>
+          <td>${esc(r.counterparty_name||'—')}</td>
+          <td>${esc(r.document_title)}${r.notes?'<div class="muted" style="font-size:12px;">'+esc(r.notes)+'</div>':''}${r.voided_at?'<div style="font-size:12px;color:#991B1B;">Anuliavimo priežastis: '+esc(r.void_reason||'')+'</div>':''}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')">👁</button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')">⬇️</button>${(PERM_LEVEL==='full'||IS_SUPERADMIN)?` <button class="btn btn-sm btn-ghost" title="Koreguoti" onclick="openRegEdit('${r.id}')">✎</button>`:''}</td>
+        </tr>`).join('')+'</tbody></table>';
+    }
+
+    // --- priežiūros vaizdas ---
+    function regMaintToggleChrome(on){
+      const t=$('regToolsRow'), n=$('newRegBtn'), tb=$('registryTable'), w=$('regMaintWrap');
+      if(t)t.style.display=on?'none':'';
+      if(n)n.style.display=on?'none':'';
+      if(tb)tb.style.display=on?'none':'';
+      if(w)w.style.display=on?'':'none';
+    }
+
+    async function loadRegDeleted(){
+      if(!CURRENT||CURRENT.__new||!IS_SUPERADMIN){ REG_DELETED=[]; return; }
+      const { data }=await sb.from('insolvency_doc_registrations_deleted')
+        .select('*').eq('case_id',CURRENT.id).is('restored_at',null)
+        .order('deleted_at',{ascending:false});
+      REG_DELETED=data||[];
+    }
+
+    function renderRegMaint(){
+      $('regListTitle').textContent='Registracijų priežiūra (superadministratorius)';
+      const q=($('rmSearch')&&$('rmSearch').value||'').toLowerCase();
+      const rows=REGISTRATIONS.filter(r=>!q||[r.registration_number,r.document_title,r.counterparty_name].some(v=>(v||'').toLowerCase().includes(q)));
+      let h='<div style="background:#FFF7E0;border:1px solid var(--gold);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#8A6D00;">'+
+        '<b>Anuliavimas</b> — įrašas lieka žurnale su žyma, numeris nebeperduodamas kitam dokumentui. '+
+        '<b>Ištrynimas</b> — įrašas perkeliamas į archyvą (90 d.), o numeris atlaisvinamas ir gali būti panaudotas iš naujo.</div>';
+      h+='<div style="display:flex;gap:8px;margin-bottom:10px;"><input id="rmSearch" class="input" placeholder="Paieška: Nr., aprašymas, šalis…" style="flex:1;" value="'+esc($('rmSearch')&&$('rmSearch').value||'')+'"></div>';
+      h+='<div class="sec-title">Aktyvūs žurnalo įrašai ('+rows.length+')</div>';
+      h+= rows.length
+        ? '<table><thead><tr><th>Reg. Nr.</th><th>Data</th><th>Tipas</th><th>Aprašymas</th><th>Būsena</th><th></th></tr></thead><tbody>'+
+          rows.map(r=>`<tr>
+            <td><b>${esc(r.registration_number)}</b></td>
+            <td>${esc(r.registration_date||'')}</td>
+            <td>${r.doc_type==='received'?'📥 Gautas':'📤 Siunčiamas'}</td>
+            <td>${esc(r.document_title||'')}<div class="muted" style="font-size:12px;">${esc(r.counterparty_name||'')}</div></td>
+            <td>${r.voided_at?'<span class="badge" style="background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;">ANULIUOTA</span>':'<span class="badge badge-green">Galioja</span>'}</td>
+            <td style="text-align:right;white-space:nowrap;">${r.voided_at
+                ? `<button class="btn btn-sm btn-ghost" onclick="rmUnvoid('${r.id}')">↩ Atšaukti anuliavimą</button>`
+                : `<button class="btn btn-sm btn-ghost" onclick="rmOpenVoid('${r.id}')">⊘ Anuliuoti</button>`} <button class="btn btn-sm btn-danger" onclick="rmOpenDelete('${r.id}')">🗑 Ištrinti</button></td>
+          </tr>`).join('')+'</tbody></table>'
+        : '<div class="muted center" style="padding:18px;">Įrašų nėra.</div>';
+      h+='<div class="sec-title" style="margin-top:22px;">Ištrinti įrašai — archyvas ('+REG_DELETED.length+')</div>';
+      h+= REG_DELETED.length
+        ? '<table><thead><tr><th>Reg. Nr.</th><th>Ištrinta</th><th>Priežastis</th><th>Galioja iki</th><th></th></tr></thead><tbody>'+
+          REG_DELETED.map(d=>`<tr>
+            <td><b>${esc(d.registration_number||'')}</b></td>
+            <td>${esc((d.deleted_at||'').slice(0,16).replace('T',' '))}</td>
+            <td style="font-size:13px;">${esc(d.reason||'')}</td>
+            <td>${esc(d.purge_after||'')}</td>
+            <td style="text-align:right;"><button class="btn btn-sm" onclick="rmRestore('${d.id}')">↩ Atkurti</button></td>
+          </tr>`).join('')+'</tbody></table>'
+        : '<div class="muted center" style="padding:18px;">Ištrintų įrašų nėra.</div>';
+      $('regMaintWrap').innerHTML=h;
+      const s=$('rmSearch'); if(s)s.oninput=renderRegMaint;
+    }
+
+    // --- veiksmai ---
+    window.rmOpenVoid=id=>{
+      const r=REGISTRATIONS.find(x=>x.id===id); if(!r)return;
+      RM_TARGET=r;
+      $('rmVoidInfo').textContent=r.registration_number+' · '+(r.document_title||'');
+      $('rmVoidReason').value=''; $('rmVoidMsg').innerHTML='';
+      show('rmVoidModal');
+    };
+    window.rmUnvoid=async id=>{
+      if(!confirm('Atšaukti anuliavimą? Įrašas vėl taps galiojantis.'))return;
+      const res=await sb.rpc('unvoid_insolvency_registration',{ p_id:id });
+      if(res.error){ alert(res.error.message); return; }
+      if(!res.data||!res.data.ok){ alert(rmErr(res.data&&res.data.error_code)); return; }
+      await loadRegistry();
+    };
+    window.rmOpenDelete=id=>{
+      const r=REGISTRATIONS.find(x=>x.id===id); if(!r)return;
+      RM_TARGET=r;
+      $('rmDelInfo').textContent=r.registration_number+' · '+(r.document_title||'');
+      $('rmDelNumHint').textContent=r.registration_number;
+      $('rmDelReason').value=''; $('rmDelConfirm').value=''; $('rmDelMsg').innerHTML='';
+      $('rmDelBtn').disabled=true;
+      show('rmDelModal');
+    };
+    window.rmRestore=async archiveId=>{
+      if(!confirm('Atkurti įrašą į žurnalą?'))return;
+      const res=await sb.rpc('restore_insolvency_registration',{ p_archive_id:archiveId });
+      if(res.error){ alert(res.error.message); return; }
+      if(!res.data||!res.data.ok){ alert(rmErr(res.data&&res.data.error_code)); return; }
+      const p=res.data.storage_path;
+      if(p){ try{ await sb.storage.from('insolvency-docs').move(p.replace('/registered/','/deleted/'),p); }catch(_){ } }
+      await loadRegDeleted(); await loadRegistry();
+      alert('Įrašas atkurtas: '+(res.data.registration_number||''));
+    };
+
+    function rmErr(code){
+      return ({ not_superadmin:'Veiksmą gali atlikti tik superadministratorius.',
+        reason_too_short:'Nurodykite priežastį (bent 10 simbolių).',
+        confirm_mismatch:'Įvestas registracijos numeris nesutampa.',
+        number_taken:'Numeris jau panaudotas kitam dokumentui — atkurti negalima.',
+        already_restored:'Įrašas jau atkurtas.',
+        not_found:'Įrašas nerastas.',
+        not_found_or_already_voided:'Įrašas nerastas arba jau anuliuotas.',
+        not_found_or_not_voided:'Įrašas nerastas arba nėra anuliuotas.' })[code]||('Klaida: '+(code||'nežinoma'));
+    }
+
+    function initRegMaintenance(){
+      if(!IS_SUPERADMIN)return;
+      // 1) papildomas tabas
+      const tabs=document.querySelector('#paneRegistry .tabs');
+      if(tabs&&!document.querySelector('#paneRegistry .tab[data-regtype="maint"]')){
+        const t=document.createElement('div');
+        t.className='tab'; t.dataset.regtype='maint'; t.innerHTML='🗑 Priežiūra';
+        t.style.marginLeft='auto';
+        tabs.appendChild(t);
+      }
+      // 2) įrankių eilutės ir konteinerio paruošimas
+      const searchEl=$('regSearch');
+      if(searchEl&&searchEl.parentElement&&!searchEl.parentElement.id) searchEl.parentElement.id='regToolsRow';
+      if(searchEl&&!$('regShowVoidedWrap')){
+        const w=document.createElement('label');
+        w.id='regShowVoidedWrap';
+        w.style.cssText='display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;';
+        w.innerHTML='<input type="checkbox" id="regShowVoided" checked> Rodyti anuliuotus';
+        searchEl.parentElement.appendChild(w);
+        $('regShowVoided').onchange=function(){ REG_SHOW_VOIDED=this.checked; renderRegistry(); };
+      }
+      if(!$('regMaintWrap')){
+        const w=document.createElement('div');
+        w.id='regMaintWrap'; w.style.display='none';
+        $('registryTable').parentElement.appendChild(w);
+      }
+      // 3) tabų perrišimas
+      document.querySelectorAll('#paneRegistry .tab').forEach(t=>{
+        t.onclick=async()=>{
+          document.querySelectorAll('#paneRegistry .tab').forEach(x=>x.classList.remove('active'));
+          t.classList.add('active');
+          if(t.dataset.regtype==='maint'){ REG_MAINT=true; regMaintToggleChrome(true); await loadRegDeleted(); renderRegistry(); }
+          else { REG_MAINT=false; regMaintToggleChrome(false); REG_TYPE=t.dataset.regtype; renderRegistry(); }
+        };
+      });
+      // 4) modalės
+      if(!$('rmVoidModal')){
+        const d=document.createElement('div');
+        d.innerHTML=
+          '<div id="rmVoidModal" class="modal-bg hidden"><div class="modal" style="max-width:520px;">'+
+            '<h2>Anuliuoti registracijos įrašą</h2>'+
+            '<div class="muted" id="rmVoidInfo" style="margin-bottom:10px;"></div>'+
+            '<div class="hint" style="margin-bottom:10px;">Įrašas liks žurnale su žyma ANULIUOTA. Numeris <b>nebus</b> atlaisvintas.</div>'+
+            '<label class="label">Anuliavimo priežastis * (bent 10 simbolių)</label>'+
+            '<textarea id="rmVoidReason" class="input" rows="3"></textarea>'+
+            '<div id="rmVoidMsg" style="margin-top:8px;"></div>'+
+            '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">'+
+              '<button class="btn btn-ghost" id="rmVoidCancel">Atšaukti</button>'+
+              '<button class="btn" id="rmVoidBtn">⊘ Anuliuoti</button></div>'+
+          '</div></div>'+
+          '<div id="rmDelModal" class="modal-bg hidden"><div class="modal" style="max-width:560px;">'+
+            '<h2 style="color:#991B1B;">Ištrinti registracijos įrašą</h2>'+
+            '<div class="muted" id="rmDelInfo" style="margin-bottom:10px;"></div>'+
+            '<div style="background:#FEE2E2;border:1px solid #FCA5A5;color:#991B1B;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px;">'+
+              '<b>Dėmesio.</b> Įrašas bus pašalintas iš žurnalo ir perkeltas į archyvą (atkuriamas 90 d.). '+
+              'Registracijos numeris bus <b>atlaisvintas</b> ir gali būti suteiktas kitam dokumentui. '+
+              'Susiejimai su kreditoriais / debitoriais / laiškais bus atkabinti.</div>'+
+            '<label class="label">Trynimo priežastis * (bent 10 simbolių)</label>'+
+            '<textarea id="rmDelReason" class="input" rows="3"></textarea>'+
+            '<label class="label" style="margin-top:10px;">Patvirtinimui įveskite registracijos numerį: <b id="rmDelNumHint"></b></label>'+
+            '<input id="rmDelConfirm" class="input" placeholder="pvz. G26-TOR-001" autocomplete="off">'+
+            '<div id="rmDelMsg" style="margin-top:8px;"></div>'+
+            '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">'+
+              '<button class="btn btn-ghost" id="rmDelCancel">Atšaukti</button>'+
+              '<button class="btn btn-danger" id="rmDelBtn" disabled>🗑 Ištrinti visam laikui</button></div>'+
+          '</div></div>';
+        while(d.firstChild) document.body.appendChild(d.firstChild);
+
+        $('rmVoidCancel').onclick=()=>hide('rmVoidModal');
+        $('rmDelCancel').onclick=()=>hide('rmDelModal');
+        $('rmDelConfirm').oninput=function(){
+          $('rmDelBtn').disabled=(this.value.trim()!==($('rmDelNumHint').textContent||'').trim());
+        };
+        $('rmVoidBtn').onclick=async()=>{
+          if(!RM_TARGET)return;
+          const reason=$('rmVoidReason').value.trim();
+          if(reason.length<10){ $('rmVoidMsg').innerHTML='<div class="error">Priežastis per trumpa (bent 10 simbolių).</div>'; return; }
+          $('rmVoidBtn').disabled=true;
+          const res=await sb.rpc('void_insolvency_registration',{ p_id:RM_TARGET.id, p_reason:reason });
+          $('rmVoidBtn').disabled=false;
+          if(res.error){ $('rmVoidMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+          if(!res.data||!res.data.ok){ $('rmVoidMsg').innerHTML='<div class="error">'+esc(rmErr(res.data&&res.data.error_code))+'</div>'; return; }
+          hide('rmVoidModal'); await loadRegistry();
+        };
+        $('rmDelBtn').onclick=async()=>{
+          if(!RM_TARGET)return;
+          const reason=$('rmDelReason').value.trim();
+          if(reason.length<10){ $('rmDelMsg').innerHTML='<div class="error">Priežastis per trumpa (bent 10 simbolių).</div>'; return; }
+          if(!confirm('PASKUTINIS PATVIRTINIMAS\n\nĮrašas '+RM_TARGET.registration_number+' bus pašalintas iš žurnalo.\nNumeris bus atlaisvintas.\n\nTęsti?'))return;
+          $('rmDelBtn').disabled=true;
+          const res=await sb.rpc('delete_insolvency_registration',{
+            p_id:RM_TARGET.id, p_reason:reason, p_confirm_number:$('rmDelConfirm').value.trim() });
+          $('rmDelBtn').disabled=false;
+          if(res.error){ $('rmDelMsg').innerHTML='<div class="error">'+esc(res.error.message)+'</div>'; return; }
+          if(!res.data||!res.data.ok){ $('rmDelMsg').innerHTML='<div class="error">'+esc(rmErr(res.data&&res.data.error_code))+'</div>'; return; }
+          const p=res.data.storage_path;
+          if(p){ try{ await sb.storage.from('insolvency-docs').move(p,p.replace('/registered/','/deleted/')); }catch(_){ } }
+          hide('rmDelModal');
+          await loadRegDeleted(); await loadRegistry();
+          alert('Įrašas ištrintas: '+(res.data.registration_number||'')+'\nNumeris atlaisvintas.');
+        };
+      }
+    }
+
     bindCredButtons();
     bindClaimExtras();
-    boot();
+    initClaimV3();
+    boot().then(()=>{ try{ initRegMaintenance(); }catch(e){ console.warn('initRegMaintenance',e); } });
   </script>
 </body>
 </html>
