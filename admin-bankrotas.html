@@ -991,6 +991,16 @@
           <input type="file" id="asPhotoCam" accept="image/*" capture="environment" class="hidden">
           <button class="btn btn-sm btn-ghost" id="asPhotoUploadBtn" type="button">🖼 Įkelti nuotraukas</button>
           <button class="btn btn-sm btn-ghost" id="asPhotoCamBtn" type="button">📷 Fotografuoti</button>
+          <button class="btn btn-sm btn-ghost hidden" id="asActPhotoBtn" type="button" title="Pridėti fotofiksacijas iš perdavimo akto, iš kurio sukurta ši kortelė">📎 Pridėti akto fotofiksacijas</button>
+        </div>
+        <div id="asActPhotoPicker" class="hidden" style="border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:8px;background:#F6F8FB;">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Perdavimo akto fotofiksacijos — pažymėkite, kurias pridėti prie šios turto kortelės:</div>
+          <div id="asActPhotoList"></div>
+          <div id="asActPhotoMsg" style="font-size:12px;margin-top:6px;"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn-sm" type="button" id="asActPhotoAdd">✓ Pridėti pažymėtas</button>
+            <button class="btn btn-sm btn-ghost" type="button" id="asActPhotoClose">Uždaryti</button>
+          </div>
         </div>
         <div id="asPhotoGrid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
       </div>
@@ -1780,7 +1790,7 @@
           body.perm-view #photoUploadBtn, body.perm-view #photoCamBtn, body.perm-view #actSaveDraft, body.perm-view #actGenPdf,
           body.perm-view #admBlankBtn, body.perm-view #addPersonBtn, body.perm-view #admSave, body.perm-view #recSave,
           body.perm-view #impFileBtn, body.perm-view #impSheetBtn, body.perm-view #impSave, body.perm-view #pdfAttUploadBtn, body.perm-view #pdfGenerate,
-          body.perm-view #ntSave, body.perm-view #asPhotoUploadBtn, body.perm-view #asPhotoCamBtn, body.perm-view #assetSave, body.perm-view #priceSave,
+          body.perm-view #ntSave, body.perm-view #asPhotoUploadBtn, body.perm-view #asPhotoCamBtn, body.perm-view #asActPhotoBtn, body.perm-view #asActPhotoAdd, body.perm-view #assetSave, body.perm-view #priceSave,
           body.perm-view [onclick*="clearSig"], body.perm-view [onclick*="delRecipient"], body.perm-view [onclick*="editRecipient"],
           body.perm-view [onclick*="delPerson"], body.perm-view [onclick*="delAdmin"], body.perm-view [onclick*="delCase"],
           body.perm-view [onclick*="renameTpl"], body.perm-view [onclick*="delTpl"], body.perm-view [onclick*="editContact"],
@@ -3374,7 +3384,7 @@
     };
 
     // ---------- TURTAS ----------
-    let ASSETS=[], AS_PHOTOS=[];
+    let ASSETS=[], AS_PHOTOS=[], AS_SRC_ACT=null, AS_ACT_PHOTOS=[];
     const AS_CAT={ realestate:'Nekilnojamas', movable:'Kilnojamas', inventory:'Atsargos', vehicle:'Transportas', intangible:'Nematerialus', other:'Kita' };
     const AS_ST={ in_stock:'Apskaitytas', for_sale:'Parduodamas', sold:'Parduotas', written_off:'Nurašytas', transferred:'Perduotas' };
     const fmtEur=v=>(v==null||v==='')?'—':Number(v).toLocaleString('lt-LT',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
@@ -3442,7 +3452,10 @@
       $('asStatus').value=(a.status&&a.status!=='sold')?a.status:'in_stock';
       $('asNotes').value=a.notes||''; $('assetMsg').innerHTML='';
       AS_PHOTOS=(a.photos||[]).slice();
+      AS_SRC_ACT=a.source_act_id||null; AS_ACT_PHOTOS=[];
       $('assetPhotoSec').classList.toggle('hidden',!id);
+      $('asActPhotoBtn').classList.toggle('hidden',!(id&&AS_SRC_ACT));
+      $('asActPhotoPicker').classList.add('hidden');
       renderAsPhotos();
       $('asLeaseSec').classList.toggle('hidden',!id);
       if(id)$('asLeaseInfo').innerHTML=assetLeaseInfoHtml(id);
@@ -3462,6 +3475,49 @@
       await sb.from('insolvency_assets').update({ photos:AS_PHOTOS, updated_at:new Date().toISOString() }).eq('id',id);
       loadAssets();
     }
+    // --- fotofiksacijų perkėlimas iš perdavimo akto į turto kortelę ---
+    $('asActPhotoBtn').onclick=async()=>{
+      if(!AS_SRC_ACT)return;
+      $('asActPhotoBtn').disabled=true;
+      try{
+        const { data:act }=await sb.from('insolvency_acts').select('photos').eq('id',AS_SRC_ACT).maybeSingle();
+        AS_ACT_PHOTOS=(act&&Array.isArray(act.photos)?act.photos:[]).filter(x=>x&&x.path&&x.kind!=='file');
+        if(!AS_ACT_PHOTOS.length){ $('asActPhotoList').innerHTML='<div class="muted" style="font-size:12px;">Prie perdavimo akto fotofiksacijų nėra.</div>'; }
+        else{
+          $('asActPhotoList').innerHTML='<div style="display:flex;flex-direction:column;gap:4px;">'+AS_ACT_PHOTOS.map((p,i)=>`<label style="display:flex;align-items:center;gap:6px;font-size:12px;">
+            <input type="checkbox" class="asActPhotoChk" data-i="${i}" style="width:auto;" checked>
+            🖼 ${esc(p.name||('akto foto '+(i+1)))}
+            <span style="cursor:pointer;" title="Peržiūrėti" onclick="previewDoc('${esc(p.path)}','${esc(p.name||'Akto nuotrauka')}')">👁</span>
+          </label>`).join('')+'</div>';
+        }
+        $('asActPhotoMsg').innerHTML=''; $('asActPhotoPicker').classList.remove('hidden');
+      }catch(err){ $('assetMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ $('asActPhotoBtn').disabled=false; }
+    };
+    $('asActPhotoClose').onclick=()=>$('asActPhotoPicker').classList.add('hidden');
+    $('asActPhotoAdd').onclick=async()=>{
+      const id=$('assetId').value; if(!id)return;
+      const idxs=[...document.querySelectorAll('.asActPhotoChk')].filter(c=>c.checked).map(c=>+c.dataset.i);
+      if(!idxs.length){ $('asActPhotoMsg').innerHTML='<span style="color:#C0392B;">Pažymėkite bent vieną nuotrauką.</span>'; return; }
+      $('asActPhotoMsg').innerHTML='⏳ Kopijuojama…';
+      let ok=0, fail=0;
+      for(const i of idxs){
+        const ph=AS_ACT_PHOTOS[i]; if(!ph)continue;
+        try{
+          const url=await fetchSignedUrlBytes(ph.path);
+          const blob=await (await fetch(url)).blob();
+          const safe=(ph.name||'foto').replace(/[^A-Za-z0-9._-]+/g,'_');
+          const newPath=`${CURRENT.case_short_code}/assets/${id}/${Date.now()}_akt_${safe}`;
+          const upo=await sb.storage.from('insolvency-docs').upload(newPath,blob,{ upsert:true });
+          if(upo.error)throw upo.error;
+          AS_PHOTOS.push({ path:newPath, name:ph.name||'Akto nuotrauka' });
+          ok++;
+        }catch(_){ fail++; }
+      }
+      await saveAsPhotos(); renderAsPhotos();
+      $('asActPhotoMsg').innerHTML='<span style="color:#046C4E;">Pridėta nuotraukų: '+ok+'.'+(fail?' Nepavyko: '+fail+'.':'')+'</span>';
+      if(ok)setTimeout(()=>$('asActPhotoPicker').classList.add('hidden'),1200);
+    };
     $('asPhotoUploadBtn').onclick=()=>$('asPhotoFile').click();
     $('asPhotoCamBtn').onclick=()=>$('asPhotoCam').click();
     async function handleAssetPhotos(e){
