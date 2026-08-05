@@ -13,6 +13,9 @@
     .header h1 { color:#fff; font-size:18px; font-weight:600; }
     .header .right { color:rgba(255,255,255,.85); font-size:13px; display:flex; gap:14px; align-items:center; }
     .container { max-width:1100px; margin:0 auto; padding:24px 20px; }
+    /* Sutikrinimo darbo aplinka — platesnis langas nei 1100px konteineris */
+    #paneCredRecon:not(.hidden){ width:min(94vw,1720px); position:relative; left:50%; transform:translateX(-50%); }
+    @media (max-width:1200px){ #paneCredRecon:not(.hidden){ width:auto; left:auto; transform:none; } }
     .card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
     .btn { background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; }
     .btn:hover { background:var(--navy2); } .btn:disabled { opacity:.55; cursor:not-allowed; }
@@ -1774,7 +1777,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-05-r10';
+    const APP_VERSION='2026-08-05-r11';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
