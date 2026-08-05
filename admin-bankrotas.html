@@ -5211,7 +5211,9 @@
           pardavimo_budas:!isLease?((SALE_METHODS[obj.sale_method]||'—')+(obj.sale_method_note?' ('+obj.sale_method_note+')':'')):''
         };
         let body=tpl.body;
-        for(const k in map)body=body.split('{{'+k+'}}').join(map[k]);
+        for(const k in map)body=body.split('{{'+k+'}}').join(map[k]==null?'':map[k]);
+        // APSAUGA: pašalinam bet kokius likusius neužpildytus {{žymeklius}}, kad sutartyje niekada nebūtų matomas neapdorotas šablono žymeklis
+        body=body.replace(/\{\{\s*[a-z0-9_]+\s*\}\}/gi,'—');
         // ŠALIŲ REKVIZITAI IR PARAŠAI — dvi atskiros skiltys (lentelė)
         const sigCell=(sig)=> (sig&&sig.data)
           ? '<img src="'+sig.data+'" style="height:46px;display:block;"><div style="border-top:1px solid #000;width:75%;margin-top:2px;font-size:10px;color:#333;">'+esc(sig.name||'')+(sig.at?' · '+new Date(sig.at).toLocaleDateString('lt-LT'):'')+'</div>'
