@@ -1801,6 +1801,9 @@
     // ---------- MODULIO TEISĖS (bankrotas) ----------
     let PERM_LEVEL = 'full';
     let IS_SUPERADMIN = false;
+    window.BUILD_VERSION='2026-08-07';
+    window.BUILD_BLOCKS=['r8-categories','r9-reg-maintenance','recon-v2','claim-v3'];
+    console.log('%cadmin-bankrotas build '+window.BUILD_VERSION,'color:#0A2E4D;font-weight:700',window.BUILD_BLOCKS);
     let CURRENT_UID = null;
     async function checkModuleAccess(moduleCode){
       try{
@@ -3388,8 +3391,8 @@
           admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
         // 3) įkėlimas į Storage (be perrašymo — registruoti PDF nekeičiami)
         $('regMsg').innerHTML='<div class="muted">⏳ Įkeliamas dokumentas…</div>';
-        const path=`${CURRENT.case_short_code}/registered/${regNumber}.pdf`;
-        const up=await sb.storage.from('insolvency-docs').upload(path,blob,{ upsert:false, contentType:'application/pdf' });
+        const path=`${CURRENT.case_short_code}/registered/${regNumber.replace(/[^A-Za-z0-9._-]+/g,'_')}_${Date.now()}.pdf`;
+        const up=await sb.storage.from('insolvency-docs').upload(path,blob,{ upsert:true, contentType:'application/pdf' });
         if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
         // 4) įrašas žurnale (+ auditas RPC viduje)
         const reg=await sb.rpc('register_insolvency_document',{ p:{
@@ -7883,8 +7886,13 @@
         not_found_or_not_voided:'Įrašas nerastas arba nėra anuliuotas.' })[code]||('Klaida: '+(code||'nežinoma'));
     }
 
-    function initRegMaintenance(){
-      if(!IS_SUPERADMIN)return;
+    async function initRegMaintenance(){
+      if(!IS_SUPERADMIN){
+        try{ const r=await sb.rpc('is_superadmin'); IS_SUPERADMIN = (r.data===true); }catch(_){ }
+      }
+      if(!IS_SUPERADMIN){ console.log('[regMaint] praleista: vartotojas nėra superadmin'); return; }
+      if(document.querySelector('#paneRegistry .tab[data-regtype="maint"]')){ return; }
+      console.log('[regMaint] įjungta');
       // 1) papildomas tabas
       const tabs=document.querySelector('#paneRegistry .tabs');
       if(tabs&&!document.querySelector('#paneRegistry .tab[data-regtype="maint"]')){
@@ -8114,12 +8122,20 @@
       $('regCatFilter')&&($('regCatFilter').onchange=renderRegistry);
     }
 
+    window.__regMaint=async()=>{
+      let rpc=null; try{ rpc=(await sb.rpc('is_superadmin')).data; }catch(e){ rpc='klaida: '+e.message; }
+      return { build:window.BUILD_VERSION, blokai:window.BUILD_BLOCKS,
+        IS_SUPERADMIN, rpc_is_superadmin:rpc,
+        funkcija:typeof initRegMaintenance,
+        tabas:!!document.querySelector('#paneRegistry .tab[data-regtype="maint"]'),
+        modale:!!document.getElementById('rmDelModal') };
+    };
+
     bindCredButtons();
     bindClaimExtras();
     initReconV2();
-    initRegMaintenance();
     initClaimV3();
-    boot();
+    boot().then(()=>{ try{ initRegMaintenance(); }catch(e){ console.warn('initRegMaintenance', e); } });
   </script>
 </body>
 </html>
