@@ -132,7 +132,8 @@
             <div id="ccRepeat" style="margin-top:8px;"></div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a id="okredoLink" class="btn btn-ghost btn-sm" target="_blank" rel="noopener" style="text-decoration:none;">🔗 Okredo paieška</a>
+            <button class="btn btn-sm full-only" id="okredoFetchBtn" style="background:#0369A1;">⬇️ Surinkti iš Okredo</button>
+            <a id="okredoLink" class="btn btn-ghost btn-sm" target="_blank" rel="noopener" style="text-decoration:none;">🔗 Atidaryti Okredo</a>
             <button class="btn btn-gold btn-sm full-only" id="saveCardBtn">💾 Išsaugoti kortelę</button>
           </div>
         </div>
@@ -239,7 +240,7 @@
 
     // ---------- BŪSENA ----------
     let PERM_LEVEL='full', ANN=[], PROFILES={}, COMPANIES=[], FILTER='all', SEARCH='', CURRENT=null, CURRENT_UID=null;
-    window.BUILD_VERSION='avnis-2026-08-08';
+    window.BUILD_VERSION='avnis-2026-08-08b-okredo';
 
     async function checkModuleAccess(){
       try{
@@ -454,6 +455,61 @@
     }
     $('saveCardBtn').onclick = saveCard;
     $('saveCardBtn2').onclick = saveCard;
+
+    // ---------- OKREDO SURINKIMAS ----------
+    // Sulieja atsiųstus įrašus su esamais: rakinama pagal (data/metai), Okredo įrašai perrašo tik tuščius laukus
+    function mergeRows(sec, incoming){
+      const keyOf = r => sec==='fin' ? String(r.metai||'') : String(r.data||'');
+      const existing = EDIT[sec];
+      const byKey = {}; existing.forEach((r,i)=>{ byKey[keyOf(r)]=i; });
+      for(const inc of incoming){
+        const k = keyOf(inc);
+        if(k && byKey[k]!=null){
+          const cur = existing[byKey[k]];
+          for(const f of Object.keys(inc)){
+            if(f==='pastabos') continue;
+            if(cur[f]===''||cur[f]==null) cur[f]=inc[f];
+          }
+          if(!cur.pastabos) cur.pastabos = inc.pastabos;
+        } else {
+          existing.push(inc);
+        }
+      }
+      // rūšiuojam naujausius viršuje
+      existing.sort((a,b)=> keyOf(b).localeCompare(keyOf(a)));
+    }
+
+    $('okredoFetchBtn').onclick = async () => {
+      if(!CURRENT || PERM_LEVEL!=='full') return;
+      if(!CURRENT.code){ $('cardMsg').innerHTML='<div class="error">Šis skelbimas neturi įmonės kodo — Okredo paieška negalima.</div>'; return; }
+      const btn = $('okredoFetchBtn');
+      const orig = btn.textContent; btn.disabled=true; btn.textContent='⏳ Renkama iš Okredo…';
+      $('cardMsg').innerHTML='';
+      try{
+        const { data:{ session } } = await sb.auth.getSession();
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/okredo-fetch`, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${session.access_token}`, 'apikey':SUPABASE_ANON_KEY },
+          body: JSON.stringify({ company_code: CURRENT.code, company_name: CURRENT.name })
+        });
+        const d = await res.json();
+        if(!res.ok || !d.ok){ $('cardMsg').innerHTML='<div class="error">Okredo: '+esc(d.error||('klaida '+res.status))+'</div>'; return; }
+        mergeRows('fin', (d.financial_data||[]).map(r=>({metai:String(r.metai||''),pardavimo_pajamos:r.pardavimo_pajamos??'',grynasis_pelnas:r.grynasis_pelnas??'',turtas:r.turtas??'',nuosavas_kapitalas:r.nuosavas_kapitalas??'',isipareigojimai:r.isipareigojimai??'',pastabos:r.pastabos||'Okredo'})));
+        mergeRows('emp', (d.employees_data||[]).map(r=>({data:String(r.data||''),darbuotoju_sk:r.darbuotoju_sk??'',pokytis:r.pokytis??'',pastabos:r.pastabos||'Okredo'})));
+        mergeRows('debt', (d.state_debts||[]).map(r=>({data:String(r.data||''),sodra:r.sodra??'',vmi:r.vmi??'',kita:r.kita??'',pastabos:r.pastabos||'Okredo'})));
+        mergeRows('court', (d.court_cases||[]).map(r=>({data:String(r.data||''),teismas:r.teismas??'',bylos_nr:r.bylos_nr??'',aprasymas:r.aprasymas??'',busena:r.busena??''})));
+        // pastabos papildymas Okredo aprašymu ir vadovu
+        const extra = [];
+        if(d.company){ if(d.company.manager) extra.push('Vadovas (Okredo): '+d.company.manager+(d.company.manager_role?' ('+d.company.manager_role+')':'')); if(d.company.activity) extra.push('Veikla: '+d.company.activity); if(d.company.mobile) extra.push('Tel.: '+d.company.mobile); }
+        if(d.description) extra.push('\n'+d.description);
+        if(extra.length){ const cur=$('ccNotes').value.trim(); const add=extra.join('\n'); if(!cur.includes(add.slice(0,40))) $('ccNotes').value = (cur?cur+'\n\n':'')+add; }
+        ['fin','emp','debt','court'].forEach(renderEdit);
+        $('okredoLink').href = d.url;
+        $('cardMsg').innerHTML='<div class="success">✅ Duomenys surinkti iš Okredo. Peržiūrėkite ir paspauskite „💾 Išsaugoti kortelę".</div>';
+      }catch(e){
+        $('cardMsg').innerHTML='<div class="error">Nepavyko susisiekti su Okredo funkcija: '+esc(String(e))+'</div>';
+      }finally{ btn.disabled=false; btn.textContent=orig; }
+    };
 
     boot();
   </script>
