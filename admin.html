@@ -754,6 +754,10 @@
             <span class="sidebar-nav-icon">⚖️</span>
             <span>Nemokumo procesai</span>
           </a>
+          <a class="sidebar-nav-item" data-module="avnis" href="admin-avnis.html" style="text-decoration:none;">
+            <span class="sidebar-nav-icon">📢</span>
+            <span>AVNIS skelbimai</span>
+          </a>
 
           <div class="sidebar-section-label" style="margin-top: 16px;">Konfigūracija</div>
           <button class="sidebar-nav-item" data-view="templates" data-module="klausimynai" onclick="navigateTo('templates')">
@@ -858,6 +862,15 @@
                   <strong style="color: var(--kab-navy); font-size: 14px;">Nemokumo procesai</strong>
                 </div>
                 <p style="font-size: 12px; color: #6B7280; margin: 0;">Nemokumo proceso valdymas: pirminiai raštai, blankai, registras</p>
+              </div>
+            </a>
+            <a href="admin-avnis.html" id="card-avnis" data-module="avnis" style="text-decoration:none; color: inherit; display: block;">
+              <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
+                  <div style="width:42px; height:42px; background:#E0F2FE; color:#0369A1; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📢</div>
+                  <strong style="color: var(--kab-navy); font-size: 14px;">AVNIS skelbimai</strong>
+                </div>
+                <p style="font-size: 12px; color: #6B7280; margin: 0;">Teisiniai skelbimai apie nemokumo procesus — automatinis rinkimas kasdien</p>
               </div>
             </a>
             <div id="card-spec" data-module="klausimynai" onclick="openSpecModal()" style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">

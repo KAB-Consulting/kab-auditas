@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAB Admin — AVNIS skelbimai</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root { --navy:#0B1E3F; --navy2:#1A3660; --gold:#C9A961; --cream:#F7F4EC; --gray:#5A5A5A; --bd:#E5E5E5; --light:#F9F9F9; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; background:var(--cream); color:#333; line-height:1.55; }
+    .header { background:var(--navy); border-bottom:4px solid var(--gold); padding:14px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+    .header h1 { color:#fff; font-size:18px; font-weight:600; }
+    .header .right { color:rgba(255,255,255,.85); font-size:13px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+    .container { max-width:1250px; margin:0 auto; padding:24px 20px; }
+    .card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .btn { background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; }
+    .btn:hover { background:var(--navy2); } .btn:disabled { opacity:.55; cursor:not-allowed; }
+    .btn-ghost { background:#fff; color:var(--navy); border:1px solid var(--navy); }
+    .btn-gold { background:var(--gold); color:var(--navy); } .btn-danger { background:#C0392B; }
+    .btn-sm { padding:6px 12px; font-size:13px; }
+    .input,.textarea,.select { width:100%; padding:10px 12px; border:1px solid var(--bd); border-radius:6px; font-size:14px; font-family:inherit; background:#fff; }
+    .input:focus,.textarea:focus,.select:focus { outline:none; border-color:var(--gold); }
+    .textarea { min-height:80px; resize:vertical; }
+    .label { display:block; font-size:13px; color:var(--gray); margin-bottom:5px; font-weight:600; margin-top:12px; }
+    .error { background:#FDECEA; color:#C0392B; border:1px solid #F5B7B1; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
+    .success { background:#E8F8F0; color:#1E8449; border:1px solid #ABEBC6; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
+    .hidden { display:none !important; } .center { text-align:center; } .muted { color:var(--gray); font-size:13px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th { text-align:left; background:var(--light); padding:10px 12px; border-bottom:2px solid var(--bd); font-size:12px; color:var(--gray); text-transform:uppercase; }
+    td { padding:10px 12px; border-bottom:1px solid #F0F0F0; vertical-align:top; }
+    tr:hover td { background:#FBFAF6; }
+    .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
+    .badge-green { background:#E8F8F0; color:#1E8449; } .badge-gray { background:#EEE; color:#777; } .badge-gold { background:#FBF3DF; color:#9A7B24; }
+    .badge-red { background:#FDECEA; color:#C0392B; } .badge-blue { background:#DBEAFE; color:#1D4ED8; } .badge-purple { background:#EDE9FE; color:#6D28D9; }
+    .crumb { font-size:13px; color:var(--gray); margin-bottom:14px; cursor:pointer; }
+    .crumb:hover { color:var(--navy); text-decoration:underline; }
+    .tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .tab { padding:8px 16px; border:1px solid var(--bd); border-radius:20px; background:#fff; cursor:pointer; font-size:13px; font-weight:600; color:var(--gray); }
+    .tab.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+    .spinner { border:3px solid #eee; border-top:3px solid var(--gold); border-radius:50%; width:28px; height:28px; animation:spin 1s linear infinite; margin:20px auto; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .hint { font-size:12px; color:var(--gray); margin-top:3px; }
+    .sec-title { color:var(--navy); font-size:15px; font-weight:700; margin:18px 0 4px; border-bottom:1px solid var(--bd); padding-bottom:5px; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:18px; }
+    .stat-card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:14px 16px; }
+    .stat-card .v { font-size:24px; font-weight:700; color:var(--navy); }
+    .stat-card .l { font-size:12px; color:var(--gray); }
+    .clickable { cursor:pointer; }
+    .etable input, .etable select { padding:6px 8px; font-size:13px; border:1px solid var(--bd); border-radius:5px; width:100%; font-family:inherit; }
+    .etable td { padding:5px 6px; }
+    .etable th { padding:7px 8px; }
+    body.perm-view .full-only { display:none !important; }
+    .newmark { background:#FFF8E1; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📢 KAB Admin — AVNIS skelbimai</h1>
+    <div class="right">
+      <a href="admin.html" style="color:#fff;text-decoration:underline;font-size:12px;">← Pagrindinis</a>
+      <a href="admin-bankrotas.html" style="color:#fff;text-decoration:underline;font-size:12px;">Nemokumo procesai</a>
+      <span id="userEmail"></span>
+      <button class="btn btn-sm btn-ghost" id="logoutBtn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4);">Atsijungti</button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- LOGIN -->
+    <div id="loginView" class="card hidden" style="max-width:420px;margin:60px auto;">
+      <h2 style="color:var(--navy);font-size:20px;margin-bottom:12px;">Administratoriaus prisijungimas</h2>
+      <label class="label">El. paštas</label><input id="loginEmail" class="input" type="email">
+      <label class="label">Slaptažodis</label><input id="loginPassword" class="input" type="password">
+      <div id="loginError" class="error hidden"></div>
+      <button id="loginBtn" class="btn" style="width:100%;margin-top:16px;">Prisijungti</button>
+    </div>
+
+    <div id="loadingView" class="card center"><div class="spinner"></div><div class="muted">Kraunama…</div></div>
+
+    <!-- SĄRAŠO VAIZDAS -->
+    <div id="listView" class="hidden">
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="v" id="stCompanies">—</div><div class="l">Įmonių iš viso</div></div>
+        <div class="stat-card"><div class="v" id="stValid">—</div><div class="l">Su galiojančiu skelbimu</div></div>
+        <div class="stat-card"><div class="v" id="stExpired">—</div><div class="l">Tik pasibaigę</div></div>
+        <div class="stat-card"><div class="v" id="stRepeat">—</div><div class="l">🔁 Pasikartojančios</div></div>
+        <div class="stat-card"><div class="v" id="stNew">—</div><div class="l">🆕 Naujos (48 val.)</div></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div>
+            <h2 style="color:var(--navy);font-size:18px;">Įmonės iš AVNIS skelbimų</h2>
+            <div class="muted" id="syncInfo">Sinchronizacija: —</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="reloadBtn">🔄 Atnaujinti</button>
+        </div>
+
+        <div class="tabs" id="filterTabs">
+          <div class="tab active" data-f="all">Visos</div>
+          <div class="tab" data-f="valid">Su galiojančiu</div>
+          <div class="tab" data-f="expired">Tik pasibaigę</div>
+          <div class="tab" data-f="repeat">🔁 Pasikartojančios</div>
+          <div class="tab" data-f="new">🆕 Naujos</div>
+        </div>
+
+        <input id="searchBox" class="input" placeholder="🔍 Ieškoti pagal įmonės pavadinimą, kodą, teismą, bylos nr…" style="margin-bottom:12px;max-width:520px;">
+
+        <div id="listMsg"></div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr>
+              <th>Įmonė</th><th>Kodas</th><th class="center">Skelbimų</th><th>Naujausia stadija</th><th>Teismas</th><th>Paskutinis skelbimas</th><th>Būsena</th><th>Kortelė</th>
+            </tr></thead>
+            <tbody id="listBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ĮMONĖS KORTELĖS VAIZDAS -->
+    <div id="cardView" class="hidden">
+      <div class="crumb" id="backToList">← Visos įmonės</div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+          <div>
+            <h2 style="color:var(--navy);font-size:20px;" id="ccName">—</h2>
+            <div class="muted" id="ccMeta">—</div>
+            <div id="ccRepeat" style="margin-top:8px;"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a id="okredoLink" class="btn btn-ghost btn-sm" target="_blank" rel="noopener" style="text-decoration:none;">🔗 Okredo paieška</a>
+            <button class="btn btn-gold btn-sm full-only" id="saveCardBtn">💾 Išsaugoti kortelę</button>
+          </div>
+        </div>
+        <div id="cardMsg"></div>
+      </div>
+
+      <!-- SKELBIMŲ ISTORIJA -->
+      <div class="card">
+        <div class="sec-title" style="margin-top:0;">📜 Skelbimų istorija AVNIS sistemoje</div>
+        <div class="hint" style="margin-bottom:8px;">Visi šios įmonės skelbimai, surinkti iš AVNIS (nauji papildomi automatiškai kiekvieną rytą). Jei skelbimų daugiau nei vienas — skelbimas kartojasi.</div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>#</th><th>Galioja nuo</th><th>Galioja iki</th><th>Proceso stadija</th><th>Teismas</th><th>Bylos Nr.</th><th>Teisėjas</th><th>Būsena</th></tr></thead>
+            <tbody id="annBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FINANSINIAI DUOMENYS -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="sec-title" style="margin-top:0;border:none;padding:0;">💰 Finansiniai duomenys</div>
+          <button class="btn btn-sm btn-ghost full-only" onclick="addRow('fin')">+ Pridėti metus</button>
+        </div>
+        <div class="hint" style="margin-bottom:8px;">Duomenys iš Okredo ar kitų šaltinių. Sumos eurais.</div>
+        <div style="overflow-x:auto;">
+          <table class="etable">
+            <thead><tr><th style="width:90px;">Metai</th><th>Pardavimo pajamos</th><th>Grynasis pelnas</th><th>Turtas</th><th>Nuosavas kapitalas</th><th>Įsipareigojimai</th><th>Pastabos</th><th class="full-only" style="width:40px;"></th></tr></thead>
+            <tbody id="finBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DARBUOTOJAI -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="sec-title" style="margin-top:0;border:none;padding:0;">👥 Darbuotojų pasikeitimas</div>
+          <button class="btn btn-sm btn-ghost full-only" onclick="addRow('emp')">+ Pridėti įrašą</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="etable">
+            <thead><tr><th style="width:130px;">Data</th><th style="width:140px;">Darbuotojų sk.</th><th style="width:140px;">Pokytis</th><th>Pastabos</th><th class="full-only" style="width:40px;"></th></tr></thead>
+            <tbody id="empBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SKOLOS VALSTYBEI -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="sec-title" style="margin-top:0;border:none;padding:0;">🏛️ Skolos valstybei</div>
+          <button class="btn btn-sm btn-ghost full-only" onclick="addRow('debt')">+ Pridėti įrašą</button>
+        </div>
+        <div class="hint" style="margin-bottom:8px;">Sodros, VMI ir kitos skolos valstybei (EUR) nurodytai datai.</div>
+        <div style="overflow-x:auto;">
+          <table class="etable">
+            <thead><tr><th style="width:130px;">Data</th><th>Sodra</th><th>VMI</th><th>Kita</th><th>Pastabos</th><th class="full-only" style="width:40px;"></th></tr></thead>
+            <tbody id="debtBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TEISMAI -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="sec-title" style="margin-top:0;border:none;padding:0;">⚖️ Teismai ir bylos</div>
+          <button class="btn btn-sm btn-ghost full-only" onclick="addRow('court')">+ Pridėti bylą</button>
+        </div>
+        <div class="hint" style="margin-bottom:8px;">Kiti teisminiai procesai (be AVNIS skelbimų, kurie rodomi viršuje automatiškai).</div>
+        <div style="overflow-x:auto;">
+          <table class="etable">
+            <thead><tr><th style="width:130px;">Data</th><th>Teismas</th><th style="width:160px;">Bylos Nr.</th><th>Aprašymas</th><th style="width:130px;">Būsena</th><th class="full-only" style="width:40px;"></th></tr></thead>
+            <tbody id="courtBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PASTABOS -->
+      <div class="card">
+        <div class="sec-title" style="margin-top:0;">📝 Pastabos</div>
+        <textarea id="ccNotes" class="textarea" placeholder="Laisvos pastabos apie įmonę…"></textarea>
+        <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-gold full-only" id="saveCardBtn2">💾 Išsaugoti kortelę</button>
+          <span class="muted" id="ccUpdated"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const show = id => $(id).classList.remove('hidden');
+    const hide = id => $(id).classList.add('hidden');
+    function views(v){ ['loginView','loadingView','listView','cardView'].forEach(hide); show(v); }
+    const fmtD = s => s ? String(s).slice(0,10) : '—';
+    const fmtDT = s => s ? new Date(s).toLocaleString('lt-LT',{dateStyle:'short',timeStyle:'short'}) : '—';
+    const fmtEur = v => (v===''||v==null||isNaN(Number(v))) ? '' : Number(v).toLocaleString('lt-LT');
+
+    // ---------- BŪSENA ----------
+    let PERM_LEVEL='full', ANN=[], PROFILES={}, COMPANIES=[], FILTER='all', SEARCH='', CURRENT=null, CURRENT_UID=null;
+    window.BUILD_VERSION='avnis-2026-08-08';
+
+    async function checkModuleAccess(){
+      try{
+        const { data, error } = await sb.rpc('module_access', { p_module:'avnis' });
+        if (error) throw error;
+        PERM_LEVEL = data || 'none';
+      }catch(e){ PERM_LEVEL='none'; }
+      if (PERM_LEVEL === 'none'){
+        document.body.innerHTML = '<div style="max-width:480px;margin:15vh auto;text-align:center;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0B1E3F;"><h2>⛔ Prieiga negalima</h2><p style="color:#6B7280;">Jūsų paskyra neturi prieigos prie šio modulio. Kreipkitės į administratorių.</p><a href="admin.html" style="color:#C9A961;font-weight:600;text-decoration:none;">← Grįžti į pagrindinį</a></div>';
+        return 'none';
+      }
+      if (PERM_LEVEL === 'view') document.body.classList.add('perm-view');
+      return PERM_LEVEL;
+    }
+
+    async function boot(){
+      try{
+        const { data:{ session } } = await sb.auth.getSession();
+        if(!session){ views('loginView'); return; }
+        if(await checkModuleAccess()==='none') return;
+        CURRENT_UID = session.user.id;
+        $('userEmail').textContent = session.user.email;
+        await loadData();
+      }catch(err){
+        views('loginView');
+        $('loginError').textContent='Sesijos klaida: '+(err.message||String(err)); show('loginError');
+      }
+    }
+    $('loginBtn').onclick = async () => {
+      hide('loginError');
+      const { error } = await sb.auth.signInWithPassword({ email:$('loginEmail').value.trim(), password:$('loginPassword').value });
+      if(error){ $('loginError').textContent='Nepavyko prisijungti: '+error.message; show('loginError'); return; }
+      boot();
+    };
+    $('logoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+    $('loginPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') $('loginBtn').click(); });
+
+    // ---------- DUOMENYS ----------
+    async function loadData(){
+      views('loadingView');
+      const [a,p,s] = await Promise.all([
+        sb.from('avnis_announcements').select('*').order('date_from',{ascending:false}).limit(5000),
+        sb.from('avnis_company_profiles').select('*'),
+        sb.from('avnis_sync_log').select('*').order('id',{ascending:false}).limit(1)
+      ]);
+      if(a.error){ $('listMsg').innerHTML='<div class="error">Klaida: '+esc(a.error.message)+'</div>'; views('listView'); return; }
+      ANN = a.data||[];
+      PROFILES = {}; (p.data||[]).forEach(x=>PROFILES[x.company_code]=x);
+      const log = (s.data||[])[0];
+      $('syncInfo').textContent = log
+        ? `Paskutinė sinchronizacija: ${fmtDT(log.run_at)} · ${log.status==='success' ? `✅ (naujų: ${log.new_count}, atnaujinta: ${log.updated_count}, nebegalioja: ${log.invalidated_count})` : '❌ klaida: '+(log.error_message||'')}`
+        : 'Sinchronizacija dar nevykdyta';
+      buildCompanies();
+      renderList();
+      views('listView');
+    }
+
+    function buildCompanies(){
+      const map = {};
+      const cutoffNew = Date.now() - 48*3600*1000;
+      for(const r of ANN){
+        const key = r.company_code || ('name:'+r.company_name);
+        if(!map[key]) map[key] = { key, code:r.company_code, name:r.company_name, anns:[] };
+        map[key].anns.push(r);
+      }
+      COMPANIES = Object.values(map).map(c=>{
+        c.anns.sort((x,y)=> (y.date_from||'').localeCompare(x.date_from||''));
+        const latest = c.anns[0];
+        c.latest = latest;
+        c.count = c.anns.length;
+        c.hasValid = c.anns.some(x=>x.is_valid);
+        c.isRepeat = c.count > 1;
+        c.isNew = c.anns.some(x=> x.first_seen_at && new Date(x.first_seen_at).getTime() > cutoffNew);
+        c.name = latest.company_name || c.name;
+        c.profile = c.code ? PROFILES[c.code] : null;
+        c.hasProfile = !!(c.profile && (c.profile.notes || (c.profile.financial_data||[]).length || (c.profile.employees_data||[]).length || (c.profile.state_debts||[]).length || (c.profile.court_cases||[]).length));
+        return c;
+      });
+      COMPANIES.sort((a,b)=> (b.latest.date_from||'').localeCompare(a.latest.date_from||''));
+      COMPANIES.forEach((c,i)=>c.idx=i);
+      $('stCompanies').textContent = COMPANIES.length;
+      $('stValid').textContent = COMPANIES.filter(c=>c.hasValid).length;
+      $('stExpired').textContent = COMPANIES.filter(c=>!c.hasValid).length;
+      $('stRepeat').textContent = COMPANIES.filter(c=>c.isRepeat).length;
+      $('stNew').textContent = COMPANIES.filter(c=>c.isNew).length;
+    }
+
+    function renderList(){
+      let rows = COMPANIES;
+      if(FILTER==='valid') rows = rows.filter(c=>c.hasValid);
+      else if(FILTER==='expired') rows = rows.filter(c=>!c.hasValid);
+      else if(FILTER==='repeat') rows = rows.filter(c=>c.isRepeat);
+      else if(FILTER==='new') rows = rows.filter(c=>c.isNew);
+      if(SEARCH){
+        const q = SEARCH.toLowerCase();
+        rows = rows.filter(c =>
+          (c.name||'').toLowerCase().includes(q) ||
+          (c.code||'').toLowerCase().includes(q) ||
+          c.anns.some(a=> (a.court||'').toLowerCase().includes(q) || (a.case_no||'').toLowerCase().includes(q))
+        );
+      }
+      if(!rows.length){ $('listBody').innerHTML = '<tr><td colspan="8" class="muted center" style="padding:24px;">Įrašų nėra</td></tr>'; return; }
+      $('listBody').innerHTML = rows.map(c=>{
+        const l = c.latest;
+        const badges =
+          (c.isNew ? ' <span class="badge badge-gold">🆕 nauja</span>' : '') +
+          (c.isRepeat ? ` <span class="badge badge-purple" title="Šios įmonės skelbimas AVNIS sistemoje buvo skelbtas anksčiau">🔁 kartojasi (${c.count} k.)</span>` : '');
+        return `<tr class="clickable ${c.isNew?'newmark':''}" onclick="openCard(${c.idx})">
+          <td><strong style="color:var(--navy);">${esc(c.name)}</strong>${badges}</td>
+          <td>${esc(c.code||'—')}</td>
+          <td class="center">${c.count}</td>
+          <td>${esc(l.process_stage_title||'—')}</td>
+          <td>${esc(l.court||'—')}</td>
+          <td>${fmtD(l.date_from)} – ${fmtD(l.date_to)}</td>
+          <td>${c.hasValid ? '<span class="badge badge-green">Galioja</span>' : '<span class="badge badge-gray">Pasibaigęs</span>'}</td>
+          <td>${c.hasProfile ? '<span class="badge badge-blue">✓ užpildyta</span>' : '<span class="badge badge-gray">tuščia</span>'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    $('filterTabs').addEventListener('click', e=>{
+      const t = e.target.closest('.tab'); if(!t) return;
+      document.querySelectorAll('#filterTabs .tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active'); FILTER = t.dataset.f; renderList();
+    });
+    $('searchBox').addEventListener('input', e=>{ SEARCH=e.target.value.trim(); renderList(); });
+    $('reloadBtn').onclick = () => loadData();
+    $('backToList').onclick = () => { CURRENT=null; views('listView'); };
+
+    // ---------- ĮMONĖS KORTELĖ ----------
+    const EMPTY_ROWS = { fin:{metai:'',pardavimo_pajamos:'',grynasis_pelnas:'',turtas:'',nuosavas_kapitalas:'',isipareigojimai:'',pastabos:''},
+                        emp:{data:'',darbuotoju_sk:'',pokytis:'',pastabos:''},
+                        debt:{data:'',sodra:'',vmi:'',kita:'',pastabos:''},
+                        court:{data:'',teismas:'',bylos_nr:'',aprasymas:'',busena:''} };
+    let EDIT = { fin:[], emp:[], debt:[], court:[] };
+
+    window.openCard = function(idx){
+      const c = COMPANIES[idx]; if(!c) return;
+      CURRENT = c;
+      $('ccName').textContent = c.name;
+      const l = c.latest;
+      $('ccMeta').innerHTML = `Įmonės kodas: <b>${esc(c.code||'—')}</b> · ${esc(l.company_address||'')}`;
+      $('ccRepeat').innerHTML = c.isRepeat
+        ? `<span class="badge badge-purple">🔁 Skelbimas kartojasi — AVNIS sistemoje ši įmonė skelbta ${c.count} kartus</span>`
+        : `<span class="badge badge-gray">Vienintelis skelbimas</span>`;
+      $('okredoLink').href = 'https://okredo.com/lt-lt/ieskoti?q=' + encodeURIComponent(c.code || c.name);
+      $('annBody').innerHTML = c.anns.map((a,i)=>`<tr>
+        <td>${c.anns.length-i}</td>
+        <td>${fmtD(a.date_from)}</td><td>${fmtD(a.date_to)}</td>
+        <td>${esc(a.process_stage_title||'—')}</td>
+        <td>${esc(a.court||'—')}</td><td>${esc(a.case_no||'—')}</td><td>${esc(a.judge||'—')}</td>
+        <td>${a.is_valid ? '<span class="badge badge-green">Galioja</span>' : `<span class="badge badge-gray">Nebegalioja${a.invalidated_at?' nuo '+fmtD(a.invalidated_at):''}</span>`}</td>
+      </tr>`).join('');
+      const p = c.profile || {};
+      EDIT.fin   = JSON.parse(JSON.stringify(p.financial_data || []));
+      EDIT.emp   = JSON.parse(JSON.stringify(p.employees_data || []));
+      EDIT.debt  = JSON.parse(JSON.stringify(p.state_debts || []));
+      EDIT.court = JSON.parse(JSON.stringify(p.court_cases || []));
+      $('ccNotes').value = p.notes || '';
+      $('ccUpdated').textContent = p.updated_at ? ('Paskutinį kartą atnaujinta: '+fmtDT(p.updated_at)) : 'Kortelė dar nepildyta';
+      $('cardMsg').innerHTML='';
+      ['fin','emp','debt','court'].forEach(renderEdit);
+      views('cardView');
+      window.scrollTo(0,0);
+    };
+
+    function inp(sec,i,field,val,type,ph){
+      return `<input type="${type||'text'}" value="${esc(val)}" placeholder="${ph||''}" ${PERM_LEVEL!=='full'?'disabled':''} onchange="EDIT['${sec}'][${i}]['${field}']=this.value">`;
+    }
+    function delBtn(sec,i){ return `<td class="full-only center"><span style="cursor:pointer;color:#C0392B;" title="Šalinti eilutę" onclick="EDIT['${sec}'].splice(${i},1);renderEdit('${sec}')">✕</span></td>`; }
+
+    window.renderEdit = function(sec){
+      const body = { fin:'finBody', emp:'empBody', debt:'debtBody', court:'courtBody' }[sec];
+      const rows = EDIT[sec];
+      if(!rows.length){ $(body).innerHTML = `<tr><td colspan="9" class="muted" style="padding:10px;">Įrašų nėra${PERM_LEVEL==='full'?' — spauskite „+ Pridėti"':''}</td></tr>`; return; }
+      $(body).innerHTML = rows.map((r,i)=>{
+        if(sec==='fin') return `<tr><td>${inp(sec,i,'metai',r.metai,'text','2025')}</td><td>${inp(sec,i,'pardavimo_pajamos',r.pardavimo_pajamos,'text','€')}</td><td>${inp(sec,i,'grynasis_pelnas',r.grynasis_pelnas,'text','€')}</td><td>${inp(sec,i,'turtas',r.turtas,'text','€')}</td><td>${inp(sec,i,'nuosavas_kapitalas',r.nuosavas_kapitalas,'text','€')}</td><td>${inp(sec,i,'isipareigojimai',r.isipareigojimai,'text','€')}</td><td>${inp(sec,i,'pastabos',r.pastabos)}</td>${delBtn(sec,i)}</tr>`;
+        if(sec==='emp') return `<tr><td>${inp(sec,i,'data',r.data,'date')}</td><td>${inp(sec,i,'darbuotoju_sk',r.darbuotoju_sk,'text','sk.')}</td><td>${inp(sec,i,'pokytis',r.pokytis,'text','+/-')}</td><td>${inp(sec,i,'pastabos',r.pastabos)}</td>${delBtn(sec,i)}</tr>`;
+        if(sec==='debt') return `<tr><td>${inp(sec,i,'data',r.data,'date')}</td><td>${inp(sec,i,'sodra',r.sodra,'text','€')}</td><td>${inp(sec,i,'vmi',r.vmi,'text','€')}</td><td>${inp(sec,i,'kita',r.kita,'text','€')}</td><td>${inp(sec,i,'pastabos',r.pastabos)}</td>${delBtn(sec,i)}</tr>`;
+        return `<tr><td>${inp(sec,i,'data',r.data,'date')}</td><td>${inp(sec,i,'teismas',r.teismas)}</td><td>${inp(sec,i,'bylos_nr',r.bylos_nr)}</td><td>${inp(sec,i,'aprasymas',r.aprasymas)}</td><td>${inp(sec,i,'busena',r.busena,'text','pvz., nagrinėjama')}</td>${delBtn(sec,i)}</tr>`;
+      }).join('');
+    };
+    window.addRow = function(sec){
+      if(PERM_LEVEL!=='full') return;
+      EDIT[sec].push(JSON.parse(JSON.stringify(EMPTY_ROWS[sec])));
+      renderEdit(sec);
+    };
+
+    async function saveCard(){
+      if(!CURRENT || PERM_LEVEL!=='full') return;
+      if(!CURRENT.code){ $('cardMsg').innerHTML='<div class="error">Šis skelbimas neturi įmonės kodo — kortelės išsaugoti negalima.</div>'; return; }
+      const clean = arr => arr.filter(r => Object.values(r).some(v => String(v||'').trim()!==''));
+      const row = {
+        company_code: CURRENT.code,
+        company_name: CURRENT.name,
+        financial_data: clean(EDIT.fin),
+        employees_data: clean(EDIT.emp),
+        state_debts: clean(EDIT.debt),
+        court_cases: clean(EDIT.court),
+        notes: $('ccNotes').value.trim() || null,
+        updated_at: new Date().toISOString(),
+        updated_by: CURRENT_UID
+      };
+      const { error } = await sb.from('avnis_company_profiles').upsert(row, { onConflict:'company_code' });
+      if(error){ $('cardMsg').innerHTML='<div class="error">Nepavyko išsaugoti: '+esc(error.message)+'</div>'; return; }
+      PROFILES[CURRENT.code] = { ...(PROFILES[CURRENT.code]||{}), ...row };
+      CURRENT.profile = PROFILES[CURRENT.code];
+      CURRENT.hasProfile = true;
+      $('cardMsg').innerHTML='<div class="success">✅ Kortelė išsaugota.</div>';
+      $('ccUpdated').textContent = 'Paskutinį kartą atnaujinta: '+fmtDT(row.updated_at);
+      setTimeout(()=>{ $('cardMsg').innerHTML=''; }, 3000);
+    }
+    $('saveCardBtn').onclick = saveCard;
+    $('saveCardBtn2').onclick = saveCard;
+
+    boot();
+  </script>
+</body>
+</html>
