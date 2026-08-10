@@ -17,7 +17,7 @@
     .btn { background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; }
     .btn:hover { background:var(--navy2); } .btn:disabled { opacity:.55; cursor:not-allowed; }
     .btn-ghost { background:#fff; color:var(--navy); border:1px solid var(--navy); }
-    .btn-gold { background:var(--gold); color:var(--navy); } .btn-danger { background:#C0392B; }
+    .btn-gold { background:var(--gold); color:var(--navy); } .btn-danger { background:#C0392B; color:#fff; }
     .btn-sm { padding:6px 12px; font-size:13px; }
     .input,.textarea,.select { width:100%; padding:10px 12px; border:1px solid var(--bd); border-radius:6px; font-size:14px; font-family:inherit; background:#fff; }
     .input:focus,.textarea:focus,.select:focus { outline:none; border-color:var(--gold); }
@@ -27,8 +27,8 @@
     .success { background:#E8F8F0; color:#1E8449; border:1px solid #ABEBC6; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
     .hidden { display:none !important; } .center { text-align:center; } .muted { color:var(--gray); font-size:13px; }
     table { width:100%; border-collapse:collapse; font-size:14px; }
-    th { text-align:left; background:var(--light); padding:10px 12px; border-bottom:2px solid var(--bd); font-size:12px; color:var(--gray); text-transform:uppercase; }
-    td { padding:10px 12px; border-bottom:1px solid #F0F0F0; vertical-align:top; }
+    th { text-align:left; background:var(--light); padding:9px 12px; border-bottom:2px solid var(--bd); font-size:12px; color:var(--gray); text-transform:uppercase; }
+    td { padding:9px 12px; border-bottom:1px solid #F0F0F0; vertical-align:top; }
     tr:hover td { background:#FBFAF6; }
     .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
     .badge-green { background:#E8F8F0; color:#1E8449; } .badge-gray { background:#EEE; color:#777; } .badge-gold { background:#FBF3DF; color:#9A7B24; }
@@ -41,17 +41,32 @@
     .spinner { border:3px solid #eee; border-top:3px solid var(--gold); border-radius:50%; width:28px; height:28px; animation:spin 1s linear infinite; margin:20px auto; }
     @keyframes spin { to { transform:rotate(360deg); } }
     .hint { font-size:12px; color:var(--gray); margin-top:3px; }
-    .sec-title { color:var(--navy); font-size:15px; font-weight:700; margin:18px 0 4px; border-bottom:1px solid var(--bd); padding-bottom:5px; }
-    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:18px; }
+    .sec-title { color:var(--navy); font-size:15px; font-weight:700; margin:0 0 10px; border-bottom:1px solid var(--bd); padding-bottom:6px; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:18px; }
     .stat-card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:14px 16px; }
     .stat-card .v { font-size:24px; font-weight:700; color:var(--navy); }
     .stat-card .l { font-size:12px; color:var(--gray); }
     .clickable { cursor:pointer; }
-    .etable input, .etable select { padding:6px 8px; font-size:13px; border:1px solid var(--bd); border-radius:5px; width:100%; font-family:inherit; }
-    .etable td { padding:5px 6px; }
-    .etable th { padding:7px 8px; }
-    body.perm-view .full-only { display:none !important; }
     .newmark { background:#FFF8E1; }
+    .kv { display:grid; grid-template-columns:1fr 1fr; gap:8px 20px; }
+    .kv > div { display:flex; justify-content:space-between; gap:10px; border-bottom:1px dotted #eee; padding:4px 0; }
+    .kv .k { color:var(--gray); font-size:13px; } .kv .v2 { font-weight:600; text-align:right; }
+    .pivot th, .pivot td { text-align:right; white-space:nowrap; }
+    .pivot th:first-child, .pivot td:first-child { text-align:left; position:sticky; left:0; background:#fff; font-weight:600; color:var(--navy); }
+    .pivot thead th { text-align:right; }
+    .toggle { display:inline-flex; align-items:center; gap:6px; cursor:pointer; user-select:none; font-size:13px; font-weight:600; padding:6px 12px; border-radius:20px; border:1px solid var(--bd); }
+    .toggle.on { background:#FBF3DF; color:#9A7B24; border-color:var(--gold); }
+    .note { border:1px solid var(--bd); border-radius:8px; padding:12px 14px; margin-bottom:10px; background:#fff; }
+    .note .meta { font-size:12px; color:var(--gray); margin-bottom:5px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .note .txt { white-space:pre-wrap; font-size:14px; }
+    .note .att { margin-top:8px; font-size:13px; }
+    .noteActions { display:flex; gap:6px; }
+    .chart-wrap { position:relative; height:280px; margin-top:6px; }
+    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; z-index:100; overflow:auto; }
+    .modal { background:#fff; border-radius:12px; max-width:640px; width:100%; padding:24px; }
+    .etable input, .etable select { padding:6px 8px; font-size:13px; border:1px solid var(--bd); border-radius:5px; width:100%; font-family:inherit; }
+    .etable td { padding:5px 6px; } .etable th { padding:7px 8px; }
+    body.perm-view .full-only { display:none !important; }
   </style>
 </head>
 <body>
@@ -67,7 +82,6 @@
 
   <div class="container">
 
-    <!-- LOGIN -->
     <div id="loginView" class="card hidden" style="max-width:420px;margin:60px auto;">
       <h2 style="color:var(--navy);font-size:20px;margin-bottom:12px;">Administratoriaus prisijungimas</h2>
       <label class="label">El. paštas</label><input id="loginEmail" class="input" type="email">
@@ -78,14 +92,14 @@
 
     <div id="loadingView" class="card center"><div class="spinner"></div><div class="muted">Kraunama…</div></div>
 
-    <!-- SĄRAŠO VAIZDAS -->
+    <!-- SĄRAŠAS -->
     <div id="listView" class="hidden">
-
       <div class="stat-grid">
         <div class="stat-card"><div class="v" id="stCompanies">—</div><div class="l">Įmonių iš viso</div></div>
-        <div class="stat-card"><div class="v" id="stValid">—</div><div class="l">Su galiojančiu skelbimu</div></div>
+        <div class="stat-card"><div class="v" id="stValid">—</div><div class="l">Su galiojančiu</div></div>
         <div class="stat-card"><div class="v" id="stExpired">—</div><div class="l">Tik pasibaigę</div></div>
         <div class="stat-card"><div class="v" id="stRepeat">—</div><div class="l">🔁 Pasikartojančios</div></div>
+        <div class="stat-card"><div class="v" id="stMon">—</div><div class="l">⭐ Stebimos</div></div>
         <div class="stat-card"><div class="v" id="stNew">—</div><div class="l">🆕 Naujos (48 val.)</div></div>
       </div>
 
@@ -103,24 +117,27 @@
           <div class="tab" data-f="valid">Su galiojančiu</div>
           <div class="tab" data-f="expired">Tik pasibaigę</div>
           <div class="tab" data-f="repeat">🔁 Pasikartojančios</div>
+          <div class="tab" data-f="monitored">⭐ Stebimos</div>
           <div class="tab" data-f="new">🆕 Naujos</div>
         </div>
 
         <input id="searchBox" class="input" placeholder="🔍 Ieškoti pagal įmonės pavadinimą, kodą, teismą, bylos nr…" style="margin-bottom:12px;max-width:520px;">
+        <div class="muted" id="listCount" style="margin-bottom:8px;"></div>
 
         <div id="listMsg"></div>
         <div style="overflow-x:auto;">
           <table>
             <thead><tr>
-              <th>Įmonė</th><th>Kodas</th><th class="center">Skelbimų</th><th>Naujausia stadija</th><th>Teismas</th><th>Paskutinis skelbimas</th><th>Būsena</th><th>Kortelė</th>
+              <th style="width:34px;"></th><th>Įmonė</th><th>Kodas</th><th class="center">Skelbimų</th><th>Naujausia stadija</th><th>Teismas</th><th>Paskutinis skelbimas</th><th>Būsena</th><th>Kortelė</th>
             </tr></thead>
             <tbody id="listBody"></tbody>
           </table>
         </div>
+        <div id="pager" class="center" style="margin-top:12px;"></div>
       </div>
     </div>
 
-    <!-- ĮMONĖS KORTELĖS VAIZDAS -->
+    <!-- ĮMONĖS KORTELĖ -->
     <div id="cardView" class="hidden">
       <div class="crumb" id="backToList">← Visos įmonės</div>
 
@@ -131,19 +148,48 @@
             <div class="muted" id="ccMeta">—</div>
             <div id="ccRepeat" style="margin-top:8px;"></div>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <span class="toggle full-only" id="monToggle">☆ Nestebima</span>
             <button class="btn btn-sm full-only" id="okredoFetchBtn" style="background:#0369A1;">⬇️ Surinkti iš Okredo</button>
             <a id="okredoLink" class="btn btn-ghost btn-sm" target="_blank" rel="noopener" style="text-decoration:none;">🔗 Atidaryti Okredo</a>
-            <button class="btn btn-gold btn-sm full-only" id="saveCardBtn">💾 Išsaugoti kortelę</button>
+            <button class="btn btn-gold btn-sm full-only" id="saveCardBtn">💾 Išsaugoti duomenis</button>
           </div>
         </div>
         <div id="cardMsg"></div>
       </div>
 
+      <!-- PASTABOS -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="sec-title" style="margin:0;border:none;padding:0;">📝 Pastabos</div>
+          <button class="btn btn-sm full-only" id="addNoteBtn">➕ Įvesti naują pastabą</button>
+        </div>
+        <div id="noteFormWrap" class="hidden" style="margin-top:12px;border:1px dashed var(--gold);border-radius:8px;padding:14px;background:#FFFDF5;">
+          <input type="hidden" id="noteEditId">
+          <label class="label" style="margin-top:0;">Pastaba</label>
+          <textarea id="noteText" class="textarea" placeholder="Aktuali informacija…"></textarea>
+          <label class="label">Prisegti dokumentą (nebūtina)</label>
+          <input type="file" id="noteFile" class="input">
+          <div id="noteExistingFile" class="hint" style="margin-top:6px;"></div>
+          <div id="noteFormMsg"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn btn-sm" id="noteSaveBtn">💾 Išsaugoti pastabą</button>
+            <button class="btn btn-ghost btn-sm" id="noteCancelBtn">Atšaukti</button>
+          </div>
+        </div>
+        <div id="notesList" style="margin-top:14px;"></div>
+      </div>
+
+      <!-- KRITERIJAI (iš AVNIS) -->
+      <div class="card" id="criteriaCard">
+        <div class="sec-title">⚖️ Kriterijai (iš AVNIS skelbimo)</div>
+        <div id="criteriaBody"></div>
+      </div>
+
       <!-- SKELBIMŲ ISTORIJA -->
       <div class="card">
-        <div class="sec-title" style="margin-top:0;">📜 Skelbimų istorija AVNIS sistemoje</div>
-        <div class="hint" style="margin-bottom:8px;">Visi šios įmonės skelbimai, surinkti iš AVNIS (nauji papildomi automatiškai kiekvieną rytą). Jei skelbimų daugiau nei vienas — skelbimas kartojasi.</div>
+        <div class="sec-title">📜 Skelbimų istorija AVNIS sistemoje</div>
+        <div class="hint" style="margin-bottom:8px;">Visi šios įmonės skelbimai (nauji papildomi kiekvieną rytą). Jei skelbimų daugiau nei vienas — skelbimas kartojasi.</div>
         <div style="overflow-x:auto;">
           <table>
             <thead><tr><th>#</th><th>Galioja nuo</th><th>Galioja iki</th><th>Proceso stadija</th><th>Teismas</th><th>Bylos Nr.</th><th>Teisėjas</th><th>Būsena</th></tr></thead>
@@ -155,79 +201,78 @@
       <!-- FINANSINIAI DUOMENYS -->
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div class="sec-title" style="margin-top:0;border:none;padding:0;">💰 Finansiniai duomenys</div>
-          <button class="btn btn-sm btn-ghost full-only" onclick="addRow('fin')">+ Pridėti metus</button>
+          <div class="sec-title" style="margin:0;border:none;padding:0;">💰 Finansiniai duomenys</div>
+          <button class="btn btn-sm btn-ghost full-only" onclick="toggleEdit('fin')">✏️ Redaguoti</button>
         </div>
-        <div class="hint" style="margin-bottom:8px;">Duomenys iš Okredo ar kitų šaltinių. Sumos eurais.</div>
-        <div style="overflow-x:auto;">
-          <table class="etable">
-            <thead><tr><th style="width:90px;">Metai</th><th>Pardavimo pajamos</th><th>Grynasis pelnas</th><th>Turtas</th><th>Nuosavas kapitalas</th><th>Įsipareigojimai</th><th>Pastabos</th><th class="full-only" style="width:40px;"></th></tr></thead>
-            <tbody id="finBody"></tbody>
-          </table>
+        <div class="hint" style="margin-bottom:8px;">Duomenys pagal metus (stulpeliais). Sumos eurais. Užpildoma iš Okredo arba ranka.</div>
+        <div id="finView" style="overflow-x:auto;"></div>
+        <div id="finEdit" class="hidden" style="overflow-x:auto;margin-top:10px;">
+          <table class="etable"><thead><tr><th style="width:80px;">Metai</th><th>Pardavimo pajamos</th><th>Grynasis pelnas</th><th>Turtas</th><th>Nuosavas kapitalas</th><th>Įsipareigojimai</th><th>Pastabos</th><th style="width:30px;"></th></tr></thead><tbody id="finBody"></tbody></table>
+          <button class="btn btn-sm btn-ghost" style="margin-top:8px;" onclick="addRow('fin')">+ Pridėti metus</button>
         </div>
+        <div class="chart-wrap"><canvas id="finChart"></canvas></div>
+      </div>
+
+      <!-- NEMOKUMO VERTINIMAS -->
+      <div class="card">
+        <div class="sec-title">🧭 Nemokumo vertinimas — turto ir skolų santykis (1:2)</div>
+        <div class="hint" style="margin-bottom:8px;">Pagal LR juridinių asmenų nemokumo įstatymą įmonė laikoma nemoki, kai pradelsti įsipareigojimai viršija <b>1/2 turto vertės</b> (skolos/turtas &gt; 0,5). Grafike: turtas ir įsipareigojimai pagal metus, punktyras — nemokumo riba (½ turto). Raudoni metai — santykis viršija ribą.</div>
+        <div class="chart-wrap"><canvas id="insolvChart"></canvas></div>
+        <div id="insolvSummary" style="margin-top:8px;"></div>
       </div>
 
       <!-- DARBUOTOJAI -->
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div class="sec-title" style="margin-top:0;border:none;padding:0;">👥 Darbuotojų pasikeitimas</div>
-          <button class="btn btn-sm btn-ghost full-only" onclick="addRow('emp')">+ Pridėti įrašą</button>
+          <div class="sec-title" style="margin:0;border:none;padding:0;">👥 Darbuotojų pasikeitimas</div>
+          <button class="btn btn-sm btn-ghost full-only" onclick="toggleEdit('emp')">✏️ Redaguoti</button>
         </div>
-        <div style="overflow-x:auto;">
-          <table class="etable">
-            <thead><tr><th style="width:130px;">Data</th><th style="width:140px;">Darbuotojų sk.</th><th style="width:140px;">Pokytis</th><th>Pastabos</th><th class="full-only" style="width:40px;"></th></tr></thead>
-            <tbody id="empBody"></tbody>
-          </table>
+        <div class="hint" style="margin-bottom:8px;">Pagal periodus (stulpeliais).</div>
+        <div id="empView" style="overflow-x:auto;"></div>
+        <div id="empEdit" class="hidden" style="overflow-x:auto;margin-top:10px;">
+          <table class="etable"><thead><tr><th style="width:130px;">Data</th><th style="width:150px;">Darbuotojų sk.</th><th style="width:130px;">Pokytis</th><th>Pastabos</th><th style="width:30px;"></th></tr></thead><tbody id="empBody"></tbody></table>
+          <button class="btn btn-sm btn-ghost" style="margin-top:8px;" onclick="addRow('emp')">+ Pridėti įrašą</button>
         </div>
+        <div class="chart-wrap"><canvas id="empChart"></canvas></div>
       </div>
 
       <!-- SKOLOS VALSTYBEI -->
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div class="sec-title" style="margin-top:0;border:none;padding:0;">🏛️ Skolos valstybei</div>
-          <button class="btn btn-sm btn-ghost full-only" onclick="addRow('debt')">+ Pridėti įrašą</button>
+          <div class="sec-title" style="margin:0;border:none;padding:0;">🏛️ Skolos valstybei</div>
+          <button class="btn btn-sm btn-ghost full-only" onclick="toggleEdit('debt')">✏️ Redaguoti</button>
         </div>
-        <div class="hint" style="margin-bottom:8px;">Sodros, VMI ir kitos skolos valstybei (EUR) nurodytai datai.</div>
-        <div style="overflow-x:auto;">
-          <table class="etable">
-            <thead><tr><th style="width:130px;">Data</th><th>Sodra</th><th>VMI</th><th>Kita</th><th>Pastabos</th><th class="full-only" style="width:40px;"></th></tr></thead>
-            <tbody id="debtBody"></tbody>
-          </table>
+        <div class="hint" style="margin-bottom:8px;">Sodra, VMI ir kt. (EUR) pagal periodus (stulpeliais).</div>
+        <div id="debtView" style="overflow-x:auto;"></div>
+        <div id="debtEdit" class="hidden" style="overflow-x:auto;margin-top:10px;">
+          <table class="etable"><thead><tr><th style="width:130px;">Data</th><th>Sodra</th><th>VMI</th><th>Kita</th><th>Pastabos</th><th style="width:30px;"></th></tr></thead><tbody id="debtBody"></tbody></table>
+          <button class="btn btn-sm btn-ghost" style="margin-top:8px;" onclick="addRow('debt')">+ Pridėti įrašą</button>
         </div>
+        <div class="chart-wrap"><canvas id="debtChart"></canvas></div>
       </div>
 
       <!-- TEISMAI -->
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div class="sec-title" style="margin-top:0;border:none;padding:0;">⚖️ Teismai ir bylos</div>
-          <button class="btn btn-sm btn-ghost full-only" onclick="addRow('court')">+ Pridėti bylą</button>
+          <div class="sec-title" style="margin:0;border:none;padding:0;">⚖️ Teismai ir bylos</div>
+          <button class="btn btn-sm btn-ghost full-only" onclick="toggleEdit('court')">✏️ Redaguoti</button>
         </div>
-        <div class="hint" style="margin-bottom:8px;">Kiti teisminiai procesai (be AVNIS skelbimų, kurie rodomi viršuje automatiškai).</div>
-        <div style="overflow-x:auto;">
-          <table class="etable">
-            <thead><tr><th style="width:130px;">Data</th><th>Teismas</th><th style="width:160px;">Bylos Nr.</th><th>Aprašymas</th><th style="width:130px;">Būsena</th><th class="full-only" style="width:40px;"></th></tr></thead>
-            <tbody id="courtBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- PASTABOS -->
-      <div class="card">
-        <div class="sec-title" style="margin-top:0;">📝 Pastabos</div>
-        <textarea id="ccNotes" class="textarea" placeholder="Laisvos pastabos apie įmonę…"></textarea>
-        <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button class="btn btn-gold full-only" id="saveCardBtn2">💾 Išsaugoti kortelę</button>
-          <span class="muted" id="ccUpdated"></span>
+        <div id="courtView" style="overflow-x:auto;"></div>
+        <div id="courtEdit" class="hidden" style="overflow-x:auto;margin-top:10px;">
+          <table class="etable"><thead><tr><th style="width:120px;">Data</th><th>Teismas</th><th style="width:150px;">Bylos Nr.</th><th>Aprašymas</th><th style="width:120px;">Būsena</th><th style="width:30px;"></th></tr></thead><tbody id="courtBody"></tbody></table>
+          <button class="btn btn-sm btn-ghost" style="margin-top:8px;" onclick="addRow('court')">+ Pridėti bylą</button>
         </div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const NOTES_BUCKET = 'avnis-notes';
 
     const $ = id => document.getElementById(id);
     const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -236,53 +281,55 @@
     function views(v){ ['loginView','loadingView','listView','cardView'].forEach(hide); show(v); }
     const fmtD = s => s ? String(s).slice(0,10) : '—';
     const fmtDT = s => s ? new Date(s).toLocaleString('lt-LT',{dateStyle:'short',timeStyle:'short'}) : '—';
-    const fmtEur = v => (v===''||v==null||isNaN(Number(v))) ? '' : Number(v).toLocaleString('lt-LT');
 
-    // ---------- BŪSENA ----------
-    let PERM_LEVEL='full', ANN=[], PROFILES={}, COMPANIES=[], FILTER='all', SEARCH='', CURRENT=null, CURRENT_UID=null;
-    window.BUILD_VERSION='avnis-2026-08-08b-okredo';
+    // ---- SKAIČIŲ FORMATAS: tūkstančiai atskiriami tašku, dešimtainė — kablelis ----
+    function fmtNum(v, dec){
+      if(v===''||v==null) return '';
+      const n = typeof v==='number' ? v : Number(String(v).replace(/\s/g,'').replace(',','.'));
+      if(!isFinite(n)) return esc(String(v));
+      const neg = n<0; let x = Math.abs(n);
+      let s;
+      if(dec!=null){ s = x.toFixed(dec); } else { s = (Math.round(x*100)/100).toString(); }
+      let [ip, dp] = s.split('.');
+      ip = ip.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      let out = ip + (dp && Number(dp)!==0 ? (','+dp) : '');
+      return (neg?'−':'')+out;
+    }
+    const fmtEur = v => { const s = fmtNum(v); return s===''?'—':s+' €'; };
+
+    let PERM_LEVEL='full', ANN=[], PROFILES={}, NOTES=[], COMPANIES=[], FILTER='all', SEARCH='', CURRENT=null, CURRENT_UID=null, PAGE=0;
+    const PAGE_SIZE=100;
+    window.BUILD_VERSION='avnis-2026-08-10-v3';
+
+    const JURISDICTION = {1:'Lietuvos (teritorinė)', 2:'Lietuvos (pagrindinė)', 3:'Tarptautinė'};
 
     async function checkModuleAccess(){
-      try{
-        const { data, error } = await sb.rpc('module_access', { p_module:'avnis' });
-        if (error) throw error;
-        PERM_LEVEL = data || 'none';
-      }catch(e){ PERM_LEVEL='none'; }
-      if (PERM_LEVEL === 'none'){
-        document.body.innerHTML = '<div style="max-width:480px;margin:15vh auto;text-align:center;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0B1E3F;"><h2>⛔ Prieiga negalima</h2><p style="color:#6B7280;">Jūsų paskyra neturi prieigos prie šio modulio. Kreipkitės į administratorių.</p><a href="admin.html" style="color:#C9A961;font-weight:600;text-decoration:none;">← Grįžti į pagrindinį</a></div>';
-        return 'none';
-      }
-      if (PERM_LEVEL === 'view') document.body.classList.add('perm-view');
+      try{ const { data, error } = await sb.rpc('module_access', { p_module:'avnis' }); if(error) throw error; PERM_LEVEL = data||'none'; }
+      catch(e){ PERM_LEVEL='none'; }
+      if(PERM_LEVEL==='none'){ document.body.innerHTML='<div style="max-width:480px;margin:15vh auto;text-align:center;font-family:sans-serif;color:#0B1E3F;"><h2>⛔ Prieiga negalima</h2><p style="color:#6B7280;">Jūsų paskyra neturi prieigos prie šio modulio.</p><a href="admin.html" style="color:#C9A961;font-weight:600;">← Grįžti</a></div>'; return 'none'; }
+      if(PERM_LEVEL==='view') document.body.classList.add('perm-view');
       return PERM_LEVEL;
     }
-
     async function boot(){
       try{
         const { data:{ session } } = await sb.auth.getSession();
         if(!session){ views('loginView'); return; }
         if(await checkModuleAccess()==='none') return;
-        CURRENT_UID = session.user.id;
-        $('userEmail').textContent = session.user.email;
+        CURRENT_UID = session.user.id; $('userEmail').textContent = session.user.email;
         await loadData();
-      }catch(err){
-        views('loginView');
-        $('loginError').textContent='Sesijos klaida: '+(err.message||String(err)); show('loginError');
-      }
+      }catch(err){ views('loginView'); $('loginError').textContent='Sesijos klaida: '+(err.message||String(err)); show('loginError'); }
     }
-    $('loginBtn').onclick = async () => {
-      hide('loginError');
+    $('loginBtn').onclick = async () => { hide('loginError');
       const { error } = await sb.auth.signInWithPassword({ email:$('loginEmail').value.trim(), password:$('loginPassword').value });
-      if(error){ $('loginError').textContent='Nepavyko prisijungti: '+error.message; show('loginError'); return; }
-      boot();
-    };
+      if(error){ $('loginError').textContent='Nepavyko prisijungti: '+error.message; show('loginError'); return; } boot(); };
     $('logoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
     $('loginPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') $('loginBtn').click(); });
 
-    // ---------- DUOMENYS ----------
+    // ---------------- DUOMENYS ----------------
     async function loadData(){
       views('loadingView');
       const [a,p,s] = await Promise.all([
-        sb.from('avnis_announcements').select('*').order('date_from',{ascending:false}).limit(5000),
+        sb.from('avnis_announcements').select('id,process_id,company_name,company_code,process_stage_title,company_address,date_from,date_to,court,case_no,judge,is_valid,invalidated_at,first_seen_at,criteria').order('date_to',{ascending:false}).limit(30000),
         sb.from('avnis_company_profiles').select('*'),
         sb.from('avnis_sync_log').select('*').order('id',{ascending:false}).limit(1)
       ]);
@@ -290,225 +337,370 @@
       ANN = a.data||[];
       PROFILES = {}; (p.data||[]).forEach(x=>PROFILES[x.company_code]=x);
       const log = (s.data||[])[0];
-      $('syncInfo').textContent = log
-        ? `Paskutinė sinchronizacija: ${fmtDT(log.run_at)} · ${log.status==='success' ? `✅ (naujų: ${log.new_count}, atnaujinta: ${log.updated_count}, nebegalioja: ${log.invalidated_count})` : '❌ klaida: '+(log.error_message||'')}`
-        : 'Sinchronizacija dar nevykdyta';
-      buildCompanies();
-      renderList();
-      views('listView');
+      $('syncInfo').textContent = log ? `Paskutinė sinchronizacija: ${fmtDT(log.run_at)} · ${log.status==='success'?`✅ (naujų: ${log.new_count}, atnaujinta: ${log.updated_count}, nebegalioja: ${log.invalidated_count})`:'❌ '+(log.error_message||'')}` : 'Sinchronizacija dar nevykdyta';
+      buildCompanies(); renderList(); views('listView');
     }
 
     function buildCompanies(){
-      const map = {};
-      const cutoffNew = Date.now() - 48*3600*1000;
+      const map = {}; const cutoffNew = Date.now() - 48*3600*1000;
       for(const r of ANN){
         const key = r.company_code || ('name:'+r.company_name);
         if(!map[key]) map[key] = { key, code:r.company_code, name:r.company_name, anns:[] };
         map[key].anns.push(r);
       }
       COMPANIES = Object.values(map).map(c=>{
-        c.anns.sort((x,y)=> (y.date_from||'').localeCompare(x.date_from||''));
-        const latest = c.anns[0];
-        c.latest = latest;
-        c.count = c.anns.length;
+        c.anns.sort((x,y)=> (y.date_to||'').localeCompare(x.date_to||''));
+        c.latest = c.anns[0]; c.count = c.anns.length;
         c.hasValid = c.anns.some(x=>x.is_valid);
-        c.isRepeat = c.count > 1;
-        c.isNew = c.anns.some(x=> x.first_seen_at && new Date(x.first_seen_at).getTime() > cutoffNew);
-        c.name = latest.company_name || c.name;
+        c.isRepeat = c.count>1;
+        c.isNew = c.anns.some(x=> x.first_seen_at && new Date(x.first_seen_at).getTime()>cutoffNew);
+        c.name = c.latest.company_name || c.name;
         c.profile = c.code ? PROFILES[c.code] : null;
-        c.hasProfile = !!(c.profile && (c.profile.notes || (c.profile.financial_data||[]).length || (c.profile.employees_data||[]).length || (c.profile.state_debts||[]).length || (c.profile.court_cases||[]).length));
+        c.monitored = !!(c.profile && c.profile.is_monitored);
+        c.hasProfile = !!(c.profile && ((c.profile.financial_data||[]).length||(c.profile.employees_data||[]).length||(c.profile.state_debts||[]).length||(c.profile.court_cases||[]).length));
         return c;
       });
-      COMPANIES.sort((a,b)=> (b.latest.date_from||'').localeCompare(a.latest.date_from||''));
+      COMPANIES.sort((a,b)=> (b.latest.date_to||'').localeCompare(a.latest.date_to||''));
       COMPANIES.forEach((c,i)=>c.idx=i);
-      $('stCompanies').textContent = COMPANIES.length;
-      $('stValid').textContent = COMPANIES.filter(c=>c.hasValid).length;
-      $('stExpired').textContent = COMPANIES.filter(c=>!c.hasValid).length;
-      $('stRepeat').textContent = COMPANIES.filter(c=>c.isRepeat).length;
-      $('stNew').textContent = COMPANIES.filter(c=>c.isNew).length;
+      $('stCompanies').textContent = fmtNum(COMPANIES.length);
+      $('stValid').textContent = fmtNum(COMPANIES.filter(c=>c.hasValid).length);
+      $('stExpired').textContent = fmtNum(COMPANIES.filter(c=>!c.hasValid).length);
+      $('stRepeat').textContent = fmtNum(COMPANIES.filter(c=>c.isRepeat).length);
+      $('stMon').textContent = fmtNum(COMPANIES.filter(c=>c.monitored).length);
+      $('stNew').textContent = fmtNum(COMPANIES.filter(c=>c.isNew).length);
     }
 
-    function renderList(){
+    function filteredCompanies(){
       let rows = COMPANIES;
-      if(FILTER==='valid') rows = rows.filter(c=>c.hasValid);
-      else if(FILTER==='expired') rows = rows.filter(c=>!c.hasValid);
-      else if(FILTER==='repeat') rows = rows.filter(c=>c.isRepeat);
-      else if(FILTER==='new') rows = rows.filter(c=>c.isNew);
-      if(SEARCH){
-        const q = SEARCH.toLowerCase();
-        rows = rows.filter(c =>
-          (c.name||'').toLowerCase().includes(q) ||
-          (c.code||'').toLowerCase().includes(q) ||
-          c.anns.some(a=> (a.court||'').toLowerCase().includes(q) || (a.case_no||'').toLowerCase().includes(q))
-        );
-      }
-      if(!rows.length){ $('listBody').innerHTML = '<tr><td colspan="8" class="muted center" style="padding:24px;">Įrašų nėra</td></tr>'; return; }
-      $('listBody').innerHTML = rows.map(c=>{
-        const l = c.latest;
-        const badges =
-          (c.isNew ? ' <span class="badge badge-gold">🆕 nauja</span>' : '') +
-          (c.isRepeat ? ` <span class="badge badge-purple" title="Šios įmonės skelbimas AVNIS sistemoje buvo skelbtas anksčiau">🔁 kartojasi (${c.count} k.)</span>` : '');
+      if(FILTER==='valid') rows=rows.filter(c=>c.hasValid);
+      else if(FILTER==='expired') rows=rows.filter(c=>!c.hasValid);
+      else if(FILTER==='repeat') rows=rows.filter(c=>c.isRepeat);
+      else if(FILTER==='monitored') rows=rows.filter(c=>c.monitored);
+      else if(FILTER==='new') rows=rows.filter(c=>c.isNew);
+      if(SEARCH){ const q=SEARCH.toLowerCase();
+        rows=rows.filter(c=> (c.name||'').toLowerCase().includes(q) || (c.code||'').toLowerCase().includes(q) || c.anns.some(a=> (a.court||'').toLowerCase().includes(q) || (a.case_no||'').toLowerCase().includes(q))); }
+      return rows;
+    }
+    function renderList(){
+      const rows = filteredCompanies();
+      $('listCount').textContent = 'Rodoma: '+fmtNum(rows.length)+' įmonių';
+      const pages = Math.max(1, Math.ceil(rows.length/PAGE_SIZE));
+      if(PAGE>=pages) PAGE=0;
+      const slice = rows.slice(PAGE*PAGE_SIZE, PAGE*PAGE_SIZE+PAGE_SIZE);
+      if(!slice.length){ $('listBody').innerHTML='<tr><td colspan="9" class="muted center" style="padding:24px;">Įrašų nėra</td></tr>'; $('pager').innerHTML=''; return; }
+      $('listBody').innerHTML = slice.map(c=>{
+        const l=c.latest;
+        const badges = (c.isNew?' <span class="badge badge-gold">🆕</span>':'') + (c.isRepeat?` <span class="badge badge-purple" title="Kartojasi">🔁 ${c.count} k.</span>`:'');
         return `<tr class="clickable ${c.isNew?'newmark':''}" onclick="openCard(${c.idx})">
+          <td class="center">${c.monitored?'<span title="Stebima">⭐</span>':''}</td>
           <td><strong style="color:var(--navy);">${esc(c.name)}</strong>${badges}</td>
-          <td>${esc(c.code||'—')}</td>
-          <td class="center">${c.count}</td>
-          <td>${esc(l.process_stage_title||'—')}</td>
-          <td>${esc(l.court||'—')}</td>
-          <td>${fmtD(l.date_from)} – ${fmtD(l.date_to)}</td>
-          <td>${c.hasValid ? '<span class="badge badge-green">Galioja</span>' : '<span class="badge badge-gray">Pasibaigęs</span>'}</td>
-          <td>${c.hasProfile ? '<span class="badge badge-blue">✓ užpildyta</span>' : '<span class="badge badge-gray">tuščia</span>'}</td>
+          <td>${esc(c.code||'—')}</td><td class="center">${c.count}</td>
+          <td>${esc(l.process_stage_title||'—')}</td><td>${esc(l.court||'—')}</td>
+          <td>${fmtD(l.date_to)}</td>
+          <td>${c.hasValid?'<span class="badge badge-green">Galioja</span>':'<span class="badge badge-gray">Pasibaigęs</span>'}</td>
+          <td>${c.hasProfile?'<span class="badge badge-blue">✓ užpildyta</span>':'<span class="badge badge-gray">tuščia</span>'}</td>
         </tr>`;
       }).join('');
+      let pg=''; if(pages>1){ pg = `<button class="btn btn-ghost btn-sm" ${PAGE<=0?'disabled':''} onclick="setPage(${PAGE-1})">‹ Ankstesnis</button> <span class="muted" style="margin:0 10px;">${PAGE+1} / ${pages}</span> <button class="btn btn-ghost btn-sm" ${PAGE>=pages-1?'disabled':''} onclick="setPage(${PAGE+1})">Kitas ›</button>`; }
+      $('pager').innerHTML = pg;
     }
-
-    $('filterTabs').addEventListener('click', e=>{
-      const t = e.target.closest('.tab'); if(!t) return;
-      document.querySelectorAll('#filterTabs .tab').forEach(x=>x.classList.remove('active'));
-      t.classList.add('active'); FILTER = t.dataset.f; renderList();
-    });
-    $('searchBox').addEventListener('input', e=>{ SEARCH=e.target.value.trim(); renderList(); });
+    window.setPage = p => { PAGE=p; renderList(); window.scrollTo(0,0); };
+    $('filterTabs').addEventListener('click', e=>{ const t=e.target.closest('.tab'); if(!t) return; document.querySelectorAll('#filterTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); FILTER=t.dataset.f; PAGE=0; renderList(); });
+    $('searchBox').addEventListener('input', e=>{ SEARCH=e.target.value.trim(); PAGE=0; renderList(); });
     $('reloadBtn').onclick = () => loadData();
-    $('backToList').onclick = () => { CURRENT=null; views('listView'); };
+    $('backToList').onclick = () => { CURRENT=null; destroyCharts(); views('listView'); renderList(); };
 
-    // ---------- ĮMONĖS KORTELĖ ----------
-    const EMPTY_ROWS = { fin:{metai:'',pardavimo_pajamos:'',grynasis_pelnas:'',turtas:'',nuosavas_kapitalas:'',isipareigojimai:'',pastabos:''},
-                        emp:{data:'',darbuotoju_sk:'',pokytis:'',pastabos:''},
-                        debt:{data:'',sodra:'',vmi:'',kita:'',pastabos:''},
-                        court:{data:'',teismas:'',bylos_nr:'',aprasymas:'',busena:''} };
+    // ---------------- KORTELĖ ----------------
+    const EMPTY = { fin:{metai:'',pardavimo_pajamos:'',grynasis_pelnas:'',turtas:'',nuosavas_kapitalas:'',isipareigojimai:'',pastabos:''},
+                    emp:{data:'',darbuotoju_sk:'',pokytis:'',pastabos:''}, debt:{data:'',sodra:'',vmi:'',kita:'',pastabos:''},
+                    court:{data:'',teismas:'',bylos_nr:'',aprasymas:'',busena:''} };
     let EDIT = { fin:[], emp:[], debt:[], court:[] };
+    let CHARTS = {};
+    function destroyCharts(){ Object.values(CHARTS).forEach(c=>{ try{c.destroy();}catch(_){} }); CHARTS={}; }
 
-    window.openCard = function(idx){
-      const c = COMPANIES[idx]; if(!c) return;
-      CURRENT = c;
+    window.openCard = async function(idx){
+      const c = COMPANIES[idx]; if(!c) return; CURRENT=c;
       $('ccName').textContent = c.name;
-      const l = c.latest;
+      const l=c.latest;
       $('ccMeta').innerHTML = `Įmonės kodas: <b>${esc(c.code||'—')}</b> · ${esc(l.company_address||'')}`;
-      $('ccRepeat').innerHTML = c.isRepeat
-        ? `<span class="badge badge-purple">🔁 Skelbimas kartojasi — AVNIS sistemoje ši įmonė skelbta ${c.count} kartus</span>`
-        : `<span class="badge badge-gray">Vienintelis skelbimas</span>`;
-      $('okredoLink').href = 'https://okredo.com/lt-lt/ieskoti?q=' + encodeURIComponent(c.code || c.name);
+      $('ccRepeat').innerHTML = c.isRepeat ? `<span class="badge badge-purple">🔁 Skelbimas kartojasi — AVNIS sistemoje ši įmonė skelbta ${c.count} kartus</span>` : `<span class="badge badge-gray">Vienintelis skelbimas</span>`;
+      $('okredoLink').href = 'https://okredo.com/lt-lt/ieskoti?q='+encodeURIComponent(c.code||c.name);
+      setMonitorUI(c.monitored);
+      // istorija
       $('annBody').innerHTML = c.anns.map((a,i)=>`<tr>
-        <td>${c.anns.length-i}</td>
-        <td>${fmtD(a.date_from)}</td><td>${fmtD(a.date_to)}</td>
-        <td>${esc(a.process_stage_title||'—')}</td>
-        <td>${esc(a.court||'—')}</td><td>${esc(a.case_no||'—')}</td><td>${esc(a.judge||'—')}</td>
-        <td>${a.is_valid ? '<span class="badge badge-green">Galioja</span>' : `<span class="badge badge-gray">Nebegalioja${a.invalidated_at?' nuo '+fmtD(a.invalidated_at):''}</span>`}</td>
-      </tr>`).join('');
-      const p = c.profile || {};
-      EDIT.fin   = JSON.parse(JSON.stringify(p.financial_data || []));
-      EDIT.emp   = JSON.parse(JSON.stringify(p.employees_data || []));
-      EDIT.debt  = JSON.parse(JSON.stringify(p.state_debts || []));
-      EDIT.court = JSON.parse(JSON.stringify(p.court_cases || []));
-      $('ccNotes').value = p.notes || '';
-      $('ccUpdated').textContent = p.updated_at ? ('Paskutinį kartą atnaujinta: '+fmtDT(p.updated_at)) : 'Kortelė dar nepildyta';
+        <td>${c.anns.length-i}</td><td>${fmtD(a.date_from)}</td><td>${fmtD(a.date_to)}</td>
+        <td>${esc(a.process_stage_title||'—')}</td><td>${esc(a.court||'—')}</td><td>${esc(a.case_no||'—')}</td><td>${esc(a.judge||'—')}</td>
+        <td>${a.is_valid?'<span class="badge badge-green">Galioja</span>':`<span class="badge badge-gray">Nebegalioja${a.invalidated_at?' nuo '+fmtD(a.invalidated_at):''}</span>`}</td></tr>`).join('');
+      renderCriteria(c);
+      // profilio duomenys
+      const pr = c.profile||{};
+      EDIT.fin = JSON.parse(JSON.stringify(pr.financial_data||[]));
+      EDIT.emp = JSON.parse(JSON.stringify(pr.employees_data||[]));
+      EDIT.debt = JSON.parse(JSON.stringify(pr.state_debts||[]));
+      EDIT.court = JSON.parse(JSON.stringify(pr.court_cases||[]));
+      ['fin','emp','debt','court'].forEach(sec=>{ $(sec+'Edit').classList.add('hidden'); renderEdit(sec); });
+      renderAllViews();
       $('cardMsg').innerHTML='';
-      ['fin','emp','debt','court'].forEach(renderEdit);
-      views('cardView');
-      window.scrollTo(0,0);
+      views('cardView'); window.scrollTo(0,0);
+      loadNotes(c.code);
     };
 
-    function inp(sec,i,field,val,type,ph){
-      return `<input type="${type||'text'}" value="${esc(val)}" placeholder="${ph||''}" ${PERM_LEVEL!=='full'?'disabled':''} onchange="EDIT['${sec}'][${i}]['${field}']=this.value">`;
+    // ---- KRITERIJAI ----
+    function renderCriteria(c){
+      const withCrit = c.anns.find(a=>a.criteria) ;
+      const cr = withCrit ? withCrit.criteria : null;
+      if(!cr){ $('criteriaBody').innerHTML='<div class="muted">Šiam skelbimui kriterijų duomenų AVNIS nepateikė.</div>'; return; }
+      const rizika = cr.isAdministrativeCostsRisk ? '<span class="badge badge-red">Taip</span>' : '<span class="badge badge-gray">Ne</span>';
+      const jur = JURISDICTION[cr.juristictionId] || (cr.juristictionId!=null?('ID '+cr.juristictionId):'—');
+      const row=(k,v)=>`<div><span class="k">${k}</span><span class="v2">${v}</span></div>`;
+      $('criteriaBody').innerHTML = `
+        <div style="font-weight:700;color:var(--navy);margin:4px 0 6px;">Administratoriaus atlygis</div>
+        <div class="kv">
+          ${row('Administravimo rizika', rizika)}
+          ${row('Bazinis atlygis', fmtEur(cr.baseSalary))}
+        </div>
+        <div style="font-weight:700;color:var(--navy);margin:14px 0 6px;">Juridinį asmenį apibūdinantys kriterijai</div>
+        <div class="kv">
+          ${row('Dydis', esc(cr.companySize||'—'))}
+          ${row('Turto duomenų data', fmtD(cr.dataDate))}
+          ${row('Turtas iš viso', fmtEur(cr.totalProperty))}
+          ${row('Nekilnojamasis turtas', fmtEur(cr.realProperty))}
+          ${row('Kilnojamasis turtas', fmtEur(cr.movableProperty))}
+          ${row('Nematerialusis turtas', fmtEur(cr.intangibleProperty))}
+          ${row('Gautinos sumos', fmtEur(cr.incomes))}
+          ${row('Kitas turtas', fmtEur(cr.otherProperty))}
+          ${row('Kreditorių duomenų data', fmtD(cr.creditDataDate))}
+          ${row('Kreditorių reikalavimų dydis', fmtEur(cr.creditorClaimsSum))}
+          ${row('Kreditorių skaičius', cr.creditorCount!=null?fmtNum(cr.creditorCount):'—')}
+          ${row('Taikoma jurisdikcija', esc(jur))}
+        </div>`;
     }
-    function delBtn(sec,i){ return `<td class="full-only center"><span style="cursor:pointer;color:#C0392B;" title="Šalinti eilutę" onclick="EDIT['${sec}'].splice(${i},1);renderEdit('${sec}')">✕</span></td>`; }
 
+    // ---- STEBĖJIMO ŽYMA ----
+    function setMonitorUI(on){ const t=$('monToggle'); t.textContent = on?'⭐ Stebima':'☆ Nestebima'; t.classList.toggle('on', !!on); }
+    $('monToggle').onclick = async () => {
+      if(!CURRENT || PERM_LEVEL!=='full') return;
+      if(!CURRENT.code){ $('cardMsg').innerHTML='<div class="error">Įmonė be kodo — stebėti negalima.</div>'; return; }
+      const next = !CURRENT.monitored;
+      setMonitorUI(next);
+      const { error } = await sb.from('avnis_company_profiles').upsert({ company_code:CURRENT.code, company_name:CURRENT.name, is_monitored:next, monitored_at: next?new Date().toISOString():null, monitored_by: next?CURRENT_UID:null, updated_at:new Date().toISOString(), updated_by:CURRENT_UID }, { onConflict:'company_code' });
+      if(error){ setMonitorUI(!next); $('cardMsg').innerHTML='<div class="error">Nepavyko: '+esc(error.message)+'</div>'; return; }
+      CURRENT.monitored = next; PROFILES[CURRENT.code] = { ...(PROFILES[CURRENT.code]||{company_code:CURRENT.code}), is_monitored:next };
+      CURRENT.profile = PROFILES[CURRENT.code];
+      $('stMon').textContent = fmtNum(COMPANIES.filter(x=>x.monitored).length);
+    };
+
+    // ---- PASTABOS ----
+    async function loadNotes(code){
+      $('notesList').innerHTML='<div class="muted">Kraunama…</div>';
+      if(!code){ $('notesList').innerHTML='<div class="muted">Įmonė be kodo — pastabos negalimos.</div>'; return; }
+      const { data, error } = await sb.from('avnis_company_notes').select('*').eq('company_code', code).order('created_at',{ascending:false});
+      if(error){ $('notesList').innerHTML='<div class="error">Klaida: '+esc(error.message)+'</div>'; return; }
+      NOTES = data||[]; renderNotes();
+    }
+    function renderNotes(){
+      if(!NOTES.length){ $('notesList').innerHTML='<div class="muted">Pastabų dar nėra.</div>'; return; }
+      $('notesList').innerHTML = NOTES.map(n=>`<div class="note">
+        <div class="meta"><span>🕒 ${fmtDT(n.created_at)}${n.updated_at&&n.updated_at!==n.created_at?' · redaguota '+fmtDT(n.updated_at):''}</span>
+          <span class="noteActions full-only">
+            <button class="btn btn-ghost btn-sm" onclick="editNote(${n.id})">✏️</button>
+            <button class="btn btn-ghost btn-sm" style="color:#C0392B;" onclick="delNote(${n.id})">🗑️</button>
+          </span></div>
+        <div class="txt">${esc(n.note_text)}</div>
+        ${n.file_path?`<div class="att">📎 <a href="#" onclick="viewNoteFile('${esc(n.file_path)}');return false;">${esc(n.file_name||'dokumentas')}</a></div>`:''}
+      </div>`).join('');
+    }
+    $('addNoteBtn').onclick = () => { $('noteEditId').value=''; $('noteText').value=''; $('noteFile').value=''; $('noteExistingFile').textContent=''; $('noteFormMsg').innerHTML=''; show('noteFormWrap'); $('noteText').focus(); };
+    $('noteCancelBtn').onclick = () => hide('noteFormWrap');
+    window.editNote = (id) => { const n=NOTES.find(x=>x.id===id); if(!n) return; $('noteEditId').value=id; $('noteText').value=n.note_text; $('noteFile').value=''; $('noteExistingFile').innerHTML = n.file_path?('Dabartinis dokumentas: '+esc(n.file_name||'dokumentas')+' (įkėlus naują — bus pakeistas)'):''; $('noteFormMsg').innerHTML=''; show('noteFormWrap'); $('noteText').focus(); };
+    $('noteSaveBtn').onclick = async () => {
+      if(PERM_LEVEL!=='full' || !CURRENT || !CURRENT.code) return;
+      const txt = $('noteText').value.trim(); const file = $('noteFile').files[0];
+      if(!txt && !file){ $('noteFormMsg').innerHTML='<div class="error">Įveskite pastabą arba prisekite dokumentą.</div>'; return; }
+      const btn=$('noteSaveBtn'); btn.disabled=true; const orig=btn.textContent; btn.textContent='💾 Saugoma…';
+      try{
+        const id = $('noteEditId').value;
+        let file_path=null, file_name=null;
+        if(file){
+          const safe = file.name.replace(/[^a-zA-Z0-9._-]+/g,'_');
+          const path = `${CURRENT.code}/${Date.now()}_${safe}`;
+          const up = await sb.storage.from(NOTES_BUCKET).upload(path, file, { upsert:false });
+          if(up.error) throw up.error;
+          file_path = path; file_name = file.name;
+        }
+        if(id){
+          const patch = { note_text:txt, updated_at:new Date().toISOString() };
+          if(file_path){ patch.file_path=file_path; patch.file_name=file_name; }
+          const { error } = await sb.from('avnis_company_notes').update(patch).eq('id', id);
+          if(error) throw error;
+        } else {
+          const { error } = await sb.from('avnis_company_notes').insert({ company_code:CURRENT.code, note_text:txt, file_path, file_name, created_by:CURRENT_UID });
+          if(error) throw error;
+        }
+        hide('noteFormWrap'); await loadNotes(CURRENT.code);
+        // atnaujinam sąrašo žymą "užpildyta"
+        buildCompanies();
+      }catch(e){ $('noteFormMsg').innerHTML='<div class="error">Nepavyko: '+esc(e.message||String(e))+'</div>'; }
+      finally{ btn.disabled=false; btn.textContent=orig; }
+    };
+    window.delNote = async (id) => {
+      if(PERM_LEVEL!=='full') return;
+      if(!confirm('Ištrinti šią pastabą negrįžtamai?')) return;
+      const n = NOTES.find(x=>x.id===id);
+      if(n && n.file_path){ try{ await sb.storage.from(NOTES_BUCKET).remove([n.file_path]); }catch(_){} }
+      const { error } = await sb.from('avnis_company_notes').delete().eq('id', id);
+      if(error){ alert('Nepavyko ištrinti: '+error.message); return; }
+      await loadNotes(CURRENT.code);
+    };
+    window.viewNoteFile = async (path) => {
+      const { data, error } = await sb.storage.from(NOTES_BUCKET).createSignedUrl(path, 300);
+      if(error){ alert('Nepavyko atidaryti dokumento: '+error.message); return; }
+      window.open(data.signedUrl, '_blank');
+    };
+
+    // ---- REDAGAVIMAS (eilutėmis) ----
+    window.toggleEdit = (sec) => { $(sec+'Edit').classList.toggle('hidden'); };
+    function inp(sec,i,field,val,type,ph){ return `<input type="${type||'text'}" value="${esc(val)}" placeholder="${ph||''}" ${PERM_LEVEL!=='full'?'disabled':''} onchange="EDIT['${sec}'][${i}]['${field}']=this.value;renderAllViews()">`; }
+    function delBtn(sec,i){ return `<td class="center"><span style="cursor:pointer;color:#C0392B;" onclick="EDIT['${sec}'].splice(${i},1);renderEdit('${sec}');renderAllViews()">✕</span></td>`; }
     window.renderEdit = function(sec){
-      const body = { fin:'finBody', emp:'empBody', debt:'debtBody', court:'courtBody' }[sec];
-      const rows = EDIT[sec];
-      if(!rows.length){ $(body).innerHTML = `<tr><td colspan="9" class="muted" style="padding:10px;">Įrašų nėra${PERM_LEVEL==='full'?' — spauskite „+ Pridėti"':''}</td></tr>`; return; }
+      const body={fin:'finBody',emp:'empBody',debt:'debtBody',court:'courtBody'}[sec]; const rows=EDIT[sec];
+      if(!rows.length){ $(body).innerHTML=`<tr><td colspan="8" class="muted" style="padding:10px;">Įrašų nėra${PERM_LEVEL==='full'?' — spauskite „+ Pridėti"':''}</td></tr>`; return; }
       $(body).innerHTML = rows.map((r,i)=>{
         if(sec==='fin') return `<tr><td>${inp(sec,i,'metai',r.metai,'text','2025')}</td><td>${inp(sec,i,'pardavimo_pajamos',r.pardavimo_pajamos,'text','€')}</td><td>${inp(sec,i,'grynasis_pelnas',r.grynasis_pelnas,'text','€')}</td><td>${inp(sec,i,'turtas',r.turtas,'text','€')}</td><td>${inp(sec,i,'nuosavas_kapitalas',r.nuosavas_kapitalas,'text','€')}</td><td>${inp(sec,i,'isipareigojimai',r.isipareigojimai,'text','€')}</td><td>${inp(sec,i,'pastabos',r.pastabos)}</td>${delBtn(sec,i)}</tr>`;
-        if(sec==='emp') return `<tr><td>${inp(sec,i,'data',r.data,'date')}</td><td>${inp(sec,i,'darbuotoju_sk',r.darbuotoju_sk,'text','sk.')}</td><td>${inp(sec,i,'pokytis',r.pokytis,'text','+/-')}</td><td>${inp(sec,i,'pastabos',r.pastabos)}</td>${delBtn(sec,i)}</tr>`;
+        if(sec==='emp') return `<tr><td>${inp(sec,i,'data',r.data,'date')}</td><td>${inp(sec,i,'darbuotoju_sk',r.darbuotoju_sk,'text')}</td><td>${inp(sec,i,'pokytis',r.pokytis,'text')}</td><td>${inp(sec,i,'pastabos',r.pastabos)}</td>${delBtn(sec,i)}</tr>`;
         if(sec==='debt') return `<tr><td>${inp(sec,i,'data',r.data,'date')}</td><td>${inp(sec,i,'sodra',r.sodra,'text','€')}</td><td>${inp(sec,i,'vmi',r.vmi,'text','€')}</td><td>${inp(sec,i,'kita',r.kita,'text','€')}</td><td>${inp(sec,i,'pastabos',r.pastabos)}</td>${delBtn(sec,i)}</tr>`;
-        return `<tr><td>${inp(sec,i,'data',r.data,'date')}</td><td>${inp(sec,i,'teismas',r.teismas)}</td><td>${inp(sec,i,'bylos_nr',r.bylos_nr)}</td><td>${inp(sec,i,'aprasymas',r.aprasymas)}</td><td>${inp(sec,i,'busena',r.busena,'text','pvz., nagrinėjama')}</td>${delBtn(sec,i)}</tr>`;
+        return `<tr><td>${inp(sec,i,'data',r.data,'date')}</td><td>${inp(sec,i,'teismas',r.teismas)}</td><td>${inp(sec,i,'bylos_nr',r.bylos_nr)}</td><td>${inp(sec,i,'aprasymas',r.aprasymas)}</td><td>${inp(sec,i,'busena',r.busena)}</td>${delBtn(sec,i)}</tr>`;
       }).join('');
     };
-    window.addRow = function(sec){
-      if(PERM_LEVEL!=='full') return;
-      EDIT[sec].push(JSON.parse(JSON.stringify(EMPTY_ROWS[sec])));
-      renderEdit(sec);
-    };
+    window.addRow = (sec) => { if(PERM_LEVEL!=='full') return; EDIT[sec].push(JSON.parse(JSON.stringify(EMPTY[sec]))); renderEdit(sec); };
 
-    async function saveCard(){
-      if(!CURRENT || PERM_LEVEL!=='full') return;
-      if(!CURRENT.code){ $('cardMsg').innerHTML='<div class="error">Šis skelbimas neturi įmonės kodo — kortelės išsaugoti negalima.</div>'; return; }
-      const clean = arr => arr.filter(r => Object.values(r).some(v => String(v||'').trim()!==''));
-      const row = {
-        company_code: CURRENT.code,
-        company_name: CURRENT.name,
-        financial_data: clean(EDIT.fin),
-        employees_data: clean(EDIT.emp),
-        state_debts: clean(EDIT.debt),
-        court_cases: clean(EDIT.court),
-        notes: $('ccNotes').value.trim() || null,
-        updated_at: new Date().toISOString(),
-        updated_by: CURRENT_UID
-      };
-      const { error } = await sb.from('avnis_company_profiles').upsert(row, { onConflict:'company_code' });
-      if(error){ $('cardMsg').innerHTML='<div class="error">Nepavyko išsaugoti: '+esc(error.message)+'</div>'; return; }
-      PROFILES[CURRENT.code] = { ...(PROFILES[CURRENT.code]||{}), ...row };
-      CURRENT.profile = PROFILES[CURRENT.code];
-      CURRENT.hasProfile = true;
-      $('cardMsg').innerHTML='<div class="success">✅ Kortelė išsaugota.</div>';
-      $('ccUpdated').textContent = 'Paskutinį kartą atnaujinta: '+fmtDT(row.updated_at);
-      setTimeout(()=>{ $('cardMsg').innerHTML=''; }, 3000);
+    // ---- PERŽIŪROS (stulpeliais) + GRAFIKAI ----
+    const num = v => { if(v===''||v==null) return null; const n=Number(String(v).replace(/\s/g,'').replace(',','.')); return isFinite(n)?n:null; };
+    function renderAllViews(){ renderFinView(); renderEmpView(); renderDebtView(); renderCourtView(); drawFinChart(); drawInsolvChart(); drawEmpChart(); drawDebtChart(); }
+
+    function pivotTable(periods, metrics, dataByPeriod){
+      // periods: array of column labels (chronological asc). metrics: [{key,label}]. dataByPeriod: {period:{key:val}}
+      if(!periods.length) return '<div class="muted">Įrašų nėra.</div>';
+      let h='<table class="pivot"><thead><tr><th>Rodiklis</th>'+periods.map(p=>`<th>${esc(p)}</th>`).join('')+'</tr></thead><tbody>';
+      for(const m of metrics){ h+='<tr><td>'+esc(m.label)+'</td>'+periods.map(p=>{ const v=dataByPeriod[p]?dataByPeriod[p][m.key]:null; return '<td>'+(v==null||v===''?'—':(m.eur?fmtEur(v):fmtNum(v)))+'</td>'; }).join('')+'</tr>'; }
+      h+='</tbody></table>'; return h;
     }
-    $('saveCardBtn').onclick = saveCard;
-    $('saveCardBtn2').onclick = saveCard;
+    function renderFinView(){
+      const rows=[...EDIT.fin].filter(r=>String(r.metai||'').trim()); rows.sort((a,b)=>String(a.metai).localeCompare(String(b.metai)));
+      const periods=rows.map(r=>String(r.metai)); const by={}; rows.forEach(r=>by[String(r.metai)]=r);
+      $('finView').innerHTML = pivotTable(periods, [
+        {key:'pardavimo_pajamos',label:'Pardavimo pajamos',eur:1},{key:'grynasis_pelnas',label:'Grynasis pelnas',eur:1},
+        {key:'turtas',label:'Turtas',eur:1},{key:'nuosavas_kapitalas',label:'Nuosavas kapitalas',eur:1},{key:'isipareigojimai',label:'Įsipareigojimai',eur:1}
+      ], by);
+    }
+    function renderEmpView(){
+      const rows=[...EDIT.emp].filter(r=>String(r.data||'').trim()); rows.sort((a,b)=>String(a.data).localeCompare(String(b.data)));
+      const periods=rows.map(r=>fmtD(r.data)); const by={}; rows.forEach(r=>by[fmtD(r.data)]=r);
+      $('empView').innerHTML = pivotTable(periods, [{key:'darbuotoju_sk',label:'Darbuotojų sk.'},{key:'pokytis',label:'Pokytis'}], by);
+    }
+    function renderDebtView(){
+      const rows=[...EDIT.debt].filter(r=>String(r.data||'').trim()); rows.sort((a,b)=>String(a.data).localeCompare(String(b.data)));
+      const periods=rows.map(r=>fmtD(r.data)); const by={}; rows.forEach(r=>by[fmtD(r.data)]=r);
+      $('debtView').innerHTML = pivotTable(periods, [{key:'sodra',label:'Sodra',eur:1},{key:'vmi',label:'VMI',eur:1},{key:'kita',label:'Kita',eur:1}], by);
+    }
+    function renderCourtView(){
+      const rows=[...EDIT.court].filter(r=> String(r.teismas||r.bylos_nr||r.aprasymas||'').trim());
+      if(!rows.length){ $('courtView').innerHTML='<div class="muted">Įrašų nėra.</div>'; return; }
+      $('courtView').innerHTML = '<table><thead><tr><th>Data</th><th>Teismas</th><th>Bylos Nr.</th><th>Aprašymas</th><th>Būsena</th></tr></thead><tbody>'+
+        rows.map(r=>`<tr><td>${fmtD(r.data)}</td><td>${esc(r.teismas||'—')}</td><td>${esc(r.bylos_nr||'—')}</td><td>${esc(r.aprasymas||'')}</td><td>${esc(r.busena||'')}</td></tr>`).join('')+'</tbody></table>';
+    }
 
-    // ---------- OKREDO SURINKIMAS ----------
-    // Sulieja atsiųstus įrašus su esamais: rakinama pagal (data/metai), Okredo įrašai perrašo tik tuščius laukus
-    function mergeRows(sec, incoming){
-      const keyOf = r => sec==='fin' ? String(r.metai||'') : String(r.data||'');
-      const existing = EDIT[sec];
-      const byKey = {}; existing.forEach((r,i)=>{ byKey[keyOf(r)]=i; });
-      for(const inc of incoming){
-        const k = keyOf(inc);
-        if(k && byKey[k]!=null){
-          const cur = existing[byKey[k]];
-          for(const f of Object.keys(inc)){
-            if(f==='pastabos') continue;
-            if(cur[f]===''||cur[f]==null) cur[f]=inc[f];
-          }
-          if(!cur.pastabos) cur.pastabos = inc.pastabos;
-        } else {
-          existing.push(inc);
+    const eurTick = { callback:(v)=>fmtNum(v) };
+    const tooltipEur = { callbacks:{ label:(ctx)=> ctx.dataset.label+': '+fmtEur(ctx.parsed.y) } };
+    function drawFinChart(){
+      const rows=[...EDIT.fin].filter(r=>String(r.metai||'').trim()); rows.sort((a,b)=>String(a.metai).localeCompare(String(b.metai)));
+      const labels=rows.map(r=>String(r.metai));
+      const series=[['Pardavimo pajamos','pardavimo_pajamos','#2563EB'],['Grynasis pelnas','grynasis_pelnas','#16A34A'],['Turtas','turtas','#C9A961'],['Įsipareigojimai','isipareigojimai','#DC2626'],['Nuosavas kapitalas','nuosavas_kapitalas','#7C3AED']];
+      const ds = series.map(([lab,key,col])=>({ label:lab, data:rows.map(r=>num(r[key])), backgroundColor:col, borderColor:col, borderWidth:1 }));
+      mkChart('finChart','bar',labels,ds,{ plugins:{ tooltip:tooltipEur, legend:{labels:{boxWidth:12}} }, scales:{ y:{ ticks:eurTick } } });
+    }
+    function drawEmpChart(){
+      const rows=[...EDIT.emp].filter(r=>String(r.data||'').trim()); rows.sort((a,b)=>String(a.data).localeCompare(String(b.data)));
+      const labels=rows.map(r=>fmtD(r.data));
+      mkChart('empChart','line',labels,[{ label:'Darbuotojų skaičius', data:rows.map(r=>num(r.darbuotoju_sk)), borderColor:'#2563EB', backgroundColor:'rgba(37,99,235,.12)', tension:.25, fill:true, pointRadius:3 }],{ plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, ticks:{precision:0} } } });
+    }
+    function drawDebtChart(){
+      const rows=[...EDIT.debt].filter(r=>String(r.data||'').trim()); rows.sort((a,b)=>String(a.data).localeCompare(String(b.data)));
+      const labels=rows.map(r=>fmtD(r.data));
+      const ds=[['Sodra','sodra','#DC2626'],['VMI','vmi','#D97706'],['Kita','kita','#6B7280']].map(([lab,key,col])=>({label:lab,data:rows.map(r=>num(r[key])),backgroundColor:col}));
+      mkChart('debtChart','bar',labels,ds,{ plugins:{ tooltip:tooltipEur, legend:{labels:{boxWidth:12}} }, scales:{ x:{stacked:true}, y:{stacked:true, ticks:eurTick} } });
+    }
+    function drawInsolvChart(){
+      const rows=[...EDIT.fin].filter(r=>String(r.metai||'').trim() && (num(r.turtas)!=null||num(r.isipareigojimai)!=null)); rows.sort((a,b)=>String(a.metai).localeCompare(String(b.metai)));
+      const labels=rows.map(r=>String(r.metai));
+      const turtas=rows.map(r=>num(r.turtas)); const skolos=rows.map(r=>num(r.isipareigojimai)); const riba=turtas.map(t=> t!=null? t/2 : null);
+      const skoluSpalva = rows.map(r=>{ const t=num(r.turtas), s=num(r.isipareigojimai); return (t&&s!=null&&s> t/2)?'#DC2626':'#F59E0B'; });
+      const ds=[
+        { type:'bar', label:'Turtas', data:turtas, backgroundColor:'#C9A961' },
+        { type:'bar', label:'Įsipareigojimai (skolos)', data:skolos, backgroundColor:skoluSpalva },
+        { type:'line', label:'Nemokumo riba (½ turto)', data:riba, borderColor:'#0B1E3F', borderDash:[6,4], pointRadius:0, borderWidth:2 }
+      ];
+      mkChart('insolvChart','bar',labels,ds,{ plugins:{ tooltip:tooltipEur, legend:{labels:{boxWidth:12}} }, scales:{ y:{ ticks:eurTick } } });
+      // santrauka
+      let sm='';
+      const last = rows[rows.length-1];
+      if(last){ const t=num(last.turtas), s=num(last.isipareigojimai);
+        if(t!=null && s!=null){ const ratio = t? (s/t) : null; const nemoki = s> t/2;
+          sm = `<div class="${nemoki?'error':'success'}">${String(last.metai)} m.: skolos ${fmtEur(s)} vs ½ turto ${fmtEur(t/2)} — santykis skolos/turtas ${ratio!=null?fmtNum(ratio,2):'—'}. ${nemoki?'⚠️ Viršija nemokumo ribą (galimas nemokumas pagal turto/skolų kriterijų).':'✅ Neviršija nemokumo ribos pagal šį kriterijų.'}</div>`;
         }
       }
-      // rūšiuojam naujausius viršuje
-      existing.sort((a,b)=> keyOf(b).localeCompare(keyOf(a)));
+      $('insolvSummary').innerHTML = sm;
+    }
+    function mkChart(canvasId, type, labels, datasets, opts){
+      if(CHARTS[canvasId]){ try{CHARTS[canvasId].destroy();}catch(_){} }
+      const hasData = datasets.some(d=> (d.data||[]).some(v=>v!=null));
+      const ctx=$(canvasId).getContext('2d');
+      if(!labels.length || !hasData){ CHARTS[canvasId]=new Chart(ctx,{type:'bar',data:{labels:['Nėra duomenų'],datasets:[{data:[0],backgroundColor:'#eee'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}}}}); return; }
+      CHARTS[canvasId]=new Chart(ctx,{ type, data:{labels,datasets}, options:Object.assign({ responsive:true, maintainAspectRatio:false }, opts) });
     }
 
+    // ---- SAUGOJIMAS ----
+    async function saveCard(){
+      if(!CURRENT || PERM_LEVEL!=='full') return;
+      if(!CURRENT.code){ $('cardMsg').innerHTML='<div class="error">Šis skelbimas neturi įmonės kodo — išsaugoti negalima.</div>'; return; }
+      const clean = arr => arr.filter(r=> Object.values(r).some(v=>String(v||'').trim()!==''));
+      const row = { company_code:CURRENT.code, company_name:CURRENT.name,
+        financial_data:clean(EDIT.fin), employees_data:clean(EDIT.emp), state_debts:clean(EDIT.debt), court_cases:clean(EDIT.court),
+        is_monitored: CURRENT.monitored||false, updated_at:new Date().toISOString(), updated_by:CURRENT_UID };
+      const { error } = await sb.from('avnis_company_profiles').upsert(row, { onConflict:'company_code' });
+      if(error){ $('cardMsg').innerHTML='<div class="error">Nepavyko išsaugoti: '+esc(error.message)+'</div>'; return; }
+      PROFILES[CURRENT.code] = { ...(PROFILES[CURRENT.code]||{}), ...row }; CURRENT.profile=PROFILES[CURRENT.code]; CURRENT.hasProfile=true;
+      $('cardMsg').innerHTML='<div class="success">✅ Duomenys išsaugoti.</div>'; setTimeout(()=>{$('cardMsg').innerHTML='';},3000);
+    }
+    $('saveCardBtn').onclick = saveCard;
+
+    // ---- OKREDO ----
+    function mergeRows(sec, incoming){
+      const keyOf = r => sec==='fin' ? String(r.metai||'') : String(r.data||'');
+      const existing = EDIT[sec]; const byKey={}; existing.forEach((r,i)=>{ byKey[keyOf(r)]=i; });
+      for(const inc of incoming){ const k=keyOf(inc);
+        if(k && byKey[k]!=null){ const cur=existing[byKey[k]]; for(const f of Object.keys(inc)){ if(f==='pastabos') continue; if(cur[f]===''||cur[f]==null) cur[f]=inc[f]; } if(!cur.pastabos) cur.pastabos=inc.pastabos; }
+        else existing.push(inc); }
+      existing.sort((a,b)=> keyOf(b).localeCompare(keyOf(a)));
+    }
     $('okredoFetchBtn').onclick = async () => {
       if(!CURRENT || PERM_LEVEL!=='full') return;
       if(!CURRENT.code){ $('cardMsg').innerHTML='<div class="error">Šis skelbimas neturi įmonės kodo — Okredo paieška negalima.</div>'; return; }
-      const btn = $('okredoFetchBtn');
-      const orig = btn.textContent; btn.disabled=true; btn.textContent='⏳ Renkama iš Okredo…';
-      $('cardMsg').innerHTML='';
+      const btn=$('okredoFetchBtn'); const orig=btn.textContent; btn.disabled=true; btn.textContent='⏳ Renkama iš Okredo…'; $('cardMsg').innerHTML='';
       try{
         const { data:{ session } } = await sb.auth.getSession();
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/okredo-fetch`, {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${session.access_token}`, 'apikey':SUPABASE_ANON_KEY },
-          body: JSON.stringify({ company_code: CURRENT.code, company_name: CURRENT.name })
-        });
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/okredo-fetch`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY}, body: JSON.stringify({ company_code:CURRENT.code, company_name:CURRENT.name }) });
         const d = await res.json();
         if(!res.ok || !d.ok){ $('cardMsg').innerHTML='<div class="error">Okredo: '+esc(d.error||('klaida '+res.status))+'</div>'; return; }
-        mergeRows('fin', (d.financial_data||[]).map(r=>({metai:String(r.metai||''),pardavimo_pajamos:r.pardavimo_pajamos??'',grynasis_pelnas:r.grynasis_pelnas??'',turtas:r.turtas??'',nuosavas_kapitalas:r.nuosavas_kapitalas??'',isipareigojimai:r.isipareigojimai??'',pastabos:r.pastabos||'Okredo'})));
-        mergeRows('emp', (d.employees_data||[]).map(r=>({data:String(r.data||''),darbuotoju_sk:r.darbuotoju_sk??'',pokytis:r.pokytis??'',pastabos:r.pastabos||'Okredo'})));
-        mergeRows('debt', (d.state_debts||[]).map(r=>({data:String(r.data||''),sodra:r.sodra??'',vmi:r.vmi??'',kita:r.kita??'',pastabos:r.pastabos||'Okredo'})));
-        mergeRows('court', (d.court_cases||[]).map(r=>({data:String(r.data||''),teismas:r.teismas??'',bylos_nr:r.bylos_nr??'',aprasymas:r.aprasymas??'',busena:r.busena??''})));
-        // pastabos papildymas Okredo aprašymu ir vadovu
-        const extra = [];
-        if(d.company){ if(d.company.manager) extra.push('Vadovas (Okredo): '+d.company.manager+(d.company.manager_role?' ('+d.company.manager_role+')':'')); if(d.company.activity) extra.push('Veikla: '+d.company.activity); if(d.company.mobile) extra.push('Tel.: '+d.company.mobile); }
-        if(d.description) extra.push('\n'+d.description);
-        if(extra.length){ const cur=$('ccNotes').value.trim(); const add=extra.join('\n'); if(!cur.includes(add.slice(0,40))) $('ccNotes').value = (cur?cur+'\n\n':'')+add; }
-        ['fin','emp','debt','court'].forEach(renderEdit);
-        $('okredoLink').href = d.url;
-        $('cardMsg').innerHTML='<div class="success">✅ Duomenys surinkti iš Okredo. Peržiūrėkite ir paspauskite „💾 Išsaugoti kortelę".</div>';
-      }catch(e){
-        $('cardMsg').innerHTML='<div class="error">Nepavyko susisiekti su Okredo funkcija: '+esc(String(e))+'</div>';
-      }finally{ btn.disabled=false; btn.textContent=orig; }
+        mergeRows('fin',(d.financial_data||[]).map(r=>({metai:String(r.metai||''),pardavimo_pajamos:r.pardavimo_pajamos??'',grynasis_pelnas:r.grynasis_pelnas??'',turtas:r.turtas??'',nuosavas_kapitalas:r.nuosavas_kapitalas??'',isipareigojimai:r.isipareigojimai??'',pastabos:r.pastabos||'Okredo'})));
+        mergeRows('emp',(d.employees_data||[]).map(r=>({data:String(r.data||''),darbuotoju_sk:r.darbuotoju_sk??'',pokytis:r.pokytis??'',pastabos:r.pastabos||'Okredo'})));
+        mergeRows('debt',(d.state_debts||[]).map(r=>({data:String(r.data||''),sodra:r.sodra??'',vmi:r.vmi??'',kita:r.kita??'',pastabos:r.pastabos||'Okredo'})));
+        mergeRows('court',(d.court_cases||[]).map(r=>({data:String(r.data||''),teismas:r.teismas??'',bylos_nr:r.bylos_nr??'',aprasymas:r.aprasymas??'',busena:r.busena??''})));
+        ['fin','emp','debt','court'].forEach(renderEdit); renderAllViews();
+        $('okredoLink').href = d.url || $('okredoLink').href;
+        $('cardMsg').innerHTML='<div class="success">✅ Duomenys surinkti iš Okredo. Peržiūrėkite ir paspauskite „💾 Išsaugoti duomenis".</div>';
+      }catch(e){ $('cardMsg').innerHTML='<div class="error">Nepavyko susisiekti su Okredo funkcija: '+esc(String(e))+'</div>'; }
+      finally{ btn.disabled=false; btn.textContent=orig; }
     };
 
     boot();
