@@ -1777,7 +1777,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-05-r11';
+    const APP_VERSION='2026-08-05-r12';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -1801,9 +1801,6 @@
     // ---------- MODULIO TEISĖS (bankrotas) ----------
     let PERM_LEVEL = 'full';
     let IS_SUPERADMIN = false;
-    window.BUILD_VERSION='2026-08-07';
-    window.BUILD_BLOCKS=['r8-categories','r9-reg-maintenance','recon-v2','claim-v3'];
-    console.log('%cadmin-bankrotas build '+window.BUILD_VERSION,'color:#0A2E4D;font-weight:700',window.BUILD_BLOCKS);
     let CURRENT_UID = null;
     async function checkModuleAccess(moduleCode){
       try{
@@ -3391,8 +3388,8 @@
           admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
         // 3) įkėlimas į Storage (be perrašymo — registruoti PDF nekeičiami)
         $('regMsg').innerHTML='<div class="muted">⏳ Įkeliamas dokumentas…</div>';
-        const path=`${CURRENT.case_short_code}/registered/${regNumber.replace(/[^A-Za-z0-9._-]+/g,'_')}_${Date.now()}.pdf`;
-        const up=await sb.storage.from('insolvency-docs').upload(path,blob,{ upsert:true, contentType:'application/pdf' });
+        const path=`${CURRENT.case_short_code}/registered/${regNumber}.pdf`;
+        const up=await sb.storage.from('insolvency-docs').upload(path,blob,{ upsert:false, contentType:'application/pdf' });
         if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
         // 4) įrašas žurnale (+ auditas RPC viduje)
         const reg=await sb.rpc('register_insolvency_document',{ p:{
@@ -7886,13 +7883,8 @@
         not_found_or_not_voided:'Įrašas nerastas arba nėra anuliuotas.' })[code]||('Klaida: '+(code||'nežinoma'));
     }
 
-    async function initRegMaintenance(){
-      if(!IS_SUPERADMIN){
-        try{ const r=await sb.rpc('is_superadmin'); IS_SUPERADMIN = (r.data===true); }catch(_){ }
-      }
-      if(!IS_SUPERADMIN){ console.log('[regMaint] praleista: vartotojas nėra superadmin'); return; }
-      if(document.querySelector('#paneRegistry .tab[data-regtype="maint"]')){ return; }
-      console.log('[regMaint] įjungta');
+    function initRegMaintenance(){
+      if(!IS_SUPERADMIN)return;
       // 1) papildomas tabas
       const tabs=document.querySelector('#paneRegistry .tabs');
       if(tabs&&!document.querySelector('#paneRegistry .tab[data-regtype="maint"]')){
@@ -8122,20 +8114,133 @@
       $('regCatFilter')&&($('regCatFilter').onchange=renderRegistry);
     }
 
-    window.__regMaint=async()=>{
-      let rpc=null; try{ rpc=(await sb.rpc('is_superadmin')).data; }catch(e){ rpc='klaida: '+e.message; }
-      return { build:window.BUILD_VERSION, blokai:window.BUILD_BLOCKS,
-        IS_SUPERADMIN, rpc_is_superadmin:rpc,
-        funkcija:typeof initRegMaintenance,
-        tabas:!!document.querySelector('#paneRegistry .tab[data-regtype="maint"]'),
-        modale:!!document.getElementById('rmDelModal') };
-    };
+
+    // ========================================================================
+    // r12: Informatyvi pažymų antraštė (įmonė, kodas, byla, teismas, administratorius, įgaliotas asmuo)
+    // ========================================================================
+    function credCaseMeta(){
+      const adm=CURRENT_ADM||{};
+      const person=(CURRENT&&CURRENT.admin_person_id)?(PERSONS||[]).find(p=>p.id===CURRENT.admin_person_id):null;
+      const igaliotas=person?(person.full_name+(person.position?', '+person.position:'')):((adm.authorized_person&&adm.authorized_person.trim())||'');
+      return { admName:adm.name||'', admCode:adm.code||'', person:igaliotas,
+        debtor:(CURRENT&&CURRENT.debtor_name)||'', code:(CURRENT&&CURRENT.debtor_code)||'',
+        addr:(CURRENT&&CURRENT.debtor_address)||'', court:(CURRENT&&CURRENT.court)||'',
+        caseNo:(CURRENT&&CURRENT.civil_case_no)||'', shortCode:(CURRENT&&CURRENT.case_short_code)||'',
+        date:new Date().toISOString().slice(0,10) };
+    }
+    // Praturtinta PDF pažyma su antrašte
+    function credTableToPdf(title,aoa){
+      const m=credCaseMeta();
+      const money=new Set();
+      aoa[0].forEach((h,i)=>{ if(/suma|pagrindin|delsp|palūk|baud|viso|tvirtin|ginčij|netesyb|apsk|gauta pagr|gauta net/i.test(h))money.add(i); });
+      const th=aoa[0].map(h=>`<th style="border:1px solid #999;padding:4px 6px;background:#0B1E3F;color:#fff;font-size:11px;">${esc(h)}</th>`).join('');
+      const tr=aoa.slice(1).map(r=>'<tr>'+r.map((v,i)=>`<td style="border:1px solid #999;padding:4px 6px;font-size:11px;${money.has(i)?'text-align:right;':''}">${money.has(i)&&typeof v==='number'?eur(v):esc(String(v))}</td>`).join('')+'</tr>').join('');
+      const mrow=(l,v)=>v?`<tr><td style="padding:1px 10px 1px 0;color:#555;white-space:nowrap;vertical-align:top;">${l}</td><td style="padding:1px 0;font-weight:600;">${esc(v)}</td></tr>`:'';
+      const holder=document.createElement('div');
+      holder.style.cssText='position:absolute;left:-9999px;top:0;width:1000px;background:#fff;padding:26px;font-family:Arial,sans-serif;color:#0B1E3F;';
+      holder.innerHTML=`
+        <div style="border-bottom:2px solid #0B1E3F;padding-bottom:8px;margin-bottom:10px;">
+          <div style="font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.5px;">Nemokumo administratorius</div>
+          <div style="font-size:15px;font-weight:700;">${esc(m.admName||'—')}${m.admCode?' <span style="font-size:11px;color:#777;font-weight:400;">(kodas '+esc(m.admCode)+')</span>':''}</div>
+          ${m.person?`<div style="font-size:12.5px;">Įgaliotas asmuo: <b>${esc(m.person)}</b></div>`:''}
+        </div>
+        <div style="font-size:18px;font-weight:700;margin:2px 0 8px;">${esc(title)}</div>
+        <table style="border-collapse:collapse;font-size:12px;margin-bottom:12px;"><tbody>
+          ${mrow('Skolininkas (įmonė):',m.debtor)}
+          ${mrow('Įmonės kodas:',m.code)}
+          ${mrow('Adresas:',m.addr)}
+          ${mrow('Teismas:',m.court)}
+          ${mrow('Civilinės bylos Nr.:',m.caseNo)}
+          ${mrow('Bylos kodas (sistemos):',m.shortCode)}
+          ${mrow('Suvestinės data:',m.date)}
+        </tbody></table>
+        <table style="border-collapse:collapse;width:100%;"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table>`;
+      document.body.appendChild(holder);
+      html2canvas(holder,{ scale:1.7, backgroundColor:'#fff' }).then(canvas=>{
+        const pdf=new jspdf.jsPDF('p','mm','a4'); const pw=210, ml=10, cw=pw-ml*2;
+        const imgH=canvas.height*cw/canvas.width; const ph=297; let pos=10, remaining=imgH;
+        const img=canvas.toDataURL('image/jpeg',0.8);
+        pdf.addImage(img,'JPEG',ml,pos,cw,imgH); remaining-=(ph-pos);
+        while(remaining>0){ pdf.addPage(); pos=10-(imgH-remaining); pdf.addImage(img,'JPEG',ml,pos,cw,imgH); remaining-=(ph-10); }
+        pdf.save(title.replace(/\s/g,'_')+'_'+(m.shortCode||'byla')+'.pdf');
+        document.body.removeChild(holder);
+      }).catch(e=>{ document.body.removeChild(holder); alert('PDF klaida: '+e.message); });
+    }
+    // XLSX su metaduomenų antrašte
+    function credXlsxSave(sheet,fname,aoa){
+      const m=credCaseMeta();
+      const meta=[
+        ['Nemokumo administratorius', m.admName],
+        ['Administratoriaus kodas', m.admCode],
+        ['Įgaliotas asmuo', m.person],
+        ['Skolininkas (įmonė)', m.debtor],
+        ['Įmonės kodas', m.code],
+        ['Adresas', m.addr],
+        ['Teismas', m.court],
+        ['Civilinės bylos Nr.', m.caseNo],
+        ['Bylos kodas (sist.)', m.shortCode],
+        ['Data', m.date],
+        []
+      ];
+      const ws=XLSX.utils.aoa_to_sheet(meta.concat(aoa));
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,sheet); XLSX.writeFile(wb,fname);
+    }
+    // Eksportai su metaduomenimis (perrašo ankstesnius)
+    function credExportLists(kind,fmt){
+      const isApp=kind==='approve';
+      const rowsData=CLAIMS.filter(c=> isApp ? (c.status==='to_approve'||c.status==='to_approve_partial') : (c.status==='rejected'||c.status==='to_approve_partial') );
+      if(!rowsData.length){ $('credReconMsg').innerHTML='<div class="error">Nėra '+(isApp?'teikiamų tvirtinti':'netvirtinamų')+' reikalavimų. Pažymėkite sprendimus sutikrinimo lentelėje.</div>'; return; }
+      const head = isApp ? ['Kreditorius','Kodas','Pagrindinė','Delspinigiai','Palūkanos','Baudos','Viso','Eilė']
+                         : ['Kreditorius','Kodas','Pateikta suma','Teikiama tvirtinti','Ginčijama/netvirtinama','Motyvai'];
+      const aoa=[head];
+      rowsData.forEach(c=>{ const cr=credById(c.creditor_id)||{}; const s=submitSums(c);
+        if(isApp){ aoa.push([credName(c.creditor_id), cr.id_code||'', s.p, s.l, s.i, s.f, s.p+s.l+s.i+s.f, c.priority||'']); }
+        else { const submitted=num(c.principal)+num(c.late_fees)+num(c.interest)+num(c.fines); const teik=s.p+s.l+s.i+s.f;
+          aoa.push([credName(c.creditor_id), cr.id_code||'', submitted, teik, submitted-teik, c.objection_note||'']); }
+      });
+      const title=isApp?'Tvirtinami kreditoriniai reikalavimai':'Netvirtinami kreditoriniai reikalavimai';
+      if(fmt==='xlsx') credXlsxSave(isApp?'Tvirtinami':'Netvirtinami', title.replace(/\s/g,'_')+'_'+(CURRENT.case_short_code||'byla')+'.xlsx', aoa);
+      else credTableToPdf(title, aoa);
+      credLog('claim_list_exported',{ kind, fmt, count:rowsData.length });
+    }
+    function credExportReceived(fmt){
+      const rows=CLAIMS.slice();
+      if(!rows.length){ $('credReconMsg').innerHTML='<div class="error">Gautų reikalavimų nėra.</div>'; return; }
+      const aoa=[['Kreditorius','Kodas','Gauta','Pagrindinė','Delspinigiai','Palūkanos','Baudos','Viso','Būsena']];
+      rows.forEach(c=>{ const cr=credById(c.creditor_id)||{}; const tot=num(c.principal)+num(c.late_fees)+num(c.interest)+num(c.fines);
+        aoa.push([credName(c.creditor_id),cr.id_code||'',c.received_date||'',num(c.principal),num(c.late_fees),num(c.interest),num(c.fines),tot,CLAIM_ST[c.status]||c.status]); });
+      if(fmt==='xlsx') credXlsxSave('Gauti reikalavimai','Gauti_reikalavimai_'+(CURRENT.case_short_code||'byla')+'.xlsx',aoa);
+      else credTableToPdf('Gauti kreditoriniai reikalavimai',aoa);
+    }
+    function credExportAccounting(fmt){
+      if(!CRED_ACC.length){ $('credReconMsg').innerHTML='<div class="error">Apskaitos įrašų nėra.</div>'; return; }
+      const aoa=[['Kreditorius','Kodas','Pagrindas','Pagrindinė','Delspinigiai','Baudos','Viso']];
+      CRED_ACC.forEach(a=>{ const c=credById(a.creditor_id)||{}; const tot=num(a.principal)+num(a.late_fees)+num(a.fines);
+        aoa.push([credName(a.creditor_id),c.id_code||'',basisLabel(a.basis_key),num(a.principal),num(a.late_fees),num(a.fines),tot]); });
+      if(fmt==='xlsx') credXlsxSave('Pagal apskaitą','Reikalavimai_pagal_apskaita_'+(CURRENT.case_short_code||'byla')+'.xlsx',aoa);
+      else credTableToPdf('Reikalavimai pagal įmonės apskaitą',aoa);
+    }
+    function credExportCourtFull(fmt){
+      if(!CREDITORS.length){ $('credReconMsg').innerHTML='<div class="error">Nėra duomenų.</div>'; return; }
+      const aoa=[['Kreditorius','Kodas','Apsk. pagrindinė','Apsk. netesybos','Apsk. viso','Gauta pagrindinė','Gauta netesybos','Gauta viso','Būsena','Teikiama/patvirtinta viso','Netvirtinama','Motyvai']];
+      CREDITORS.forEach(c=>{ const a=accTotals(c.id); const claims=claimsForCreditor(c.id); const clm=claims[0];
+        const cl=claimTotals(c.id); const cr=credById(c.id)||{};
+        let teik=0, netv=0, note='', st='Negauta';
+        if(clm){ st=CLAIM_ST[clm.status]||clm.status; const s=submitSums(clm); teik=s.p+s.l+s.i+s.f;
+          const submitted=num(clm.principal)+num(clm.late_fees)+num(clm.interest)+num(clm.fines);
+          netv=Math.max(0,submitted-teik); note=clm.objection_note||''; }
+        aoa.push([c.name,cr.id_code||'',a.principal,a.net,a.principal+a.net,
+          clm?cl.principal:'',clm?cl.net:'',clm?(cl.principal+cl.net):'',st,clm?teik:'',clm?netv:'',note]); });
+      if(fmt==='xlsx') credXlsxSave('Teismui','Teismui_pilna_suvestine_'+(CURRENT.case_short_code||'byla')+'.xlsx',aoa);
+      else credTableToPdf('Kreditorinių reikalavimų suvestinė teismui',aoa);
+    }
 
     bindCredButtons();
     bindClaimExtras();
     initReconV2();
+    initRegMaintenance();
     initClaimV3();
-    boot().then(()=>{ try{ initRegMaintenance(); }catch(e){ console.warn('initRegMaintenance', e); } });
+    boot();
   </script>
 </body>
 </html>
