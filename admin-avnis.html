@@ -44,9 +44,16 @@
     .sec-title { color:var(--navy); font-size:15px; font-weight:700; margin:0 0 10px; border-bottom:1px solid var(--bd); padding-bottom:6px; }
     .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:18px; }
     .stat-card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:14px 16px; }
+    .stat-click { cursor:pointer; transition:border-color .12s, box-shadow .12s, background .12s; }
+    .stat-click:hover { border-color:var(--navy,#0B1E3F); box-shadow:0 2px 10px rgba(11,30,63,.12); }
+    .stat-click.active { border-color:var(--navy,#0B1E3F); background:#eef3fb; box-shadow:inset 0 0 0 1px var(--navy,#0B1E3F); }
     .stat-card .v { font-size:24px; font-weight:700; color:var(--navy); }
     .stat-card .l { font-size:12px; color:var(--gray); }
     .clickable { cursor:pointer; }
+    th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
+    th.sortable:hover { background:rgba(11,30,63,0.06); }
+    th.sortable .sarr { font-size:11px; color:var(--navy,#0B1E3F); opacity:.85; }
+    th.sortable.active { color:var(--navy,#0B1E3F); }
     .newmark { background:#FFF8E1; }
     .kv { display:grid; grid-template-columns:1fr 1fr; gap:8px 20px; }
     .kv > div { display:flex; justify-content:space-between; gap:10px; border-bottom:1px dotted #eee; padding:4px 0; }
@@ -105,6 +112,33 @@
           <div class="stat-card"><div class="v" id="adStLegal">—</div><div class="l">🏢 Juridiniai</div></div>
           <div class="stat-card"><div class="v" id="adStSync" style="font-size:14px;">—</div><div class="l">Registras atnaujintas</div></div>
         </div>
+        <div class="card" id="adImportCard" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <h2 style="color:var(--navy);font-size:18px;">📊 Užimtumo statistika iš atranka.avnt.lt</h2>
+            <button class="btn btn-ghost btn-sm" id="adImpToggle">⬆️ Įkelti statistikos failą</button>
+          </div>
+          <div id="adImpPanel" class="hidden" style="margin-top:12px;">
+            <div class="hint" style="margin-bottom:10px;line-height:1.6;">
+              <b>1.</b> Atidarykite <b>atranka.avnt.lt</b> → Statistika → Administratorių statistika.
+              <b>2.</b> Pasirinkite datą ir spauskite „Ieškoti".
+              <b>3.</b> Lentelės dešinėje spauskite <b>„Excel"</b> ir atsisiųskite failą (jame būna visi administratoriai iš karto).
+              <b>4.</b> Nurodykite datą ir nutempkite failą žemiau.
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
+              <div><label class="label">Statistikos data (kurią pasirinkote atrankoje)</label><input type="date" id="adImpDate" class="input" style="max-width:190px;"></div>
+            </div>
+            <div id="adDrop" style="border:2px dashed #bcd;border-radius:12px;padding:26px;text-align:center;cursor:pointer;background:#f7fafe;transition:background .15s,border-color .15s;">
+              <div style="font-size:15px;color:var(--navy);font-weight:600;">Nutempkite Excel failą čia arba spustelėkite</div>
+              <div class="muted" style="margin-top:4px;font-size:13px;">Priimami: .xls (atranka „Excel" eksportas), .csv</div>
+              <input type="file" id="adImpFile" accept=".xls,.xlsx,.csv,.htm,.html" style="display:none;">
+            </div>
+            <div id="adImpMsg" style="margin-top:10px;"></div>
+            <div id="adImpActions" style="margin-top:10px;display:none;">
+              <button class="btn btn-primary" id="adImpUpload">✅ Įkelti į sistemą</button>
+              <button class="btn btn-ghost" id="adImpCancel">Atšaukti</button>
+            </div>
+          </div>
+        </div>
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
             <h2 style="color:var(--navy);font-size:18px;">Nemokumo administratorių registras</h2>
@@ -118,18 +152,21 @@
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
             <input id="adSearch" class="input" placeholder="🔍 Ieškoti pagal vardą, pavardę, pavadinimą, numerį…" style="max-width:360px;flex:1;min-width:200px;">
             <label class="toggle" id="adDeepToggle" title="Ieško visuose laukuose: kodas, adresas, el. paštas, telefonas"><input type="checkbox" id="adDeepChk" style="margin-right:6px;"> 🔎 Gili paieška</label>
-            <select id="adSort" class="select" style="max-width:220px;">
-              <option value="number">Rikiuoti: pagal numerį</option>
-              <option value="util">Pagal užimtumą (didž.)</option>
-              <option value="kruvis">Pagal darbo krūvį (didž.)</option>
-              <option value="name">Pagal pavadinimą</option>
-            </select>
+            <span class="muted" style="font-size:12.5px;">↕ Rikiuoti — spauskite stulpelio pavadinimą</span>
           </div>
           <div class="muted" id="adCount" style="margin-bottom:8px;"></div>
           <div id="adMsg"></div>
           <div style="overflow-x:auto;">
             <table>
-              <thead><tr><th>Numeris</th><th>Tipas</th><th>Vardas / Pavadinimas</th><th>Kodas</th><th>Užimtumas (krūvis/leist.)</th><th>Telefonas</th><th>El. paštas</th></tr></thead>
+              <thead id="adHead"><tr>
+                <th class="sortable" data-sort="number">Numeris <span class="sarr"></span></th>
+                <th class="sortable" data-sort="type">Tipas <span class="sarr"></span></th>
+                <th class="sortable" data-sort="name">Vardas / Pavadinimas <span class="sarr"></span></th>
+                <th class="sortable" data-sort="code">Kodas <span class="sarr"></span></th>
+                <th class="sortable" data-sort="occ">Užimtumas (krūvis/leist.) <span class="sarr"></span></th>
+                <th class="sortable" data-sort="phone">Telefonas <span class="sarr"></span></th>
+                <th class="sortable" data-sort="email">El. paštas <span class="sarr"></span></th>
+              </tr></thead>
               <tbody id="adBody"></tbody>
             </table>
           </div>
@@ -176,13 +213,13 @@
 
     <!-- SĄRAŠAS -->
     <div id="listView" class="hidden">
-      <div class="stat-grid">
-        <div class="stat-card"><div class="v" id="stCompanies">—</div><div class="l">Įmonių iš viso</div></div>
-        <div class="stat-card"><div class="v" id="stValid">—</div><div class="l">Su galiojančiu</div></div>
-        <div class="stat-card"><div class="v" id="stExpired">—</div><div class="l">Tik pasibaigę</div></div>
-        <div class="stat-card"><div class="v" id="stRepeat">—</div><div class="l">🔁 Pasikartojančios</div></div>
-        <div class="stat-card"><div class="v" id="stMon">—</div><div class="l">⭐ Stebimos</div></div>
-        <div class="stat-card"><div class="v" id="stNew">—</div><div class="l">🆕 Naujos (48 val.)</div></div>
+      <div class="stat-grid" id="statCards">
+        <div class="stat-card stat-click" data-setf="all" title="Rodyti visas įmones"><div class="v" id="stCompanies">—</div><div class="l">Įmonių iš viso</div></div>
+        <div class="stat-card stat-click" data-setf="valid" title="Rodyti tik su galiojančiu skelbimu"><div class="v" id="stValid">—</div><div class="l">Su galiojančiu</div></div>
+        <div class="stat-card stat-click" data-setf="expired" title="Rodyti tik pasibaigusius"><div class="v" id="stExpired">—</div><div class="l">Tik pasibaigę</div></div>
+        <div class="stat-card stat-click" data-setf="repeat" title="Rodyti pasikartojančias"><div class="v" id="stRepeat">—</div><div class="l">🔁 Pasikartojančios</div></div>
+        <div class="stat-card stat-click" data-setf="monitored" title="Rodyti stebimas"><div class="v" id="stMon">—</div><div class="l">⭐ Stebimos</div></div>
+        <div class="stat-card stat-click" data-setf="new" title="Rodyti naujas (48 val.)"><div class="v" id="stNew">—</div><div class="l">🆕 Naujos (48 val.)</div></div>
       </div>
 
       <div class="card">
@@ -234,6 +271,7 @@
           <div>
             <h2 style="color:var(--navy);font-size:20px;" id="ccName">—</h2>
             <div class="muted" id="ccMeta">—</div>
+            <div id="ccMonInfo" style="margin-top:6px;"></div>
             <div id="ccRepeat" style="margin-top:8px;"></div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -392,7 +430,7 @@
     let NOTES_BY_CODE={}; // company_code -> [{note_text, created_at}]
     let SUBMOD='avnis';
     const PAGE_SIZE=100;
-    window.BUILD_VERSION='avnis-2026-08-11-v4';
+    window.BUILD_VERSION='avnis-2026-08-11-v7';
 
     const JURISDICTION = {1:'Lietuvos (teritorinė)', 2:'Lietuvos (pagrindinė)', 3:'Tarptautinė'};
 
@@ -441,7 +479,8 @@
     }
 
     // ============ NEMOKUMO ADMINISTRATORIŲ SUBMODULIS ============
-    let ADMINS=[], ADMINS_LOADED=false, AD_FILTER='all', AD_SEARCH='', AD_DEEP=false, AD_PAGE=0, AD_CUR=null, AD_SORT='number';
+    let ADMINS=[], ADMINS_LOADED=false, AD_FILTER='all', AD_SEARCH='', AD_DEEP=false, AD_PAGE=0, AD_CUR=null;
+    let AD_SORT_KEY='number', AD_SORT_DIR=1; // dir: 1 = didėjimo (A→Z, maž→didž), -1 = mažėjimo
     let STATS_BY_NUM={}, STATS_DATE=null;
     const AD_PAGE_SIZE=100;
     async function loadAdmins(){
@@ -455,6 +494,7 @@
       ]);
       if(a.error){ $('adMsg').innerHTML='<div class="error">Klaida: '+esc(a.error.message)+'</div>'; return; }
       ADMINS=a.data||[]; ADMINS_LOADED=true; $('adMsg').innerHTML='';
+      $('adImportCard').style.display = (PERM_LEVEL==='full')?'':'none';
       STATS_BY_NUM={}; (st.data||[]).forEach(r=>{ STATS_BY_NUM[r.admin_number]=r.payload||{}; });
       ADMINS.forEach(x=>{ x.stat = STATS_BY_NUM[x.number]||null; });
       const log=(l.data||[])[0];
@@ -475,14 +515,37 @@
           return (x.full_name||'').toLowerCase().includes(q) || (x.number||'').toLowerCase().includes(q) || (x.surname||'').toLowerCase().includes(q);
         });
       }
-      const num=v=>v==null?-1:v;
-      if(AD_SORT==='util') rows.sort((a,b)=> num(utilPct(b.stat))-num(utilPct(a.stat)));
-      else if(AD_SORT==='kruvis') rows.sort((a,b)=> num(a.stat&&a.stat.darbo_kruvis)<num(b.stat&&b.stat.darbo_kruvis)?1:-1);
-      else if(AD_SORT==='name') rows.sort((a,b)=> (a.full_name||'').localeCompare(b.full_name||''));
-      else rows.sort((a,b)=> (a.number||'').localeCompare(b.number||''));
+      rows.sort(adCompare);
       return rows;
     }
+    function adSortVal(x, key){
+      switch(key){
+        case 'type': return x.legal?1:0;
+        case 'name': return (x.full_name||((x.name||'')+' '+(x.surname||''))).trim().toLowerCase();
+        case 'code': return (x.person_code||'').toLowerCase();
+        case 'occ': { const u=utilPct(x.stat); return u==null?-1:u; }
+        case 'phone': return (x.phone||'').toLowerCase();
+        case 'email': return (x.email||'').toLowerCase();
+        case 'number': default: return (x.number||'').toLowerCase();
+      }
+    }
+    function adCompare(a,b){
+      let va=adSortVal(a,AD_SORT_KEY), vb=adSortVal(b,AD_SORT_KEY);
+      let cmp;
+      if(typeof va==='string' || typeof vb==='string') cmp=String(va).localeCompare(String(vb),'lt');
+      else cmp = va<vb?-1:(va>vb?1:0);
+      if(cmp===0) cmp=(a.number||'').localeCompare(b.number||'','lt'); // stabilus antrinis raktas
+      return AD_SORT_DIR*cmp;
+    }
+    function updateSortArrows(){
+      document.querySelectorAll('#adHead th.sortable').forEach(th=>{
+        const arr=th.querySelector('.sarr');
+        if(th.dataset.sort===AD_SORT_KEY){ th.classList.add('active'); if(arr) arr.textContent = AD_SORT_DIR===1?'▲':'▼'; }
+        else { th.classList.remove('active'); if(arr) arr.textContent=''; }
+      });
+    }
     function renderAdmins(){
+      updateSortArrows();
       const rows=adFiltered();
       $('adCount').textContent='Rodoma: '+fmtNum(rows.length)+' administratorių';
       const pages=Math.max(1,Math.ceil(rows.length/AD_PAGE_SIZE)); if(AD_PAGE>=pages)AD_PAGE=0;
@@ -506,7 +569,6 @@
       const x=ADMINS.find(a=>a.number===number); if(!x) return; AD_CUR=x;
       $('adcName').textContent=x.full_name||((x.name||'')+' '+(x.surname||'')).trim()||'—';
       $('adcNumber').textContent=x.number||'';
-      $('adcNumRef').textContent=x.number||'';
       $('adcBadges').innerHTML=(x.legal?'<span class="badge badge-blue">🏢 Juridinis asmuo</span>':'<span class="badge badge-gold">👤 Fizinis asmuo</span>')+(x.status?` <span class="badge badge-green">${esc(x.status)}</span>`:'');
       const row=(k,v)=>`<div><span class="k">${k}</span><span class="v2">${v||'—'}</span></div>`;
       $('adcKv').innerHTML =
@@ -543,8 +605,75 @@
     $('adFilterTabs').addEventListener('click',e=>{ const t=e.target.closest('.tab'); if(!t)return; document.querySelectorAll('#adFilterTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); AD_FILTER=t.dataset.af; AD_PAGE=0; renderAdmins(); });
     $('adSearch').addEventListener('input',e=>{ AD_SEARCH=e.target.value.trim(); AD_PAGE=0; renderAdmins(); });
     $('adDeepChk').addEventListener('change',e=>{ AD_DEEP=e.target.checked; $('adDeepToggle').classList.toggle('on',AD_DEEP); AD_PAGE=0; renderAdmins(); });
-    $('adSort').addEventListener('change',e=>{ AD_SORT=e.target.value; AD_PAGE=0; renderAdmins(); });
+    $('adHead').addEventListener('click',e=>{ const th=e.target.closest('th.sortable'); if(!th)return;
+      const key=th.dataset.sort;
+      if(AD_SORT_KEY===key){ AD_SORT_DIR=-AD_SORT_DIR; } else { AD_SORT_KEY=key; AD_SORT_DIR=1; }
+      AD_PAGE=0; renderAdmins(); });
     $('adReloadBtn').onclick=()=>{ ADMINS_LOADED=false; loadAdmins(); };
+
+    // ---- Statistikos failo importas (atranka.avnt.lt „Excel" eksportas) ----
+    let AD_IMP_ROWS=null;
+    function ymdVilnius(offsetDays){ const d=new Date(Date.now()+((offsetDays||0)*86400000)); return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Vilnius',year:'numeric',month:'2-digit',day:'2-digit'}).format(d); }
+    function parseStatsFile(text){
+      const rows=[];
+      if(/<table|<html|<!doctype html/i.test(text)){
+        const doc=new DOMParser().parseFromString(text,'text/html');
+        doc.querySelectorAll('tr').forEach(tr=>{
+          const cells=[...tr.querySelectorAll('td,th')].map(td=>td.textContent.replace(/\s+/g,' ').trim());
+          if(cells.length>=6 && /^N-/.test(cells[0])) rows.push([cells[0],cells[1],cells[2],cells[3],cells[4],cells[5]]);
+        });
+      } else {
+        text.split(/\r?\n/).forEach(line=>{
+          if(!line.trim()) return;
+          const delim = line.indexOf('\t')>=0?'\t':';';
+          const cells=line.split(delim).map(s=>s.replace(/^"|"$/g,'').trim());
+          if(cells.length>=6 && /^N-/.test(cells[0])) rows.push(cells.slice(0,6));
+        });
+      }
+      return rows;
+    }
+    function showImpMsg(html,cls){ $('adImpMsg').innerHTML = html?`<div class="${cls||'muted'}">${html}</div>`:''; }
+    async function handleStatsFile(file){
+      AD_IMP_ROWS=null; $('adImpActions').style.display='none';
+      if(!file){ return; }
+      showImpMsg('⏳ Skaitomas failas…');
+      let text;
+      try{ text = await file.text(); }catch(e){ showImpMsg('Nepavyko perskaityti failo: '+esc(String(e)),'error'); return; }
+      const rows=parseStatsFile(text);
+      if(!rows.length){ showImpMsg('Faile nerasta administratorių įrašų (numeriai turi prasidėti „N-"). Įsitikinkite, kad tai atranka „Excel" eksportas.','error'); return; }
+      AD_IMP_ROWS=rows;
+      const first=rows[0][0], last=rows[rows.length-1][0];
+      showImpMsg(`✅ Rasta <b>${fmtNum(rows.length)}</b> administratorių (nuo <b>${esc(first)}</b> iki <b>${esc(last)}</b>). Data: <b>${esc($('adImpDate').value||'—')}</b>. Spauskite „Įkelti į sistemą".`,'success');
+      $('adImpActions').style.display='';
+    }
+    (function initStatsImport(){
+      const drop=$('adDrop'), fileInput=$('adImpFile');
+      if(!drop) return;
+      $('adImpToggle').onclick=()=>{ const p=$('adImpPanel'); p.classList.toggle('hidden'); if(!p.classList.contains('hidden')&&!$('adImpDate').value){ $('adImpDate').value=ymdVilnius(-1); } };
+      drop.onclick=()=>fileInput.click();
+      drop.ondragover=e=>{ e.preventDefault(); drop.style.background='#e8f2ff'; drop.style.borderColor='#4a90e2'; };
+      drop.ondragleave=()=>{ drop.style.background='#f7fafe'; drop.style.borderColor='#bcd'; };
+      drop.ondrop=e=>{ e.preventDefault(); drop.style.background='#f7fafe'; drop.style.borderColor='#bcd'; const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f) handleStatsFile(f); };
+      fileInput.onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(f) handleStatsFile(f); };
+      $('adImpCancel').onclick=()=>{ AD_IMP_ROWS=null; fileInput.value=''; $('adImpActions').style.display='none'; showImpMsg(''); };
+      $('adImpUpload').onclick=async ()=>{
+        if(!AD_IMP_ROWS){ return; }
+        const date=$('adImpDate').value;
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){ showImpMsg('Nurodykite statistikos datą.','error'); return; }
+        const btn=$('adImpUpload'), orig=btn.textContent; btn.disabled=true; btn.textContent='⏳ Įkeliama…';
+        try{
+          const { data:{ session } } = await sb.auth.getSession();
+          const res=await fetch(`${SUPABASE_URL}/functions/v1/avnis-stats-import`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},body:JSON.stringify({stat_date:date,rows:AD_IMP_ROWS})});
+          const d=await res.json();
+          if(!res.ok||!d.ok){ showImpMsg('Serverio klaida: '+esc(d.error||('HTTP '+res.status)),'error'); return; }
+          showImpMsg(`✅ Įkelta <b>${fmtNum(d.imported)}</b> įrašų (${esc(d.stat_date)}). Atnaujinami administratorių duomenys…`,'success');
+          AD_IMP_ROWS=null; $('adImpActions').style.display='none'; $('adImpFile').value='';
+          ADMINS_LOADED=false; await loadAdmins();
+          showImpMsg(`✅ Įkelta ir sujungta su registru (${esc(d.stat_date)}). Užimtumas jau matomas sąraše ir kortelėse.`,'success');
+        }catch(e){ showImpMsg('Nepavyko susisiekti su serveriu: '+esc(String(e)),'error'); }
+        finally{ btn.disabled=false; btn.textContent=orig; }
+      };
+    })();
 
     // ---------------- DUOMENYS ----------------
     async function loadData(){
@@ -581,6 +710,7 @@
         c.profile = c.code ? PROFILES[c.code] : null;
         c.monitored = !!(c.profile && c.profile.is_monitored);
         c.monitoredBy = c.profile ? (c.profile.monitored_by_name||'') : '';
+        c.monitoredAt = c.profile ? (c.profile.monitored_at||'') : '';
         c.notes = c.code ? (NOTES_BY_CODE[c.code]||[]) : [];
         c.notesCount = c.notes.length;
         c.hasProfile = !!(c.profile && ((c.profile.financial_data||[]).length||(c.profile.employees_data||[]).length||(c.profile.state_debts||[]).length||(c.profile.court_cases||[]).length));
@@ -642,7 +772,7 @@
         }
         return `<tr class="clickable ${c.isNew?'newmark':''}" onclick="openCard(${c.idx})">
           <td class="center">${star}</td>
-          <td><strong style="color:var(--navy);">${esc(c.name)}</strong>${badges}${noteDot}</td>
+          <td><strong style="color:var(--navy);">${esc(c.name)}</strong>${badges}${noteDot}${c.monitored&&c.monitoredBy?`<div class="muted" style="font-size:11.5px;margin-top:2px;">⭐ Stebi: <b>${esc(c.monitoredBy)}</b></div>`:''}</td>
           <td>${esc(c.code||'—')}</td><td class="center">${c.count}</td>
           <td>${esc(l.process_stage_title||'—')}</td><td>${esc(l.court||'—')}</td>
           <td>${fmtD(l.date_to)}</td>
@@ -663,12 +793,28 @@
         const base = x.dataset.label || (x.dataset.label=x.textContent.replace(/\s*\(\d+\)\s*$/,''));
         x.textContent = pos>=0 ? `${base} (${pos+1})` : base;
       });
+      updateStatCards();
     }
     $('filterTabs').addEventListener('click', e=>{ const t=e.target.closest('.tab'); if(!t) return;
       const f=t.dataset.f;
       if(f==='all'){ ACTIVE=[]; }
       else { const i=ACTIVE.indexOf(f); if(i>=0) ACTIVE.splice(i,1); else ACTIVE.push(f); }
       PAGE=0; renderFilterTabs(); renderList();
+    });
+    // Spaudžiami statistikos laukai — nustato atitinkamą filtrą ir parodo įrašus
+    function updateStatCards(){
+      document.querySelectorAll('#statCards .stat-click').forEach(card=>{
+        const f=card.dataset.setf;
+        const on = f==='all' ? ACTIVE.length===0 : (ACTIVE.length===1 && ACTIVE[0]===f);
+        card.classList.toggle('active', on);
+      });
+    }
+    $('statCards').addEventListener('click', e=>{ const card=e.target.closest('.stat-click'); if(!card) return;
+      const f=card.dataset.setf;
+      // pakartotinis to paties lauko paspaudimas grąžina į „Visas"
+      if(f==='all' || (ACTIVE.length===1 && ACTIVE[0]===f)) ACTIVE=[]; else ACTIVE=[f];
+      PAGE=0; renderFilterTabs(); renderList();
+      const anchor=$('listCount'); if(anchor) anchor.scrollIntoView({behavior:'smooth', block:'center'});
     });
     $('searchBox').addEventListener('input', e=>{ SEARCH=e.target.value.trim(); PAGE=0; renderList(); });
     $('deepChk').addEventListener('change', e=>{ DEEP=e.target.checked; $('deepToggle').classList.toggle('on',DEEP); PAGE=0; renderList(); });
@@ -691,6 +837,9 @@
       $('ccRepeat').innerHTML = c.isRepeat ? `<span class="badge badge-purple">🔁 Skelbimas kartojasi — AVNIS sistemoje ši įmonė skelbta ${c.count} kartus</span>` : `<span class="badge badge-gray">Vienintelis skelbimas</span>`;
       $('okredoLink').href = 'https://okredo.com/lt-lt/ieskoti?q='+encodeURIComponent(c.code||c.name);
       setMonitorUI(c.monitored, c.monitoredBy);
+      $('ccMonInfo').innerHTML = c.monitored
+        ? `<span class="badge badge-gold">⭐ Stebima</span> <span class="muted" style="font-size:12.5px;">pažymėjo <b>${esc(c.monitoredBy||'—')}</b>${c.monitoredAt?' · '+fmtDT(c.monitoredAt):''}</span>`
+        : '';
       // istorija
       $('annBody').innerHTML = c.anns.map((a,i)=>`<tr>
         <td>${c.anns.length-i}</td><td>${fmtD(a.date_from)}</td><td>${fmtD(a.date_to)}</td>
@@ -748,11 +897,15 @@
       if(!CURRENT.code){ $('cardMsg').innerHTML='<div class="error">Įmonė be kodo — stebėti negalima.</div>'; return; }
       const next = !CURRENT.monitored;
       const byName = next ? MY_NAME : '';
+      const nowIso = new Date().toISOString();
       setMonitorUI(next, byName);
-      const { error } = await sb.from('avnis_company_profiles').upsert({ company_code:CURRENT.code, company_name:CURRENT.name, is_monitored:next, monitored_at: next?new Date().toISOString():null, monitored_by: next?CURRENT_UID:null, monitored_by_name: next?MY_NAME:null, updated_at:new Date().toISOString(), updated_by:CURRENT_UID }, { onConflict:'company_code' });
+      const { error } = await sb.from('avnis_company_profiles').upsert({ company_code:CURRENT.code, company_name:CURRENT.name, is_monitored:next, monitored_at: next?nowIso:null, monitored_by: next?CURRENT_UID:null, monitored_by_name: next?MY_NAME:null, updated_at:nowIso, updated_by:CURRENT_UID }, { onConflict:'company_code' });
       if(error){ setMonitorUI(!next, CURRENT.monitoredBy); $('cardMsg').innerHTML='<div class="error">Nepavyko: '+esc(error.message)+'</div>'; return; }
-      CURRENT.monitored = next; CURRENT.monitoredBy = byName;
-      PROFILES[CURRENT.code] = { ...(PROFILES[CURRENT.code]||{company_code:CURRENT.code}), is_monitored:next, monitored_by_name:byName };
+      CURRENT.monitored = next; CURRENT.monitoredBy = byName; CURRENT.monitoredAt = next?nowIso:'';
+      $('ccMonInfo').innerHTML = next
+        ? `<span class="badge badge-gold">⭐ Stebima</span> <span class="muted" style="font-size:12.5px;">pažymėjo <b>${esc(byName||'—')}</b> · ${fmtDT(nowIso)}</span>`
+        : '';
+      PROFILES[CURRENT.code] = { ...(PROFILES[CURRENT.code]||{company_code:CURRENT.code}), is_monitored:next, monitored_by_name:byName, monitored_at: next?nowIso:null };
       CURRENT.profile = PROFILES[CURRENT.code];
       $('stMon').textContent = fmtNum(COMPANIES.filter(x=>x.monitored).length);
     };
