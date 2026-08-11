@@ -116,14 +116,20 @@
             <div class="tab" data-af="legal">🏢 Juridiniai</div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
-            <input id="adSearch" class="input" placeholder="🔍 Ieškoti pagal vardą, pavardę, pavadinimą, numerį…" style="max-width:420px;flex:1;min-width:220px;">
+            <input id="adSearch" class="input" placeholder="🔍 Ieškoti pagal vardą, pavardę, pavadinimą, numerį…" style="max-width:360px;flex:1;min-width:200px;">
             <label class="toggle" id="adDeepToggle" title="Ieško visuose laukuose: kodas, adresas, el. paštas, telefonas"><input type="checkbox" id="adDeepChk" style="margin-right:6px;"> 🔎 Gili paieška</label>
+            <select id="adSort" class="select" style="max-width:220px;">
+              <option value="number">Rikiuoti: pagal numerį</option>
+              <option value="util">Pagal užimtumą (didž.)</option>
+              <option value="kruvis">Pagal darbo krūvį (didž.)</option>
+              <option value="name">Pagal pavadinimą</option>
+            </select>
           </div>
           <div class="muted" id="adCount" style="margin-bottom:8px;"></div>
           <div id="adMsg"></div>
           <div style="overflow-x:auto;">
             <table>
-              <thead><tr><th>Numeris</th><th>Tipas</th><th>Vardas / Pavadinimas</th><th>Kodas</th><th>Telefonas</th><th>El. paštas</th></tr></thead>
+              <thead><tr><th>Numeris</th><th>Tipas</th><th>Vardas / Pavadinimas</th><th>Kodas</th><th>Užimtumas (krūvis/leist.)</th><th>Telefonas</th><th>El. paštas</th></tr></thead>
               <tbody id="adBody"></tbody>
             </table>
           </div>
@@ -435,16 +441,22 @@
     }
 
     // ============ NEMOKUMO ADMINISTRATORIŲ SUBMODULIS ============
-    let ADMINS=[], ADMINS_LOADED=false, AD_FILTER='all', AD_SEARCH='', AD_DEEP=false, AD_PAGE=0, AD_CUR=null;
+    let ADMINS=[], ADMINS_LOADED=false, AD_FILTER='all', AD_SEARCH='', AD_DEEP=false, AD_PAGE=0, AD_CUR=null, AD_SORT='number';
+    let STATS_BY_NUM={}, STATS_DATE=null;
     const AD_PAGE_SIZE=100;
     async function loadAdmins(){
       $('adMsg').innerHTML='<div class="muted">Kraunama…</div>';
-      const [a,l] = await Promise.all([
+      const sd = await sb.from('avnis_admin_stats').select('stat_date').order('stat_date',{ascending:false}).limit(1);
+      STATS_DATE = (sd.data&&sd.data[0])? sd.data[0].stat_date : null;
+      const [a,l,st] = await Promise.all([
         sb.from('avnis_admins').select('number,legal,user_type,full_name,name,surname,person_code,email,phone,address,assignment_date,status').order('number'),
-        sb.from('avnis_admins_sync_log').select('*').eq('source','registry').order('id',{ascending:false}).limit(1)
+        sb.from('avnis_admins_sync_log').select('*').eq('source','registry').order('id',{ascending:false}).limit(1),
+        STATS_DATE ? sb.from('avnis_admin_stats').select('admin_number,payload').eq('stat_date',STATS_DATE) : Promise.resolve({data:[]})
       ]);
       if(a.error){ $('adMsg').innerHTML='<div class="error">Klaida: '+esc(a.error.message)+'</div>'; return; }
       ADMINS=a.data||[]; ADMINS_LOADED=true; $('adMsg').innerHTML='';
+      STATS_BY_NUM={}; (st.data||[]).forEach(r=>{ STATS_BY_NUM[r.admin_number]=r.payload||{}; });
+      ADMINS.forEach(x=>{ x.stat = STATS_BY_NUM[x.number]||null; });
       const log=(l.data||[])[0];
       $('adStTotal').textContent=fmtNum(ADMINS.length);
       $('adStPhys').textContent=fmtNum(ADMINS.filter(x=>!x.legal).length);
@@ -452,8 +464,9 @@
       $('adStSync').textContent=log?fmtDT(log.run_at):'—';
       renderAdmins();
     }
+    function utilPct(s){ if(!s||s.leistinas_kruvis==null||s.darbo_kruvis==null||!s.leistinas_kruvis) return null; return Math.round(s.darbo_kruvis/s.leistinas_kruvis*100); }
     function adFiltered(){
-      let rows=ADMINS;
+      let rows=ADMINS.slice();
       if(AD_FILTER==='phys') rows=rows.filter(x=>!x.legal);
       else if(AD_FILTER==='legal') rows=rows.filter(x=>x.legal);
       if(AD_SEARCH){ const q=AD_SEARCH.toLowerCase();
@@ -462,6 +475,11 @@
           return (x.full_name||'').toLowerCase().includes(q) || (x.number||'').toLowerCase().includes(q) || (x.surname||'').toLowerCase().includes(q);
         });
       }
+      const num=v=>v==null?-1:v;
+      if(AD_SORT==='util') rows.sort((a,b)=> num(utilPct(b.stat))-num(utilPct(a.stat)));
+      else if(AD_SORT==='kruvis') rows.sort((a,b)=> num(a.stat&&a.stat.darbo_kruvis)<num(b.stat&&b.stat.darbo_kruvis)?1:-1);
+      else if(AD_SORT==='name') rows.sort((a,b)=> (a.full_name||'').localeCompare(b.full_name||''));
+      else rows.sort((a,b)=> (a.number||'').localeCompare(b.number||''));
       return rows;
     }
     function renderAdmins(){
@@ -469,14 +487,16 @@
       $('adCount').textContent='Rodoma: '+fmtNum(rows.length)+' administratorių';
       const pages=Math.max(1,Math.ceil(rows.length/AD_PAGE_SIZE)); if(AD_PAGE>=pages)AD_PAGE=0;
       const slice=rows.slice(AD_PAGE*AD_PAGE_SIZE, AD_PAGE*AD_PAGE_SIZE+AD_PAGE_SIZE);
-      if(!slice.length){ $('adBody').innerHTML='<tr><td colspan="6" class="muted center" style="padding:24px;">Įrašų nėra</td></tr>'; $('adPager').innerHTML=''; return; }
+      if(!slice.length){ $('adBody').innerHTML='<tr><td colspan="7" class="muted center" style="padding:24px;">Įrašų nėra</td></tr>'; $('adPager').innerHTML=''; return; }
       $('adBody').innerHTML=slice.map((x,i)=>{
-        const gi=AD_PAGE*AD_PAGE_SIZE+i;
         const tip=x.legal?'<span class="badge badge-blue">🏢 Juridinis</span>':'<span class="badge badge-gold">👤 Fizinis</span>';
+        const s=x.stat; let occ='—';
+        if(s && s.darbo_kruvis!=null){ const up=utilPct(s); const col= up!=null&&up>=100?'badge-red':(up!=null&&up>=80?'badge-gold':'badge-green');
+          occ=`${fmtNum(s.darbo_kruvis)} / ${fmtNum(s.leistinas_kruvis)}${up!=null?` <span class="badge ${col}">${up}%</span>`:''}`; }
         return `<tr class="clickable" onclick="openAdmin('${esc(x.number)}')">
           <td><strong>${esc(x.number||'—')}</strong></td><td>${tip}</td>
           <td>${esc(x.full_name||((x.name||'')+' '+(x.surname||'')).trim()||'—')}</td>
-          <td>${esc(x.person_code||'—')}</td><td>${esc(x.phone||'—')}</td><td>${esc(x.email||'—')}</td></tr>`;
+          <td>${esc(x.person_code||'—')}</td><td>${occ}</td><td>${esc(x.phone||'—')}</td><td>${esc(x.email||'—')}</td></tr>`;
       }).join('');
       let pg=''; if(pages>1){ pg=`<button class="btn btn-ghost btn-sm" ${AD_PAGE<=0?'disabled':''} onclick="adSetPage(${AD_PAGE-1})">‹</button> <span class="muted" style="margin:0 10px;">${AD_PAGE+1} / ${pages}</span> <button class="btn btn-ghost btn-sm" ${AD_PAGE>=pages-1?'disabled':''} onclick="adSetPage(${AD_PAGE+1})">›</button>`; }
       $('adPager').innerHTML=pg;
@@ -496,6 +516,26 @@
         row('Telefonas', esc(x.phone)) +
         row('Adresas', esc(x.address)) +
         row('Įrašymo į sąrašą data', fmtD(x.assignment_date));
+      // Užimtumas iš statistikos
+      const s=x.stat;
+      if(s && s.darbo_kruvis!=null){
+        const up=utilPct(s);
+        const col = up!=null&&up>=100?'#DC2626':(up!=null&&up>=80?'#D97706':'#16A34A');
+        const row=(k,v)=>`<div><span class="k">${k}</span><span class="v2">${v}</span></div>`;
+        $('adcOccup').innerHTML = `<div class="sec-title">📊 Faktinis užimtumas ir reitingas</div>`+
+          `<div class="hint" style="margin-bottom:8px;">Duomenys iš AVNIS atrankos statistikos, data: <b>${fmtD(STATS_DATE)}</b> · sulyginta pagal numerį <b>${esc(x.number)}</b>.</div>`+
+          `<div class="kv">`+
+            row('Darbo krūvis', fmtNum(s.darbo_kruvis))+
+            row('Leistinas darbo krūvis', fmtNum(s.leistinas_kruvis))+
+            row('Užimtumas', up!=null?`<span style="color:${col};font-weight:700;">${up}%</span>`:'—')+
+            row('Darbo patirtis', fmtNum(s.darbo_patirtis))+
+            row('Vidutinė trukmė', fmtNum(s.vidutine_trukme))+
+            row('Santykis (turto/įsipareig.)', fmtNum(s.santykis))+
+          `</div>`+
+          (up!=null?`<div style="margin-top:10px;height:14px;background:#eee;border-radius:7px;overflow:hidden;"><div style="height:100%;width:${Math.min(up,100)}%;background:${col};"></div></div>`:'');
+      } else {
+        $('adcOccup').innerHTML = `<div class="sec-title">📊 Faktinis užimtumas ir reitingas</div><div class="muted">Šiam administratoriui statistikos duomenų dar nėra${STATS_DATE?(' (paskutinė data '+fmtD(STATS_DATE)+')'):''}. Bus rodoma, kai bus surinkta AVNIS atrankos statistika pagal numerį <b>${esc(x.number)}</b>.</div>`;
+      }
       $('adcLegalMembers').style.display = x.legal?'':'none';
       hide('admListWrap'); show('admCardWrap'); window.scrollTo(0,0);
     };
@@ -503,6 +543,7 @@
     $('adFilterTabs').addEventListener('click',e=>{ const t=e.target.closest('.tab'); if(!t)return; document.querySelectorAll('#adFilterTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); AD_FILTER=t.dataset.af; AD_PAGE=0; renderAdmins(); });
     $('adSearch').addEventListener('input',e=>{ AD_SEARCH=e.target.value.trim(); AD_PAGE=0; renderAdmins(); });
     $('adDeepChk').addEventListener('change',e=>{ AD_DEEP=e.target.checked; $('adDeepToggle').classList.toggle('on',AD_DEEP); AD_PAGE=0; renderAdmins(); });
+    $('adSort').addEventListener('change',e=>{ AD_SORT=e.target.value; AD_PAGE=0; renderAdmins(); });
     $('adReloadBtn').onclick=()=>{ ADMINS_LOADED=false; loadAdmins(); };
 
     // ---------------- DUOMENYS ----------------
