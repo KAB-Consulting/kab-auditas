@@ -97,9 +97,64 @@
     </div>
 
     <div id="adminsView" class="hidden">
-      <div class="card">
-        <h2 style="color:var(--navy);font-size:18px;">👤 Nemokumo administratoriai</h2>
-        <p class="muted" style="margin-top:8px;">Šis submodulis bus įdiegtas kitame etape. Numatyta: kasdienis administratorių faktinio užimtumo reitingų rinkimas iš AVNIS statistikos, registruotų administratorių (fizinių ir juridinių) sąrašo atnaujinimas, duomenų sulyginimas pagal unikalų administratoriaus numerį ir įvairūs filtrai bei kortelės.</p>
+      <!-- SĄRAŠAS -->
+      <div id="admListWrap">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="v" id="adStTotal">—</div><div class="l">Iš viso administratorių</div></div>
+          <div class="stat-card"><div class="v" id="adStPhys">—</div><div class="l">👤 Fiziniai</div></div>
+          <div class="stat-card"><div class="v" id="adStLegal">—</div><div class="l">🏢 Juridiniai</div></div>
+          <div class="stat-card"><div class="v" id="adStSync" style="font-size:14px;">—</div><div class="l">Registras atnaujintas</div></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+            <h2 style="color:var(--navy);font-size:18px;">Nemokumo administratorių registras</h2>
+            <button class="btn btn-ghost btn-sm" id="adReloadBtn">🔄 Atnaujinti</button>
+          </div>
+          <div class="tabs" id="adFilterTabs">
+            <div class="tab active" data-af="all">Visi</div>
+            <div class="tab" data-af="phys">👤 Fiziniai</div>
+            <div class="tab" data-af="legal">🏢 Juridiniai</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+            <input id="adSearch" class="input" placeholder="🔍 Ieškoti pagal vardą, pavardę, pavadinimą, numerį…" style="max-width:420px;flex:1;min-width:220px;">
+            <label class="toggle" id="adDeepToggle" title="Ieško visuose laukuose: kodas, adresas, el. paštas, telefonas"><input type="checkbox" id="adDeepChk" style="margin-right:6px;"> 🔎 Gili paieška</label>
+          </div>
+          <div class="muted" id="adCount" style="margin-bottom:8px;"></div>
+          <div id="adMsg"></div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>Numeris</th><th>Tipas</th><th>Vardas / Pavadinimas</th><th>Kodas</th><th>Telefonas</th><th>El. paštas</th></tr></thead>
+              <tbody id="adBody"></tbody>
+            </table>
+          </div>
+          <div id="adPager" class="center" style="margin-top:12px;"></div>
+        </div>
+      </div>
+
+      <!-- KORTELĖ -->
+      <div id="admCardWrap" class="hidden">
+        <div class="crumb" id="adBack">← Visi administratoriai</div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+            <div>
+              <h2 style="color:var(--navy);font-size:20px;" id="adcName">—</h2>
+              <div style="margin-top:6px;" id="adcBadges"></div>
+            </div>
+            <div class="muted" id="adcNumber" style="font-weight:700;color:var(--navy);"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec-title">📇 Kontaktiniai ir registro duomenys</div>
+          <div class="kv" id="adcKv"></div>
+        </div>
+        <div class="card" id="adcOccup">
+          <div class="sec-title">📊 Faktinis užimtumas ir reitingas</div>
+          <div class="muted">Užimtumo reitingas, bylų baigimas ir kiti rodikliai bus rodomi, kai bus prijungta AVNIS statistikos bazė (atranka.avnt.lt). Sulyginimas vyks pagal unikalų numerį <b id="adcNumRef"></b>.</div>
+        </div>
+        <div class="card" id="adcLegalMembers" style="display:none;">
+          <div class="sec-title">👥 Kas dirba šioje įmonėje</div>
+          <div class="muted">Fizinių administratorių priskyrimas juridiniam asmeniui bus rodomas, kai bus prijungta statistikos / bylų priskyrimo bazė.</div>
+        </div>
       </div>
     </div>
 
@@ -133,7 +188,7 @@
           <button class="btn btn-ghost btn-sm" id="reloadBtn">🔄 Atnaujinti</button>
         </div>
 
-        <div style="font-size:12px;color:var(--gray);font-weight:600;margin-bottom:4px;">1. Pirminis filtras</div>
+        <div class="hint" style="margin-bottom:4px;">Spauskite kelis filtrus — jie derinami (sankirta). Paspaudimo tvarka rodoma numeriu. „Visos" nuima visus.</div>
         <div class="tabs" id="filterTabs">
           <div class="tab active" data-f="all">Visos</div>
           <div class="tab" data-f="valid">Su galiojančiu</div>
@@ -141,20 +196,8 @@
           <div class="tab" data-f="repeat">🔁 Pasikartojančios</div>
           <div class="tab" data-f="monitored">⭐ Stebimos</div>
           <div class="tab" data-f="new">🆕 Naujos</div>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-          <span style="font-size:12px;color:var(--gray);font-weight:600;">2. Antrinis filtras (iš atrinktų):</span>
-          <select id="filter2" class="select" style="max-width:280px;">
-            <option value="none">— nefiltruoti —</option>
-            <option value="valid">Tik su galiojančiu</option>
-            <option value="expired">Tik pasibaigę</option>
-            <option value="repeat">🔁 Tik pasikartojančios</option>
-            <option value="monitored">⭐ Tik stebimos</option>
-            <option value="new">🆕 Tik naujos</option>
-            <option value="withnotes">📝 Tik su pastabomis</option>
-            <option value="filled">✓ Tik užpildyta kortelė</option>
-          </select>
+          <div class="tab" data-f="withnotes">📝 Su pastabomis</div>
+          <div class="tab" data-f="filled">✓ Užpildyta kortelė</div>
         </div>
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
@@ -191,6 +234,7 @@
             <span class="toggle full-only" id="monToggle">☆ Nestebima</span>
             <button class="btn btn-sm full-only" id="okredoFetchBtn" style="background:#0369A1;">⬇️ Surinkti iš Okredo</button>
             <a id="okredoLink" class="btn btn-ghost btn-sm" target="_blank" rel="noopener" style="text-decoration:none;">🔗 Atidaryti Okredo</a>
+            <button class="btn btn-ghost btn-sm" id="rekvizitaiBtn" title="Atidaro įmonę Rekvizitai.lt (bylos, transportas, straipsniai) naujame skirtuke">🔎 Paieška Rekvizitai.lt</button>
             <button class="btn btn-gold btn-sm full-only" id="saveCardBtn">💾 Išsaugoti duomenis</button>
           </div>
         </div>
@@ -338,7 +382,7 @@
     }
     const fmtEur = v => { const s = fmtNum(v); return s===''?'—':s+' €'; };
 
-    let PERM_LEVEL='full', ANN=[], PROFILES={}, NOTES=[], COMPANIES=[], FILTER='all', FILTER2='none', SEARCH='', DEEP=false, CURRENT=null, CURRENT_UID=null, MY_NAME='', PAGE=0;
+    let PERM_LEVEL='full', ANN=[], PROFILES={}, NOTES=[], COMPANIES=[], ACTIVE=[], SEARCH='', DEEP=false, CURRENT=null, CURRENT_UID=null, MY_NAME='', PAGE=0;
     let NOTES_BY_CODE={}; // company_code -> [{note_text, created_at}]
     let SUBMOD='avnis';
     const PAGE_SIZE=100;
@@ -370,13 +414,96 @@
     $('logoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
     $('loginPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') $('loginBtn').click(); });
 
+    // Rekvizitai.lt atidarymas naujame skirtuke (POST forma, kad apeitų botų apsaugą; be duomenų traukos į sistemą)
+    $('rekvizitaiBtn').onclick = () => {
+      if(!CURRENT) return;
+      const code = CURRENT.code;
+      const f = document.createElement('form');
+      f.method='POST'; f.action='https://rekvizitai.vz.lt/imoniu-paieska/1/?scrollTo=searchForm'; f.target='_blank'; f.style.display='none';
+      const add=(n,v)=>{ const i=document.createElement('input'); i.type='hidden'; i.name=n; i.value=v; f.appendChild(i); };
+      if(code){ add('company_code', code); } else { add('name', CURRENT.name||''); }
+      add('resetFilter','0'); add('ok','');
+      document.body.appendChild(f); f.submit(); setTimeout(()=>f.remove(), 1000);
+    };
+
     // ---------------- SUBMODULIAI ----------------
     $('submodBar').addEventListener('click', e=>{ const t=e.target.closest('.subtab'); if(!t) return;
       document.querySelectorAll('#submodBar .subtab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); SUBMOD=t.dataset.sub; applySubmod(); });
     function applySubmod(){
-      if(SUBMOD==='admins'){ hide('listView'); hide('cardView'); show('adminsView'); }
+      if(SUBMOD==='admins'){ hide('listView'); hide('cardView'); show('adminsView'); if(!ADMINS_LOADED) loadAdmins(); }
       else { hide('adminsView'); if(CURRENT) show('cardView'); else show('listView'); }
     }
+
+    // ============ NEMOKUMO ADMINISTRATORIŲ SUBMODULIS ============
+    let ADMINS=[], ADMINS_LOADED=false, AD_FILTER='all', AD_SEARCH='', AD_DEEP=false, AD_PAGE=0, AD_CUR=null;
+    const AD_PAGE_SIZE=100;
+    async function loadAdmins(){
+      $('adMsg').innerHTML='<div class="muted">Kraunama…</div>';
+      const [a,l] = await Promise.all([
+        sb.from('avnis_admins').select('number,legal,user_type,full_name,name,surname,person_code,email,phone,address,assignment_date,status').order('number'),
+        sb.from('avnis_admins_sync_log').select('*').eq('source','registry').order('id',{ascending:false}).limit(1)
+      ]);
+      if(a.error){ $('adMsg').innerHTML='<div class="error">Klaida: '+esc(a.error.message)+'</div>'; return; }
+      ADMINS=a.data||[]; ADMINS_LOADED=true; $('adMsg').innerHTML='';
+      const log=(l.data||[])[0];
+      $('adStTotal').textContent=fmtNum(ADMINS.length);
+      $('adStPhys').textContent=fmtNum(ADMINS.filter(x=>!x.legal).length);
+      $('adStLegal').textContent=fmtNum(ADMINS.filter(x=>x.legal).length);
+      $('adStSync').textContent=log?fmtDT(log.run_at):'—';
+      renderAdmins();
+    }
+    function adFiltered(){
+      let rows=ADMINS;
+      if(AD_FILTER==='phys') rows=rows.filter(x=>!x.legal);
+      else if(AD_FILTER==='legal') rows=rows.filter(x=>x.legal);
+      if(AD_SEARCH){ const q=AD_SEARCH.toLowerCase();
+        rows=rows.filter(x=>{
+          if(AD_DEEP){ return [x.number,x.full_name,x.name,x.surname,x.person_code,x.email,x.phone,x.address].filter(Boolean).join(' ').toLowerCase().includes(q); }
+          return (x.full_name||'').toLowerCase().includes(q) || (x.number||'').toLowerCase().includes(q) || (x.surname||'').toLowerCase().includes(q);
+        });
+      }
+      return rows;
+    }
+    function renderAdmins(){
+      const rows=adFiltered();
+      $('adCount').textContent='Rodoma: '+fmtNum(rows.length)+' administratorių';
+      const pages=Math.max(1,Math.ceil(rows.length/AD_PAGE_SIZE)); if(AD_PAGE>=pages)AD_PAGE=0;
+      const slice=rows.slice(AD_PAGE*AD_PAGE_SIZE, AD_PAGE*AD_PAGE_SIZE+AD_PAGE_SIZE);
+      if(!slice.length){ $('adBody').innerHTML='<tr><td colspan="6" class="muted center" style="padding:24px;">Įrašų nėra</td></tr>'; $('adPager').innerHTML=''; return; }
+      $('adBody').innerHTML=slice.map((x,i)=>{
+        const gi=AD_PAGE*AD_PAGE_SIZE+i;
+        const tip=x.legal?'<span class="badge badge-blue">🏢 Juridinis</span>':'<span class="badge badge-gold">👤 Fizinis</span>';
+        return `<tr class="clickable" onclick="openAdmin('${esc(x.number)}')">
+          <td><strong>${esc(x.number||'—')}</strong></td><td>${tip}</td>
+          <td>${esc(x.full_name||((x.name||'')+' '+(x.surname||'')).trim()||'—')}</td>
+          <td>${esc(x.person_code||'—')}</td><td>${esc(x.phone||'—')}</td><td>${esc(x.email||'—')}</td></tr>`;
+      }).join('');
+      let pg=''; if(pages>1){ pg=`<button class="btn btn-ghost btn-sm" ${AD_PAGE<=0?'disabled':''} onclick="adSetPage(${AD_PAGE-1})">‹</button> <span class="muted" style="margin:0 10px;">${AD_PAGE+1} / ${pages}</span> <button class="btn btn-ghost btn-sm" ${AD_PAGE>=pages-1?'disabled':''} onclick="adSetPage(${AD_PAGE+1})">›</button>`; }
+      $('adPager').innerHTML=pg;
+    }
+    window.adSetPage=p=>{ AD_PAGE=p; renderAdmins(); window.scrollTo(0,0); };
+    window.openAdmin=(number)=>{
+      const x=ADMINS.find(a=>a.number===number); if(!x) return; AD_CUR=x;
+      $('adcName').textContent=x.full_name||((x.name||'')+' '+(x.surname||'')).trim()||'—';
+      $('adcNumber').textContent=x.number||'';
+      $('adcNumRef').textContent=x.number||'';
+      $('adcBadges').innerHTML=(x.legal?'<span class="badge badge-blue">🏢 Juridinis asmuo</span>':'<span class="badge badge-gold">👤 Fizinis asmuo</span>')+(x.status?` <span class="badge badge-green">${esc(x.status)}</span>`:'');
+      const row=(k,v)=>`<div><span class="k">${k}</span><span class="v2">${v||'—'}</span></div>`;
+      $('adcKv').innerHTML =
+        row('Registro numeris', esc(x.number)) +
+        row(x.legal?'Įmonės kodas':'Asmens kodas', esc(x.person_code)) +
+        row('El. paštas', x.email?`<a href="mailto:${esc(x.email)}">${esc(x.email)}</a>`:'—') +
+        row('Telefonas', esc(x.phone)) +
+        row('Adresas', esc(x.address)) +
+        row('Įrašymo į sąrašą data', fmtD(x.assignment_date));
+      $('adcLegalMembers').style.display = x.legal?'':'none';
+      hide('admListWrap'); show('admCardWrap'); window.scrollTo(0,0);
+    };
+    $('adBack').onclick=()=>{ AD_CUR=null; show('admListWrap'); hide('admCardWrap'); };
+    $('adFilterTabs').addEventListener('click',e=>{ const t=e.target.closest('.tab'); if(!t)return; document.querySelectorAll('#adFilterTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); AD_FILTER=t.dataset.af; AD_PAGE=0; renderAdmins(); });
+    $('adSearch').addEventListener('input',e=>{ AD_SEARCH=e.target.value.trim(); AD_PAGE=0; renderAdmins(); });
+    $('adDeepChk').addEventListener('change',e=>{ AD_DEEP=e.target.checked; $('adDeepToggle').classList.toggle('on',AD_DEEP); AD_PAGE=0; renderAdmins(); });
+    $('adReloadBtn').onclick=()=>{ ADMINS_LOADED=false; loadAdmins(); };
 
     // ---------------- DUOMENYS ----------------
     async function loadData(){
@@ -448,8 +575,8 @@
       return parts.filter(Boolean).join(' ').toLowerCase();
     }
     function filteredCompanies(){
-      let rows = applyOne(COMPANIES, FILTER);
-      if(FILTER2 && FILTER2!=='none') rows = applyOne(rows, FILTER2);
+      let rows = COMPANIES;
+      for(const f of ACTIVE){ rows = applyOne(rows, f); }   // derinami paspaudimo tvarka (sankirta)
       if(SEARCH){ const q=SEARCH.toLowerCase();
         if(DEEP){ rows=rows.filter(c=> deepText(c).includes(q)); }
         else { rows=rows.filter(c=> (c.name||'').toLowerCase().includes(q) || (c.code||'').toLowerCase().includes(q) || c.anns.some(a=> (a.court||'').toLowerCase().includes(q) || (a.case_no||'').toLowerCase().includes(q))); }
@@ -486,8 +613,22 @@
       $('pager').innerHTML = pg;
     }
     window.setPage = p => { PAGE=p; renderList(); window.scrollTo(0,0); };
-    $('filterTabs').addEventListener('click', e=>{ const t=e.target.closest('.tab'); if(!t) return; document.querySelectorAll('#filterTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); FILTER=t.dataset.f; PAGE=0; renderList(); });
-    $('filter2').addEventListener('change', e=>{ FILTER2=e.target.value; PAGE=0; renderList(); });
+    function renderFilterTabs(){
+      document.querySelectorAll('#filterTabs .tab').forEach(x=>{
+        const f=x.dataset.f;
+        if(f==='all'){ x.classList.toggle('active', ACTIVE.length===0); x.textContent='Visos'; return; }
+        const pos = ACTIVE.indexOf(f);
+        x.classList.toggle('active', pos>=0);
+        const base = x.dataset.label || (x.dataset.label=x.textContent.replace(/\s*\(\d+\)\s*$/,''));
+        x.textContent = pos>=0 ? `${base} (${pos+1})` : base;
+      });
+    }
+    $('filterTabs').addEventListener('click', e=>{ const t=e.target.closest('.tab'); if(!t) return;
+      const f=t.dataset.f;
+      if(f==='all'){ ACTIVE=[]; }
+      else { const i=ACTIVE.indexOf(f); if(i>=0) ACTIVE.splice(i,1); else ACTIVE.push(f); }
+      PAGE=0; renderFilterTabs(); renderList();
+    });
     $('searchBox').addEventListener('input', e=>{ SEARCH=e.target.value.trim(); PAGE=0; renderList(); });
     $('deepChk').addEventListener('change', e=>{ DEEP=e.target.checked; $('deepToggle').classList.toggle('on',DEEP); PAGE=0; renderList(); });
     $('reloadBtn').onclick = () => loadData();
