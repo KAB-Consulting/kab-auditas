@@ -1665,6 +1665,9 @@
             <div style="max-width:170px;"><label class="label">Pateikimo būdas</label>
               <select id="clmVia" class="select"><option value="email">El. paštu</option><option value="post">Paštu</option><option value="epp">EPP</option><option value="delivered">Įteikta</option><option value="other">Kita</option></select></div>
             <div><label class="label">Reikalavimo pagrindas</label><select id="clmBasis" class="select"></select></div>
+            <div style="max-width:250px;"><label class="label">VSD požymis (I eilei)</label>
+              <select id="clmVsd" class="select"><option value="">— nenurodyta / netaikoma —</option><option value="vsd">VSD apmokestinamos sumos</option><option value="non_vsd">VSD neapmokestinamos sumos</option></select>
+              <div class="hint">Darbo santykių (I eilės) reikalavimams: nuo požymio priklauso dengimas Garantinio fondo lėšomis (Įst. Nr. XII-2604 7 str. 1 d., VSDĮ 10 ir 11 str.). To paties kreditoriaus VSD apmokestinamos ir neapmokestinamos sumos vedamos kaip <b>atskiri reikalavimo įrašai</b>.</div></div>
           </div>
           <div class="sec-title">Reikalaujamos sumos</div>
           <div id="clmAccInfo" style="margin-bottom:6px;"></div>
@@ -6548,6 +6551,10 @@
     const CLAIM_ST_COLOR={ received:'#6B7280', to_approve:'#1E7A34', to_approve_partial:'#8A6D00', rejected:'#C0392B',
       approved:'#0B6E2E', approved_partial:'#0B6E2E', not_approved:'#C0392B' };
     function stBadge(s){ return `<span style="background:${CLAIM_ST_COLOR[s]||'#6B7280'};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;white-space:nowrap;">${CLAIM_ST[s]||s}</span>`; }
+    const VSD_LBL={ vsd:'VSD apmokestinamos sumos', non_vsd:'VSD neapmokestinamos sumos' };
+    function vsdBadge(v){ if(!v)return''; const col=v==='vsd'?'#1D6FA5':'#7A4FA5'; return `<span style="background:${col};color:#fff;padding:1px 6px;border-radius:8px;font-size:10.5px;white-space:nowrap;">${v==='vsd'?'VSD apmok.':'VSD neapmok.'}</span>`; }
+    function claimSum(c){ return num(c.principal)+num(c.late_fees)+num(c.interest)+num(c.fines); }
+    function claimShortDesc(c,i,total){ const bits=[]; if(total>1)bits.push('reik. '+(i+1)); if(c.basis_key)bits.push(basisLabel(c.basis_key)); if(c.received_date)bits.push('gauta '+String(c.received_date).slice(0,10)); return bits.join(' · '); }
     function credCanEdit(){ if(IS_SUPERADMIN)return true; const l=(ACCESS_MAP&&ACCESS_MAP.creditors)||PERM_LEVEL; return l==='edit'||l==='full'; }
     function credCanDelete(){ if(IS_SUPERADMIN)return true; const l=(ACCESS_MAP&&ACCESS_MAP.creditors)||PERM_LEVEL; return l==='full'; }
 
@@ -6763,7 +6770,8 @@
       if(!rows.length){ html+='<div class="muted center" style="padding:20px;">Gautų reikalavimų nėra. Paspauskite „+ Naujas reikalavimas".</div>'; el.innerHTML=html; return; }
       html+='<table><thead><tr><th>Kreditorius</th><th>Gauta</th><th>Būdas</th><th style="text-align:right;">Pagrindinė</th><th style="text-align:right;">Netesybos/palūk.</th><th style="text-align:right;">Viso</th><th>Būsena</th><th></th></tr></thead><tbody>';
       rows.forEach(c=>{ const net=num(c.late_fees)+num(c.interest)+num(c.fines); const tot=num(c.principal)+net;
-        html+=`<tr><td><b>${esc(credName(c.creditor_id))}</b>${c.secured?' 🔒':''}</td>
+        const sibs=claimsForCreditor(c.creditor_id); const ci=sibs.findIndex(x=>x.id===c.id);
+        html+=`<tr><td><b>${esc(credName(c.creditor_id))}</b>${c.secured?' 🔒':''}${sibs.length>1?` <span style="background:#0B1E3F;color:#fff;padding:0 6px;border-radius:8px;font-size:10.5px;">${ci+1}/${sibs.length}</span>`:''}${c.vsd_type?' '+vsdBadge(c.vsd_type):''}${c.basis_key?`<div style="font-size:11px;color:#666;">${esc(basisLabel(c.basis_key))}</div>`:''}</td>
           <td>${c.received_date?esc(c.received_date):'—'}${c.is_late?' <span title="Pateikta praleidus terminą" style="color:#C0392B;">⏰</span>':''}</td>
           <td>${RECV_VIA[c.received_via]||'—'}</td>
           <td style="text-align:right;">${eur(c.principal)}</td><td style="text-align:right;">${eur(net)}</td>
@@ -6987,17 +6995,24 @@
         '<button class="btn btn-sm btn-gold" onclick="courtMark(\'approved\')">✓ Pažymėti patvirtintais</button>'+
         '<button class="btn btn-sm btn-danger" onclick="courtMark(\'not_approved\')">✕ Pažymėti nepatvirtintais</button>'+
         '<button class="btn btn-sm btn-ghost" onclick="setPriority(\'I\')">I eilė</button>'+
-        '<button class="btn btn-sm btn-ghost" onclick="setPriority(\'II\')">II eilė</button></div>';
+        '<button class="btn btn-sm btn-ghost" onclick="setPriority(\'II\')">II eilė</button>'+
+        '<button class="btn btn-sm btn-ghost" onclick="setVsdType(\'vsd\')" title="Sumos, nuo kurių skaičiuojamos VSD įmokos (VSDĮ 10 str. 1 d. 1–6 p.) — dengtinos Garantinio fondo lėšomis">VSD apmok.</button>'+
+        '<button class="btn btn-sm btn-ghost" onclick="setVsdType(\'non_vsd\')" title="Sumos, nuo kurių VSD įmokos neskaičiuojamos (VSDĮ 11 str.) — nedengtinos Garantinio fondo lėšomis">VSD neapmok.</button>'+
+        '<button class="btn btn-sm btn-ghost" onclick="setVsdType(null)" title="Pašalinti VSD požymį">VSD ✕</button></div>';
       if(!rows.length){ html+='<div class="muted center" style="padding:16px;">Nėra teikiamų/patvirtintų reikalavimų. Pirma pažymėkite sprendimus Sutikrinime.</div>'; el.innerHTML=html; renderCredFinal(); return; }
-      html+='<table style="font-size:12.5px;"><thead><tr><th style="width:26px;"><input type="checkbox" id="courtAll"></th><th>Kreditorius</th><th style="text-align:right;">Teikiama/patvirtinta</th><th>Eilė</th><th>Būsena</th><th>Nutartis</th><th></th></tr></thead><tbody>';
+      html+='<div class="hint" style="margin-bottom:6px;">I eilės (darbo santykių) reikalavimams priskirkite VSD požymį — pagal jį prašyme teismui sudaromos atskiros VSD apmokestinamų ir neapmokestinamų sumų lentelės (Įst. Nr. XII-2604 7 str. 1 d.).</div>';
+      html+='<table style="font-size:12.5px;"><thead><tr><th style="width:26px;"><input type="checkbox" id="courtAll"></th><th>Kreditorius / reikalavimas</th><th style="text-align:right;">Teikiama/patvirtinta</th><th>Eilė</th><th>VSD požymis</th><th>Būsena</th><th>Nutartis</th><th></th></tr></thead><tbody>';
       rows.forEach(c=>{ const s=submitSums(c); const teik=s.p+s.l+s.i+s.f;
         const appr=num(c.approved_principal)+num(c.approved_late_fees)+num(c.approved_interest)+num(c.approved_fines);
         const isAppr=['approved','approved_partial'].includes(c.status);
         const ord=CORDERS.find(o=>o.id===c.court_order_id);
+        const sibs=claimsForCreditor(c.creditor_id); const ci=sibs.findIndex(x=>x.id===c.id);
+        const desc=claimShortDesc(c,ci,sibs.length);
         html+=`<tr><td><input type="checkbox" class="court-cb" value="${c.id}"></td>
-          <td><b>${esc(credName(c.creditor_id))}</b></td>
+          <td><b>${esc(credName(c.creditor_id))}</b>${sibs.length>1?` <span style="background:#0B1E3F;color:#fff;padding:0 6px;border-radius:8px;font-size:10.5px;">${ci+1}/${sibs.length}</span>`:''}${desc?`<div style="font-size:11px;color:#666;">${esc(desc)}</div>`:''}</td>
           <td style="text-align:right;">${eur(isAppr?appr:teik)}</td>
           <td>${c.priority?('<b>'+c.priority+' eilė</b>'):'<span class="muted">—</span>'}</td>
+          <td>${c.vsd_type?vsdBadge(c.vsd_type):'<span class="muted">—</span>'}</td>
           <td>${stBadge(c.status)}</td>
           <td style="font-size:11px;">${ord?esc(ord.order_date+(ord.case_no?' · '+ord.case_no:'')):'—'}</td>
           <td style="text-align:right;white-space:nowrap;">${isAppr?`<button class="btn btn-sm btn-ghost" title="Tikslinti (JANĮ 44 str.)" onclick="openAdjustModal('${c.id}')">✎ tikslinti</button>`:''}</td></tr>`;
@@ -7034,6 +7049,15 @@
       if(error){ $('credCourtMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
       await credLog('claims_priority_set',{ priority:pr, count:data.updated });
       await loadCreditorsModule('court'); $('credCourtMsg').innerHTML='<div class="success">'+pr+' eilei priskirta: '+data.updated+'.</div>';
+    };
+    window.setVsdType=async(vt)=>{
+      if(!credCanEdit())return; const ids=courtSelected();
+      if(!ids.length){ $('credCourtMsg').innerHTML='<div class="error">Pažymėkite bent vieną reikalavimą.</div>'; return; }
+      const { data, error }=await sb.rpc('set_claims_vsd_type',{ p_claim_ids:ids, p_vsd_type:vt });
+      if(error){ $('credCourtMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
+      if(data&&data.ok===false){ $('credCourtMsg').innerHTML='<div class="error">Klaida: '+esc(data.error_code)+'</div>'; return; }
+      await credLog('claims_vsd_type_set',{ vsd_type:vt, count:data.updated });
+      await loadCreditorsModule('court'); $('credCourtMsg').innerHTML='<div class="success">VSD požymis '+(vt?('„'+(VSD_LBL[vt]||vt)+'“'):'pašalintas')+' — reikalavimų: '+data.updated+'.</div>';
     };
     // Nutarties modalė
     window.openCourtOrderModal=(id)=>{ if(!credCanEdit())return; const o=id?CORDERS.find(x=>x.id===id):{}; $('coId').value=id||'';
@@ -7084,7 +7108,7 @@
       html+='<table style="font-size:12px;"><thead><tr><th>Kreditorius</th><th>Eilė</th><th style="text-align:right;">Pagrindinė (I et.)</th><th style="text-align:right;">Netesybos/palūk. (II et.)</th><th style="text-align:right;">Viso</th><th style="text-align:right;">Balsų %</th></tr></thead><tbody>';
       appr.forEach(c=>{ const p=num(c.approved_principal); const net=num(c.approved_late_fees)+num(c.approved_interest)+num(c.approved_fines);
         const tot=p+net; const pct=grand>0?(tot/grand*100):0;
-        html+=`<tr><td>${esc(credName(c.creditor_id))}${c.secured?' 🔒':''}</td><td>${c.priority||'—'}</td>
+        html+=`<tr><td>${esc(credName(c.creditor_id))}${c.secured?' 🔒':''}</td><td>${c.priority||'—'}${c.vsd_type?' '+vsdBadge(c.vsd_type):''}</td>
           <td style="text-align:right;">${eur(p)}</td><td style="text-align:right;">${eur(net)}</td>
           <td style="text-align:right;font-weight:600;">${eur(tot)}</td><td style="text-align:right;">${pct.toFixed(2)} %</td></tr>`;
       });
@@ -7542,8 +7566,8 @@
       const el=$('credReconBody'); if(!el)return;
       const filt=($('credReconFilter')&&$('credReconFilter').value)||'';
       if(!CREDITORS.length){ el.innerHTML='<div class="muted center" style="padding:20px;">Nėra duomenų sutikrinimui.</div>'; renderReconDetail(null); return; }
-      let html='<div class="hint" style="margin-bottom:8px;">Pasirinkite kreditorių — dešinėje matysite apskaitos ir reikalavimo palyginimą, prisegtus dokumentus ir galėsite priimti sprendimą.</div>';
-      html+='<table style="font-size:12.5px;"><thead><tr><th>Kreditorius</th><th style="text-align:right;">Apsk. viso</th><th style="text-align:right;">Reik. viso</th><th style="text-align:right;">Δ</th><th>Būsena</th></tr></thead><tbody>';
+      let html='<div class="hint" style="margin-bottom:8px;">Pasirinkite reikalavimą — dešinėje matysite apskaitos ir reikalavimo palyginimą, prisegtus dokumentus ir galėsite priimti sprendimą. Jei kreditorius pateikė kelis reikalavimus (pvz., VSD apmokestinamos ir neapmokestinamos sumos, perimti reikalavimai, skirtingos eilės) — kiekvienas rodomas ir vertinamas atskirai.</div>';
+      html+='<table style="font-size:12.5px;"><thead><tr><th>Kreditorius / reikalavimas</th><th style="text-align:right;">Apsk. viso</th><th style="text-align:right;">Reik. suma</th><th style="text-align:right;">Δ</th><th>Būsena</th></tr></thead><tbody>';
       let shown=0;
       CREDITORS.forEach(c=>{
         const a=accTotals(c.id); const claims=claimsForCreditor(c.id);
@@ -7554,40 +7578,75 @@
         if(filt==='match'&&cat!=='match')return; if(filt==='diff'&&cat!=='diff')return;
         if(filt==='notrecv'&&cat!=='notrecv')return; if(filt==='claimonly'&&(a.principal+a.net)>0)return;
         shown++;
-        const st=claims[0]?claims[0].status:'';
         const dTot=(cl.principal+cl.net)-(a.principal+a.net);
-        const sel=RECON_SEL===c.id;
-        html+=`<tr onclick="selectReconCreditor('${c.id}')" style="cursor:pointer;${sel?'background:#FFF7E0;':''}">
-          <td><b>${esc(c.name)}</b>${!hasClaim?' <span style="color:#8A6D00;font-size:11px;">(negauta)</span>':''}</td>
-          <td style="text-align:right;">${eur(a.principal+a.net)}</td>
-          <td style="text-align:right;">${hasClaim?eur(cl.principal+cl.net):'—'}</td>
-          ${hasClaim?deltaCell(dTot):'<td></td>'}
-          <td>${hasClaim?stBadge(st):'<span class="muted">—</span>'} <span title="Peržiūrėti">👁</span></td></tr>`;
+        if(!hasClaim){
+          const sel=RECON_SEL===('cred:'+c.id);
+          html+=`<tr onclick="selectReconCreditor('cred:${c.id}')" style="cursor:pointer;${sel?'background:#FFF7E0;':''}">
+            <td><b>${esc(c.name)}</b> <span style="color:#8A6D00;font-size:11px;">(negauta)</span></td>
+            <td style="text-align:right;">${eur(a.principal+a.net)}</td>
+            <td style="text-align:right;">—</td><td></td>
+            <td><span class="muted">—</span> <span title="Peržiūrėti">👁</span></td></tr>`;
+          return;
+        }
+        claims.forEach((clm,ci)=>{
+          const sel=RECON_SEL===clm.id; const first=ci===0;
+          const desc=claimShortDesc(clm,ci,claims.length);
+          html+=`<tr onclick="selectReconCreditor('${clm.id}')" style="cursor:pointer;${sel?'background:#FFF7E0;':''}">
+            <td><b>${esc(c.name)}</b>${claims.length>1?` <span style="background:#0B1E3F;color:#fff;padding:0 6px;border-radius:8px;font-size:10.5px;">${ci+1}/${claims.length}</span>`:''}${clm.vsd_type?' '+vsdBadge(clm.vsd_type):''}${desc?`<div style="font-size:11px;color:#666;">${esc(desc)}</div>`:''}</td>
+            <td style="text-align:right;">${first?eur(a.principal+a.net):'<span class="muted">↑</span>'}</td>
+            <td style="text-align:right;">${eur(claimSum(clm))}</td>
+            ${first?deltaCell(dTot):'<td></td>'}
+            <td>${stBadge(clm.status)} <span title="Peržiūrėti">👁</span></td></tr>`;
+        });
       });
       html+='</tbody></table>';
       if(!shown)html+='<div class="muted center" style="padding:16px;">Pagal filtrą įrašų nėra.</div>';
       el.innerHTML=html;
-      if(RECON_SEL&&!CREDITORS.some(c=>c.id===RECON_SEL))RECON_SEL=null;
+      if(RECON_SEL){
+        const ok=(typeof RECON_SEL==='string'&&RECON_SEL.indexOf('cred:')===0)?CREDITORS.some(c=>('cred:'+c.id)===RECON_SEL):CLAIMS.some(x=>x.id===RECON_SEL);
+        if(!ok)RECON_SEL=null;
+      }
       renderReconDetail(RECON_SEL);
     }
-    window.selectReconCreditor=(cid)=>{ RECON_SEL=cid;
-      document.querySelectorAll('#credReconBody tr').forEach(tr=>{});
-      renderCredRecon();
-    };
+    window.selectReconCreditor=(key)=>{ RECON_SEL=key; renderCredRecon(); };
 
     // --- Dešinysis blokas: palyginimas + sprendimas + dokumentai ---
-    function renderReconDetail(cid){
+    function renderReconDetail(selKey){
       const el=$('credReconDetail'); if(!el)return;
-      if(!cid){ el.innerHTML='<div class="muted" style="padding:20px;">Pasirinkite kreditorių sąraše kairėje — matysite palyginimą, dokumentus ir sprendimą.</div>'; return; }
+      if(!selKey){ el.innerHTML='<div class="muted" style="padding:20px;">Pasirinkite reikalavimą sąraše kairėje — matysite palyginimą, dokumentus ir sprendimą.</div>'; return; }
+      let clm=null, cid=null;
+      if(typeof selKey==='string'&&selKey.indexOf('cred:')===0){ cid=selKey.slice(5); }
+      else { clm=CLAIMS.find(x=>x.id===selKey)||null; if(!clm){ el.innerHTML=''; return; } cid=clm.creditor_id; }
       const c=credById(cid); if(!c){ el.innerHTML=''; return; }
       const a=accTotals(cid); const claims=claimsForCreditor(cid); const cl=claimTotals(cid);
-      const clm=claims[0];
+      const multi=claims.length>1;
       const row=(lbl,av,cv)=>{ const d=(cv==null||av==null)?null:(cv-av);
         return `<tr><td>${lbl}</td><td style="text-align:right;">${eur(av)}</td><td style="text-align:right;">${cv==null?'—':eur(cv)}</td>${d==null?'<td></td>':deltaCell(d)}</tr>`; };
       let html=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
         <div><strong style="font-size:15px;">${esc(c.name)}</strong>${c.id_code?' · '+esc(c.id_code):''}${c.secured?' 🔒':''}
           <div class="muted" style="font-size:12px;">${esc(c.address||'')}${c.email?' · '+esc(c.email):''}</div></div></div>`;
-      html+='<div class="sec-title" style="margin-top:10px;">Apskaita vs pateiktas reikalavimas</div>';
+      if(clm){
+        const ci=claims.findIndex(x=>x.id===clm.id);
+        html+=`<div style="margin-top:6px;background:#F0F4FA;border:1px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12.5px;">
+          <b>Vertinamas reikalavimas${multi?(' '+(ci+1)+' iš '+claims.length):''}:</b>
+          ${clm.received_date?(' gautas '+esc(String(clm.received_date).slice(0,10))+' ·'):''}
+          ${clm.basis_key?(' '+esc(basisLabel(clm.basis_key))+' ·'):''}
+          suma <b>${eur(claimSum(clm))}</b>
+          ${clm.priority?(' · <b>'+esc(clm.priority)+' eilė</b>'):''}
+          ${clm.vsd_type?(' · '+vsdBadge(clm.vsd_type)):''}
+          ${clm.notes?('<div style="font-size:11.5px;color:#555;margin-top:2px;">Pastabos: '+esc(clm.notes)+'</div>'):''}</div>`;
+      }
+      if(multi){
+        html+='<div class="sec-title" style="margin-top:10px;">Visi šio kreditoriaus reikalavimai</div>';
+        html+='<table style="font-size:12px;"><thead><tr><th>#</th><th>Reikalavimas</th><th>VSD</th><th>Eilė</th><th style="text-align:right;">Suma</th><th>Būsena</th></tr></thead><tbody>';
+        claims.forEach((x,i)=>{ const selRow=clm&&x.id===clm.id;
+          html+=`<tr onclick="selectReconCreditor('${x.id}')" style="cursor:pointer;${selRow?'background:#FFF7E0;font-weight:600;':''}"><td>${i+1}</td>
+            <td>${esc([x.basis_key?basisLabel(x.basis_key):'',x.received_date?('gauta '+String(x.received_date).slice(0,10)):''].filter(Boolean).join(' · ')||'—')}</td>
+            <td>${x.vsd_type?vsdBadge(x.vsd_type):'<span class="muted">—</span>'}</td><td>${x.priority||'—'}</td>
+            <td style="text-align:right;">${eur(claimSum(x))}</td><td>${stBadge(x.status)}</td></tr>`; });
+        html+=`<tr style="font-weight:700;background:#F6F8FB;"><td></td><td>Viso pareikšta</td><td></td><td></td><td style="text-align:right;">${eur(cl.principal+cl.net)}</td><td></td></tr></tbody></table>`;
+      }
+      html+='<div class="sec-title" style="margin-top:10px;">Apskaita vs '+(multi?'visi pateikti reikalavimai':'pateiktas reikalavimas')+'</div>';
       html+='<table style="font-size:12.5px;"><thead><tr><th></th><th style="text-align:right;">Apskaita</th><th style="text-align:right;">Reikalavimas</th><th style="text-align:right;">Δ</th></tr></thead><tbody>';
       html+=row('Pagrindinė skola',a.principal,clm?cl.principal:null);
       html+=row('Netesybos / palūkanos',a.net,clm?cl.net:null);
@@ -7752,15 +7811,19 @@
     }
     function credExportCourtFull(fmt){
       if(!CREDITORS.length){ $('credReconMsg').innerHTML='<div class="error">Nėra duomenų.</div>'; return; }
-      const aoa=[['Kreditorius','Kodas','Apsk. pagrindinė','Apsk. netesybos','Apsk. viso','Gauta pagrindinė','Gauta netesybos','Gauta viso','Būsena','Teikiama/patvirtinta viso','Netvirtinama','Motyvai']];
-      CREDITORS.forEach(c=>{ const a=accTotals(c.id); const claims=claimsForCreditor(c.id); const clm=claims[0];
-        const cl=claimTotals(c.id); const cr=credById(c.id)||{};
-        let teik=0, netv=0, note='', st='Negauta';
-        if(clm){ st=CLAIM_ST[clm.status]||clm.status; const s=submitSums(clm); teik=s.p+s.l+s.i+s.f;
+      const aoa=[['Kreditorius','Kodas','Apsk. pagrindinė','Apsk. netesybos','Apsk. viso','Gauta pagrindinė','Gauta netesybos','Gauta viso','Eilė','VSD požymis','Būsena','Teikiama/patvirtinta viso','Netvirtinama','Motyvai']];
+      CREDITORS.forEach(c=>{ const a=accTotals(c.id); const claims=claimsForCreditor(c.id);
+        const cr=credById(c.id)||{};
+        if(!claims.length){ aoa.push([c.name,cr.id_code||'',a.principal,a.net,a.principal+a.net,'','','','','','Negauta','','','']); return; }
+        claims.forEach((clm,ci)=>{
+          const st=CLAIM_ST[clm.status]||clm.status; const s=submitSums(clm); const teik=s.p+s.l+s.i+s.f;
           const submitted=num(clm.principal)+num(clm.late_fees)+num(clm.interest)+num(clm.fines);
-          netv=Math.max(0,submitted-teik); note=clm.objection_note||''; }
-        aoa.push([c.name,cr.id_code||'',a.principal,a.net,a.principal+a.net,
-          clm?cl.principal:'',clm?cl.net:'',clm?(cl.principal+cl.net):'',st,clm?teik:'',clm?netv:'',note]); });
+          const netv=Math.max(0,submitted-teik); const note=clm.objection_note||'';
+          const p=num(clm.principal), n=num(clm.late_fees)+num(clm.interest)+num(clm.fines);
+          aoa.push([c.name+(claims.length>1?(' ('+(ci+1)+'/'+claims.length+')'):''),cr.id_code||'',
+            ci===0?a.principal:'',ci===0?a.net:'',ci===0?(a.principal+a.net):'',
+            p,n,p+n,clm.priority||'',clm.vsd_type?(VSD_LBL[clm.vsd_type]||clm.vsd_type):'',st,teik,netv,note]); });
+      });
       if(fmt==='xlsx'){ const ws=XLSX.utils.aoa_to_sheet(aoa); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Teismui'); XLSX.writeFile(wb,'Teismui_pilna_suvestine_'+(CURRENT.case_short_code||'byla')+'.xlsx'); }
       else credTableToPdf('PAŽYMA — Kreditorinių reikalavimų suvestinė teismui',aoa);
     }
@@ -8099,6 +8162,7 @@
       const tot=num(c.principal)+num(c.late_fees)+num(c.interest)+num(c.fines); $('clmTotalInput')&&($('clmTotalInput').value=(id&&tot)?tot.toFixed(2):'');
       $('clmSecured').checked=!!c.secured; $('clmSecuredNote').value=c.secured_note||''; clmSecToggle();
       $('clmNotes').value=c.notes||''; clmRecalcDisplay(); $('clmMsg').innerHTML='';
+      $('clmVsd')&&($('clmVsd').value=c.vsd_type||'');
       renderClaimCreditorInfo(); renderClaimAccInfo();
       await fillClmRegSelect();
       if(id){ await loadClaimFiles(id); await loadClaimRegLinks(id); }
@@ -8115,7 +8179,7 @@
       const row={ creditor_id:cid, basis_key:$('clmBasis').value||null, received_date:recv, received_via:$('clmVia').value||null, is_late:isLate,
         principal:num($('clmPrincipal').value), late_fees:num($('clmLate').value), interest:num($('clmInterest').value), fines:num($('clmFines').value),
         secured:$('clmSecured').checked, secured_note:$('clmSecured').checked?($('clmSecuredNote').value.trim()||null):null,
-        notes:$('clmNotes').value.trim()||null, updated_at:new Date().toISOString() };
+        notes:$('clmNotes').value.trim()||null, vsd_type:(($('clmVsd')&&$('clmVsd').value)||null), updated_at:new Date().toISOString() };
       let outId=id;
       if(id){ const { error }=await sb.from('insolvency_creditor_claims').update(row).eq('id',id); if(error){ $('clmMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return null; } }
       else { row.id=CLM_DRAFT_ID; row.case_id=CURRENT.id; row.status='received'; row.created_by=CURRENT_UID;
@@ -8226,11 +8290,11 @@
       const isApp=kind==='approve';
       const rowsData=CLAIMS.filter(c=> isApp ? (c.status==='to_approve'||c.status==='to_approve_partial') : (c.status==='rejected'||c.status==='to_approve_partial') );
       if(!rowsData.length){ $('credReconMsg').innerHTML='<div class="error">Nėra '+(isApp?'teikiamų tvirtinti':'netvirtinamų')+' reikalavimų. Pažymėkite sprendimus sutikrinimo lentelėje.</div>'; return; }
-      const head = isApp ? ['Kreditorius','Kodas','Pagrindinė','Delspinigiai','Palūkanos','Baudos','Viso','Eilė']
+      const head = isApp ? ['Kreditorius','Kodas','Pagrindinė','Delspinigiai','Palūkanos','Baudos','Viso','Eilė','VSD požymis']
                          : ['Kreditorius','Kodas','Pateikta suma','Teikiama tvirtinti','Ginčijama/netvirtinama','Motyvai'];
       const aoa=[head];
       rowsData.forEach(c=>{ const cr=credById(c.creditor_id)||{}; const s=submitSums(c);
-        if(isApp){ aoa.push([credName(c.creditor_id), cr.id_code||'', s.p, s.l, s.i, s.f, s.p+s.l+s.i+s.f, c.priority||'']); }
+        if(isApp){ aoa.push([credName(c.creditor_id), cr.id_code||'', s.p, s.l, s.i, s.f, s.p+s.l+s.i+s.f, c.priority||'', c.vsd_type?(VSD_LBL[c.vsd_type]||c.vsd_type):'']); }
         else { const submitted=num(c.principal)+num(c.late_fees)+num(c.interest)+num(c.fines); const teik=s.p+s.l+s.i+s.f;
           aoa.push([credName(c.creditor_id), cr.id_code||'', submitted, teik, submitted-teik, c.objection_note||'']); }
       });
@@ -8258,15 +8322,19 @@
     }
     function credExportCourtFull(fmt){
       if(!CREDITORS.length){ $('credReconMsg').innerHTML='<div class="error">Nėra duomenų.</div>'; return; }
-      const aoa=[['Kreditorius','Kodas','Apsk. pagrindinė','Apsk. netesybos','Apsk. viso','Gauta pagrindinė','Gauta netesybos','Gauta viso','Būsena','Teikiama/patvirtinta viso','Netvirtinama','Motyvai']];
-      CREDITORS.forEach(c=>{ const a=accTotals(c.id); const claims=claimsForCreditor(c.id); const clm=claims[0];
-        const cl=claimTotals(c.id); const cr=credById(c.id)||{};
-        let teik=0, netv=0, note='', st='Negauta';
-        if(clm){ st=CLAIM_ST[clm.status]||clm.status; const s=submitSums(clm); teik=s.p+s.l+s.i+s.f;
+      const aoa=[['Kreditorius','Kodas','Apsk. pagrindinė','Apsk. netesybos','Apsk. viso','Gauta pagrindinė','Gauta netesybos','Gauta viso','Eilė','VSD požymis','Būsena','Teikiama/patvirtinta viso','Netvirtinama','Motyvai']];
+      CREDITORS.forEach(c=>{ const a=accTotals(c.id); const claims=claimsForCreditor(c.id);
+        const cr=credById(c.id)||{};
+        if(!claims.length){ aoa.push([c.name,cr.id_code||'',a.principal,a.net,a.principal+a.net,'','','','','','Negauta','','','']); return; }
+        claims.forEach((clm,ci)=>{
+          const st=CLAIM_ST[clm.status]||clm.status; const s=submitSums(clm); const teik=s.p+s.l+s.i+s.f;
           const submitted=num(clm.principal)+num(clm.late_fees)+num(clm.interest)+num(clm.fines);
-          netv=Math.max(0,submitted-teik); note=clm.objection_note||''; }
-        aoa.push([c.name,cr.id_code||'',a.principal,a.net,a.principal+a.net,
-          clm?cl.principal:'',clm?cl.net:'',clm?(cl.principal+cl.net):'',st,clm?teik:'',clm?netv:'',note]); });
+          const netv=Math.max(0,submitted-teik); const note=clm.objection_note||'';
+          const p=num(clm.principal), n=num(clm.late_fees)+num(clm.interest)+num(clm.fines);
+          aoa.push([c.name+(claims.length>1?(' ('+(ci+1)+'/'+claims.length+')'):''),cr.id_code||'',
+            ci===0?a.principal:'',ci===0?a.net:'',ci===0?(a.principal+a.net):'',
+            p,n,p+n,clm.priority||'',clm.vsd_type?(VSD_LBL[clm.vsd_type]||clm.vsd_type):'',st,teik,netv,note]); });
+      });
       if(fmt==='xlsx') credXlsxSave('Teismui','Teismui_pilna_suvestine_'+(CURRENT.case_short_code||'byla')+'.xlsx',aoa);
       else credTableToPdf('PAŽYMA — Kreditorinių reikalavimų suvestinė teismui',aoa);
     }
@@ -8299,6 +8367,8 @@
       return CREDITORS.filter(c=>{ const a=accTotals(c.id); return (a.principal+a.net)>0.004 && !claimsForCreditor(c.id).length; });
     }
     function reqNoPriority(){ return reqSubmitClaims().filter(c=>c.priority!=='I'&&c.priority!=='II'); }
+    function reqVsdMissing(){ return reqSubmitClaims().filter(c=>c.priority==='I'&&!c.vsd_type); }
+    function reqVsdShort(c){ return c.priority==='I'?(c.vsd_type==='vsd'?'apmok.':(c.vsd_type==='non_vsd'?'neapmok.':'—')):''; }
 
     function renderCredReq(){
       const el=$('credReqBody'); if(!el)return;
@@ -8348,13 +8418,15 @@
       let h='';
       const noPr=reqNoPriority();
       if(noPr.length)h+='<div class="error">⚠ '+noPr.length+' reikalavimui(-ams) nepriskirta kreditorių eilė ('+noPr.map(c=>esc(credName(c.creditor_id))).join(', ')+'). Prašyme jie bus priskirti antrai eilei. Eilę galite nurodyti skirtuke „Tvirtinimas“.</div>';
+      const noVsd=reqVsdMissing();
+      if(noVsd.length)h+='<div class="error">⚠ '+noVsd.length+' pirmos eilės reikalavimui(-ams) nepriskirtas VSD požymis ('+noVsd.map(c=>esc(credName(c.creditor_id))).join(', ')+'). Prašyme jie bus priskirti VSD apmokestinamoms sumoms. Požymį nurodykite skirtuke „Tvirtinimas“ (mygtukai „VSD apmok.“ / „VSD neapmok.“).</div>';
       if(!sub.length){ el.innerHTML=h+'<div class="muted center" style="padding:24px;">Teikiamų tvirtinti reikalavimų nėra. Pažymėkite sprendimus skirtuke „Sutikrinimas“.</div>'; return; }
       let i=0,t1=0,t2=0; const rows=[];
       sub.forEach(c=>{ const cr=credById(c.creditor_id)||{}; const s=submitSums(c); const e1=s.p, e2=s.l+s.i+s.f; t1+=e1; t2+=e2;
-        rows.push([++i, credName(c.creditor_id), cr.id_code||'—', c.priority||'II', reqEur(e1), reqEur(e2), reqEur(e1+e2)]); });
-      rows.push(['','Iš viso:','','',reqEur(t1),reqEur(t2),reqEur(t1+t2)]);
-      h+='<div class="muted" style="font-size:12px;margin-bottom:8px;">1 etapas — pagrindinė skola; 2 etapas — palūkanos ir netesybos (delspinigiai, baudos) pagal JANĮ 94 str.</div>'+
-        reqTableHtml(['Eil. Nr.','Kreditorius','Kodas','Eilė','1 etapo skola, Eur','2 etapo skola, Eur','Viso, Eur'],rows,['c','l','l','c','r','r','r'],true);
+        rows.push([++i, credName(c.creditor_id), cr.id_code||'—', c.priority||'II', reqVsdShort(c), reqEur(e1), reqEur(e2), reqEur(e1+e2)]); });
+      rows.push(['','Iš viso:','','','',reqEur(t1),reqEur(t2),reqEur(t1+t2)]);
+      h+='<div class="muted" style="font-size:12px;margin-bottom:8px;">1 etapas — pagrindinė skola; 2 etapas — palūkanos ir netesybos (delspinigiai, baudos) pagal JANĮ 94 str. I eilės reikalavimai papildomai skirstomi į VSD apmokestinamas ir neapmokestinamas sumas (Įst. Nr. XII-2604 7 str. 1 d.).</div>'+
+        reqTableHtml(['Eil. Nr.','Kreditorius','Kodas','Eilė','VSD','1 etapo skola, Eur','2 etapo skola, Eur','Viso, Eur'],rows,['c','l','l','c','c','r','r','r'],true);
       if(rej.length){
         let j=0,t=0; const rrows=[];
         rej.forEach(r=>{ t+=r.sum; rrows.push([++j, r.name, reqEur(r.sum), r.note||'—']); });
@@ -8378,6 +8450,8 @@
       const recvOnly=CLAIMS.filter(c=>c.status==='received').length;
       if(recvOnly)warn.push(recvOnly+' gautas(-i) reikalavimas(-ai) be sprendimo — į prašymą nebus įtraukti kaip tvirtinami');
       if(noPr.length)warn.push(noPr.length+' tvirtinamam(-iems) reikalavimui(-ams) nepriskirta eilė — prašyme priskiriami antrai eilei');
+      const noVsdG=reqVsdMissing();
+      if(noVsdG.length)warn.push(noVsdG.length+' pirmos eilės reikalavimui(-ams) nepriskirtas VSD požymis ('+noVsdG.map(c=>credName(c.creditor_id)).join(', ')+') — prašyme priskiriami VSD apmokestinamoms sumoms');
       const persons=(PERSONS||[]);
       const selPid=CURRENT.admin_person_id||'';
       let h='<div class="fgrid">';
@@ -8455,16 +8529,23 @@
       const ns=reqNotSubmitted();
       if(ns.length)P('Kiti Bendrovės buhalterinėje apskaitoje apskaityti kreditoriai ('+ns.map(c=>c.name).join(', ')+') finansinių reikalavimų per nustatytą terminą nepateikė.');
       const sub=reqSubmitClaims(); const rej=reqRejectRows();
+      const hasIvsd=sub.some(c=>c.priority==='I'&&c.vsd_type);
       if(sub.length){
+        if(hasIvsd){
+          P('Pažymėtina, kad pagal JANĮ 94 straipsnio 2 dalies 1 punktą pirmąja eile tenkinami su darbo santykiais susiję darbuotojų reikalavimai. '+
+            'Lietuvos Respublikos garantijų darbuotojams jų darbdaviui tapus nemokiam ir ilgalaikio darbo išmokų įstatymo Nr. XII-2604 7 straipsnio 1 dalyje nustatyta, kad išmokos iš Garantinio fondo lėšų skiriamos darbuotojams dėl nesumokėtų su darbo santykiais susijusių Lietuvos Respublikos valstybinio socialinio draudimo įstatymo 10 straipsnio 1 dalies 1–6 punktuose nurodytų pajamų, t. y. tik dėl sumų, nuo kurių skaičiuojamos valstybinio socialinio draudimo įmokos (darbo užmokestis, kompensacijos už nepanaudotas kasmetines atostogas, išeitinės išmokos ir kt.). '+
+            'Sumos, nuo kurių valstybinio socialinio draudimo įmokos neskaičiuojamos (Valstybinio socialinio draudimo įstatymo 11 straipsnis; pvz., delspinigiai už pavėluotą su darbo santykiais susijusių išmokų mokėjimą, žalos atlyginimo sumos), Garantinio fondo lėšomis nedengiamos. '+
+            'Kadangi nuo šio skirstymo priklauso darbuotojų reikalavimų (jų dalių) dengimas Garantinio fondo lėšomis, pirmos eilės kreditorių reikalavimai teismui teikiami tvirtinti atskirai nurodant valstybinio socialinio draudimo įmokomis apmokestinamas ir jomis neapmokestinamas sumas.');
+        }
         P('Susipažinus su pareikštais reikalavimais ir jų pagrindimo dokumentais bei palyginus juos su Bendrovės buhalterinės apskaitos duomenimis nustatyta, kad '+
           (rej.length?'toliau nurodyti':'visi pareikšti')+' kreditorių finansiniai reikalavimai yra pagrįsti, todėl tvirtintini. '+
           'Vadovaujantis JANĮ 94 straipsniu, kreditorių reikalavimai suskirstyti į pirmuoju etapu tenkintinas sumas (pagrindinė skola be priskaičiuotų palūkanų ir netesybų) ir antruoju etapu tenkintinas sumas (palūkanos ir netesybos – delspinigiai, baudos):');
         const rows=[]; let i=0,t1=0,t2=0;
         sub.forEach(c=>{ const cr=credById(c.creditor_id)||{}; const s=submitSums(c); const e1=s.p, e2=s.l+s.i+s.f; t1+=e1; t2+=e2;
-          rows.push([++i, credName(c.creditor_id), cr.id_code||'—', c.priority||'II', reqEur(e1), reqEur(e2), reqEur(e1+e2)]); });
+          rows.push([++i, credName(c.creditor_id), cr.id_code||'—', (c.priority||'II')+(c.priority==='I'&&c.vsd_type?(' '+(c.vsd_type==='vsd'?'(VSD apmok.)':'(VSD neapmok.)')):''), reqEur(e1), reqEur(e2), reqEur(e1+e2)]); });
         rows.push(['','Iš viso:','','',reqEur(t1),reqEur(t2),reqEur(t1+t2)]);
         B.push({t:'table',header:['Eil. Nr.','Kreditorius','Kodas','Eilė','1 etapo skola, Eur','2 etapo skola, Eur','Finansinis reikalavimas, Eur'],
-          widths:[6,26,11,7,16,16,18],aligns:['c','l','l','c','r','r','r'],rows,boldLastRow:true});
+          widths:[6,24,11,9,16,16,18],aligns:['c','l','l','c','r','r','r'],rows,boldLastRow:true});
       }
       if(rej.length){
         P('Susipažinus su pareikštais reikalavimais nustatyta, kad šie kreditorių finansiniai reikalavimai (ar jų dalys) yra nepagrįsti, todėl netvirtintini:');
@@ -8479,6 +8560,7 @@
         rn++;
         B.push({t:'p',text:rn+'. Patvirtinti bankrutuojančios '+shortD+' kreditorių finansinius reikalavimus ir jų sąrašą:',align:'left',after:120});
         const gI=sub.filter(c=>c.priority==='I'), gII=sub.filter(c=>c.priority!=='I');
+        const gIvsd=gI.filter(c=>c.vsd_type!=='non_vsd'), gInon=gI.filter(c=>c.vsd_type==='non_vsd');
         const grpTable=arr=>{ const rows=[]; let i=0,t1=0,t2=0;
           arr.forEach(c=>{ const s=submitSums(c); const e1=s.p, e2=s.l+s.i+s.f; t1+=e1; t2+=e2;
             rows.push([++i, credName(c.creditor_id), reqEur(e1), reqEur(e2), reqEur(e1+e2)]); });
@@ -8486,7 +8568,21 @@
           return {t:'table',header:['Eil. Nr.','Kreditorius','1 etapo reikalavimas, Eur','2 etapo reikalavimas, Eur','Finansinis reikalavimas, Eur'],
             widths:[6,38,18,18,20],aligns:['c','l','r','r','r'],rows,boldLastRow:true}; };
         let sn=0;
-        if(gI.length){ sn++; B.push({t:'p',text:rn+'.'+sn+'. Pirmos eilės kreditorių reikalavimai:',align:'left',after:120,indent:360}); B.push(grpTable(gI)); }
+        if(gI.length){
+          sn++;
+          if(hasIvsd){
+            B.push({t:'p',text:rn+'.'+sn+'. Pirmos eilės kreditorių reikalavimai:',align:'left',after:120,indent:360});
+            let vn=0;
+            if(gIvsd.length){ vn++;
+              B.push({t:'p',text:rn+'.'+sn+'.'+vn+'. Reikalavimai dėl sumų, nuo kurių skaičiuojamos valstybinio socialinio draudimo įmokos (VSD apmokestinamos sumos):',align:'left',after:120,indent:600});
+              B.push(grpTable(gIvsd)); }
+            if(gInon.length){ vn++;
+              B.push({t:'p',text:rn+'.'+sn+'.'+vn+'. Reikalavimai dėl sumų, nuo kurių valstybinio socialinio draudimo įmokos neskaičiuojamos (VSD neapmokestinamos sumos):',align:'left',after:120,indent:600});
+              B.push(grpTable(gInon)); }
+          } else {
+            B.push({t:'p',text:rn+'.'+sn+'. Pirmos eilės kreditorių reikalavimai:',align:'left',after:120,indent:360}); B.push(grpTable(gI));
+          }
+        }
         if(gII.length){ sn++; B.push({t:'p',text:rn+'.'+sn+'. Antros eilės kreditorių reikalavimai:',align:'left',after:120,indent:360}); B.push(grpTable(gII)); }
       }
       if(rej.length){
