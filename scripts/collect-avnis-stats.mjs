@@ -1,6 +1,7 @@
 // AVNIS administratorių užimtumo statistikos rinkiklis (GitHub Actions robotas).
-// Prisijungia prie AVNIS, atidaro atranka.avnt.lt statistiką, pasirenka datą,
-// atsisiunčia „Excel" eksportą, jį išnagrinėja ir įkelia į Supabase (avnis-stats-import).
+// Prisijungia prie AVNIS, per mygtuką „Administratorių statistika" (/app/selections) SSO
+// būdu atidaro atranka.avnt.lt statistiką, pasirenka datą, atsisiunčia „Excel" eksportą,
+// jį išnagrinėja ir įkelia į Supabase (avnis-stats-import).
 //
 // Aplinkos kintamieji (iš GitHub Secrets):
 //   AVNIS_USERNAME, AVNIS_PASSWORD, AVNIS_STATS_KEY
@@ -14,13 +15,14 @@ const PASS = process.env.AVNIS_PASSWORD;
 const IMPORT_KEY = process.env.AVNIS_STATS_KEY;
 
 const LOGIN_URL = 'https://avnis.avnt.lt/account/login';
-const STATS_URL = 'https://atranka.avnt.lt/Statistika/administratoriu_statistika.aspx';
+const SELECTIONS_URL = 'https://avnis.avnt.lt/app/selections';
 const IMPORT_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co/functions/v1/avnis-stats-import';
 
 const SEL = {
   user: 'input[name="userNameOrEmailAddress"]',
   pass: 'input[name="password"]',
   loginBtn: '#LoginButton',
+  statsBtn: 'Administratorių statistika', // mygtuko tekstas /app/selections puslapyje
   date: '#RadDatePickerData_dateInput',
   searchBtn: '#RadButton_Search_input',
   excelBtn: '#RadButton_xmlx_input',
@@ -79,7 +81,6 @@ async function main() {
     await page.fill(SEL.user, USER);
     await page.fill(SEL.pass, PASS);
     await page.click(SEL.loginBtn);
-    // Palaukiam, kol AVNIS baigs prisijungimą (išeis iš /account/login)
     await page.waitForTimeout(4000);
     await page.waitForLoadState('networkidle').catch(() => {});
     if (/\/account\/login/.test(page.url())) {
@@ -91,35 +92,58 @@ async function main() {
     }
     console.log('AVNIS prisijungimas OK. URL:', page.url());
 
-    // 2) Atranka statistikos puslapis (SSO turi persikelti automatiškai)
-    console.log('Atidaroma atranka statistika…');
-    await page.goto(STATS_URL, { waitUntil: 'domcontentloaded' });
+    // 2) Iš AVNIS SSO būdu atidaryti atranką („Administratorių statistika" mygtukas)
+    console.log('Atidaromas atrankos statistikos langas iš AVNIS…');
+    await page.goto(SELECTIONS_URL, { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle').catch(() => {});
-    const dateEl = await page.$(SEL.date);
-    if (!dateEl) {
-      await dump(page, 'atranka');
-      throw new Error('Atranka statistika neatsidarė (nerastas datos laukas). Galimai neužteko AVNIS SSO teisių.');
-    }
+    const statBtn = page.getByRole('button', { name: SEL.statsBtn });
+    await statBtn.waitFor({ timeout: 30000 });
 
-    // 3) Datos parinkimas — reikia realių klavišų, kad Telerik RadDatePicker priimtų
+    // Mygtukas atidaro atranką naujame lange (SSO perdavimas). Pagaunam tą langą.
+    let work = null;
+    try {
+      const [popup] = await Promise.all([
+        ctx.waitForEvent('page', { timeout: 20000 }),
+        statBtn.click(),
+      ]);
+      work = popup;
+      console.log('Atsidarė naujas langas.');
+    } catch {
+      work = page; // atsarginis variantas: atsidarė tame pačiame lange
+      console.log('Naujas langas neatsidarė – dirbame tame pačiame.');
+    }
+    work.setDefaultTimeout(45000);
+    await work.bringToFront().catch(() => {});
+    await work.waitForLoadState('domcontentloaded').catch(() => {});
+
+    // Atranka gali atlikti kelis SSO peradresavimus – palaukiam datos lauko
+    try {
+      await work.waitForSelector(SEL.date, { timeout: 45000 });
+    } catch {
+      await dump(work, 'atranka');
+      console.error('Atranka lango URL:', work.url());
+      throw new Error('Atranka statistika neatsidarė (nerastas datos laukas). Lango URL: ' + work.url());
+    }
+    console.log('Atranka atidaryta:', work.url());
+
+    // 3) Datos parinkimas – reikia realių klavišų, kad Telerik RadDatePicker priimtų
     console.log('Nustatoma data ir ieškoma…');
-    await page.click(SEL.date);
-    await page.keyboard.press('Control+A');
-    await page.keyboard.type(statDate, { delay: 40 });
-    await page.keyboard.press('Enter');
-    await page.click(SEL.searchBtn);
-    await page.waitForTimeout(3000);
-    await page.waitForLoadState('networkidle').catch(() => {});
+    await work.click(SEL.date);
+    await work.keyboard.press('Control+A');
+    await work.keyboard.type(statDate, { delay: 40 });
+    await work.keyboard.press('Enter');
+    await work.click(SEL.searchBtn);
+    await work.waitForTimeout(3000);
+    await work.waitForLoadState('networkidle').catch(() => {});
 
     // 4) „Excel" eksporto atsisiuntimas
     console.log('Atsisiunčiamas Excel eksportas…');
     const [download] = await Promise.all([
-      page.waitForEvent('download', { timeout: 60000 }),
-      page.click(SEL.excelBtn),
+      work.waitForEvent('download', { timeout: 60000 }),
+      work.click(SEL.excelBtn),
     ]);
     const filePath = await download.path();
-    const buf = fs.readFileSync(filePath);
-    const text = buf.toString('utf8');
+    const text = fs.readFileSync(filePath).toString('utf8');
 
     // 5) Nagrinėjimas
     const rows = parseStats(text);
