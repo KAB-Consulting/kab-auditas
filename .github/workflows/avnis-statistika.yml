@@ -1,0 +1,61 @@
+name: AVNIS administratorių statistika (kasdien)
+
+# Kasdien surenka administratorių užimtumo statistiką iš atranka.avnt.lt
+# ir įkelia į „KAB auditas" Supabase (avnis_admin_stats).
+#
+# Reikalingi „Secrets" (Settings -> Secrets and variables -> Actions):
+#   AVNIS_USERNAME   - AVNIS prisijungimo vardas
+#   AVNIS_PASSWORD   - AVNIS slaptažodis
+#   AVNIS_STATS_KEY  - importo raktas (216c5b715291695bee2a1f828ddeb78620cd)
+
+on:
+  schedule:
+    # 04:15 UTC = 07:15 Europe/Vilnius (vasarą). Žiemą (UTC+2) tai bus 06:15 vietos laiku.
+    - cron: '15 4 * * *'
+  workflow_dispatch:
+    inputs:
+      stat_date:
+        description: 'Statistikos data YYYY-MM-DD (palikite tuščią = vakar diena)'
+        required: false
+        default: ''
+
+concurrency:
+  group: avnis-statistika
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Parsisiųsti repozitoriją
+        uses: actions/checkout@v4
+
+      - name: Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Įdiegti Playwright + Chromium
+        run: |
+          npm install playwright@1.48.2 --no-save
+          npx playwright install --with-deps chromium
+
+      - name: Surinkti ir įkelti statistiką
+        env:
+          AVNIS_USERNAME: ${{ secrets.AVNIS_USERNAME }}
+          AVNIS_PASSWORD: ${{ secrets.AVNIS_PASSWORD }}
+          AVNIS_STATS_KEY: ${{ secrets.AVNIS_STATS_KEY }}
+          STAT_DATE: ${{ github.event.inputs.stat_date }}
+        run: node scripts/collect-avnis-stats.mjs
+
+      - name: Įkelti klaidos diagnostiką (jei nepavyko)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avnis-stats-debug
+          path: |
+            error-*.png
+            error-*.html
+          if-no-files-found: ignore
+          retention-days: 7
