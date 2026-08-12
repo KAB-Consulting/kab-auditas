@@ -196,9 +196,13 @@
           <div class="sec-title">📊 Faktinis užimtumas ir reitingas</div>
           <div class="muted">Užimtumo reitingas, bylų baigimas ir kiti rodikliai bus rodomi, kai bus prijungta AVNIS statistikos bazė (atranka.avnt.lt). Sulyginimas vyks pagal unikalų numerį <b id="adcNumRef"></b>.</div>
         </div>
-        <div class="card" id="adcLegalMembers" style="display:none;">
-          <div class="sec-title">👥 Kas dirba šioje įmonėje</div>
-          <div class="muted">Fizinių administratorių priskyrimas juridiniam asmeniui bus rodomas, kai bus prijungta statistikos / bylų priskyrimo bazė.</div>
+        <div class="card" id="adcRel">
+          <div class="sec-title" id="adcRelTitle">🏢 Darbovietės</div>
+          <div id="adcRelBody"></div>
+        </div>
+        <div class="card" id="adcSanctions" style="display:none;">
+          <div class="sec-title">⚖️ Poveikio priemonės (nuobaudos)</div>
+          <div id="adcSanctionsBody"></div>
         </div>
       </div>
     </div>
@@ -476,7 +480,7 @@
     function userName(uid, fallback){ return (uid && USERS[uid]) || fallback || ''; }
     let SUBMOD='avnis';
     const PAGE_SIZE=100;
-    window.BUILD_VERSION='avnis-2026-08-12-v9';
+    window.BUILD_VERSION='avnis-2026-08-12-v10';
 
     const JURISDICTION = {1:'Lietuvos (teritorinė)', 2:'Lietuvos (pagrindinė)', 3:'Tarptautinė'};
 
@@ -528,20 +532,27 @@
     let ADMINS=[], ADMINS_LOADED=false, AD_FILTER='all', AD_SEARCH='', AD_DEEP=false, AD_PAGE=0, AD_CUR=null;
     let AD_SORT_KEY='number', AD_SORT_DIR=1; // dir: 1 = didėjimo (A→Z, maž→didž), -1 = mažėjimo
     let STATS_BY_NUM={}, STATS_DATE=null;
+    let EMP_BY_PERSON={}, EMP_BY_EMPLOYER={}; // darbovietės / darbuotojai
     const AD_PAGE_SIZE=100;
     async function loadAdmins(){
       $('adMsg').innerHTML='<div class="muted">Kraunama…</div>';
       const sd = await sb.from('avnis_admin_stats').select('stat_date').order('stat_date',{ascending:false}).limit(1);
       STATS_DATE = (sd.data&&sd.data[0])? sd.data[0].stat_date : null;
-      const [a,l,st] = await Promise.all([
-        sb.from('avnis_admins').select('number,legal,user_type,full_name,name,surname,person_code,email,phone,address,assignment_date,status').order('number'),
+      const [a,l,st,emp] = await Promise.all([
+        sb.from('avnis_admins').select('number,legal,user_type,full_name,name,surname,person_code,email,phone,address,assignment_date,status,sanctions,insurance').order('number'),
         sb.from('avnis_admins_sync_log').select('*').eq('source','registry').order('id',{ascending:false}).limit(1),
-        STATS_DATE ? sb.from('avnis_admin_stats').select('admin_number,payload').eq('stat_date',STATS_DATE) : Promise.resolve({data:[]})
+        STATS_DATE ? sb.from('avnis_admin_stats').select('admin_number,payload').eq('stat_date',STATS_DATE) : Promise.resolve({data:[]}),
+        sb.from('avnis_admin_employment').select('person_number,person_name,employer_number,employer_name,valid_from,valid_to,active').order('valid_from',{ascending:false})
       ]);
       if(a.error){ $('adMsg').innerHTML='<div class="error">Klaida: '+esc(a.error.message)+'</div>'; return; }
       ADMINS=a.data||[]; ADMINS_LOADED=true; $('adMsg').innerHTML='';
       $('adImportCard').style.display = (PERM_LEVEL==='full')?'':'none';
       STATS_BY_NUM={}; (st.data||[]).forEach(r=>{ STATS_BY_NUM[r.admin_number]=r.payload||{}; });
+      EMP_BY_PERSON={}; EMP_BY_EMPLOYER={};
+      if(emp && !emp.error){ (emp.data||[]).forEach(r=>{
+        (EMP_BY_PERSON[r.person_number]=EMP_BY_PERSON[r.person_number]||[]).push(r);
+        if(r.employer_number) (EMP_BY_EMPLOYER[r.employer_number]=EMP_BY_EMPLOYER[r.employer_number]||[]).push(r);
+      }); }
       ADMINS.forEach(x=>{ x.stat = STATS_BY_NUM[x.number]||null; });
       const log=(l.data||[])[0];
       $('adStTotal').textContent=fmtNum(ADMINS.length);
@@ -651,9 +662,45 @@
       } else {
         $('adcOccup').innerHTML = `<div class="sec-title">📊 Faktinis užimtumas ir reitingas</div><div class="muted">Šiam administratoriui statistikos duomenų dar nėra${STATS_DATE?(' (paskutinė data '+fmtD(STATS_DATE)+')'):''}. Bus rodoma, kai bus surinkta AVNIS atrankos statistika pagal numerį <b>${esc(x.number)}</b>.</div>`;
       }
-      $('adcLegalMembers').style.display = x.legal?'':'none';
+      renderAdminRelations(x);
+      renderAdminSanctions(x);
       hide('admListWrap'); show('admCardWrap'); window.scrollTo(0,0);
     };
+    function renderAdminRelations(x){
+      const box=$('adcRelBody');
+      if(x.legal){
+        $('adcRelTitle').innerHTML='👥 Kas dirba šioje įmonėje';
+        const rows=(EMP_BY_EMPLOYER[x.number]||[]).slice().sort((a,b)=> (a.active===b.active)?String(b.valid_from||'').localeCompare(String(a.valid_from||'')):(a.active?-1:1));
+        if(!rows.length){ box.innerHTML='<div class="muted">Šiuo metu nėra priskirtų fizinių administratorių (arba dar nesurinkta).</div>'; return; }
+        box.innerHTML='<div class="hint" style="margin-bottom:6px;">Fiziniai administratoriai, dirbantys šiame juridiniame asmenyje. Spauskite vardą — atsidarys jo kortelė.</div>'+
+          '<div style="overflow-x:auto;"><table><thead><tr><th>Nr.</th><th>Vardas, pavardė</th><th style="width:120px;">Nuo kada</th><th style="width:90px;">Būsena</th></tr></thead><tbody>'+
+          rows.map(r=>`<tr class="${r.active?'clickable':''}" ${r.active?`onclick="openAdmin('${esc(r.person_number)}')"`:''}>
+            <td><b>${esc(r.person_number)}</b></td><td>${esc(r.person_name||'—')}</td>
+            <td>${fmtD(r.valid_from)}</td>
+            <td>${r.active?'<span class="badge badge-green">Dirba</span>':`<span class="badge badge-gray">Nebedirba${r.valid_to?' ('+fmtD(r.valid_to)+')':''}</span>`}</td></tr>`).join('')+
+          '</tbody></table></div>';
+      } else {
+        $('adcRelTitle').innerHTML='🏢 Darbovietės (juridiniai asmenys)';
+        const rows=(EMP_BY_PERSON[x.number]||[]).slice().sort((a,b)=> (a.active===b.active)?String(b.valid_from||'').localeCompare(String(a.valid_from||'')):(a.active?-1:1));
+        if(!rows.length){ box.innerHTML='<div class="muted">Nedirba per juridinį asmenį (vykdo individualią veiklą) arba dar nesurinkta.</div>'; return; }
+        box.innerHTML='<div class="hint" style="margin-bottom:6px;">Juridiniai asmenys, kuriuose šis fizinis administratorius dirba. Spauskite pavadinimą — atsidarys to juridinio asmens kortelė.</div>'+
+          '<div style="overflow-x:auto;"><table><thead><tr><th>Nr.</th><th>Juridinio asmens pavadinimas</th><th style="width:120px;">Nuo kada</th><th style="width:90px;">Būsena</th></tr></thead><tbody>'+
+          rows.map(r=>`<tr class="${(r.active&&r.employer_number)?'clickable':''}" ${(r.active&&r.employer_number)?`onclick="openAdmin('${esc(r.employer_number)}')"`:''}>
+            <td>${r.employer_number?'<b>'+esc(r.employer_number)+'</b>':'—'}</td><td>${esc(r.employer_name||'—')}</td>
+            <td>${fmtD(r.valid_from)}</td>
+            <td>${r.active?'<span class="badge badge-green">Dirba</span>':`<span class="badge badge-gray">Nebedirba${r.valid_to?' ('+fmtD(r.valid_to)+')':''}</span>`}</td></tr>`).join('')+
+          '</tbody></table></div>';
+      }
+    }
+    function renderAdminSanctions(x){
+      const list = Array.isArray(x.sanctions)?x.sanctions:[];
+      if(!list.length){ $('adcSanctions').style.display='none'; return; }
+      $('adcSanctions').style.display='';
+      $('adcSanctionsBody').innerHTML='<div style="overflow-x:auto;"><table><thead><tr><th style="width:120px;">Data</th><th>Poveikio priemonė / pastaba</th></tr></thead><tbody>'+
+        list.map(s=>{ const d=s.date||s.sanctionDate||s.createdDate||s.validFrom; const desc=s.description||s.note||s.sanctionType||s.type||s.name||JSON.stringify(s).slice(0,200);
+          return `<tr><td>${d?fmtD(typeof d==='number'?new Date(d).toISOString():d):'—'}</td><td>${esc(String(desc))}</td></tr>`; }).join('')+
+        '</tbody></table></div>';
+    }
     $('adBack').onclick=()=>{ AD_CUR=null; show('admListWrap'); hide('admCardWrap'); };
     $('adFilterTabs').addEventListener('click',e=>{ const t=e.target.closest('.tab'); if(!t)return; document.querySelectorAll('#adFilterTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); AD_FILTER=t.dataset.af; AD_PAGE=0; renderAdmins(); });
     $('adSearch').addEventListener('input',e=>{ AD_SEARCH=e.target.value.trim(); AD_PAGE=0; renderAdmins(); });
