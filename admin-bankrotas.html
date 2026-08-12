@@ -8462,7 +8462,15 @@
         '</select></div>';
       h+='<div class="fld"><label class="label">PRIDEDAMA (priedų aprašymas)</label><input class="input" id="reqPriedai" value="Įmonei pareikštų finansinių reikalavimų kopijos."></div>';
       h+='</div>';
-      h+='<label class="fchk" style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;font-size:14px;"><input type="checkbox" id="reqRegChk" checked> Registruoti siunčiamų dokumentų žurnale (automatiškai suteikiamas kitas eilės numeris)</label>';
+      h+='<label class="fchk" style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;font-size:14px;"><input type="checkbox" id="reqRegChk" checked> Registruoti siunčiamų dokumentų žurnale</label>';
+      h+='<div id="reqRegFields" class="hidden" style="margin-top:8px;background:#F6F8FB;border:1px solid var(--bd);border-radius:8px;padding:10px 12px;">'+
+        '<div class="fgrid">'+
+        '<div class="fld fld-sm"><label class="label">Žurnalo Nr. (numatomas)</label><input class="input" id="reqRegNo" value="⏳" readonly style="background:#EFEFEF;font-weight:600;"></div>'+
+        '<div class="fld fld-sm"><label class="label">Siuntimo data</label><input class="input" id="reqSendDate" type="date" value="'+today+'"></div>'+
+        '<div class="fld"><label class="label">Dokumento aprašymas žurnale</label><input class="input" id="reqRegDesc" value="Prašymas teismui dėl kreditorių reikalavimų patvirtinimo"></div>'+
+        '</div>'+
+        '<div class="hint" style="margin-top:6px;">Numeris galutinai suteikiamas generavimo metu (jei žurnale tuo metu atsiras naujų įrašų — bus suteiktas kitas eilės numeris) ir <b>įrašomas į patį dokumentą</b>. Sugeneruotą dokumentą peržiūrėję ir pasirašę, galutinę pasirašytą versiją įkelkite Dok. registravimas → Siunčiami, mygtuku „🖊️⬆“ prie šio įrašo.</div>'+
+        '</div>';
       h+='<div style="margin-top:12px;font-size:13px;color:var(--gray);">Į prašymą bus įtraukta: apskaitos kreditorių — <b>'+CRED_ACC.length+'</b>, gautų reikalavimų — <b>'+CLAIMS.length+'</b>, tvirtinamų — <b>'+sub.length+'</b>'+(rej.length?', netvirtinamų (ar dalių) — <b>'+rej.length+'</b>':'')+(reqNotSubmitted().length?', reikalavimų nepateikė — <b>'+reqNotSubmitted().length+'</b> kreditoriai(-ų)':'')+'.</div>';
       if(warn.length)h+='<div class="error" style="margin-top:10px;">⚠ Patikrinkite: '+esc(warn.join('; '))+'.</div>';
       h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">'+
@@ -8471,15 +8479,31 @@
         '</div><div id="reqGenMsg" style="margin-top:10px;"></div>';
       el.innerHTML=h;
       $('reqPreviewBtn').onclick=reqPreview;
+      const rc=$('reqRegChk');
+      if(rc){ const tog=()=>{ $('reqRegFields').classList.toggle('hidden',!rc.checked); if(rc.checked)reqPeekRegNo(); };
+        rc.onchange=tog; if(rc.checked)tog(); }
       $('reqGenBtn').onclick=reqGenerate;
     }
 
+    async function reqPeekRegNo(){
+      const el=$('reqRegNo'); if(!el)return;
+      if(!CURRENT.project_code){ el.value='— (bylos kortelėje nėra registracijos trumpinio)'; return; }
+      el.value='⏳';
+      try{
+        const yy=String(new Date().getFullYear()).slice(2); const pref='S'+yy+'-';
+        const r=await sb.from('insolvency_doc_registrations').select('registration_number').eq('case_id',CURRENT.id).eq('doc_type','sent').like('registration_number',pref+'%');
+        let mx=0; (r.data||[]).forEach(x=>{ const p=parseInt(String(x.registration_number||'').split('-')[2],10); if(!isNaN(p)&&p>mx)mx=p; });
+        el.value=pref+String(CURRENT.project_code).toUpperCase()+'-'+String(mx+1).padStart(3,'0');
+      }catch(_){ el.value='—'; }
+    }
     function reqOpts(){
       const sigSel=$('reqSigner'); let signer='';
       if(sigSel){ const pid=sigSel.value; if(pid){ const p=(PERSONS||[]).find(x=>x.id===pid); signer=p?(p.full_name+(p.position?', '+p.position:'')):''; } else signer=credCaseMeta().person||''; }
       else signer=credCaseMeta().person||'';
       return { date:($('reqDate')&&$('reqDate').value)||new Date().toISOString().slice(0,10),
-        signer, priedai:($('reqPriedai')&&$('reqPriedai').value.trim())||'Įmonei pareikštų finansinių reikalavimų kopijos.' };
+        signer, priedai:($('reqPriedai')&&$('reqPriedai').value.trim())||'Įmonei pareikštų finansinių reikalavimų kopijos.',
+        sendDate:($('reqSendDate')&&$('reqSendDate').value)||(($('reqDate')&&$('reqDate').value)||new Date().toISOString().slice(0,10)),
+        regDesc:(($('reqRegDesc')&&$('reqRegDesc').value.trim())||'Prašymas teismui dėl kreditorių reikalavimų patvirtinimo') };
     }
 
     function reqBuildModel(opts){
@@ -8710,13 +8734,13 @@
         if(doReg){
           msg.innerHTML='<div class="muted">⏳ Registruojama siunčiamų dokumentų žurnale…</div>';
           const file=new File([pdfBlob], baseName+'.pdf', { type:'application/pdf' });
-          const { blob:regBlob, pageCount }=await buildRegisteredPdf([file],{ regNumber, dateStr:opts.date, dateLabel:'Išsiųsta', admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
+          const { blob:regBlob, pageCount }=await buildRegisteredPdf([file],{ regNumber, dateStr:(opts.sendDate||opts.date), dateLabel:'Išsiųsta', admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
           const path=`${CURRENT.case_short_code}/registered/${regNumber.replace(/[^A-Za-z0-9._-]+/g,'_')}_${Date.now()}.pdf`;
           const up=await sb.storage.from('insolvency-docs').upload(path,regBlob,{ upsert:false, contentType:'application/pdf' });
           if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
           const reg=await sb.rpc('register_insolvency_document',{ p:{
-            case_id:CURRENT.id, registration_number:regNumber, doc_type:'sent', registration_date:opts.date,
-            document_title:'Prašymas dėl kreditorių reikalavimų patvirtinimo', counterparty_name:CURRENT.court||'',
+            case_id:CURRENT.id, registration_number:regNumber, doc_type:'sent', registration_date:(opts.sendDate||opts.date),
+            document_title:(opts.regDesc||'Prašymas teismui dėl kreditorių reikalavimų patvirtinimo'), counterparty_name:CURRENT.court||'',
             notes:'Sugeneruota: Kreditoriai → Prašymas teismui'+(docxPath?'; DOCX: '+docxPath:''),
             storage_path:path, file_size:regBlob.size, page_count:pageCount,
             original_files_metadata:[{ name:baseName+'.pdf', size:pdfBlob.size }],
@@ -8726,7 +8750,7 @@
         }
         try{ await credLog('court_request_generated',{ reg_number:regNumber||null, docx:docxPath||null, approved:sub.length }); }catch(_){ }
         msg.innerHTML='<div class="success">✔ Prašymas sugeneruotas'+(regNumber?(' ir užregistruotas Nr. <b>'+esc(regNumber)+'</b>'):'')+'. DOCX ir PDF atsisiųsti į jūsų kompiuterį.'+
-          (regNumber?(' Jei dokumentą koreguosite ir pasirašysite — galutinę pasirašytą versiją įkelkite Reg. žurnale mygtuku „🖊️⬆“ prie įrašo '+esc(regNumber)+'.'):'')+'</div>';
+          (regNumber?(' Dokumentą peržiūrėję ir pasirašę, galutinę pasirašytą versiją įkelkite skirtuke „Dok. registravimas“ → Siunčiami, mygtuku „🖊️⬆“ prie įrašo <b>'+esc(regNumber)+'</b> — ji bus saugoma prie žurnalo įrašo atskaitingumui.'):'')+'</div>';
         if(!(CURRENT_ADM&&CURRENT_ADM.blank_docx_path))msg.innerHTML+='<div class="error">DOCX nesugeneruotas — administratoriui neįkeltas firminis blankas (Nustatymai → Administratoriai).</div>';
       }catch(err){ msg.innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
       finally{ btn.disabled=false; }
