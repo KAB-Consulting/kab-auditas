@@ -253,7 +253,7 @@
         <div style="overflow-x:auto;overflow-y:visible;">
           <table>
             <thead><tr>
-              <th style="width:34px;"></th><th>Įmonė</th><th>Kodas</th><th class="center">Skelbimų</th><th>Naujausia stadija</th><th>Teismas</th><th>Paskutinis skelbimas</th><th>Būsena</th><th>Kortelė</th>
+              <th style="width:34px;"></th><th>Įmonė</th><th>Atrankinis dydis</th><th class="center">Skelbimų</th><th>Naujausia stadija</th><th>Teismas</th><th>Paskutinis skelbimas</th><th>🗓️ Naujas įvykis</th><th>Būsena</th><th>Kortelė</th>
             </tr></thead>
             <tbody id="listBody"></tbody>
           </table>
@@ -305,6 +305,47 @@
           </div>
         </div>
         <div id="notesList" style="margin-top:14px;"></div>
+      </div>
+
+      <!-- TEISMO ĮVYKIAI -->
+      <div class="card" id="eventsCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+          <div class="sec-title" style="margin:0;">🗓️ Įvykiai (teismo posėdžiai / nutartys)</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <span class="muted" id="evCaseNo" style="font-size:12.5px;"></span>
+            <button class="btn btn-ghost btn-sm" id="evLiteko" title="Kopijuoja bylos nr. ir atidaro LITEKO viešą paiešką">🔎 LITEKO</button>
+            <button class="btn btn-ghost btn-sm" id="evPranesimai" title="Kopijuoja bylos nr. ir atidaro Teismų pranešimus">🔎 Teismų pranešimai</button>
+            <button class="btn btn-gold btn-sm full-only" id="evAddBtn">➕ Pridėti įvykį</button>
+          </div>
+        </div>
+        <div class="hint" style="margin-bottom:8px;">Portaluose gali reikėti patvirtinti CAPTCHA. Radę posėdžio datą ar nutartį — įrašykite ją čia („Pridėti įvykį").</div>
+        <div id="evAddForm" class="hidden" style="background:#f7fafe;border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div><label class="label">Įvykio tipas</label>
+              <select id="evType" class="select">
+                <option value="Teismo posėdis">Teismo posėdis</option>
+                <option value="Priimta nutartis">Priimta nutartis</option>
+                <option value="Kita">Kita</option>
+              </select>
+            </div>
+            <div><label class="label">Numatyta įvykio data</label><input type="date" id="evDate" class="input"></div>
+          </div>
+          <label class="label" style="margin-top:8px;">Aprašymas</label>
+          <input type="text" id="evDesc" class="input" placeholder="Pvz.: paskirtas bankroto bylos nagrinėjimas / priimta nutartis iškelti bankrotą…">
+          <label class="label" style="margin-top:8px;">Nuoroda į šaltinį (posėdis / nutartis)</label>
+          <input type="url" id="evUrl" class="input" placeholder="https://…">
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <button class="btn btn-primary btn-sm" id="evSave">💾 Išsaugoti įvykį</button>
+            <button class="btn btn-ghost btn-sm" id="evCancel">Atšaukti</button>
+          </div>
+        </div>
+        <div id="evMsg"></div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th style="width:110px;">Įrašo data</th><th style="width:150px;">Numatytas įvykis</th><th>Aprašymas</th><th style="width:120px;">Įvykio data</th><th style="width:90px;">Šaltinis</th><th class="full-only" style="width:40px;"></th></tr></thead>
+            <tbody id="evBody"></tbody>
+          </table>
+        </div>
       </div>
 
       <!-- KRITERIJAI (iš AVNIS) -->
@@ -428,9 +469,10 @@
 
     let PERM_LEVEL='full', ANN=[], PROFILES={}, NOTES=[], COMPANIES=[], ACTIVE=[], SEARCH='', DEEP=false, CURRENT=null, CURRENT_UID=null, MY_NAME='', PAGE=0;
     let NOTES_BY_CODE={}; // company_code -> [{note_text, created_at}]
+    let EVENTS_BY_CODE={}; // company_code -> [{event_date, event_type, description, source_url, source_type, record_date, found_at}]
     let SUBMOD='avnis';
     const PAGE_SIZE=100;
-    window.BUILD_VERSION='avnis-2026-08-11-v7';
+    window.BUILD_VERSION='avnis-2026-08-11-v8';
 
     const JURISDICTION = {1:'Lietuvos (teritorinė)', 2:'Lietuvos (pagrindinė)', 3:'Tarptautinė'};
 
@@ -678,16 +720,18 @@
     // ---------------- DUOMENYS ----------------
     async function loadData(){
       views('loadingView');
-      const [a,p,s,nt] = await Promise.all([
+      const [a,p,s,nt,ev] = await Promise.all([
         sb.from('avnis_announcements').select('id,process_id,company_name,company_code,process_stage_title,company_address,date_from,date_to,court,case_no,judge,is_valid,invalidated_at,first_seen_at,criteria').order('date_to',{ascending:false}).limit(30000),
         sb.from('avnis_company_profiles').select('*'),
         sb.from('avnis_sync_log').select('*').order('id',{ascending:false}).limit(1),
-        sb.from('avnis_company_notes').select('company_code,note_text,created_at').order('created_at',{ascending:false})
+        sb.from('avnis_company_notes').select('company_code,note_text,created_at').order('created_at',{ascending:false}),
+        sb.from('avnis_court_events').select('company_code,case_no,event_date,event_type,description,source_url,source_type,record_date,found_at').order('found_at',{ascending:false})
       ]);
       if(a.error){ $('listMsg').innerHTML='<div class="error">Klaida: '+esc(a.error.message)+'</div>'; views('listView'); return; }
       ANN = a.data||[];
       PROFILES = {}; (p.data||[]).forEach(x=>PROFILES[x.company_code]=x);
       NOTES_BY_CODE = {}; (nt.data||[]).forEach(n=>{ (NOTES_BY_CODE[n.company_code]=NOTES_BY_CODE[n.company_code]||[]).push(n); });
+      EVENTS_BY_CODE = {}; if(ev && !ev.error){ (ev.data||[]).forEach(e=>{ (EVENTS_BY_CODE[e.company_code]=EVENTS_BY_CODE[e.company_code]||[]).push(e); }); }
       const log = (s.data||[])[0];
       $('syncInfo').textContent = log ? `Paskutinė sinchronizacija: ${fmtDT(log.run_at)} · ${log.status==='success'?`✅ (naujų: ${log.new_count}, atnaujinta: ${log.updated_count}, nebegalioja: ${log.invalidated_count})`:'❌ '+(log.error_message||'')}` : 'Sinchronizacija dar nevykdyta';
       buildCompanies(); renderList(); views('listView');
@@ -711,6 +755,11 @@
         c.monitored = !!(c.profile && c.profile.is_monitored);
         c.monitoredBy = c.profile ? (c.profile.monitored_by_name||'') : '';
         c.monitoredAt = c.profile ? (c.profile.monitored_at||'') : '';
+        const _sz = c.anns.find(a=> a.criteria && a.criteria.companySize);
+        c.companySize = _sz ? _sz.criteria.companySize : '';
+        c.events = c.code ? (EVENTS_BY_CODE[c.code]||[]) : [];
+        c.lastEvent = c.events[0] || null; // naujausias pagal found_at
+        c.lastEventDate = c.lastEvent ? (c.lastEvent.event_date || c.lastEvent.found_at) : '';
         c.notes = c.code ? (NOTES_BY_CODE[c.code]||[]) : [];
         c.notesCount = c.notes.length;
         c.hasProfile = !!(c.profile && ((c.profile.financial_data||[]).length||(c.profile.employees_data||[]).length||(c.profile.state_debts||[]).length||(c.profile.court_cases||[]).length));
@@ -760,7 +809,7 @@
       const pages = Math.max(1, Math.ceil(rows.length/PAGE_SIZE));
       if(PAGE>=pages) PAGE=0;
       const slice = rows.slice(PAGE*PAGE_SIZE, PAGE*PAGE_SIZE+PAGE_SIZE);
-      if(!slice.length){ $('listBody').innerHTML='<tr><td colspan="9" class="muted center" style="padding:24px;">Įrašų nėra</td></tr>'; $('pager').innerHTML=''; return; }
+      if(!slice.length){ $('listBody').innerHTML='<tr><td colspan="10" class="muted center" style="padding:24px;">Įrašų nėra</td></tr>'; $('pager').innerHTML=''; return; }
       $('listBody').innerHTML = slice.map(c=>{
         const l=c.latest;
         const badges = (c.isNew?' <span class="badge badge-gold">🆕</span>':'') + (c.isRepeat?` <span class="badge badge-purple" title="Kartojasi">🔁 ${c.count} k.</span>`:'');
@@ -773,9 +822,10 @@
         return `<tr class="clickable ${c.isNew?'newmark':''}" onclick="openCard(${c.idx})">
           <td class="center">${star}</td>
           <td><strong style="color:var(--navy);">${esc(c.name)}</strong>${badges}${noteDot}${c.monitored&&c.monitoredBy?`<div class="muted" style="font-size:11.5px;margin-top:2px;">⭐ Stebi: <b>${esc(c.monitoredBy)}</b></div>`:''}</td>
-          <td>${esc(c.code||'—')}</td><td class="center">${c.count}</td>
+          <td>${c.companySize?`<span class="badge badge-gray">${esc(c.companySize)}</span>`:'—'}</td><td class="center">${c.count}</td>
           <td>${esc(l.process_stage_title||'—')}</td><td>${esc(l.court||'—')}</td>
           <td>${fmtD(l.date_to)}</td>
+          <td>${c.lastEventDate?`<span class="badge badge-red" title="Naujausias įvykio įrašas kortelėje">🗓️ ${fmtD(c.lastEventDate)}</span>`:'<span class="muted">—</span>'}</td>
           <td>${c.hasValid?'<span class="badge badge-green">Galioja</span>':'<span class="badge badge-gray">Pasibaigęs</span>'}</td>
           <td>${c.hasProfile?'<span class="badge badge-blue">✓ užpildyta</span>':'<span class="badge badge-gray">tuščia</span>'}</td>
         </tr>`;
@@ -846,6 +896,8 @@
         <td>${esc(a.process_stage_title||'—')}</td><td>${esc(a.court||'—')}</td><td>${esc(a.case_no||'—')}</td><td>${esc(a.judge||'—')}</td>
         <td>${a.is_valid?'<span class="badge badge-green">Galioja</span>':`<span class="badge badge-gray">Nebegalioja${a.invalidated_at?' nuo '+fmtD(a.invalidated_at):''}</span>`}</td></tr>`).join('');
       renderCriteria(c);
+      c.caseNo = (c.anns.find(a=>a.case_no) || {}).case_no || '';
+      renderEvents(c);
       // profilio duomenys
       const pr = c.profile||{};
       EDIT.fin = JSON.parse(JSON.stringify(pr.financial_data||[]));
@@ -857,6 +909,72 @@
       $('cardMsg').innerHTML='';
       views('cardView'); window.scrollTo(0,0);
       loadNotes(c.code);
+    };
+
+    // ---- TEISMO ĮVYKIAI ----
+    function srcLabel(t){ return t==='liteko'?'LITEKO':(t==='pranesimai'?'Pranešimai':(t==='manual'?'Rankinis':(t||'—'))); }
+    function renderEvents(c){
+      const cn = c.caseNo||'';
+      $('evCaseNo').innerHTML = cn ? ('Byla: <b>'+esc(cn)+'</b>') : '<i>bylos nr. nėra</i>';
+      const evs = (c.events||[]).slice().sort((a,b)=> String(b.found_at||'').localeCompare(String(a.found_at||'')));
+      if(!evs.length){
+        $('evBody').innerHTML = '<tr><td colspan="6" class="muted center" style="padding:16px;">Įvykių dar neįrašyta. Patikrinkite teismą (mygtukai viršuje) ir įrašykite radę.</td></tr>';
+      } else {
+        $('evBody').innerHTML = evs.map(e=>`<tr>
+          <td>${fmtD(e.record_date||e.found_at)}</td>
+          <td><b>${esc(e.event_type||'—')}</b></td>
+          <td>${esc(e.description||'—')}${e.created_by_name?`<div class="muted" style="font-size:11px;">įrašė: ${esc(e.created_by_name)}</div>`:''}</td>
+          <td>${e.event_date?`<span class="badge badge-red">${fmtD(e.event_date)}</span>`:'—'}</td>
+          <td>${e.source_url?`<a href="${esc(e.source_url)}" target="_blank" rel="noopener">${esc(srcLabel(e.source_type))} ↗</a>`:esc(srcLabel(e.source_type))}</td>
+          <td class="full-only center"><span class="del" title="Trinti" style="cursor:pointer;color:#DC2626;" onclick="deleteEvent(${e.id})">✕</span></td>
+        </tr>`).join('');
+      }
+    }
+    function openCourtPortal(kind){
+      const cn = (CURRENT && CURRENT.caseNo) || '';
+      if(cn){ try{ navigator.clipboard.writeText(cn); }catch(_){} }
+      const url = kind==='liteko' ? 'https://liteko.teismai.lt/tvarkarasciai/paieska.aspx' : 'https://pranesimai.teismai.lt/teismu_pranesimai/';
+      $('evMsg').innerHTML = cn ? `<div class="muted" style="font-size:12.5px;">Bylos nr. <b>${esc(cn)}</b> nukopijuotas — įklijuokite (Ctrl/Cmd+V) į portalo paiešką.</div>` : '';
+      window.open(url, '_blank', 'noopener');
+    }
+    $('evLiteko').onclick = ()=> openCourtPortal('liteko');
+    $('evPranesimai').onclick = ()=> openCourtPortal('pranesimai');
+    $('evAddBtn').onclick = ()=>{ if(PERM_LEVEL!=='full') return; $('evAddForm').classList.toggle('hidden');
+      if(!$('evAddForm').classList.contains('hidden')){ $('evType').value='Teismo posėdis'; $('evDate').value=''; $('evDesc').value=''; $('evUrl').value=''; } };
+    $('evCancel').onclick = ()=> $('evAddForm').classList.add('hidden');
+    $('evSave').onclick = async ()=>{
+      if(!CURRENT || PERM_LEVEL!=='full') return;
+      if(!CURRENT.code){ $('evMsg').innerHTML='<div class="error">Įmonė be kodo — įvykio įrašyti negalima.</div>'; return; }
+      const desc=$('evDesc').value.trim();
+      if(!desc){ $('evMsg').innerHTML='<div class="error">Įveskite aprašymą.</div>'; return; }
+      const rec = {
+        company_code: CURRENT.code, case_no: CURRENT.caseNo||null,
+        event_type: $('evType').value, description: desc,
+        event_date: $('evDate').value || null,
+        source_url: $('evUrl').value.trim() || null,
+        source_type: 'manual', created_by: CURRENT_UID, created_by_name: MY_NAME,
+        found_at: new Date().toISOString(), updated_at: new Date().toISOString()
+      };
+      const btn=$('evSave'); btn.disabled=true; btn.textContent='⏳ Įrašoma…';
+      const { data, error } = await sb.from('avnis_court_events').insert(rec).select().single();
+      btn.disabled=false; btn.textContent='💾 Išsaugoti įvykį';
+      if(error){ $('evMsg').innerHTML='<div class="error">Nepavyko: '+esc(error.message)+'</div>'; return; }
+      // atnaujinam atmintį
+      (EVENTS_BY_CODE[CURRENT.code]=EVENTS_BY_CODE[CURRENT.code]||[]).unshift(data);
+      CURRENT.events = EVENTS_BY_CODE[CURRENT.code];
+      CURRENT.lastEvent = CURRENT.events[0]; CURRENT.lastEventDate = data.event_date || data.found_at;
+      $('evAddForm').classList.add('hidden'); $('evMsg').innerHTML='<div class="success">✅ Įvykis įrašytas.</div>';
+      renderEvents(CURRENT); renderList();
+    };
+    window.deleteEvent = async (id)=>{
+      if(PERM_LEVEL!=='full') return;
+      if(!confirm('Ištrinti šį įvykį?')) return;
+      const { error } = await sb.from('avnis_court_events').delete().eq('id', id);
+      if(error){ $('evMsg').innerHTML='<div class="error">Nepavyko ištrinti: '+esc(error.message)+'</div>'; return; }
+      const arr = (EVENTS_BY_CODE[CURRENT.code]||[]).filter(e=>e.id!==id);
+      EVENTS_BY_CODE[CURRENT.code]=arr; CURRENT.events=arr;
+      CURRENT.lastEvent = arr[0]||null; CURRENT.lastEventDate = CURRENT.lastEvent ? (CURRENT.lastEvent.event_date||CURRENT.lastEvent.found_at) : '';
+      renderEvents(CURRENT); renderList();
     };
 
     // ---- KRITERIJAI ----
