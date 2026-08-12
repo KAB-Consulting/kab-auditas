@@ -531,20 +531,18 @@
             </select>
           </div>
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
-          <button class="btn btn-sm btn-gold" id="reconExpAppXlsx">Tvirtinami (XLSX)</button>
-          <button class="btn btn-sm btn-ghost" id="reconExpAppPdf">Tvirtinami (PDF)</button>
-          <button class="btn btn-sm btn-danger" id="reconExpRejXlsx">Netvirtinami (XLSX)</button>
-          <button class="btn btn-sm btn-ghost" id="reconExpRejPdf">Netvirtinami (PDF)</button>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-          <button class="btn btn-sm btn-ghost" id="reconExpReceivedXlsx">Gauti reikalavimai (XLSX)</button>
-          <button class="btn btn-sm btn-ghost" id="reconExpReceivedPdf">Gauti (PDF)</button>
-          <button class="btn btn-sm btn-ghost" id="reconExpAccXlsx">Pagal apskaitą (XLSX)</button>
-          <button class="btn btn-sm btn-ghost" id="reconExpAccPdf">Apskaita (PDF)</button>
-          <button class="btn btn-sm btn-gold" id="reconExpCourtXlsx">⚖️ Teismui — pilna suvestinė (XLSX)</button>
-          <button class="btn btn-sm btn-ghost" id="reconExpCourtPdf">Teismui (PDF)</button>
-          <button class="btn btn-sm" id="reconBundleAll">📎 Visų gautų reikalavimų dokumentai (1 PDF)</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+          <label class="label" style="margin:0;">Suvestinė:</label>
+          <select id="reconExpSel" class="select" style="max-width:300px;">
+            <option value="approve">✅ Tvirtinami reikalavimai</option>
+            <option value="reject">❌ Netvirtinami reikalavimai</option>
+            <option value="received">📥 Gauti reikalavimai</option>
+            <option value="acc">📒 Pagal apskaitą</option>
+            <option value="court">⚖️ Teismui — pilna suvestinė</option>
+          </select>
+          <button class="btn btn-sm btn-gold" id="reconExpXlsx">⬇️ XLSX</button>
+          <button class="btn btn-sm btn-ghost" id="reconExpPdf">⬇️ PDF</button>
+          <button class="btn btn-sm" id="reconBundleAll" style="margin-left:auto;">📎 Visų gautų reikalavimų dokumentai (1 PDF)</button>
         </div>
         <div id="credReconMsg"></div>
         <div style="display:flex;gap:14px;align-items:stretch;flex-wrap:wrap;">
@@ -7151,8 +7149,12 @@
       b('accNewBtn',()=>openAccModal(null));
       b('claimNewBtn',()=>openClaimModal(null)); const cs=$('credClaimSearch'); if(cs)cs.oninput=renderCredClaims;
       const rf=$('credReconFilter'); if(rf)rf.onchange=renderCredRecon;
-      b('reconExpAppXlsx',()=>credExportLists('approve','xlsx')); b('reconExpAppPdf',()=>credExportLists('approve','pdf'));
-      b('reconExpRejXlsx',()=>credExportLists('reject','xlsx')); b('reconExpRejPdf',()=>credExportLists('reject','pdf'));
+      const reconDoExp=fmt=>{ const v=($('reconExpSel')&&$('reconExpSel').value)||'approve';
+        if(v==='approve'||v==='reject')credExportLists(v,fmt);
+        else if(v==='received')credExportReceived(fmt);
+        else if(v==='acc')credExportAccounting(fmt);
+        else credExportCourtFull(fmt); };
+      b('reconExpXlsx',()=>reconDoExp('xlsx')); b('reconExpPdf',()=>reconDoExp('pdf'));
       b('credAvntBtn',exportAvnt);
       // modalų mygtukai
       b('credCancel',()=>hide('credModal')); b('credRepChk',credRepToggle);
@@ -7777,17 +7779,26 @@
       if(!blob){ alert('Nepavyko suformuoti PDF.'); return; }
       dlBlob(blob,'Reikalavimo_dokumentai_'+latin(credName(c.creditor_id)).replace(/[^\w]+/g,'_')+'.pdf');
     };
-    window.rcnBundleAllReceived=async()=>{
-      const withClaims=CREDITORS.filter(c=>claimsForCreditor(c.id).length);
-      if(!withClaims.length){ alert('Gautų reikalavimų nėra.'); return; }
-      $('credReconMsg').innerHTML='<div class="muted">⏳ Ruošiamas bendras PDF (gali užtrukti)…</div>';
+    async function buildAllClaimsBundle(){
+      // Visų gautų reikalavimų pagrindimo dokumentai — po sekciją kiekvienam reikalavimui (įsk. kelis to paties kreditoriaus)
       const sections=[];
-      for(const c of withClaims){ const clm=claimsForCreditor(c.id)[0]; const items=await rcnClaimDocItems(clm.id);
-        if(items.length)sections.push({ heading:c.name, sub:'Kreditorinį reikalavimą pagrindžiantys dokumentai', paths:items }); }
-      if(!sections.length){ $('credReconMsg').innerHTML=''; alert('Prie gautų reikalavimų dokumentų nepridėta.'); return; }
-      const blob=await mergeDocsToPdf(sections);
+      for(const c of CREDITORS){
+        const claims=claimsForCreditor(c.id);
+        for(let i=0;i<claims.length;i++){
+          const items=await rcnClaimDocItems(claims[i].id);
+          if(items.length)sections.push({ heading:c.name+(claims.length>1?(' — reikalavimas '+(i+1)+'/'+claims.length):''),
+            sub:'Kreditorinį reikalavimą pagrindžiantys dokumentai', paths:items });
+        }
+      }
+      if(!sections.length)return null;
+      return await mergeDocsToPdf(sections);
+    }
+    window.rcnBundleAllReceived=async()=>{
+      if(!CLAIMS.length){ alert('Gautų reikalavimų nėra.'); return; }
+      $('credReconMsg').innerHTML='<div class="muted">⏳ Ruošiamas bendras PDF (gali užtrukti)…</div>';
+      const blob=await buildAllClaimsBundle();
       $('credReconMsg').innerHTML='';
-      if(!blob){ alert('Nepavyko suformuoti PDF.'); return; }
+      if(!blob){ alert('Prie gautų reikalavimų dokumentų nepridėta arba nepavyko suformuoti PDF.'); return; }
       dlBlob(blob,'Visi_gauti_reikalavimai_dokumentai_'+(CURRENT.case_short_code||'byla')+'.pdf');
     };
 
@@ -7830,9 +7841,12 @@
 
     function initReconV2(){
       const b=(id,fn)=>{ const e=$(id); if(e)e.onclick=fn; };
-      b('reconExpReceivedXlsx',()=>credExportReceived('xlsx')); b('reconExpReceivedPdf',()=>credExportReceived('pdf'));
-      b('reconExpAccXlsx',()=>credExportAccounting('xlsx')); b('reconExpAccPdf',()=>credExportAccounting('pdf'));
-      b('reconExpCourtXlsx',()=>credExportCourtFull('xlsx')); b('reconExpCourtPdf',()=>credExportCourtFull('pdf'));
+      const reconDoExp2=fmt=>{ const v=($('reconExpSel')&&$('reconExpSel').value)||'approve';
+        if(v==='approve'||v==='reject')credExportLists(v,fmt);
+        else if(v==='received')credExportReceived(fmt);
+        else if(v==='acc')credExportAccounting(fmt);
+        else credExportCourtFull(fmt); };
+      b('reconExpXlsx',()=>reconDoExp2('xlsx')); b('reconExpPdf',()=>reconDoExp2('pdf'));
       b('reconBundleAll',()=>rcnBundleAllReceived());
     }
 
@@ -8471,6 +8485,8 @@
         '</div>'+
         '<div class="hint" style="margin-top:6px;">Numeris galutinai suteikiamas generavimo metu (jei žurnale tuo metu atsiras naujų įrašų — bus suteiktas kitas eilės numeris) ir <b>įrašomas į patį dokumentą</b>. Sugeneruotą dokumentą peržiūrėję ir pasirašę, galutinę pasirašytą versiją įkelkite Dok. registravimas → Siunčiami, mygtuku „🖊️⬆“ prie šio įrašo.</div>'+
         '</div>';
+      h+='<label class="fchk" style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;font-size:14px;"><input type="checkbox" id="reqBundleChk" checked> 📎 Pridėti priedą — visų gautų reikalavimų dokumentai (1 PDF)</label>';
+      h+='<div class="hint" style="margin-left:24px;">Suformuojamas visų kreditorinių reikalavimų pagrindimo dokumentų paketas (kaip Sutikrinime): atsisiunčiamas atskiru PDF failu, o registruojant žurnale — įtraukiamas į žurnalo kopiją po prašymo teksto.</div>';
       h+='<div style="margin-top:12px;font-size:13px;color:var(--gray);">Į prašymą bus įtraukta: apskaitos kreditorių — <b>'+CRED_ACC.length+'</b>, gautų reikalavimų — <b>'+CLAIMS.length+'</b>, tvirtinamų — <b>'+sub.length+'</b>'+(rej.length?', netvirtinamų (ar dalių) — <b>'+rej.length+'</b>':'')+(reqNotSubmitted().length?', reikalavimų nepateikė — <b>'+reqNotSubmitted().length+'</b> kreditoriai(-ų)':'')+'.</div>';
       if(warn.length)h+='<div class="error" style="margin-top:10px;">⚠ Patikrinkite: '+esc(warn.join('; '))+'.</div>';
       h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">'+
@@ -8730,26 +8746,35 @@
         msg.innerHTML='<div class="muted">⏳ Generuojamas PDF…</div>';
         const pdfBlob=await reqBuildPdf(blocks);
         dlBlob(pdfBlob, baseName+'.pdf');
-        // 4) registracija siunčiamų žurnale (PDF su registracijos žyma)
+        // 3b) priedai — visų gautų reikalavimų dokumentai (1 PDF)
+        let bundleBlob=null;
+        if($('reqBundleChk')&&$('reqBundleChk').checked&&CLAIMS.length){
+          msg.innerHTML='<div class="muted">⏳ Ruošiami priedai — reikalavimų dokumentų paketas (gali užtrukti)…</div>';
+          try{ bundleBlob=await buildAllClaimsBundle(); }catch(_){ bundleBlob=null; }
+          if(bundleBlob)dlBlob(bundleBlob, 'Priedas_reikalavimu_dokumentai_'+(CURRENT.case_short_code||'byla')+'.pdf');
+        }
+        // 4) registracija siunčiamų žurnale (PDF su registracijos žyma; priedai įtraukiami po prašymo)
         if(doReg){
           msg.innerHTML='<div class="muted">⏳ Registruojama siunčiamų dokumentų žurnale…</div>';
-          const file=new File([pdfBlob], baseName+'.pdf', { type:'application/pdf' });
-          const { blob:regBlob, pageCount }=await buildRegisteredPdf([file],{ regNumber, dateStr:(opts.sendDate||opts.date), dateLabel:'Išsiųsta', admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
+          const regFiles=[new File([pdfBlob], baseName+'.pdf', { type:'application/pdf' })];
+          if(bundleBlob)regFiles.push(new File([bundleBlob], 'Priedas_reikalavimu_dokumentai.pdf', { type:'application/pdf' }));
+          const { blob:regBlob, pageCount }=await buildRegisteredPdf(regFiles,{ regNumber, dateStr:(opts.sendDate||opts.date), dateLabel:'Išsiųsta', admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
           const path=`${CURRENT.case_short_code}/registered/${regNumber.replace(/[^A-Za-z0-9._-]+/g,'_')}_${Date.now()}.pdf`;
           const up=await sb.storage.from('insolvency-docs').upload(path,regBlob,{ upsert:false, contentType:'application/pdf' });
           if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
           const reg=await sb.rpc('register_insolvency_document',{ p:{
             case_id:CURRENT.id, registration_number:regNumber, doc_type:'sent', registration_date:(opts.sendDate||opts.date),
             document_title:(opts.regDesc||'Prašymas teismui dėl kreditorių reikalavimų patvirtinimo'), counterparty_name:CURRENT.court||'',
-            notes:'Sugeneruota: Kreditoriai → Prašymas teismui'+(docxPath?'; DOCX: '+docxPath:''),
+            notes:'Sugeneruota: Kreditoriai → Prašymas teismui'+(bundleBlob?'; su priedais (reikalavimų dokumentai)':'')+(docxPath?'; DOCX: '+docxPath:''),
             storage_path:path, file_size:regBlob.size, page_count:pageCount,
-            original_files_metadata:[{ name:baseName+'.pdf', size:pdfBlob.size }],
+            original_files_metadata:bundleBlob?[{ name:baseName+'.pdf', size:pdfBlob.size },{ name:'Priedas_reikalavimu_dokumentai.pdf', size:bundleBlob.size }]:[{ name:baseName+'.pdf', size:pdfBlob.size }],
             source_type:'court_request', category:'court' } });
           if(reg.error)throw new Error(reg.error.message);
           if(!reg.data.ok)throw new Error('Registracijos klaida: '+reg.data.error_code);
         }
         try{ await credLog('court_request_generated',{ reg_number:regNumber||null, docx:docxPath||null, approved:sub.length }); }catch(_){ }
         msg.innerHTML='<div class="success">✔ Prašymas sugeneruotas'+(regNumber?(' ir užregistruotas Nr. <b>'+esc(regNumber)+'</b>'):'')+'. DOCX ir PDF atsisiųsti į jūsų kompiuterį.'+
+          (($('reqBundleChk')&&$('reqBundleChk').checked)?(bundleBlob?' Priedų paketas (reikalavimų dokumentai) atsisiųstas atskiru PDF'+(regNumber?' ir įtrauktas į žurnalo kopiją':'')+'.':' <span style="color:#8A6D00;">Priedų paketas nesuformuotas — prie reikalavimų nepridėta dokumentų.</span>'):'')+
           (regNumber?(' Dokumentą peržiūrėję ir pasirašę, galutinę pasirašytą versiją įkelkite skirtuke „Dok. registravimas“ → Siunčiami, mygtuku „🖊️⬆“ prie įrašo <b>'+esc(regNumber)+'</b> — ji bus saugoma prie žurnalo įrašo atskaitingumui.'):'')+'</div>';
         if(!(CURRENT_ADM&&CURRENT_ADM.blank_docx_path))msg.innerHTML+='<div class="error">DOCX nesugeneruotas — administratoriui neįkeltas firminis blankas (Nustatymai → Administratoriai).</div>';
       }catch(err){ msg.innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
