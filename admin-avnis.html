@@ -162,8 +162,10 @@
                 <th class="sortable" data-sort="number">Numeris <span class="sarr"></span></th>
                 <th class="sortable" data-sort="type">Tipas <span class="sarr"></span></th>
                 <th class="sortable" data-sort="name">Vardas / Pavadinimas <span class="sarr"></span></th>
-                <th class="sortable" data-sort="code">Kodas <span class="sarr"></span></th>
-                <th class="sortable" data-sort="occ">Užimtumas (krūvis/leist.) <span class="sarr"></span></th>
+                <th class="sortable center" data-sort="kruvis">Darbo krūvis <span class="sarr"></span></th>
+                <th class="sortable center" data-sort="leist">Leistinas krūvis <span class="sarr"></span></th>
+                <th class="sortable center" data-sort="trukme">Vidutinė trukmė <span class="sarr"></span></th>
+                <th class="sortable" data-sort="occ">Užimtumas <span class="sarr"></span></th>
                 <th class="sortable" data-sort="phone">Telefonas <span class="sarr"></span></th>
                 <th class="sortable" data-sort="email">El. paštas <span class="sarr"></span></th>
               </tr></thead>
@@ -470,9 +472,11 @@
     let PERM_LEVEL='full', ANN=[], PROFILES={}, NOTES=[], COMPANIES=[], ACTIVE=[], SEARCH='', DEEP=false, CURRENT=null, CURRENT_UID=null, MY_NAME='', PAGE=0;
     let NOTES_BY_CODE={}; // company_code -> [{note_text, created_at}]
     let EVENTS_BY_CODE={}; // company_code -> [{event_date, event_type, description, source_url, source_type, record_date, found_at}]
+    let USERS={}; // user_id -> full_name (kas atliko veiksmus)
+    function userName(uid, fallback){ return (uid && USERS[uid]) || fallback || ''; }
     let SUBMOD='avnis';
     const PAGE_SIZE=100;
-    window.BUILD_VERSION='avnis-2026-08-11-v8';
+    window.BUILD_VERSION='avnis-2026-08-12-v9';
 
     const JURISDICTION = {1:'Lietuvos (teritorinė)', 2:'Lietuvos (pagrindinė)', 3:'Tarptautinė'};
 
@@ -566,6 +570,9 @@
         case 'name': return (x.full_name||((x.name||'')+' '+(x.surname||''))).trim().toLowerCase();
         case 'code': return (x.person_code||'').toLowerCase();
         case 'occ': { const u=utilPct(x.stat); return u==null?-1:u; }
+        case 'kruvis': return (x.stat&&x.stat.darbo_kruvis!=null)?x.stat.darbo_kruvis:-1;
+        case 'leist': return (x.stat&&x.stat.leistinas_kruvis!=null)?x.stat.leistinas_kruvis:-1;
+        case 'trukme': return (x.stat&&x.stat.vidutine_trukme!=null)?x.stat.vidutine_trukme:-1;
         case 'phone': return (x.phone||'').toLowerCase();
         case 'email': return (x.email||'').toLowerCase();
         case 'number': default: return (x.number||'').toLowerCase();
@@ -592,16 +599,20 @@
       $('adCount').textContent='Rodoma: '+fmtNum(rows.length)+' administratorių';
       const pages=Math.max(1,Math.ceil(rows.length/AD_PAGE_SIZE)); if(AD_PAGE>=pages)AD_PAGE=0;
       const slice=rows.slice(AD_PAGE*AD_PAGE_SIZE, AD_PAGE*AD_PAGE_SIZE+AD_PAGE_SIZE);
-      if(!slice.length){ $('adBody').innerHTML='<tr><td colspan="7" class="muted center" style="padding:24px;">Įrašų nėra</td></tr>'; $('adPager').innerHTML=''; return; }
+      if(!slice.length){ $('adBody').innerHTML='<tr><td colspan="9" class="muted center" style="padding:24px;">Įrašų nėra</td></tr>'; $('adPager').innerHTML=''; return; }
       $('adBody').innerHTML=slice.map((x,i)=>{
         const tip=x.legal?'<span class="badge badge-blue">🏢 Juridinis</span>':'<span class="badge badge-gold">👤 Fizinis</span>';
         const s=x.stat; let occ='—';
         if(s && s.darbo_kruvis!=null){ const up=utilPct(s); const col= up!=null&&up>=100?'badge-red':(up!=null&&up>=80?'badge-gold':'badge-green');
-          occ=`${fmtNum(s.darbo_kruvis)} / ${fmtNum(s.leistinas_kruvis)}${up!=null?` <span class="badge ${col}">${up}%</span>`:''}`; }
+          occ=up!=null?`<span class="badge ${col}">${up}%</span>`:'—'; }
+        const kruvis = (s&&s.darbo_kruvis!=null)?fmtNum(s.darbo_kruvis):'—';
+        const leist = (s&&s.leistinas_kruvis!=null)?fmtNum(s.leistinas_kruvis):'—';
+        const trukme = (s&&s.vidutine_trukme!=null)?fmtNum(s.vidutine_trukme,3):'—';
         return `<tr class="clickable" onclick="openAdmin('${esc(x.number)}')">
           <td><strong>${esc(x.number||'—')}</strong></td><td>${tip}</td>
           <td>${esc(x.full_name||((x.name||'')+' '+(x.surname||'')).trim()||'—')}</td>
-          <td>${esc(x.person_code||'—')}</td><td>${occ}</td><td>${esc(x.phone||'—')}</td><td>${esc(x.email||'—')}</td></tr>`;
+          <td class="center">${kruvis}</td><td class="center">${leist}</td><td class="center">${trukme}</td>
+          <td>${occ}</td><td>${esc(x.phone||'—')}</td><td>${esc(x.email||'—')}</td></tr>`;
       }).join('');
       let pg=''; if(pages>1){ pg=`<button class="btn btn-ghost btn-sm" ${AD_PAGE<=0?'disabled':''} onclick="adSetPage(${AD_PAGE-1})">‹</button> <span class="muted" style="margin:0 10px;">${AD_PAGE+1} / ${pages}</span> <button class="btn btn-ghost btn-sm" ${AD_PAGE>=pages-1?'disabled':''} onclick="adSetPage(${AD_PAGE+1})">›</button>`; }
       $('adPager').innerHTML=pg;
@@ -732,6 +743,7 @@
       PROFILES = {}; (p.data||[]).forEach(x=>PROFILES[x.company_code]=x);
       NOTES_BY_CODE = {}; (nt.data||[]).forEach(n=>{ (NOTES_BY_CODE[n.company_code]=NOTES_BY_CODE[n.company_code]||[]).push(n); });
       EVENTS_BY_CODE = {}; if(ev && !ev.error){ (ev.data||[]).forEach(e=>{ (EVENTS_BY_CODE[e.company_code]=EVENTS_BY_CODE[e.company_code]||[]).push(e); }); }
+      try{ const un = await sb.rpc('avnis_user_names'); if(un && !un.error){ USERS={}; (un.data||[]).forEach(u=>{ USERS[u.user_id]=u.full_name; }); } }catch(_){}
       const log = (s.data||[])[0];
       $('syncInfo').textContent = log ? `Paskutinė sinchronizacija: ${fmtDT(log.run_at)} · ${log.status==='success'?`✅ (naujų: ${log.new_count}, atnaujinta: ${log.updated_count}, nebegalioja: ${log.invalidated_count})`:'❌ '+(log.error_message||'')}` : 'Sinchronizacija dar nevykdyta';
       buildCompanies(); renderList(); views('listView');
@@ -747,13 +759,16 @@
       COMPANIES = Object.values(map).map(c=>{
         c.anns.sort((x,y)=> (y.date_to||'').localeCompare(x.date_to||''));
         c.latest = c.anns[0]; c.count = c.anns.length;
+        c.newestFrom = c.anns.reduce((m,a)=> (a.date_from && a.date_from>m)?a.date_from:m, '');
+        c.newestSeen = c.anns.reduce((m,a)=> (a.first_seen_at && a.first_seen_at>m)?a.first_seen_at:m, '');
         c.hasValid = c.anns.some(x=>x.is_valid);
         c.isRepeat = c.count>1;
         c.isNew = c.anns.some(x=> x.first_seen_at && new Date(x.first_seen_at).getTime()>cutoffNew);
         c.name = c.latest.company_name || c.name;
         c.profile = c.code ? PROFILES[c.code] : null;
         c.monitored = !!(c.profile && c.profile.is_monitored);
-        c.monitoredBy = c.profile ? (c.profile.monitored_by_name||'') : '';
+        c.monitoredById = c.profile ? (c.profile.monitored_by||'') : '';
+        c.monitoredBy = c.profile ? userName(c.profile.monitored_by, c.profile.monitored_by_name||'') : '';
         c.monitoredAt = c.profile ? (c.profile.monitored_at||'') : '';
         const _sz = c.anns.find(a=> a.criteria && a.criteria.companySize);
         c.companySize = _sz ? _sz.criteria.companySize : '';
@@ -765,7 +780,8 @@
         c.hasProfile = !!(c.profile && ((c.profile.financial_data||[]).length||(c.profile.employees_data||[]).length||(c.profile.state_debts||[]).length||(c.profile.court_cases||[]).length));
         return c;
       });
-      COMPANIES.sort((a,b)=> (b.latest.date_to||'').localeCompare(a.latest.date_to||''));
+      // Numatytasis rūšiavimas: naujausi skelbimai viršuje (pagal paskelbimo datą, po to pagal pirmą pastebėjimą)
+      COMPANIES.sort((a,b)=> (b.newestFrom||'').localeCompare(a.newestFrom||'') || (b.newestSeen||'').localeCompare(a.newestSeen||''));
       COMPANIES.forEach((c,i)=>c.idx=i);
       $('stCompanies').textContent = fmtNum(COMPANIES.length);
       $('stValid').textContent = fmtNum(COMPANIES.filter(c=>c.hasValid).length);
