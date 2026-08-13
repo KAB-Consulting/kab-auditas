@@ -70,6 +70,13 @@
     .bigbtn { border:1px solid var(--bd); border-radius:12px; padding:26px 20px; cursor:pointer; text-align:center; transition:.15s; background:#fff; }
     .bigbtn:hover { border-color:var(--gold); box-shadow:0 2px 8px rgba(0,0,0,.08); }
     .bigbtn .bb-ico { font-size:30px; } .bigbtn .bb-t { font-weight:700; color:var(--navy); margin-top:6px; }
+    body.perm-view #newDebtorBtn, body.perm-view #debtImportBtn, body.perm-view #debtorSaveBtn, body.perm-view #debtorDelBtn,
+    body.perm-view #drSaveBtn, body.perm-view #dnGenBtn, body.perm-view #daSaveBtn, body.perm-view #dpSaveBtn, body.perm-view #dbRemAddBtn,
+    body.perm-view #dlSaveBtn, body.perm-view #dlGenBtn, body.perm-view #deSaveBtn, body.perm-view #deGenBtn, body.perm-view #dsSaveBtn, body.perm-view #dsGenBtn,
+    body.perm-view #dbFileBtn, body.perm-view #dbRegLinkBtn, body.perm-view #dactAddBtn,
+    body.perm-view [onclick*="delDebt"], body.perm-view [onclick*="editDebtRecv"], body.perm-view [onclick*="editDebtLegal"], body.perm-view [onclick*="editDebtEnf"],
+    body.perm-view [onclick*="debtRemDone"], body.perm-view [onclick*="debtAgrItemPaid"], body.perm-view [onclick*="debtNoticeResp"] { display:none !important; }
+    body.perm-cred-nodelete #debtorDelBtn, body.perm-cred-nodelete [onclick*="delDebt"] { display:none !important; }
   </style>
 </head>
 <body>
@@ -357,10 +364,29 @@
         </div>
       </div>
 
-      <!-- DEBITORIAI (placeholder) -->
+      <!-- DEBITORIAI -->
       <div id="paneDebtors" class="card hidden">
-        <div class="sec-title" style="margin-top:0;">💰 Debitoriai</div>
-        <div class="muted" style="padding:20px 0;">Debitorių (skolininkų) sąrašo ir darbo su skolininkais funkcionalumas bus diegiamas kitame etape.</div>
+        <div id="debtDash" style="margin-bottom:14px;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div><strong>💰 Debitoriai</strong>
+            <div class="muted" style="font-size:12px;">Skolininkų registras, skolos, ikiteisminis / teisminis išieškojimas, antstolis, pardavimas.</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <input id="debtSearch" class="input" style="width:220px;" placeholder="Paieška (pavadinimas, kodas)…">
+            <select id="debtStatusFilter" class="input" style="width:170px;">
+              <option value="">Visos būsenos</option>
+              <option value="NAUJAS">Naujas</option>
+              <option value="IKITEISMINIS">Ikiteisminis</option>
+              <option value="DERYBOS">Derybos / susitarimas</option>
+              <option value="TEISMINIS">Teisminis</option>
+              <option value="ANTSTOLIS">Antstolis</option>
+              <option value="UZDARYTA">Uždaryta</option>
+              <option value="PARDUOTA">Parduota</option>
+            </select>
+            <button class="btn btn-sm btn-ghost" id="debtImportBtn">📋 Masinis importas</button>
+            <button class="btn btn-sm" id="newDebtorBtn">+ Naujas debitorius</button>
+          </div>
+        </div>
+        <div id="debtList"></div>
       </div>
 
       <!-- TURTAS -->
@@ -1795,6 +1821,327 @@
     </div>
   </div>
 
+  <!-- DEBITORIAUS KORTELĖ -->
+  <div id="debtorModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:1040px;width:96vw;max-height:92vh;overflow:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+        <div>
+          <h2 id="debtorModalTitle" style="margin:0 0 2px;">Debitorius</h2>
+          <div id="debtorModalSub" class="muted" style="font-size:12px;"></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-ghost" id="debtReportBtn">🧾 Ataskaita</button>
+          <button class="btn btn-sm btn-ghost" onclick="closeDebtorModal()">✕ Uždaryti</button>
+        </div>
+      </div>
+      <div class="tabs" id="debtorTabs" style="margin:12px 0 14px;flex-wrap:wrap;">
+        <div class="tab active" data-dtab="req">Rekvizitai</div>
+        <div class="tab" data-dtab="recv">Skolos</div>
+        <div class="tab" data-dtab="pretrial">⚖️ Ikiteisminis</div>
+        <div class="tab" data-dtab="legal">🏛️ Teisminis</div>
+        <div class="tab" data-dtab="enf">🧾 Antstolis</div>
+        <div class="tab" data-dtab="sale">🛒 Pardavimas</div>
+        <div class="tab" data-dtab="files">Dokumentai</div>
+        <div class="tab" data-dtab="log">Žurnalas</div>
+      </div>
+
+      <!-- REKVIZITAI -->
+      <div id="dtabReq">
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label class="label">Tipas</label>
+            <select id="dbKind" class="input"><option value="legal">Juridinis asmuo</option><option value="person">Fizinis asmuo</option></select>
+          </div>
+          <div>
+            <label class="label">Iš kontrahentų žinyno</label>
+            <select id="dbCpSelect" class="input"><option value="">— pasirinkti (nebūtina) —</option></select>
+          </div>
+          <div>
+            <label class="label">Pavadinimas / vardas pavardė *</label>
+            <input id="dbName" class="input">
+          </div>
+          <div>
+            <label class="label">Įmonės / asmens kodas</label>
+            <input id="dbCode" class="input">
+            <div id="dbDupWarn" class="hint hidden" style="color:#C0392B;"></div>
+          </div>
+          <div><label class="label">Adresas</label><input id="dbAddress" class="input"></div>
+          <div><label class="label">El. paštas</label><input id="dbEmail" class="input"></div>
+          <div><label class="label">Telefonas</label><input id="dbPhone" class="input"></div>
+          <div>
+            <label class="label">Atstovas</label>
+            <div style="display:flex;gap:6px;">
+              <select id="dbRepType" class="input" style="width:40%;"></select>
+              <input id="dbRepName" class="input" placeholder="Vardas Pavardė" style="width:60%;">
+            </div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <input id="dbRepEmail" class="input" placeholder="Atstovo el. paštas" style="width:50%;">
+              <input id="dbRepPhone" class="input" placeholder="Atstovo tel." style="width:50%;">
+            </div>
+          </div>
+          <div>
+            <label class="label">Būsena</label>
+            <select id="dbStatus" class="input">
+              <option value="NAUJAS">Naujas</option><option value="IKITEISMINIS">Ikiteisminis</option>
+              <option value="DERYBOS">Derybos / susitarimas</option><option value="TEISMINIS">Teisminis</option>
+              <option value="ANTSTOLIS">Antstolis</option><option value="UZDARYTA">Uždaryta</option><option value="PARDUOTA">Parduota</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Atgaunamumas</label>
+            <select id="dbRecover" class="input">
+              <option value="">— nevertinta —</option><option value="perspektyvi">Perspektyvi</option>
+              <option value="abejotina">Abejotina</option><option value="beviltiska">Beviltiška / nurašytina</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Sekantis veiksmas (data)</label>
+            <input id="dbNextOn" type="date" class="input">
+          </div>
+          <div>
+            <label class="label">Sekančio veiksmo aprašymas</label>
+            <input id="dbNextNote" class="input" placeholder="pvz., paskambinti dėl pretenzijos">
+          </div>
+        </div>
+        <label class="label" style="margin-top:10px;">Pastabos</label>
+        <textarea id="dbNotes" class="textarea" style="min-height:56px;"></textarea>
+      </div>
+
+      <!-- SKOLOS -->
+      <div id="dtabRecv" class="hidden">
+        <div id="dbRecvList" style="margin-bottom:12px;"></div>
+        <div id="dbRecvFormWrap" style="background:#F7F9FB;border:1px solid #E3E9EF;border-radius:8px;padding:12px;">
+          <strong style="font-size:13px;" id="dbRecvFormTitle">Nauja skola</strong>
+          <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+            <div><label class="label">Pagrindas</label><select id="drBasis" class="input"></select></div>
+            <div><label class="label">Dokumentas (sąskaitos / sutarties Nr.)</label><input id="drDocRef" class="input"></div>
+            <div><label class="label">Prievolės / pradelsimo data</label><input id="drOblDate" type="date" class="input"></div>
+            <div><label class="label">Pagrindinė skola, EUR</label><input id="drPrincipal" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Netesybos (delspinigiai / palūkanos), EUR</label><input id="drPenalties" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Būsena</label><select id="drStatus" class="input">
+              <option value="open">Neapmokėta</option><option value="partially_paid">Iš dalies apmokėta</option>
+              <option value="paid">Apmokėta</option><option value="written_off">Nurašyta</option></select></div>
+          </div>
+          <label class="label" style="margin-top:8px;">Pastaba</label>
+          <input id="drNote" class="input">
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="btn btn-sm" id="drSaveBtn">💾 Išsaugoti skolą</button>
+            <button class="btn btn-sm btn-ghost hidden" id="drCancelBtn">Atšaukti</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- IKITEISMINIS -->
+      <div id="dtabPretrial" class="hidden">
+        <div class="sec-title" style="margin-top:0;">Pretenzijos / raginimai</div>
+        <div id="dbNoticeList" style="margin-bottom:10px;"></div>
+        <div style="background:#F7F9FB;border:1px solid #E3E9EF;border-radius:8px;padding:12px;margin-bottom:16px;">
+          <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:8px;">
+            <div><label class="label">Tipas</label><select id="dnKind" class="input">
+              <option value="primary">Pirminis pranešimas</option><option value="repeated">Pakartotinis (galutinis)</option></select></div>
+            <div><label class="label">Data</label><input id="dnDate" type="date" class="input"></div>
+            <div><label class="label">Terminas sumokėti (d.)</label><input id="dnTermDays" type="number" class="input" value="14"></div>
+            <div style="display:flex;align-items:flex-end;gap:6px;">
+              <button class="btn btn-sm" id="dnGenBtn">📄 Rengti pretenziją (PDF)</button>
+            </div>
+          </div>
+          <label style="display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px;">
+            <input type="checkbox" id="dnRegCb" checked> Registruoti siunčiamų dokumentų žurnale ir susieti su debitoriumi
+          </label>
+        </div>
+
+        <div class="sec-title">Susitarimai / mokėjimo grafikai</div>
+        <div id="dbAgrList" style="margin-bottom:10px;"></div>
+        <div style="background:#F7F9FB;border:1px solid #E3E9EF;border-radius:8px;padding:12px;margin-bottom:16px;">
+          <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:8px;">
+            <div><label class="label">Tipas</label><select id="daType" class="input">
+              <option value="installment">Mokėjimo grafikas</option><option value="settlement">Taikos susitarimas</option>
+              <option value="deferral">Atidėjimas</option></select></div>
+            <div><label class="label">Pradžia</label><input id="daStart" type="date" class="input"></div>
+            <div><label class="label">Suma, EUR</label><input id="daAmount" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Dalių sk. (grafikui)</label><input id="daParts" type="number" class="input" value="3"></div>
+          </div>
+          <label class="label" style="margin-top:8px;">Sąlygos / pastaba</label>
+          <input id="daNote" class="input">
+          <button class="btn btn-sm" id="daSaveBtn" style="margin-top:10px;">💾 Sukurti susitarimą</button>
+        </div>
+
+        <div class="sec-title">Gauti mokėjimai</div>
+        <div id="dbPayList" style="margin-bottom:10px;"></div>
+        <div style="background:#F7F9FB;border:1px solid #E3E9EF;border-radius:8px;padding:12px;margin-bottom:16px;">
+          <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:8px;">
+            <div><label class="label">Data</label><input id="dpDate" type="date" class="input"></div>
+            <div><label class="label">Suma, EUR</label><input id="dpAmount" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Iš jos pagrindinei</label><input id="dpPrincipal" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Skola</label><select id="dpRecv" class="input"></select></div>
+            <div style="display:flex;align-items:flex-end;"><button class="btn btn-sm" id="dpSaveBtn">💾 Registruoti</button></div>
+          </div>
+        </div>
+
+        <div class="sec-title">Priminimai</div>
+        <div id="dbRemList" style="margin-bottom:10px;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="dbRemDate" type="date" class="input" style="width:160px;">
+          <input id="dbRemNote" class="input" style="flex:1;min-width:220px;" placeholder="Priminimo tekstas">
+          <button class="btn btn-sm" id="dbRemAddBtn">+ Priminimas</button>
+        </div>
+      </div>
+
+      <!-- TEISMINIS -->
+      <div id="dtabLegal" class="hidden">
+        <div id="dbLegalList" style="margin-bottom:12px;"></div>
+        <div style="background:#F7F9FB;border:1px solid #E3E9EF;border-radius:8px;padding:12px;">
+          <strong style="font-size:13px;" id="dlFormTitle">Naujas teisminis įrašas</strong>
+          <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+            <div><label class="label">Procedūra</label><select id="dlProc" class="input">
+              <option value="court_order">Teismo įsakymas (CPK XXIII sk.)</option>
+              <option value="documentary">Dokumentinis procesas</option>
+              <option value="action">Ieškinys (bendra tvarka)</option></select></div>
+            <div><label class="label">Teismas</label><input id="dlCourt" class="input"></div>
+            <div><label class="label">Bylos Nr.</label><input id="dlCaseNo" class="input"></div>
+            <div><label class="label">Pateikimo data</label><input id="dlFiled" type="date" class="input"></div>
+            <div><label class="label">Žyminis mokestis, EUR</label><input id="dlFee" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Būsena</label><select id="dlStatus" class="input">
+              <option value="filed">Pateikta</option><option value="awarded">Priteista</option>
+              <option value="objected">Pareikšti prieštaravimai</option><option value="rejected">Atmesta</option></select></div>
+            <div><label class="label">Priteista pagrindinė, EUR</label><input id="dlAwPrincipal" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Priteistos netesybos, EUR</label><input id="dlAwPenalties" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Priteistos bylinėjimosi išl., EUR</label><input id="dlAwCosts" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Sprendimo / įsakymo data</label><input id="dlDecision" type="date" class="input"></div>
+            <div><label class="label">Vykdomasis dok. (tipas)</label><select id="dlExecType" class="input">
+              <option value="">—</option><option value="court_order">Teismo įsakymas</option>
+              <option value="writ">Vykdomasis raštas</option></select></div>
+            <div><label class="label">Vykdomojo dok. Nr. / data</label>
+              <div style="display:flex;gap:6px;"><input id="dlExecNo" class="input" style="width:55%;"><input id="dlExecDate" type="date" class="input" style="width:45%;"></div></div>
+          </div>
+          <label class="label" style="margin-top:8px;">Pastabos</label>
+          <input id="dlNotes" class="input">
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <button class="btn btn-sm" id="dlSaveBtn">💾 Išsaugoti</button>
+            <button class="btn btn-sm btn-ghost" id="dlGenBtn">📄 Teismo dokumentas (PDF)</button>
+            <button class="btn btn-sm btn-ghost hidden" id="dlCancelBtn">Atšaukti</button>
+            <label style="display:flex;gap:6px;align-items:center;font-size:13px;"><input type="checkbox" id="dlRegCb" checked> Registruoti žurnale</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANTSTOLIS -->
+      <div id="dtabEnf" class="hidden">
+        <div id="dbEnfList" style="margin-bottom:12px;"></div>
+        <div style="background:#F7F9FB;border:1px solid #E3E9EF;border-radius:8px;padding:12px;">
+          <strong style="font-size:13px;" id="deFormTitle">Naujas perdavimas antstoliui</strong>
+          <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+            <div><label class="label">Antstolis</label><input id="deBailiff" class="input"></div>
+            <div><label class="label">Kontora</label><input id="deOffice" class="input"></div>
+            <div><label class="label">Vykd. bylos Nr.</label><input id="deCaseNo" class="input"></div>
+            <div><label class="label">Perdavimo data</label><input id="deHanded" type="date" class="input"></div>
+            <div><label class="label">Vykdomasis dokumentas</label><select id="deLegal" class="input"></select></div>
+            <div><label class="label">Būsena</label><select id="deStatus" class="input">
+              <option value="submitted">Pateikta</option><option value="in_progress">Vykdoma</option>
+              <option value="recovered">Išieškota</option><option value="returned">Grąžinta neišieškojus</option>
+              <option value="closed">Uždaryta</option></select></div>
+            <div><label class="label">Išieškota suma, EUR</label><input id="deRecovered" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Likusi suma, EUR</label><input id="deRemaining" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Paskutinis atnaujinimas</label><input id="deLastUpd" type="date" class="input"></div>
+          </div>
+          <label class="label" style="margin-top:8px;">Pastabos</label>
+          <input id="deNotes" class="input">
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <button class="btn btn-sm" id="deSaveBtn">💾 Išsaugoti</button>
+            <button class="btn btn-sm btn-ghost" id="deGenBtn">📄 Lydraštis antstoliui (PDF)</button>
+            <button class="btn btn-sm btn-ghost hidden" id="deCancelBtn">Atšaukti</button>
+            <label style="display:flex;gap:6px;align-items:center;font-size:13px;"><input type="checkbox" id="deRegCb" checked> Registruoti žurnale</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARDAVIMAS -->
+      <div id="dtabSale" class="hidden">
+        <div id="dbSaleList" style="margin-bottom:12px;"></div>
+        <div style="background:#F7F9FB;border:1px solid #E3E9EF;border-radius:8px;padding:12px;">
+          <strong style="font-size:13px;" id="dsFormTitle">Skolos (reikalavimo) pardavimas / cesija</strong>
+          <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+            <div><label class="label">Pirkėjas (perėmėjas)</label><input id="dsBuyer" class="input"></div>
+            <div><label class="label">Pirkėjo kodas</label><input id="dsBuyerCode" class="input"></div>
+            <div><label class="label">Kaina, EUR</label><input id="dsPrice" type="number" step="0.01" class="input"></div>
+            <div><label class="label">Sutarties Nr.</label><input id="dsContractNo" class="input"></div>
+            <div><label class="label">Sutarties data</label><input id="dsContractDate" type="date" class="input"></div>
+            <div><label class="label">Perleidimo data</label><input id="dsAssigned" type="date" class="input"></div>
+          </div>
+          <label class="label" style="margin-top:8px;">Pastabos</label>
+          <input id="dsNotes" class="input">
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <button class="btn btn-sm" id="dsSaveBtn">💾 Išsaugoti</button>
+            <button class="btn btn-sm btn-ghost" id="dsGenBtn">📄 Cesijos sutartis (PDF)</button>
+            <label style="display:flex;gap:6px;align-items:center;font-size:13px;"><input type="checkbox" id="dsRegCb" checked> Registruoti žurnale</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOKUMENTAI -->
+      <div id="dtabFiles" class="hidden">
+        <div class="sec-title" style="margin-top:0;">Pridėti failai</div>
+        <div id="dbFileList" style="margin-bottom:10px;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+          <input id="dbFileLabel" class="input" style="flex:1;min-width:200px;" placeholder="Failo pavadinimas / aprašymas">
+          <input id="dbFileInput" type="file" class="hidden">
+          <button class="btn btn-sm" id="dbFileBtn">📎 Įkelti failą</button>
+        </div>
+        <div class="sec-title">Susieti registruoti dokumentai</div>
+        <div id="dbRegLinkList" style="margin-bottom:10px;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <select id="dbRegLinkSel" class="input" style="flex:1;min-width:260px;"></select>
+          <select id="dbRegLinkDir" class="input" style="width:130px;"><option value="in">Gautas</option><option value="out">Siųstas</option></select>
+          <button class="btn btn-sm" id="dbRegLinkBtn">🔗 Susieti</button>
+        </div>
+      </div>
+
+      <!-- ŽURNALAS -->
+      <div id="dtabLog" class="hidden">
+        <div id="dbActionList" style="margin-bottom:12px;"></div>
+        <div style="background:#F7F9FB;border:1px solid #E3E9EF;border-radius:8px;padding:12px;">
+          <strong style="font-size:13px;">Rankinis įrašas</strong>
+          <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;">
+            <div><label class="label">Tipas</label><select id="dactType" class="input">
+              <option value="CALL">Skambutis</option><option value="EMAIL">El. laiškas</option>
+              <option value="MEETING">Susitikimas</option><option value="RESPONSE">Gautas atsakymas</option>
+              <option value="NOTE">Pastaba</option></select></div>
+            <div><label class="label">Kryptis</label><select id="dactDir" class="input">
+              <option value="out">Siųsta / atlikta</option><option value="in">Gauta</option></select></div>
+            <div><label class="label">Data</label><input id="dactDate" type="date" class="input"></div>
+            <div style="display:flex;align-items:flex-end;"><button class="btn btn-sm" id="dactAddBtn">+ Įrašyti</button></div>
+          </div>
+          <input id="dactNote" class="input" style="margin-top:8px;" placeholder="Aprašymas / rezultatas">
+        </div>
+      </div>
+
+      <div id="debtorMsg" style="margin-top:12px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn btn-danger btn-sm hidden" id="debtorDelBtn">🗑 Pašalinti debitorių</button>
+        <button class="btn btn-ghost" onclick="closeDebtorModal()">Uždaryti</button>
+        <button class="btn" id="debtorSaveBtn">💾 Išsaugoti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEBITORIŲ MASINIS IMPORTAS -->
+  <div id="debtImportModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:980px;width:96vw;">
+      <h2 style="margin:0 0 6px;">📋 Masinis debitorių importas</h2>
+      <div class="hint" style="margin-bottom:10px;">Įklijuokite lentelę iš Excel (stulpeliai tabuliacija atskirti) tvarka:
+        <b>Pavadinimas · Kodas · Adresas · El. paštas · Pagrindinė skola · Netesybos · Pagrindas · Dokumento Nr.</b>.
+        Kiekviena eilutė — vienas debitorius su viena skola. Esami (pagal kodą) papildomi nauja skola, nedubliuojami.</div>
+      <textarea id="debtImpText" class="textarea" style="min-height:160px;font-family:monospace;font-size:12px;" placeholder="UAB Pavyzdys	300123456	Vilniaus g. 1	info@pvz.lt	1200.50	80	Paslaugos	S-2025/114"></textarea>
+      <div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-sm btn-ghost" id="debtImpPreviewBtn">👁 Peržiūrėti</button></div>
+      <div id="debtImpMsg"></div>
+      <div id="debtImpPreview" style="max-height:260px;overflow:auto;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="debtImpCancel">Atšaukti</button>
+        <button class="btn" id="debtImpDoBtn">✔ Importuoti</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -1805,7 +2152,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-05-r13';
+    const APP_VERSION='2026-08-13-r14';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -2388,6 +2735,7 @@
       if(key==='assets')loadAssets();
       if(key==='lease')loadLeases();
       if(key==='sale')loadSales();
+      if(key==='debtors')loadDebtors();
       if(key==='credRegistry')loadCreditorsModule('registry');
       if(key==='credAcc')loadCreditorsModule('acc');
       if(key==='credClaims')loadCreditorsModule('claims');
@@ -8821,6 +9169,819 @@
     window.regSignedView=(id)=>{
       const r=REGISTRATIONS.find(x=>x.id===id); if(!r||!r.signed_file_path)return;
       previewDoc(r.signed_file_path, r.registration_number+' (pasirašytas)');
+    };
+
+    // ==================================================================
+    // ---------- DEBITORIŲ MODULIS (atkurta pilna integracija) ----------
+    // ==================================================================
+    let DEBTORS=[], DEBT_RECV_ALL=[], DEBT_PAY_ALL=[], DEBT_CURRENT=null;
+    let DEBT_RECV=[], DEBT_NOTICES=[], DEBT_AGRS=[], DEBT_AGR_ITEMS=[], DEBT_PAYS=[], DEBT_LEGAL=[], DEBT_ENF=[], DEBT_SALE=[], DEBT_FILES=[], DEBT_ACTIONS=[], DEBT_REMS=[], DEBT_REGLINKS=[], DEBT_REGS_CACHE=[];
+    let DEBT_CBASES=[], DR_EDIT_ID=null, DL_EDIT_ID=null, DE_EDIT_ID=null, DS_EDIT_ID=null;
+    const DEBT_STATUS_LBL={ NAUJAS:'Naujas', IKITEISMINIS:'Ikiteisminis', DERYBOS:'Derybos / susitarimas', TEISMINIS:'Teisminis', ANTSTOLIS:'Antstolis', UZDARYTA:'Uždaryta', PARDUOTA:'Parduota' };
+    const DEBT_STATUS_CLR={ NAUJAS:'#6B7B8C', IKITEISMINIS:'#B8860B', DERYBOS:'#8A2BE2', TEISMINIS:'#C0392B', ANTSTOLIS:'#8B4513', UZDARYTA:'#2E8B57', PARDUOTA:'#4169E1' };
+    const DEBT_ACT_LBL={ NOTICE_SENT:'Išsiųsta pretenzija', RESPONSE:'Gautas atsakymas', CALL:'Skambutis', EMAIL:'El. laiškas', MEETING:'Susitikimas', AGREEMENT:'Susitarimas', PAYMENT:'Gautas mokėjimas', COURT_FILING:'Kreipimasis į teismą', JUDGMENT:'Priteista', EXEC_DOC:'Vykdomasis dokumentas', ENFORCEMENT_HANDOFF:'Perduota antstoliui', ENFORCEMENT_UPDATE:'Vykdymo eiga', SALE:'Skola parduota (cesija)', NOTE:'Pastaba', STATUS_CHANGE:'Būsenos pakeitimas' };
+    function debtLvl(){ return (typeof subLevel==='function')?subLevel('debtors'):'full'; }
+    function debtCanEdit(){ const l=debtLvl(); return l==='edit'||l==='full'; }
+    function debtCanDelete(){ return debtLvl()==='full'; }
+    const debtNum=v=>{ const n=parseFloat(String(v==null?'':v).replace(',','.')); return isNaN(n)?0:n; };
+
+    async function loadDebtors(){
+      if(!CURRENT||CURRENT.__new){ $('debtList').innerHTML='<div class="muted center" style="padding:24px;">Pirma išsaugokite bylos kortelę.</div>'; $('debtDash').innerHTML=''; return; }
+      const [d,r,p]=await Promise.all([
+        sb.from('insolvency_debtors').select('*').eq('case_id',CURRENT.id).order('created_at'),
+        sb.from('insolvency_debtor_receivables').select('*').eq('case_id',CURRENT.id),
+        sb.from('insolvency_debtor_payments').select('*').eq('case_id',CURRENT.id)
+      ]);
+      DEBTORS=d.data||[]; DEBT_RECV_ALL=r.data||[]; DEBT_PAY_ALL=p.data||[];
+      renderDebtDash(); renderDebtList();
+    }
+    function debtSums(debtorId){
+      const rs=DEBT_RECV_ALL.filter(x=>x.debtor_id===debtorId&&x.status!=='written_off');
+      const principal=rs.reduce((s,x)=>s+debtNum(x.principal),0);
+      const penalties=rs.reduce((s,x)=>s+debtNum(x.penalties),0);
+      const paid=DEBT_PAY_ALL.filter(x=>x.debtor_id===debtorId).reduce((s,x)=>s+debtNum(x.amount),0);
+      return { principal, penalties, total:principal+penalties, paid, balance:Math.max(0,principal+penalties-paid) };
+    }
+    function renderDebtDash(){
+      let principal=0,penalties=0,paid=0,balance=0;
+      DEBTORS.forEach(x=>{ const s=debtSums(x.id); principal+=s.principal; penalties+=s.penalties; paid+=s.paid; balance+=s.balance; });
+      const byStatus={}; DEBTORS.forEach(x=>{ byStatus[x.status||'NAUJAS']=(byStatus[x.status||'NAUJAS']||0)+1; });
+      const today=new Date().toISOString().slice(0,10);
+      const soon=DEBTORS.filter(x=>x.next_action_on&&x.next_action_on<=today).length;
+      const card=(t,v,sub)=>`<div style="background:#fff;border:1px solid #E3E9EF;border-radius:10px;padding:10px 14px;min-width:130px;"><div class="muted" style="font-size:11px;">${t}</div><div style="font-size:17px;font-weight:700;color:var(--navy);">${v}</div>${sub?`<div class="muted" style="font-size:11px;">${sub}</div>`:''}</div>`;
+      $('debtDash').innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+        +card('Debitorių',DEBTORS.length,'')
+        +card('Pagrindinė skola',fmtEur(principal),'')
+        +card('Netesybos',fmtEur(penalties),'')
+        +card('Sumokėta',fmtEur(paid),'')
+        +card('Likutis',fmtEur(balance),'')
+        +card('Pradelsti veiksmai',soon,soon?'⚠ reikia dėmesio':'—')
+        +`<div style="background:#fff;border:1px solid #E3E9EF;border-radius:10px;padding:10px 14px;flex:1;min-width:220px;"><div class="muted" style="font-size:11px;">Būsenos</div><div style="font-size:12px;line-height:1.7;">${Object.entries(byStatus).map(([k,v])=>`<span style="color:${DEBT_STATUS_CLR[k]||'#333'};font-weight:600;">${DEBT_STATUS_LBL[k]||k}: ${v}</span>`).join(' · ')||'—'}</div></div>`
+        +'</div>';
+    }
+    function renderDebtList(){
+      const q=($('debtSearch').value||'').toLowerCase().trim();
+      const st=$('debtStatusFilter').value;
+      let rows=DEBTORS.slice();
+      if(q)rows=rows.filter(x=>(x.name||'').toLowerCase().includes(q)||(x.id_code||'').toLowerCase().includes(q));
+      if(st)rows=rows.filter(x=>(x.status||'NAUJAS')===st);
+      if(!rows.length){ $('debtList').innerHTML='<div class="muted center" style="padding:20px;">Debitorių nėra. Pridėkite ranka arba importuokite sąrašą.</div>'; return; }
+      const today=new Date().toISOString().slice(0,10);
+      $('debtList').innerHTML='<table><thead><tr><th>Debitorius</th><th>Būsena</th><th style="text-align:right;">Skola (pagr.+netes.)</th><th style="text-align:right;">Likutis</th><th>Sekantis veiksmas</th><th></th></tr></thead><tbody>'
+        +rows.map(x=>{ const s=debtSums(x.id); const stt=x.status||'NAUJAS';
+          const na=x.next_action_on?`<span style="${x.next_action_on<=today?'color:#C0392B;font-weight:600;':''}">${esc(x.next_action_on)}</span>${x.next_action_note?' <span class="muted" style="font-size:11px;">'+esc(x.next_action_note)+'</span>':''}`:'<span class="muted">—</span>';
+          return `<tr style="cursor:pointer;" onclick="openDebtorModal('${x.id}')">
+            <td><b>${esc(x.name)}</b>${x.id_code?`<div class="muted" style="font-size:11px;">k. ${esc(x.id_code)}</div>`:''}</td>
+            <td><span style="color:${DEBT_STATUS_CLR[stt]};font-weight:600;">${DEBT_STATUS_LBL[stt]||stt}</span>${x.recoverability==='beviltiska'?'<div class="muted" style="font-size:11px;">beviltiška</div>':''}</td>
+            <td style="text-align:right;">${fmtEur(s.total)}</td>
+            <td style="text-align:right;font-weight:600;">${fmtEur(s.balance)}</td>
+            <td>${na}</td>
+            <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openDebtorModal('${x.id}')">✎</button></td></tr>`; }).join('')+'</tbody></table>';
+    }
+    $('debtSearch').oninput=renderDebtList;
+    $('debtStatusFilter').onchange=renderDebtList;
+
+    // ---------- Debitoriaus kortelė ----------
+    async function debtLoadRefs(){
+      if(!CPARTIES.length){ try{ await loadCounterparties(); }catch(_){}}
+      if(!DEBT_CBASES.length){ try{ const r=await sb.from('insolvency_claim_bases').select('*').eq('is_active',true).order('sort_order'); DEBT_CBASES=r.data||[]; }catch(_){ DEBT_CBASES=[]; } }
+    }
+    window.openDebtorModal=async(id)=>{
+      await debtLoadRefs();
+      DEBT_CURRENT=id?DEBTORS.find(x=>x.id===id):null;
+      $('dbCpSelect').innerHTML='<option value="">— pasirinkti (nebūtina) —</option>'+CPARTIES.map(c=>`<option value="${c.id}">${esc(c.name)}${c.reg_code?' ('+esc(c.reg_code)+')':''}</option>`).join('');
+      $('dbRepType').innerHTML=REP_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+      const d=DEBT_CURRENT||{};
+      $('debtorModalTitle').textContent=d.id?d.name:'Naujas debitorius';
+      $('debtorModalSub').textContent=d.id?((DEBT_STATUS_LBL[d.status]||d.status||'')+(d.id_code?' · k. '+d.id_code:'')):'';
+      $('dbKind').value=d.kind||'legal';
+      $('dbCpSelect').value=d.counterparty_id||'';
+      $('dbName').value=d.name||''; $('dbCode').value=d.id_code||''; $('dbAddress').value=d.address||'';
+      $('dbEmail').value=d.email||''; $('dbPhone').value=d.phone||'';
+      const rep=d.rep||{};
+      $('dbRepType').value=rep.type||''; $('dbRepName').value=rep.name||''; $('dbRepEmail').value=rep.email||''; $('dbRepPhone').value=rep.phone||'';
+      $('dbStatus').value=d.status||'NAUJAS'; $('dbRecover').value=d.recoverability||'';
+      $('dbNextOn').value=d.next_action_on||''; $('dbNextNote').value=d.next_action_note||''; $('dbNotes').value=d.notes||'';
+      $('dbDupWarn').classList.add('hidden'); $('debtorMsg').innerHTML='';
+      $('debtorDelBtn').classList.toggle('hidden',!(d.id&&debtCanDelete()));
+      $('debtorSaveBtn').classList.toggle('hidden',!debtCanEdit());
+      debtShowTab('req');
+      show('debtorModal');
+      if(d.id)await debtLoadDetail();
+      else { DEBT_RECV=[];DEBT_NOTICES=[];DEBT_AGRS=[];DEBT_AGR_ITEMS=[];DEBT_PAYS=[];DEBT_LEGAL=[];DEBT_ENF=[];DEBT_SALE=[];DEBT_FILES=[];DEBT_ACTIONS=[];DEBT_REMS=[];DEBT_REGLINKS=[]; debtRenderAll(); }
+    };
+    window.closeDebtorModal=()=>{ hide('debtorModal'); DEBT_CURRENT=null; loadDebtors(); };
+    function debtShowTab(k){
+      document.querySelectorAll('#debtorTabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.dtab===k));
+      const map={ req:'dtabReq', recv:'dtabRecv', pretrial:'dtabPretrial', legal:'dtabLegal', enf:'dtabEnf', sale:'dtabSale', files:'dtabFiles', log:'dtabLog' };
+      Object.values(map).forEach(x=>hide(x)); show(map[k]);
+    }
+    document.querySelectorAll('#debtorTabs .tab').forEach(t=>{ t.onclick=()=>{ if(!DEBT_CURRENT&&t.dataset.dtab!=='req'){ alert('Pirma išsaugokite debitoriaus rekvizitus.'); return; } debtShowTab(t.dataset.dtab); }; });
+    $('dbCpSelect').onchange=()=>{
+      const c=CPARTIES.find(x=>x.id===$('dbCpSelect').value); if(!c)return;
+      $('dbName').value=c.name||''; $('dbCode').value=c.reg_code||''; $('dbAddress').value=c.business_address||c.reg_address||'';
+      $('dbEmail').value=c.email||''; $('dbPhone').value=c.phone||'';
+      if(c.rep_name){ $('dbRepName').value=c.rep_name; }
+    };
+    $('dbCode').onblur=()=>{
+      const v=$('dbCode').value.trim(); const w=$('dbDupWarn');
+      if(!v){ w.classList.add('hidden'); return; }
+      const dup=DEBTORS.find(x=>x.id_code===v&&(!DEBT_CURRENT||x.id!==DEBT_CURRENT.id));
+      if(dup){ w.textContent='⚠ Debitorius su šiuo kodu jau yra: '+dup.name; w.classList.remove('hidden'); } else w.classList.add('hidden');
+    };
+    async function debtLoadDetail(){
+      const id=DEBT_CURRENT.id;
+      const [rv,nt,ag,pay,lg,en,sl,fl,ac,rm,rl]=await Promise.all([
+        sb.from('insolvency_debtor_receivables').select('*').eq('debtor_id',id).order('created_at'),
+        sb.from('insolvency_debtor_notices').select('*').eq('debtor_id',id).order('created_at',{ascending:false}),
+        sb.from('insolvency_debtor_agreements').select('*').eq('debtor_id',id).order('created_at',{ascending:false}),
+        sb.from('insolvency_debtor_payments').select('*').eq('debtor_id',id).order('payment_date',{ascending:false}),
+        sb.from('insolvency_debtor_legal').select('*').eq('debtor_id',id).order('created_at',{ascending:false}),
+        sb.from('insolvency_debtor_enforcement').select('*').eq('debtor_id',id).order('created_at',{ascending:false}),
+        sb.from('insolvency_debtor_sale').select('*').eq('debtor_id',id).order('created_at',{ascending:false}),
+        sb.from('insolvency_debtor_files').select('*').eq('debtor_id',id).order('created_at',{ascending:false}),
+        sb.from('insolvency_debtor_actions').select('*').eq('debtor_id',id).order('action_date',{ascending:false}).order('created_at',{ascending:false}),
+        sb.from('insolvency_debtor_reminders').select('*').eq('debtor_id',id).order('remind_on',{ascending:true,nullsFirst:false}),
+        sb.from('insolvency_debtor_reg_links').select('*').eq('debtor_id',id)
+      ]);
+      DEBT_RECV=rv.data||[]; DEBT_NOTICES=nt.data||[]; DEBT_AGRS=ag.data||[]; DEBT_PAYS=pay.data||[];
+      DEBT_LEGAL=lg.data||[]; DEBT_ENF=en.data||[]; DEBT_SALE=sl.data||[]; DEBT_FILES=fl.data||[];
+      DEBT_ACTIONS=ac.data||[]; DEBT_REMS=rm.data||[]; DEBT_REGLINKS=rl.data||[];
+      const agIds=DEBT_AGRS.map(x=>x.id);
+      if(agIds.length){ const it=await sb.from('insolvency_debtor_agreement_items').select('*').in('agreement_id',agIds).order('due_date'); DEBT_AGR_ITEMS=it.data||[]; } else DEBT_AGR_ITEMS=[];
+      debtRenderAll();
+    }
+    function debtRenderAll(){ debtRenderRecv(); debtRenderNotices(); debtRenderAgrs(); debtRenderPays(); debtRenderLegal(); debtRenderEnf(); debtRenderSale(); debtRenderFiles(); debtRenderActions(); debtRenderRems(); debtRenderRegLinks(); }
+
+    async function debtAddAction(type,dir,note,extra){
+      if(!DEBT_CURRENT)return;
+      const row=Object.assign({ debtor_id:DEBT_CURRENT.id, case_id:CURRENT.id, action_type:type, direction:dir||'out', action_date:new Date().toISOString().slice(0,10), notes:note||null, created_by:CURRENT_UID },extra||{});
+      await sb.from('insolvency_debtor_actions').insert(row);
+      try{ const ac=await sb.from('insolvency_debtor_actions').select('*').eq('debtor_id',DEBT_CURRENT.id).order('action_date',{ascending:false}).order('created_at',{ascending:false}); DEBT_ACTIONS=ac.data||[]; debtRenderActions(); }catch(_){}
+    }
+    async function debtSetStatus(st){
+      if(!DEBT_CURRENT||DEBT_CURRENT.status===st)return;
+      const old=DEBT_CURRENT.status;
+      await sb.from('insolvency_debtors').update({ status:st, updated_at:new Date().toISOString() }).eq('id',DEBT_CURRENT.id);
+      DEBT_CURRENT.status=st; $('dbStatus').value=st;
+      const i=DEBTORS.findIndex(x=>x.id===DEBT_CURRENT.id); if(i>=0)DEBTORS[i].status=st;
+      await debtAddAction('STATUS_CHANGE','out',(DEBT_STATUS_LBL[old]||old||'—')+' → '+(DEBT_STATUS_LBL[st]||st));
+    }
+    $('debtorSaveBtn').onclick=async()=>{
+      if(!debtCanEdit())return;
+      const name=$('dbName').value.trim();
+      if(!name){ $('debtorMsg').innerHTML='<div class="error">Įveskite pavadinimą / vardą.</div>'; return; }
+      const row={
+        case_id:CURRENT.id, kind:$('dbKind').value, counterparty_id:$('dbCpSelect').value||null,
+        name, id_code:$('dbCode').value.trim()||null, address:$('dbAddress').value.trim()||null,
+        email:$('dbEmail').value.trim()||null, phone:$('dbPhone').value.trim()||null,
+        rep:{ type:$('dbRepType').value||null, name:$('dbRepName').value.trim()||null, email:$('dbRepEmail').value.trim()||null, phone:$('dbRepPhone').value.trim()||null },
+        status:$('dbStatus').value, recoverability:$('dbRecover').value||null,
+        next_action_on:$('dbNextOn').value||null, next_action_note:$('dbNextNote').value.trim()||null,
+        notes:$('dbNotes').value.trim()||null
+      };
+      let err=null;
+      if(DEBT_CURRENT&&DEBT_CURRENT.id){
+        row.updated_at=new Date().toISOString();
+        const r=await sb.from('insolvency_debtors').update(row).eq('id',DEBT_CURRENT.id); err=r.error;
+        if(!err){ Object.assign(DEBT_CURRENT,row); }
+      } else {
+        row.created_by=CURRENT_UID;
+        const r=await sb.from('insolvency_debtors').insert(row).select().single(); err=r.error;
+        if(!err){ DEBT_CURRENT=r.data; DEBTORS.push(r.data); $('debtorModalTitle').textContent=r.data.name; $('debtorDelBtn').classList.toggle('hidden',!debtCanDelete()); }
+      }
+      if(err){ $('debtorMsg').innerHTML='<div class="error">'+esc(err.message)+'</div>'; return; }
+      $('debtorMsg').innerHTML='<div class="success">Išsaugota.</div>';
+      try{ await logEvent('debtor_saved',{ debtor:name }); }catch(_){}
+      loadDebtors();
+    };
+    $('debtorDelBtn').onclick=async()=>{
+      if(!DEBT_CURRENT||!debtCanDelete())return;
+      if(!confirm('Pašalinti debitorių su visomis skolomis, dokumentais ir žurnalu?'))return;
+      await sb.from('insolvency_debtors').delete().eq('id',DEBT_CURRENT.id);
+      try{ await logEvent('debtor_deleted',{ debtor:DEBT_CURRENT.name }); }catch(_){}
+      closeDebtorModal();
+    };
+    $('newDebtorBtn').onclick=()=>{ if(debtCanEdit())openDebtorModal(null); };
+
+    // ---------- Skolos ----------
+    function debtRenderRecv(){
+      const el=$('dbRecvList');
+      if(!DEBT_RECV.length){ el.innerHTML='<div class="muted">Skolų dar neįvesta.</div>'; }
+      else{
+        const stl={ open:'Neapmokėta', partially_paid:'Iš dalies apmokėta', paid:'Apmokėta', written_off:'Nurašyta' };
+        let tp=0,tn=0;
+        el.innerHTML='<table><thead><tr><th>Pagrindas / dok.</th><th>Prievolės data</th><th style="text-align:right;">Pagrindinė</th><th style="text-align:right;">Netesybos</th><th style="text-align:right;">Viso</th><th>Būsena</th><th></th></tr></thead><tbody>'
+          +DEBT_RECV.map(x=>{ const p=debtNum(x.principal),n=debtNum(x.penalties); if(x.status!=='written_off'){tp+=p;tn+=n;}
+            const b=DEBT_CBASES.find(c=>c.key===x.basis_key);
+            return `<tr><td>${esc(b?b.label||b.name||x.basis_key:(x.basis_key||'—'))}${x.doc_ref?`<div class="muted" style="font-size:11px;">${esc(x.doc_ref)}</div>`:''}</td>
+              <td>${esc(x.obligation_date||'—')}</td><td style="text-align:right;">${fmtEur(p)}</td><td style="text-align:right;">${fmtEur(n)}</td>
+              <td style="text-align:right;font-weight:600;">${fmtEur(p+n)}</td><td>${stl[x.status]||x.status}</td>
+              <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="editDebtRecv('${x.id}')">✎</button> <button class="btn btn-sm btn-ghost" onclick="delDebtRecv('${x.id}')">🗑</button></td></tr>`; }).join('')
+          +`<tr style="font-weight:700;background:#F7F9FB;"><td colspan="2">Iš viso (be nurašytų)</td><td style="text-align:right;">${fmtEur(tp)}</td><td style="text-align:right;">${fmtEur(tn)}</td><td style="text-align:right;">${fmtEur(tp+tn)}</td><td colspan="2"></td></tr></tbody></table>`;
+      }
+      $('drBasis').innerHTML='<option value="">—</option>'+DEBT_CBASES.map(b=>`<option value="${esc(b.key)}">${esc(b.label||b.name||b.key)}</option>`).join('');
+    }
+    window.editDebtRecv=(id)=>{
+      const x=DEBT_RECV.find(r=>r.id===id); if(!x)return;
+      DR_EDIT_ID=id; $('dbRecvFormTitle').textContent='Skolos redagavimas';
+      $('drBasis').value=x.basis_key||''; $('drDocRef').value=x.doc_ref||''; $('drOblDate').value=x.obligation_date||'';
+      $('drPrincipal').value=x.principal||''; $('drPenalties').value=x.penalties||''; $('drStatus').value=x.status||'open'; $('drNote').value=x.note||'';
+      $('drCancelBtn').classList.remove('hidden');
+    };
+    $('drCancelBtn').onclick=()=>{ DR_EDIT_ID=null; $('dbRecvFormTitle').textContent='Nauja skola';
+      ['drBasis','drDocRef','drOblDate','drPrincipal','drPenalties','drNote'].forEach(x=>$(x).value=''); $('drStatus').value='open'; $('drCancelBtn').classList.add('hidden'); };
+    $('drSaveBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const row={ debtor_id:DEBT_CURRENT.id, case_id:CURRENT.id, basis_key:$('drBasis').value||null, doc_ref:$('drDocRef').value.trim()||null,
+        obligation_date:$('drOblDate').value||null, principal:debtNum($('drPrincipal').value), penalties:debtNum($('drPenalties').value),
+        note:$('drNote').value.trim()||null, status:$('drStatus').value };
+      let err;
+      if(DR_EDIT_ID){ row.updated_at=new Date().toISOString(); const r=await sb.from('insolvency_debtor_receivables').update(row).eq('id',DR_EDIT_ID); err=r.error; }
+      else{ row.created_by=CURRENT_UID; const r=await sb.from('insolvency_debtor_receivables').insert(row); err=r.error; }
+      if(err){ alert('Klaida: '+err.message); return; }
+      $('drCancelBtn').onclick();
+      const rv=await sb.from('insolvency_debtor_receivables').select('*').eq('debtor_id',DEBT_CURRENT.id).order('created_at'); DEBT_RECV=rv.data||[];
+      const rva=await sb.from('insolvency_debtor_receivables').select('*').eq('case_id',CURRENT.id); DEBT_RECV_ALL=rva.data||[];
+      debtRenderRecv(); renderDebtDash();
+    };
+    window.delDebtRecv=async(id)=>{
+      if(!debtCanDelete()){ alert('Trynimui reikalingos visos teisės.'); return; }
+      if(!confirm('Pašalinti skolą?'))return;
+      await sb.from('insolvency_debtor_receivables').delete().eq('id',id);
+      DEBT_RECV=DEBT_RECV.filter(x=>x.id!==id); DEBT_RECV_ALL=DEBT_RECV_ALL.filter(x=>x.id!==id);
+      debtRenderRecv(); renderDebtDash();
+    };
+
+    // ---------- Masinis importas ----------
+    let DEBT_IMP_ROWS=[];
+    $('debtImportBtn').onclick=async()=>{ if(!CURRENT||CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; } await debtLoadRefs(); $('debtImpText').value=''; $('debtImpPreview').innerHTML=''; $('debtImpMsg').innerHTML=''; DEBT_IMP_ROWS=[]; show('debtImportModal'); };
+    $('debtImpCancel').onclick=()=>hide('debtImportModal');
+    $('debtImpPreviewBtn').onclick=()=>{
+      const lines=$('debtImpText').value.split('\n').map(l=>l.trim()).filter(Boolean);
+      DEBT_IMP_ROWS=lines.map(l=>{ const c=l.split('\t').map(x=>x.trim());
+        const basisTxt=(c[6]||'').trim(); const bMatch=DEBT_CBASES.find(b=>(b.label||'').toLowerCase()===basisTxt.toLowerCase()||b.key===basisTxt);
+        return { name:c[0]||'', id_code:c[1]||'', address:c[2]||'', email:c[3]||'', principal:debtNum(c[4]), penalties:debtNum(c[5]), basis_key:bMatch?bMatch.key:basisTxt, doc_ref:c[7]||'' }; }).filter(r=>r.name);
+      if(!DEBT_IMP_ROWS.length){ $('debtImpMsg').innerHTML='<div class="error">Neatpažinta nė viena eilutė. Stulpeliai turi būti atskirti tabuliacija (kopijuokite iš Excel).</div>'; return; }
+      $('debtImpMsg').innerHTML='<div class="muted">Atpažinta eilučių: '+DEBT_IMP_ROWS.length+'</div>';
+      $('debtImpPreview').innerHTML='<table><thead><tr><th>Pavadinimas</th><th>Kodas</th><th>El. paštas</th><th style="text-align:right;">Pagrindinė</th><th style="text-align:right;">Netesybos</th><th>Pagrindas</th><th>Dok. Nr.</th></tr></thead><tbody>'
+        +DEBT_IMP_ROWS.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.id_code)}</td><td>${esc(r.email)}</td><td style="text-align:right;">${fmtEur(r.principal)}</td><td style="text-align:right;">${fmtEur(r.penalties)}</td><td>${esc(r.basis_key)}</td><td>${esc(r.doc_ref)}</td></tr>`).join('')+'</tbody></table>';
+    };
+    $('debtImpDoBtn').onclick=async()=>{
+      if(!DEBT_IMP_ROWS.length){ $('debtImpMsg').innerHTML='<div class="error">Pirma paspauskite „Peržiūrėti".</div>'; return; }
+      $('debtImpMsg').innerHTML='<div class="muted">⏳ Importuojama…</div>';
+      const r=await sb.rpc('import_debtors_bulk',{ p_case_id:CURRENT.id, p_rows:DEBT_IMP_ROWS });
+      if(r.error){ $('debtImpMsg').innerHTML='<div class="error">'+esc(r.error.message)+'</div>'; return; }
+      if(r.data&&r.data.ok===false){ $('debtImpMsg').innerHTML='<div class="error">Klaida: '+esc(r.data.error_code||'nežinoma')+'</div>'; return; }
+      const d=r.data||{};
+      $('debtImpMsg').innerHTML='<div class="success">Importuota. Sukurta: '+(d.created||0)+', papildyta: '+(d.merged||0)+', praleista: '+(d.skipped||0)+'.</div>';
+      DEBT_IMP_ROWS=[];
+      await loadDebtors();
+      setTimeout(()=>hide('debtImportModal'),1200);
+    };
+
+    // ---------- Šablonų pildymas ir PDF ----------
+    function debtBaseMap(extra){
+      const adm=CURRENT_ADM||{};
+      const admParts=[adm.name||'—']; if(adm.code)admParts.push('juridinio asmens kodas '+adm.code); if(adm.address)admParts.push('buveinės adresas '+adm.address);
+      const person=(CURRENT&&CURRENT.admin_person_id)?(PERSONS||[]).find(p=>p.id===CURRENT.admin_person_id):null;
+      const igaliotas=person?(person.full_name+(person.position?', '+person.position:'')):((adm.authorized_person&&adm.authorized_person.trim())||'____________________');
+      const nutartis=(CURRENT.court||'teismo')+' '+(CURRENT.ruling_date?CURRENT.ruling_date+' ':'')+'nutartimi'+(CURRENT.civil_case_no?' civilinėje byloje Nr. '+CURRENT.civil_case_no:'');
+      const saskaita=CURRENT.deposit_account_iban?(CURRENT.deposit_account_iban+(CURRENT.deposit_bank_name?', '+CURRENT.deposit_bank_name:'')):'____________________';
+      const d=DEBT_CURRENT||{};
+      const rs=DEBT_RECV.filter(x=>x.status!=='written_off');
+      const p=rs.reduce((s,x)=>s+debtNum(x.principal),0), n=rs.reduce((s,x)=>s+debtNum(x.penalties),0);
+      const pagrindas=rs.map(x=>{ const b=DEBT_CBASES.find(c=>c.key===x.basis_key);
+        return '– '+(b?(b.label||b.name||x.basis_key):(x.basis_key||'prievolę'))+(x.doc_ref?' ('+x.doc_ref+')':'')+(x.obligation_date?', terminas '+x.obligation_date:'')+' — '+ (debtNum(x.principal)+debtNum(x.penalties)).toFixed(2)+' EUR'; }).join('\n')||'– (skolos pagrindas nenurodytas)';
+      return Object.assign({
+        data:new Date().toISOString().slice(0,10),
+        imone:CURRENT.debtor_name||'', imones_kodas:CURRENT.debtor_code||'—', imones_adresas:CURRENT.debtor_address||'—',
+        administratorius:admParts.join(', '), igaliotas_asmuo:igaliotas, nutartis, saskaita,
+        skolininkas:d.name||'', skolininko_kodas:d.id_code?(', kodas '+d.id_code):'', skolininko_adresas:d.address||'—',
+        skolos_pagrindas:pagrindas, skola_pagrindine:p.toFixed(2), skola_netesybos:n.toFixed(2), skola_viso:(p+n).toFixed(2)
+      },extra||{});
+    }
+    async function debtFillTemplate(kind,extra){
+      const { data:tpl }=await sb.from('insolvency_contract_templates').select('*').eq('kind',kind).maybeSingle();
+      if(!tpl)throw new Error('Šablonas „'+kind+'" nerastas — patikrinkite Nustatymai → Šablonai.');
+      const map=debtBaseMap(extra); let text=tpl.body||'';
+      Object.entries(map).forEach(([k,v])=>{ text=text.split('{{'+k+'}}').join(v==null?'':String(v)); });
+      return { title:tpl.title||kind, text };
+    }
+    async function debtTextToA4Pdf(text){
+      const holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-9999px'; holder.style.top='0';
+      holder.innerHTML='<div style="font-family:\'Times New Roman\',serif;color:#000;width:700px;padding:10px;background:#fff;font-size:13px;line-height:1.55;white-space:pre-wrap;"></div>';
+      holder.firstElementChild.textContent=text;
+      document.body.appendChild(holder);
+      const canvas=await html2canvas(holder.firstElementChild,{ scale:1.7, backgroundColor:'#fff' });
+      document.body.removeChild(holder);
+      return canvasToA4PdfBlob(canvas);
+    }
+    async function debtRegisterSentPdf(blob,title,sourceType,notes){
+      if(!CURRENT.project_code)throw new Error('Bylos kortelėje įveskite registracijos trumpinį (pvz. TOR).');
+      const nr=await sb.rpc('generate_insolvency_reg_number',{ p_case_id:CURRENT.id, p_doc_type:'sent' });
+      if(nr.error)throw new Error(nr.error.message);
+      if(!nr.data.ok)throw new Error('Klaida: '+nr.data.error_code);
+      const regNumber=nr.data.reg_number;
+      const dateV=new Date().toISOString().slice(0,10);
+      const file=new File([blob],title.replace(/[^\w.\- ]+/g,'_')+'.pdf',{ type:'application/pdf' });
+      const { blob:regBlob, pageCount }=await buildRegisteredPdf([file],{ regNumber, dateStr:dateV, dateLabel:'Išsiųsta', admName:(CURRENT_ADM&&CURRENT_ADM.name)||'', caseName:CURRENT.debtor_name });
+      const path=`${CURRENT.case_short_code}/registered/${regNumber.replace(/[^A-Za-z0-9._-]+/g,'_')}_${Date.now()}.pdf`;
+      const up=await sb.storage.from('insolvency-docs').upload(path,regBlob,{ upsert:false, contentType:'application/pdf' });
+      if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
+      const reg=await sb.rpc('register_insolvency_document',{ p:{
+        case_id:CURRENT.id, registration_number:regNumber, doc_type:'sent', registration_date:dateV,
+        document_title:title, counterparty_name:(DEBT_CURRENT&&DEBT_CURRENT.name)||'', notes:notes||'',
+        storage_path:path, file_size:regBlob.size, page_count:pageCount,
+        original_files_metadata:[{ name:file.name, size:blob.size }], source_type:sourceType } });
+      if(reg.error)throw new Error(reg.error.message);
+      if(!reg.data.ok)throw new Error('Klaida: '+reg.data.error_code);
+      await sb.from('insolvency_debtor_reg_links').insert({ debtor_id:DEBT_CURRENT.id, reg_id:reg.data.id, direction:'out', created_by:CURRENT_UID });
+      const rl=await sb.from('insolvency_debtor_reg_links').select('*').eq('debtor_id',DEBT_CURRENT.id); DEBT_REGLINKS=rl.data||[]; debtRenderRegLinks();
+      return { regId:reg.data.id, regNumber, path, regBlob };
+    }
+    function debtDlBlob(blob,name){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url); }
+
+    // ---------- Ikiteisminis: pretenzijos ----------
+    function debtRenderNotices(){
+      const el=$('dbNoticeList');
+      const kl={ primary:'Pirminis pranešimas', repeated:'Pakartotinis (galutinis)', pretrial_final:'Galutinis reikalavimas' };
+      el.innerHTML=DEBT_NOTICES.length?('<table><thead><tr><th>Tipas</th><th>Išsiųsta</th><th>Terminas</th><th style="text-align:right;">Suma</th><th>Atsakymas</th><th></th></tr></thead><tbody>'
+        +DEBT_NOTICES.map(x=>`<tr><td>${kl[x.notice_kind]||x.notice_kind}</td><td>${esc(x.sent_date||'—')}</td><td>${esc(x.due_date||'—')}</td>
+          <td style="text-align:right;">${fmtEur(debtNum(x.amount_principal)+debtNum(x.amount_penalties))}</td>
+          <td>${x.response?esc(x.response)+(x.response_date?' ('+esc(x.response_date)+')':''):'<span class="muted">—</span>'}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="debtNoticeResp('${x.id}')">↩ Atsakymas</button> <button class="btn btn-sm btn-ghost" onclick="delDebtNotice('${x.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>'):'<div class="muted">Pretenzijų dar nesiųsta.</div>';
+      if(!$('dnDate').value)$('dnDate').value=new Date().toISOString().slice(0,10);
+    }
+    window.debtNoticeResp=async(id)=>{
+      const resp=prompt('Gautas atsakymas (trumpai):'); if(resp==null)return;
+      await sb.from('insolvency_debtor_notices').update({ response:resp, response_date:new Date().toISOString().slice(0,10), updated_at:new Date().toISOString() }).eq('id',id);
+      await debtAddAction('RESPONSE','in','Atsakymas į pretenziją: '+resp);
+      const nt=await sb.from('insolvency_debtor_notices').select('*').eq('debtor_id',DEBT_CURRENT.id).order('created_at',{ascending:false}); DEBT_NOTICES=nt.data||[]; debtRenderNotices();
+    };
+    window.delDebtNotice=async(id)=>{
+      if(!debtCanDelete()){ alert('Trynimui reikalingos visos teisės.'); return; }
+      if(!confirm('Pašalinti pretenzijos įrašą?'))return;
+      await sb.from('insolvency_debtor_notices').delete().eq('id',id);
+      DEBT_NOTICES=DEBT_NOTICES.filter(x=>x.id!==id); debtRenderNotices();
+    };
+    $('dnGenBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const kind=$('dnKind').value; const days=parseInt($('dnTermDays').value)||14;
+      const sentDate=$('dnDate').value||new Date().toISOString().slice(0,10);
+      const due=new Date(new Date(sentDate).getTime()+days*86400000).toISOString().slice(0,10);
+      const msg=$('debtorMsg'); msg.innerHTML='<div class="muted">⏳ Generuojama pretenzija…</div>';
+      try{
+        const tplKind=kind==='primary'?'debtor_primary':'debtor_repeated';
+        const { title, text }=await debtFillTemplate(tplKind,{ data:sentDate, terminas:String(days) });
+        const blob=await debtTextToA4Pdf(text);
+        let regInfo=null;
+        if($('dnRegCb').checked){ regInfo=await debtRegisterSentPdf(blob,title,'debtor_notice','Pretenzija debitoriui '+DEBT_CURRENT.name); }
+        else debtDlBlob(blob,'Pretenzija_'+(DEBT_CURRENT.name||'').replace(/[^\w\- ]+/g,'_')+'.pdf');
+        const rs=DEBT_RECV.filter(x=>x.status!=='written_off');
+        const p=rs.reduce((s,x)=>s+debtNum(x.principal),0), n=rs.reduce((s,x)=>s+debtNum(x.penalties),0);
+        await sb.from('insolvency_debtor_notices').insert({ debtor_id:DEBT_CURRENT.id, case_id:CURRENT.id, notice_kind:kind,
+          sent_date:sentDate, due_date:due, reg_id:regInfo?regInfo.regId:null, amount_principal:p, amount_penalties:n, created_by:CURRENT_UID });
+        await debtAddAction('NOTICE_SENT','out',(kind==='primary'?'Pirminė':'Pakartotinė')+' pretenzija'+(regInfo?' (reg. '+regInfo.regNumber+')':''),{ reg_id:regInfo?regInfo.regId:null, amount:p+n });
+        await sb.from('insolvency_debtor_reminders').insert({ case_id:CURRENT.id, debtor_id:DEBT_CURRENT.id, is_auto:true, kind:'pretrial_term',
+          note:'Baigiasi pretenzijos terminas ('+(DEBT_CURRENT.name||'')+')', remind_on:due, created_by:CURRENT_UID });
+        if((DEBT_CURRENT.status||'NAUJAS')==='NAUJAS')await debtSetStatus('IKITEISMINIS');
+        await sb.from('insolvency_debtors').update({ next_action_on:due, next_action_note:'Pretenzijos terminas' }).eq('id',DEBT_CURRENT.id);
+        DEBT_CURRENT.next_action_on=due;
+        const nt=await sb.from('insolvency_debtor_notices').select('*').eq('debtor_id',DEBT_CURRENT.id).order('created_at',{ascending:false}); DEBT_NOTICES=nt.data||[];
+        const rm=await sb.from('insolvency_debtor_reminders').select('*').eq('debtor_id',DEBT_CURRENT.id).order('remind_on'); DEBT_REMS=rm.data||[];
+        debtRenderNotices(); debtRenderRems();
+        msg.innerHTML='<div class="success">Pretenzija parengta'+(regInfo?' ir užregistruota ('+regInfo.regNumber+'). PDF rasite Dok. registre.':' ir atsisiųsta.')+'</div>';
+        try{ await logEvent('debtor_notice_generated',{ debtor:DEBT_CURRENT.name, kind }); }catch(_){}
+      }catch(e){ msg.innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
+    };
+
+    // ---------- Susitarimai ----------
+    function debtRenderAgrs(){
+      const el=$('dbAgrList');
+      const tl={ installment:'Mokėjimo grafikas', settlement:'Taikos susitarimas', deferral:'Atidėjimas' };
+      const sl={ active:'Galioja', completed:'Įvykdytas', breached:'Pažeistas', cancelled:'Nutrauktas' };
+      el.innerHTML=DEBT_AGRS.length?DEBT_AGRS.map(a=>{
+        const items=DEBT_AGR_ITEMS.filter(i=>i.agreement_id===a.id);
+        const itemsHtml=items.length?'<table style="margin:6px 0 0 12px;font-size:12px;"><tbody>'+items.map(i=>`<tr><td style="padding:2px 8px;">${esc(i.due_date||'')}</td><td style="padding:2px 8px;text-align:right;">${fmtEur(i.amount)}</td><td style="padding:2px 8px;">${i.status==='paid'?'✅ apmokėta':'laukiama'}</td><td>${i.status!=='paid'?`<button class="btn btn-sm btn-ghost" onclick="debtAgrItemPaid('${i.id}')">✔ Apmokėta</button>`:''}</td></tr>`).join('')+'</tbody></table>':'';
+        return `<div style="border:1px solid #E3E9EF;border-radius:8px;padding:8px 12px;margin-bottom:8px;">
+          <b>${tl[a.agreement_type]||a.agreement_type}</b> · ${fmtEur(a.total_amount)} · nuo ${esc(a.start_date||'—')} · <span style="font-weight:600;">${sl[a.status]||a.status}</span>
+          <button class="btn btn-sm btn-ghost" style="float:right;" onclick="delDebtAgr('${a.id}')">🗑</button>
+          ${a.terms_note?`<div class="muted" style="font-size:12px;">${esc(a.terms_note)}</div>`:''}${itemsHtml}</div>`; }).join(''):'<div class="muted">Susitarimų nėra.</div>';
+    }
+    $('daSaveBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const total=debtNum($('daAmount').value); const start=$('daStart').value||new Date().toISOString().slice(0,10);
+      const r=await sb.from('insolvency_debtor_agreements').insert({ debtor_id:DEBT_CURRENT.id, case_id:CURRENT.id,
+        agreement_type:$('daType').value, start_date:start, total_amount:total, terms_note:$('daNote').value.trim()||null, status:'active', created_by:CURRENT_UID }).select().single();
+      if(r.error){ alert('Klaida: '+r.error.message); return; }
+      if($('daType').value==='installment'){
+        const parts=Math.max(1,parseInt($('daParts').value)||1); const per=Math.round(total/parts*100)/100;
+        const rows=[]; for(let i=0;i<parts;i++){ const d=new Date(start); d.setMonth(d.getMonth()+i);
+          rows.push({ agreement_id:r.data.id, due_date:d.toISOString().slice(0,10), amount:i===parts-1?Math.round((total-per*(parts-1))*100)/100:per, status:'pending' }); }
+        await sb.from('insolvency_debtor_agreement_items').insert(rows);
+        for(const it of rows){ await sb.from('insolvency_debtor_reminders').insert({ case_id:CURRENT.id, debtor_id:DEBT_CURRENT.id, is_auto:true, kind:'payment', note:'Grafiko dalis '+fmtEur(it.amount)+' ('+(DEBT_CURRENT.name||'')+')', remind_on:it.due_date, created_by:CURRENT_UID }); }
+      }
+      await debtAddAction('AGREEMENT','out','Sudarytas susitarimas: '+fmtEur(total));
+      if(['NAUJAS','IKITEISMINIS'].includes(DEBT_CURRENT.status||'NAUJAS'))await debtSetStatus('DERYBOS');
+      ['daAmount','daNote'].forEach(x=>$(x).value='');
+      await debtLoadDetail();
+    };
+    window.debtAgrItemPaid=async(id)=>{
+      const it=DEBT_AGR_ITEMS.find(x=>x.id===id); if(!it)return;
+      await sb.from('insolvency_debtor_agreement_items').update({ status:'paid', paid_amount:it.amount }).eq('id',id);
+      const items=await sb.from('insolvency_debtor_agreement_items').select('*').in('agreement_id',DEBT_AGRS.map(x=>x.id)).order('due_date'); DEBT_AGR_ITEMS=items.data||[];
+      const ag=DEBT_AGRS.find(a=>a.id===it.agreement_id);
+      if(ag&&!DEBT_AGR_ITEMS.some(x=>x.agreement_id===ag.id&&x.status!=='paid')){ await sb.from('insolvency_debtor_agreements').update({ status:'completed', updated_at:new Date().toISOString() }).eq('id',ag.id); ag.status='completed'; }
+      debtRenderAgrs();
+    };
+    window.delDebtAgr=async(id)=>{
+      if(!debtCanDelete()){ alert('Trynimui reikalingos visos teisės.'); return; }
+      if(!confirm('Pašalinti susitarimą su grafiku?'))return;
+      await sb.from('insolvency_debtor_agreements').delete().eq('id',id);
+      await debtLoadDetail();
+    };
+
+    // ---------- Mokėjimai ----------
+    function debtRenderPays(){
+      const el=$('dbPayList');
+      el.innerHTML=DEBT_PAYS.length?('<table><thead><tr><th>Data</th><th style="text-align:right;">Suma</th><th style="text-align:right;">Pagrindinei</th><th style="text-align:right;">Netesyboms</th><th></th></tr></thead><tbody>'
+        +DEBT_PAYS.map(x=>`<tr><td>${esc(x.payment_date||'')}</td><td style="text-align:right;font-weight:600;">${fmtEur(x.amount)}</td>
+          <td style="text-align:right;">${fmtEur(x.alloc_principal)}</td><td style="text-align:right;">${fmtEur(x.alloc_penalties)}</td>
+          <td style="text-align:right;"><button class="btn btn-sm btn-ghost" onclick="delDebtPay('${x.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>'):'<div class="muted">Mokėjimų negauta.</div>';
+      $('dpRecv').innerHTML='<option value="">— bendrai —</option>'+DEBT_RECV.map(x=>`<option value="${x.id}">${esc(x.doc_ref||x.basis_key||'skola')} (${fmtEur(debtNum(x.principal)+debtNum(x.penalties))})</option>`).join('');
+      if(!$('dpDate').value)$('dpDate').value=new Date().toISOString().slice(0,10);
+    }
+    $('dpSaveBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const amount=debtNum($('dpAmount').value); if(!amount){ alert('Įveskite sumą.'); return; }
+      const allocP=$('dpPrincipal').value!==''?debtNum($('dpPrincipal').value):amount;
+      const r=await sb.from('insolvency_debtor_payments').insert({ debtor_id:DEBT_CURRENT.id, case_id:CURRENT.id,
+        receivable_id:$('dpRecv').value||null, payment_date:$('dpDate').value||new Date().toISOString().slice(0,10),
+        amount, alloc_principal:allocP, alloc_penalties:Math.max(0,amount-allocP), created_by:CURRENT_UID });
+      if(r.error){ alert('Klaida: '+r.error.message); return; }
+      await debtAddAction('PAYMENT','in','Gautas mokėjimas',{ amount });
+      $('dpAmount').value=''; $('dpPrincipal').value='';
+      await debtLoadDetail();
+      const rva=await sb.from('insolvency_debtor_receivables').select('*').eq('case_id',CURRENT.id); DEBT_RECV_ALL=rva.data||[];
+      const pa=await sb.from('insolvency_debtor_payments').select('*').eq('case_id',CURRENT.id); DEBT_PAY_ALL=pa.data||[];
+      renderDebtDash();
+    };
+    window.delDebtPay=async(id)=>{
+      if(!debtCanDelete()){ alert('Trynimui reikalingos visos teisės.'); return; }
+      if(!confirm('Pašalinti mokėjimą?'))return;
+      await sb.from('insolvency_debtor_payments').delete().eq('id',id);
+      await debtLoadDetail();
+      const pa=await sb.from('insolvency_debtor_payments').select('*').eq('case_id',CURRENT.id); DEBT_PAY_ALL=pa.data||[]; renderDebtDash();
+    };
+
+    // ---------- Priminimai ----------
+    function debtRenderRems(){
+      const el=$('dbRemList'); const today=new Date().toISOString().slice(0,10);
+      const open=DEBT_REMS.filter(x=>x.status!=='done'&&x.status!=='dismissed');
+      const done=DEBT_REMS.filter(x=>x.status==='done');
+      el.innerHTML=(open.length||done.length)?(open.map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #f0f0f0;${x.remind_on&&x.remind_on<=today?'color:#C0392B;font-weight:600;':''}">
+          <span style="min-width:90px;">${esc(x.remind_on||'—')}</span><span style="flex:1;">${x.is_auto?'🤖 ':''}${esc(x.note||'')}</span>
+          <button class="btn btn-sm btn-ghost" onclick="debtRemDone('${x.id}')">✔ Atlikta</button>
+          <button class="btn btn-sm btn-ghost" onclick="delDebtRem('${x.id}')">🗑</button></div>`).join('')
+        +(done.length?'<div class="muted" style="font-size:11px;margin-top:6px;">Atlikta: '+done.length+'</div>':'')):'<div class="muted">Priminimų nėra.</div>';
+    }
+    $('dbRemAddBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const note=$('dbRemNote').value.trim(); if(!note){ alert('Įveskite tekstą.'); return; }
+      await sb.from('insolvency_debtor_reminders').insert({ case_id:CURRENT.id, debtor_id:DEBT_CURRENT.id, note, remind_on:$('dbRemDate').value||null, created_by:CURRENT_UID });
+      $('dbRemNote').value=''; $('dbRemDate').value='';
+      const rm=await sb.from('insolvency_debtor_reminders').select('*').eq('debtor_id',DEBT_CURRENT.id).order('remind_on'); DEBT_REMS=rm.data||[]; debtRenderRems();
+    };
+    window.debtRemDone=async(id)=>{
+      await sb.from('insolvency_debtor_reminders').update({ status:'done', done_at:new Date().toISOString().slice(0,10) }).eq('id',id);
+      const rm=await sb.from('insolvency_debtor_reminders').select('*').eq('debtor_id',DEBT_CURRENT.id).order('remind_on'); DEBT_REMS=rm.data||[]; debtRenderRems();
+    };
+    window.delDebtRem=async(id)=>{
+      await sb.from('insolvency_debtor_reminders').delete().eq('id',id);
+      DEBT_REMS=DEBT_REMS.filter(x=>x.id!==id); debtRenderRems();
+    };
+
+    // ---------- Teisminis ----------
+    function debtRenderLegal(){
+      const el=$('dbLegalList');
+      const pl={ court_order:'Teismo įsakymas', documentary:'Dokumentinis procesas', action:'Ieškinys' };
+      const sl={ filed:'Pateikta', awarded:'Priteista', objected:'Prieštaravimai', rejected:'Atmesta' };
+      el.innerHTML=DEBT_LEGAL.length?('<table><thead><tr><th>Procedūra</th><th>Teismas / byla</th><th>Pateikta</th><th style="text-align:right;">Žyminis</th><th>Būsena</th><th style="text-align:right;">Priteista</th><th>Vykd. dok.</th><th></th></tr></thead><tbody>'
+        +DEBT_LEGAL.map(x=>`<tr><td>${pl[x.procedure_type]||x.procedure_type}</td><td>${esc(x.court_name||'—')}${x.court_case_no?`<div class="muted" style="font-size:11px;">${esc(x.court_case_no)}</div>`:''}</td>
+          <td>${esc(x.filed_date||'—')}</td><td style="text-align:right;">${fmtEur(x.court_fee)}</td><td>${sl[x.status]||x.status}</td>
+          <td style="text-align:right;">${x.status==='awarded'?fmtEur(debtNum(x.awarded_principal)+debtNum(x.awarded_penalties)+debtNum(x.awarded_costs)):'—'}</td>
+          <td>${x.exec_doc_no?esc((x.exec_doc_type==='writ'?'Vykd. raštas ':'Įsakymas ')+x.exec_doc_no):'—'}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="editDebtLegal('${x.id}')">✎</button> <button class="btn btn-sm btn-ghost" onclick="delDebtLegal('${x.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>'):'<div class="muted">Teisminių įrašų nėra.</div>';
+    }
+    window.editDebtLegal=(id)=>{
+      const x=DEBT_LEGAL.find(r=>r.id===id); if(!x)return;
+      DL_EDIT_ID=id; $('dlFormTitle').textContent='Teisminio įrašo redagavimas';
+      $('dlProc').value=x.procedure_type||'court_order'; $('dlCourt').value=x.court_name||''; $('dlCaseNo').value=x.court_case_no||'';
+      $('dlFiled').value=x.filed_date||''; $('dlFee').value=x.court_fee||''; $('dlStatus').value=x.status||'filed';
+      $('dlAwPrincipal').value=x.awarded_principal||''; $('dlAwPenalties').value=x.awarded_penalties||''; $('dlAwCosts').value=x.awarded_costs||'';
+      $('dlDecision').value=x.decision_date||''; $('dlExecType').value=x.exec_doc_type||''; $('dlExecNo').value=x.exec_doc_no||''; $('dlExecDate').value=x.exec_doc_date||'';
+      $('dlNotes').value=x.notes||''; $('dlCancelBtn').classList.remove('hidden');
+    };
+    $('dlCancelBtn').onclick=()=>{ DL_EDIT_ID=null; $('dlFormTitle').textContent='Naujas teisminis įrašas';
+      ['dlCourt','dlCaseNo','dlFiled','dlFee','dlAwPrincipal','dlAwPenalties','dlAwCosts','dlDecision','dlExecNo','dlExecDate','dlNotes'].forEach(x=>$(x).value='');
+      $('dlProc').value='court_order'; $('dlStatus').value='filed'; $('dlExecType').value=''; $('dlCancelBtn').classList.add('hidden'); };
+    $('dlSaveBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const prev=DL_EDIT_ID?DEBT_LEGAL.find(x=>x.id===DL_EDIT_ID):null;
+      const row={ debtor_id:DEBT_CURRENT.id, case_id:CURRENT.id, procedure_type:$('dlProc').value,
+        court_name:$('dlCourt').value.trim()||null, court_case_no:$('dlCaseNo').value.trim()||null, filed_date:$('dlFiled').value||null,
+        court_fee:$('dlFee').value!==''?debtNum($('dlFee').value):null, status:$('dlStatus').value,
+        awarded_principal:$('dlAwPrincipal').value!==''?debtNum($('dlAwPrincipal').value):null,
+        awarded_penalties:$('dlAwPenalties').value!==''?debtNum($('dlAwPenalties').value):null,
+        awarded_costs:$('dlAwCosts').value!==''?debtNum($('dlAwCosts').value):null,
+        decision_date:$('dlDecision').value||null, exec_doc_type:$('dlExecType').value||null,
+        exec_doc_no:$('dlExecNo').value.trim()||null, exec_doc_date:$('dlExecDate').value||null, notes:$('dlNotes').value.trim()||null };
+      let err;
+      if(DL_EDIT_ID){ row.updated_at=new Date().toISOString(); const r=await sb.from('insolvency_debtor_legal').update(row).eq('id',DL_EDIT_ID); err=r.error; }
+      else{ row.created_by=CURRENT_UID; const r=await sb.from('insolvency_debtor_legal').insert(row); err=r.error; }
+      if(err){ alert('Klaida: '+err.message); return; }
+      if(!DL_EDIT_ID)await debtAddAction('COURT_FILING','out','Kreiptasi į teismą ('+({court_order:'teismo įsakymas',documentary:'dokumentinis',action:'ieškinys'})[row.procedure_type]+')');
+      if(row.status==='awarded'&&(!prev||prev.status!=='awarded'))await debtAddAction('JUDGMENT','in','Priteista '+fmtEur(debtNum(row.awarded_principal)+debtNum(row.awarded_penalties)),{ amount:debtNum(row.awarded_principal)+debtNum(row.awarded_penalties) });
+      if(row.exec_doc_no&&(!prev||!prev.exec_doc_no))await debtAddAction('EXEC_DOC','in','Vykdomasis dokumentas '+row.exec_doc_no);
+      if(!['ANTSTOLIS','UZDARYTA','PARDUOTA'].includes(DEBT_CURRENT.status))await debtSetStatus('TEISMINIS');
+      $('dlCancelBtn').onclick();
+      const lg=await sb.from('insolvency_debtor_legal').select('*').eq('debtor_id',DEBT_CURRENT.id).order('created_at',{ascending:false}); DEBT_LEGAL=lg.data||[]; debtRenderLegal();
+    };
+    window.delDebtLegal=async(id)=>{
+      if(!debtCanDelete()){ alert('Trynimui reikalingos visos teisės.'); return; }
+      if(!confirm('Pašalinti teisminį įrašą?'))return;
+      await sb.from('insolvency_debtor_legal').delete().eq('id',id);
+      DEBT_LEGAL=DEBT_LEGAL.filter(x=>x.id!==id); debtRenderLegal();
+    };
+    $('dlGenBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const proc=$('dlProc').value; const msg=$('debtorMsg');
+      msg.innerHTML='<div class="muted">⏳ Generuojamas teismo dokumentas…</div>';
+      try{
+        const kind=proc==='court_order'?'court_order_app':'claim_action';
+        const { title, text }=await debtFillTemplate(kind,{ teismas:$('dlCourt').value.trim()||'________________ teismui' });
+        const blob=await debtTextToA4Pdf(text);
+        if($('dlRegCb').checked){ const ri=await debtRegisterSentPdf(blob,title,'debtor_legal','Teismo dokumentas — '+DEBT_CURRENT.name);
+          msg.innerHTML='<div class="success">Dokumentas parengtas ir užregistruotas ('+ri.regNumber+').</div>'; }
+        else{ debtDlBlob(blob,title.replace(/[^\w\- ]+/g,'_')+'.pdf'); msg.innerHTML='<div class="success">Dokumentas parengtas ir atsisiųstas.</div>'; }
+        try{ await logEvent('debtor_court_doc_generated',{ debtor:DEBT_CURRENT.name, kind }); }catch(_){}
+      }catch(e){ msg.innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
+    };
+
+    // ---------- Antstolis ----------
+    function debtRenderEnf(){
+      const el=$('dbEnfList');
+      const sl={ submitted:'Pateikta', in_progress:'Vykdoma', recovered:'Išieškota', returned:'Grąžinta neišieškojus', closed:'Uždaryta' };
+      el.innerHTML=DEBT_ENF.length?('<table><thead><tr><th>Antstolis</th><th>Vykd. byla</th><th>Perduota</th><th>Būsena</th><th style="text-align:right;">Išieškota</th><th style="text-align:right;">Liko</th><th></th></tr></thead><tbody>'
+        +DEBT_ENF.map(x=>`<tr><td>${esc(x.bailiff_name||'—')}${x.bailiff_office?`<div class="muted" style="font-size:11px;">${esc(x.bailiff_office)}</div>`:''}</td>
+          <td>${esc(x.exec_case_no||'—')}</td><td>${esc(x.handed_date||'—')}</td><td>${sl[x.status]||x.status}</td>
+          <td style="text-align:right;">${fmtEur(x.recovered_amount)}</td><td style="text-align:right;">${fmtEur(x.remaining_amount)}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="editDebtEnf('${x.id}')">✎</button> <button class="btn btn-sm btn-ghost" onclick="delDebtEnf('${x.id}')">🗑</button></td></tr>`).join('')+'</tbody></table>'):'<div class="muted">Perdavimų antstoliui nėra.</div>';
+      $('deLegal').innerHTML='<option value="">— nesusieta —</option>'+DEBT_LEGAL.filter(x=>x.exec_doc_no).map(x=>`<option value="${x.id}">${esc((x.exec_doc_type==='writ'?'Vykd. raštas ':'Teismo įsakymas ')+(x.exec_doc_no||''))}</option>`).join('');
+    }
+    window.editDebtEnf=(id)=>{
+      const x=DEBT_ENF.find(r=>r.id===id); if(!x)return;
+      DE_EDIT_ID=id; $('deFormTitle').textContent='Vykdymo įrašo redagavimas';
+      $('deBailiff').value=x.bailiff_name||''; $('deOffice').value=x.bailiff_office||''; $('deCaseNo').value=x.exec_case_no||'';
+      $('deHanded').value=x.handed_date||''; $('deLegal').value=x.legal_id||''; $('deStatus').value=x.status||'submitted';
+      $('deRecovered').value=x.recovered_amount||''; $('deRemaining').value=x.remaining_amount||''; $('deLastUpd').value=x.last_update||'';
+      $('deNotes').value=x.notes||''; $('deCancelBtn').classList.remove('hidden');
+    };
+    $('deCancelBtn').onclick=()=>{ DE_EDIT_ID=null; $('deFormTitle').textContent='Naujas perdavimas antstoliui';
+      ['deBailiff','deOffice','deCaseNo','deHanded','deRecovered','deRemaining','deLastUpd','deNotes'].forEach(x=>$(x).value='');
+      $('deLegal').value=''; $('deStatus').value='submitted'; $('deCancelBtn').classList.add('hidden'); };
+    $('deSaveBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const prev=DE_EDIT_ID?DEBT_ENF.find(x=>x.id===DE_EDIT_ID):null;
+      const row={ debtor_id:DEBT_CURRENT.id, case_id:CURRENT.id, legal_id:$('deLegal').value||null,
+        bailiff_name:$('deBailiff').value.trim()||null, bailiff_office:$('deOffice').value.trim()||null,
+        exec_case_no:$('deCaseNo').value.trim()||null, handed_date:$('deHanded').value||null, status:$('deStatus').value,
+        recovered_amount:$('deRecovered').value!==''?debtNum($('deRecovered').value):null,
+        remaining_amount:$('deRemaining').value!==''?debtNum($('deRemaining').value):null,
+        last_update:$('deLastUpd').value||new Date().toISOString().slice(0,10), notes:$('deNotes').value.trim()||null };
+      let err;
+      if(DE_EDIT_ID){ row.updated_at=new Date().toISOString(); const r=await sb.from('insolvency_debtor_enforcement').update(row).eq('id',DE_EDIT_ID); err=r.error; }
+      else{ row.created_by=CURRENT_UID; const r=await sb.from('insolvency_debtor_enforcement').insert(row); err=r.error; }
+      if(err){ alert('Klaida: '+err.message); return; }
+      if(!DE_EDIT_ID)await debtAddAction('ENFORCEMENT_HANDOFF','out','Perduota antstoliui '+(row.bailiff_name||''));
+      else await debtAddAction('ENFORCEMENT_UPDATE','in','Vykdymo eiga: '+({submitted:'pateikta',in_progress:'vykdoma',recovered:'išieškota',returned:'grąžinta',closed:'uždaryta'})[row.status]+(row.recovered_amount?', išieškota '+fmtEur(row.recovered_amount):''),{ amount:row.recovered_amount||null });
+      if(row.status==='recovered')await debtSetStatus('UZDARYTA');
+      else if(!['UZDARYTA','PARDUOTA'].includes(DEBT_CURRENT.status))await debtSetStatus('ANTSTOLIS');
+      $('deCancelBtn').onclick();
+      const en=await sb.from('insolvency_debtor_enforcement').select('*').eq('debtor_id',DEBT_CURRENT.id).order('created_at',{ascending:false}); DEBT_ENF=en.data||[]; debtRenderEnf();
+    };
+    window.delDebtEnf=async(id)=>{
+      if(!debtCanDelete()){ alert('Trynimui reikalingos visos teisės.'); return; }
+      if(!confirm('Pašalinti vykdymo įrašą?'))return;
+      await sb.from('insolvency_debtor_enforcement').delete().eq('id',id);
+      DEBT_ENF=DEBT_ENF.filter(x=>x.id!==id); debtRenderEnf();
+    };
+    $('deGenBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const msg=$('debtorMsg'); msg.innerHTML='<div class="muted">⏳ Generuojamas lydraštis…</div>';
+      try{
+        const legalSel=$('deLegal').value?DEBT_LEGAL.find(x=>x.id===$('deLegal').value):DEBT_LEGAL.find(x=>x.exec_doc_no);
+        const vd=legalSel?((legalSel.exec_doc_type==='writ'?'vykdomasis raštas Nr. ':'teismo įsakymas Nr. ')+(legalSel.exec_doc_no||'')+(legalSel.exec_doc_date?' ('+legalSel.exec_doc_date+')':'')):'____________________';
+        const { title, text }=await debtFillTemplate('bailiff_cover',{ antstolis:$('deBailiff').value.trim()||'____________________', antstolio_kontora:$('deOffice').value.trim()||'', vykdomasis_dokumentas:vd });
+        const blob=await debtTextToA4Pdf(text);
+        if($('deRegCb').checked){ const ri=await debtRegisterSentPdf(blob,title,'debtor_enforcement','Lydraštis antstoliui — '+DEBT_CURRENT.name);
+          msg.innerHTML='<div class="success">Lydraštis parengtas ir užregistruotas ('+ri.regNumber+').</div>'; }
+        else{ debtDlBlob(blob,'Lydrastis_antstoliui.pdf'); msg.innerHTML='<div class="success">Lydraštis parengtas ir atsisiųstas.</div>'; }
+        try{ await logEvent('debtor_bailiff_cover_generated',{ debtor:DEBT_CURRENT.name }); }catch(_){}
+      }catch(e){ msg.innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
+    };
+
+    // ---------- Pardavimas / cesija ----------
+    function debtRenderSale(){
+      const el=$('dbSaleList');
+      el.innerHTML=DEBT_SALE.length?DEBT_SALE.map(x=>`<div style="border:1px solid #E3E9EF;border-radius:8px;padding:8px 12px;margin-bottom:8px;">
+        <b>${esc(x.buyer_name||'—')}</b>${x.buyer_code?' (k. '+esc(x.buyer_code)+')':''} · kaina ${fmtEur(x.price)} · sutartis ${esc(x.contract_no||'—')} ${esc(x.contract_date||'')}${x.assigned_date?' · perleista '+esc(x.assigned_date):''}
+        <button class="btn btn-sm btn-ghost" style="float:right;" onclick="delDebtSale('${x.id}')">🗑</button>
+        ${x.notes?`<div class="muted" style="font-size:12px;">${esc(x.notes)}</div>`:''}</div>`).join(''):'<div class="muted">Pardavimo įrašų nėra.</div>';
+      const s=DEBT_SALE[0];
+      if(s&&!DS_EDIT_ID){ DS_EDIT_ID=s.id; $('dsBuyer').value=s.buyer_name||''; $('dsBuyerCode').value=s.buyer_code||''; $('dsPrice').value=s.price||'';
+        $('dsContractNo').value=s.contract_no||''; $('dsContractDate').value=s.contract_date||''; $('dsAssigned').value=s.assigned_date||''; $('dsNotes').value=s.notes||''; }
+    }
+    $('dsSaveBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const row={ debtor_id:DEBT_CURRENT.id, case_id:CURRENT.id, buyer_name:$('dsBuyer').value.trim()||null, buyer_code:$('dsBuyerCode').value.trim()||null,
+        price:$('dsPrice').value!==''?debtNum($('dsPrice').value):null, contract_no:$('dsContractNo').value.trim()||null,
+        contract_date:$('dsContractDate').value||null, assigned_date:$('dsAssigned').value||null, notes:$('dsNotes').value.trim()||null };
+      let err;
+      if(DS_EDIT_ID){ row.updated_at=new Date().toISOString(); const r=await sb.from('insolvency_debtor_sale').update(row).eq('id',DS_EDIT_ID); err=r.error; }
+      else{ row.created_by=CURRENT_UID; const r=await sb.from('insolvency_debtor_sale').insert(row).select().single(); err=r.error; if(!err)DS_EDIT_ID=r.data.id; }
+      if(err){ alert('Klaida: '+err.message); return; }
+      if(row.assigned_date){ await debtAddAction('SALE','out','Skola parduota (cesija) '+(row.buyer_name||'')+' už '+fmtEur(row.price),{ amount:row.price }); await debtSetStatus('PARDUOTA'); }
+      const sl=await sb.from('insolvency_debtor_sale').select('*').eq('debtor_id',DEBT_CURRENT.id).order('created_at',{ascending:false}); DEBT_SALE=sl.data||[]; debtRenderSale();
+      $('debtorMsg').innerHTML='<div class="success">Pardavimo įrašas išsaugotas.</div>';
+    };
+    window.delDebtSale=async(id)=>{
+      if(!debtCanDelete()){ alert('Trynimui reikalingos visos teisės.'); return; }
+      if(!confirm('Pašalinti pardavimo įrašą?'))return;
+      await sb.from('insolvency_debtor_sale').delete().eq('id',id);
+      DS_EDIT_ID=null; ['dsBuyer','dsBuyerCode','dsPrice','dsContractNo','dsContractDate','dsAssigned','dsNotes'].forEach(x=>$(x).value='');
+      const sl=await sb.from('insolvency_debtor_sale').select('*').eq('debtor_id',DEBT_CURRENT.id); DEBT_SALE=sl.data||[]; debtRenderSale();
+    };
+    $('dsGenBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const msg=$('debtorMsg'); msg.innerHTML='<div class="muted">⏳ Generuojama cesijos sutartis…</div>';
+      try{
+        const { title, text }=await debtFillTemplate('debt_assignment',{
+          sutarties_nr:$('dsContractNo').value.trim()||'____', sutarties_data:$('dsContractDate').value||new Date().toISOString().slice(0,10),
+          pirkejas:$('dsBuyer').value.trim()||'____________________', pirkejo_kodas:$('dsBuyerCode').value.trim()?(', kodas '+$('dsBuyerCode').value.trim()):'',
+          kaina:($('dsPrice').value!==''?debtNum($('dsPrice').value).toFixed(2):'____') });
+        const blob=await debtTextToA4Pdf(text);
+        if($('dsRegCb').checked){ const ri=await debtRegisterSentPdf(blob,title,'debtor_sale','Cesijos sutartis — '+DEBT_CURRENT.name);
+          msg.innerHTML='<div class="success">Sutartis parengta ir užregistruota ('+ri.regNumber+').</div>'; }
+        else{ debtDlBlob(blob,'Cesijos_sutartis.pdf'); msg.innerHTML='<div class="success">Sutartis parengta ir atsisiųsta.</div>'; }
+        try{ await logEvent('debtor_assignment_generated',{ debtor:DEBT_CURRENT.name }); }catch(_){}
+      }catch(e){ msg.innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
+    };
+
+    // ---------- Dokumentai ir reg. susiejimai ----------
+    function debtRenderFiles(){
+      const el=$('dbFileList');
+      el.innerHTML=DEBT_FILES.length?DEBT_FILES.map(f=>`<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #f0f0f0;">
+        <span style="flex:1;">📄 ${esc(f.label||'failas')}</span><span class="muted" style="font-size:11px;">${fmtDate(f.created_at)}</span>
+        <button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(f.storage_path)}','${esc(f.label||'failas')}')">👁</button>
+        <button class="btn btn-sm btn-ghost" onclick="delDebtFile('${f.id}','${esc(f.storage_path)}')">🗑</button></div>`).join(''):'<div class="muted">Failų nėra.</div>';
+    }
+    $('dbFileBtn').onclick=()=>{ if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; } $('dbFileInput').click(); };
+    $('dbFileInput').onchange=async()=>{
+      const f=$('dbFileInput').files&&$('dbFileInput').files[0]; if(!f)return;
+      const label=$('dbFileLabel').value.trim()||f.name;
+      const path=`debtors/${DEBT_CURRENT.id}/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`;
+      const up=await sb.storage.from('insolvency-docs').upload(path,f,{ upsert:true });
+      if(up.error){ alert('Įkėlimo klaida: '+up.error.message); return; }
+      await sb.from('insolvency_debtor_files').insert({ debtor_id:DEBT_CURRENT.id, label, storage_path:path, uploaded_by:CURRENT_UID });
+      $('dbFileLabel').value=''; $('dbFileInput').value='';
+      const fl=await sb.from('insolvency_debtor_files').select('*').eq('debtor_id',DEBT_CURRENT.id).order('created_at',{ascending:false}); DEBT_FILES=fl.data||[]; debtRenderFiles();
+    };
+    window.delDebtFile=async(id,path)=>{
+      if(!debtCanDelete()){ alert('Trynimui reikalingos visos teisės.'); return; }
+      if(!confirm('Pašalinti failą?'))return;
+      try{ await sb.storage.from('insolvency-docs').remove([path]); }catch(_){}
+      await sb.from('insolvency_debtor_files').delete().eq('id',id);
+      DEBT_FILES=DEBT_FILES.filter(x=>x.id!==id); debtRenderFiles();
+    };
+    async function debtLoadRegsCache(){
+      if(DEBT_REGS_CACHE.length)return;
+      try{ const r=await sb.from('insolvency_doc_registrations').select('id,registration_number,registration_date,document_title,counterparty_name,storage_path,doc_type').eq('case_id',CURRENT.id).order('registration_date',{ascending:false}); DEBT_REGS_CACHE=r.data||[]; }catch(_){ DEBT_REGS_CACHE=[]; }
+    }
+    async function debtRenderRegLinks(){
+      await debtLoadRegsCache();
+      const el=$('dbRegLinkList');
+      el.innerHTML=DEBT_REGLINKS.length?DEBT_REGLINKS.map(l=>{
+        const r=DEBT_REGS_CACHE.find(x=>x.id===l.reg_id);
+        return `<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #f0f0f0;">
+          <span>${l.direction==='in'?'📥':'📤'}</span>
+          <span style="flex:1;">${r?('<b>'+esc(r.registration_number)+'</b> · '+esc(r.document_title||'')+' <span class="muted" style="font-size:11px;">'+esc(r.registration_date||'')+'</span>'):('<span class="muted">reg. įrašas '+esc((l.reg_id||'').slice(0,8))+'…</span>')}</span>
+          ${r&&r.storage_path?`<button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')">👁</button>`:''}
+          <button class="btn btn-sm btn-ghost" onclick="delDebtRegLink('${l.id}')">🗑</button></div>`; }).join(''):'<div class="muted">Susietų registruotų dokumentų nėra.</div>';
+      const linked=new Set(DEBT_REGLINKS.map(x=>x.reg_id));
+      $('dbRegLinkSel').innerHTML='<option value="">— pasirinkti registruotą dokumentą —</option>'+DEBT_REGS_CACHE.filter(r=>!linked.has(r.id)).map(r=>`<option value="${r.id}">${esc(r.registration_number)} · ${esc((r.document_title||'').slice(0,60))}</option>`).join('');
+    }
+    $('dbRegLinkBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const regId=$('dbRegLinkSel').value; if(!regId){ alert('Pasirinkite dokumentą.'); return; }
+      await sb.from('insolvency_debtor_reg_links').insert({ debtor_id:DEBT_CURRENT.id, reg_id:regId, direction:$('dbRegLinkDir').value, created_by:CURRENT_UID });
+      if($('dbRegLinkDir').value==='in')await debtAddAction('RESPONSE','in','Susietas gautas registruotas dokumentas',{ reg_id:regId });
+      const rl=await sb.from('insolvency_debtor_reg_links').select('*').eq('debtor_id',DEBT_CURRENT.id); DEBT_REGLINKS=rl.data||[]; debtRenderRegLinks();
+    };
+    window.delDebtRegLink=async(id)=>{
+      if(!confirm('Pašalinti susiejimą (registruotas dokumentas žurnale lieka)?'))return;
+      await sb.from('insolvency_debtor_reg_links').delete().eq('id',id);
+      DEBT_REGLINKS=DEBT_REGLINKS.filter(x=>x.id!==id); debtRenderRegLinks();
+    };
+
+    // ---------- Žurnalas ----------
+    function debtRenderActions(){
+      const el=$('dbActionList');
+      el.innerHTML=DEBT_ACTIONS.length?DEBT_ACTIONS.map(a=>`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">
+        <span style="min-width:86px;" class="muted">${esc(a.action_date||'')}</span>
+        <span style="min-width:20px;">${a.direction==='in'?'📥':'📤'}</span>
+        <span style="min-width:170px;font-weight:600;">${DEBT_ACT_LBL[a.action_type]||a.action_type}</span>
+        <span style="flex:1;">${esc(a.notes||'')}${a.amount?' · <b>'+fmtEur(a.amount)+'</b>':''}</span>
+        ${debtCanDelete()?`<button class="btn btn-sm btn-ghost" onclick="delDebtAction('${a.id}')">🗑</button>`:''}</div>`).join(''):'<div class="muted">Žurnalas tuščias.</div>';
+      if(!$('dactDate').value)$('dactDate').value=new Date().toISOString().slice(0,10);
+    }
+    $('dactAddBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const note=$('dactNote').value.trim();
+      await sb.from('insolvency_debtor_actions').insert({ debtor_id:DEBT_CURRENT.id, case_id:CURRENT.id, action_type:$('dactType').value,
+        direction:$('dactDir').value, action_date:$('dactDate').value||new Date().toISOString().slice(0,10), notes:note||null, created_by:CURRENT_UID });
+      $('dactNote').value='';
+      const ac=await sb.from('insolvency_debtor_actions').select('*').eq('debtor_id',DEBT_CURRENT.id).order('action_date',{ascending:false}).order('created_at',{ascending:false}); DEBT_ACTIONS=ac.data||[]; debtRenderActions();
+    };
+    window.delDebtAction=async(id)=>{
+      if(!confirm('Pašalinti žurnalo įrašą?'))return;
+      await sb.from('insolvency_debtor_actions').delete().eq('id',id);
+      DEBT_ACTIONS=DEBT_ACTIONS.filter(x=>x.id!==id); debtRenderActions();
+    };
+
+    // ---------- Ataskaita (PDF + ZIP) ----------
+    async function debtEnsureJSZip(){
+      if(window.JSZip)return;
+      await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'; s.onload=res; s.onerror=()=>rej(new Error('Nepavyko įkelti JSZip bibliotekos.')); document.head.appendChild(s); });
+    }
+    async function debtFetchStorageBlob(path){
+      const { data }=await sb.storage.from('insolvency-docs').createSignedUrl(path,300);
+      if(!data||!data.signedUrl)throw new Error('Nepavyko gauti failo: '+path);
+      const r=await fetch(data.signedUrl); if(!r.ok)throw new Error('Atsisiuntimo klaida: '+path);
+      return await r.blob();
+    }
+    $('debtReportBtn').onclick=async()=>{
+      if(!DEBT_CURRENT){ alert('Pirma išsaugokite rekvizitus.'); return; }
+      const msg=$('debtorMsg'); msg.innerHTML='<div class="muted">⏳ Rengiama ataskaita ir dokumentų paketas…</div>';
+      try{
+        await debtEnsureJSZip(); await debtLoadRegsCache();
+        const d=DEBT_CURRENT; const s=debtSums(d.id);
+        const stl={ open:'Neapmokėta', partially_paid:'Iš dalies', paid:'Apmokėta', written_off:'Nurašyta' };
+        const recvRows=DEBT_RECV.map(x=>{ const b=DEBT_CBASES.find(c=>c.key===x.basis_key);
+          return `<tr><td style="border:1px solid #999;padding:4px;">${esc(b?(b.label||b.name||x.basis_key):(x.basis_key||'—'))}${x.doc_ref?' ('+esc(x.doc_ref)+')':''}</td><td style="border:1px solid #999;padding:4px;">${esc(x.obligation_date||'—')}</td><td style="border:1px solid #999;padding:4px;text-align:right;">${debtNum(x.principal).toFixed(2)}</td><td style="border:1px solid #999;padding:4px;text-align:right;">${debtNum(x.penalties).toFixed(2)}</td><td style="border:1px solid #999;padding:4px;">${stl[x.status]||x.status}</td></tr>`; }).join('');
+        const actRows=DEBT_ACTIONS.slice().reverse().map(a=>`<tr><td style="border:1px solid #999;padding:4px;white-space:nowrap;">${esc(a.action_date||'')}</td><td style="border:1px solid #999;padding:4px;">${a.direction==='in'?'Gauta':'Siųsta/atlikta'}</td><td style="border:1px solid #999;padding:4px;">${DEBT_ACT_LBL[a.action_type]||a.action_type}</td><td style="border:1px solid #999;padding:4px;">${esc(a.notes||'')}${a.amount?' ('+debtNum(a.amount).toFixed(2)+' EUR)':''}</td></tr>`).join('');
+        const fileRows=DEBT_FILES.map(f=>'<li>'+esc(f.label||'failas')+'</li>').join('');
+        const holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-9999px'; holder.style.top='0';
+        holder.innerHTML=`<div style="font-family:'Times New Roman',serif;color:#000;width:700px;padding:10px;background:#fff;font-size:13px;line-height:1.5;">
+          <h2 style="text-align:center;font-size:15px;margin:4px 0 2px;">DEBITORIAUS IŠIEŠKOJIMO ATASKAITA</h2>
+          <div style="text-align:center;font-size:12px;margin-bottom:12px;">${esc(CURRENT.debtor_name||'')} nemokumo byla · ${new Date().toISOString().slice(0,10)}</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:10px;">
+            <tr><td style="border:1px solid #999;padding:4px;width:30%;"><b>Debitorius</b></td><td style="border:1px solid #999;padding:4px;">${esc(d.name)}${d.id_code?', kodas '+esc(d.id_code):''}</td></tr>
+            <tr><td style="border:1px solid #999;padding:4px;"><b>Adresas / kontaktai</b></td><td style="border:1px solid #999;padding:4px;">${esc([d.address,d.email,d.phone].filter(Boolean).join(' · ')||'—')}</td></tr>
+            <tr><td style="border:1px solid #999;padding:4px;"><b>Būsena</b></td><td style="border:1px solid #999;padding:4px;">${DEBT_STATUS_LBL[d.status]||d.status||'—'}${d.recoverability?' · atgaunamumas: '+esc(d.recoverability):''}</td></tr>
+            <tr><td style="border:1px solid #999;padding:4px;"><b>Skola</b></td><td style="border:1px solid #999;padding:4px;">pagrindinė ${s.principal.toFixed(2)} EUR + netesybos ${s.penalties.toFixed(2)} EUR = <b>${s.total.toFixed(2)} EUR</b>; sumokėta ${s.paid.toFixed(2)} EUR; likutis <b>${s.balance.toFixed(2)} EUR</b></td></tr>
+            <tr><td style="border:1px solid #999;padding:4px;"><b>Sekantis veiksmas</b></td><td style="border:1px solid #999;padding:4px;">${esc(d.next_action_on||'—')}${d.next_action_note?' — '+esc(d.next_action_note):''}</td></tr>
+          </table>
+          <h3 style="font-size:13px;margin:10px 0 4px;">Skolos</h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;"><tr><th style="border:1px solid #999;padding:4px;">Pagrindas</th><th style="border:1px solid #999;padding:4px;">Prievolės data</th><th style="border:1px solid #999;padding:4px;">Pagrindinė</th><th style="border:1px solid #999;padding:4px;">Netesybos</th><th style="border:1px solid #999;padding:4px;">Būsena</th></tr>${recvRows||'<tr><td colspan="5" style="border:1px solid #999;padding:4px;">—</td></tr>'}</table>
+          <h3 style="font-size:13px;margin:10px 0 4px;">Išieškojimo žurnalas (chronologiškai)</h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;"><tr><th style="border:1px solid #999;padding:4px;">Data</th><th style="border:1px solid #999;padding:4px;">Kryptis</th><th style="border:1px solid #999;padding:4px;">Veiksmas</th><th style="border:1px solid #999;padding:4px;">Aprašymas</th></tr>${actRows||'<tr><td colspan="4" style="border:1px solid #999;padding:4px;">—</td></tr>'}</table>
+          ${fileRows?'<h3 style="font-size:13px;margin:10px 0 4px;">Pridėti dokumentai</h3><ul style="font-size:12px;margin:4px 0 0 18px;">'+fileRows+'</ul>':''}
+          <div style="margin-top:16px;font-size:12.5px;">Nemokumo administratorius: ${esc((CURRENT_ADM&&CURRENT_ADM.name)||'—')}</div>
+        </div>`;
+        document.body.appendChild(holder);
+        const canvas=await html2canvas(holder.firstElementChild,{ scale:1.7, backgroundColor:'#fff' });
+        document.body.removeChild(holder);
+        const reportBlob=canvasToA4PdfBlob(canvas);
+        const zip=new JSZip();
+        const safe=(d.name||'debitorius').replace(/[^\w\- ]+/g,'_');
+        zip.file('Ataskaita_'+safe+'.pdf',reportBlob);
+        for(const l of DEBT_REGLINKS){
+          const r=DEBT_REGS_CACHE.find(x=>x.id===l.reg_id); if(!r||!r.storage_path)continue;
+          try{ const b=await debtFetchStorageBlob(r.storage_path);
+            zip.folder(l.direction==='in'?'Gauti_dokumentai':'Parengti_dokumentai').file((r.registration_number||'dok').replace(/[^\w\-]+/g,'_')+'.pdf',b); }catch(_){}
+        }
+        for(const f of DEBT_FILES){
+          try{ const b=await debtFetchStorageBlob(f.storage_path);
+            const ext=(f.storage_path.match(/\.[A-Za-z0-9]+$/)||[''])[0];
+            zip.folder('Priedai').file((f.label||'failas').replace(/[^\w\- ]+/g,'_')+ext,b); }catch(_){}
+        }
+        const zipBlob=await zip.generateAsync({ type:'blob' });
+        debtDlBlob(zipBlob,'Debitoriaus_byla_'+safe+'_'+new Date().toISOString().slice(0,10)+'.zip');
+        msg.innerHTML='<div class="success">Ataskaita ir dokumentų paketas (ZIP) atsisiųsti.</div>';
+        try{ await logEvent('debtor_report_generated',{ debtor:d.name }); }catch(_){}
+      }catch(e){ msg.innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
     };
 
     bindCredButtons();
