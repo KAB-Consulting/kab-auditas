@@ -1022,7 +1022,7 @@
 
           <!-- parašai -->
           <div class="sec-title" style="margin-top:18px;">Parašai</div>
-          <div class="hint" style="margin-bottom:8px;">Pasirašyti galima ekrane (touch pad / pelė) arba išsiųsti šaliai nuorodą el. paštu — gavėjas patvirtina tapatybę 6 skaitmenų kodu ir pasirašo nuotoliniu būdu.</div>
+          <div class="hint" style="margin-bottom:8px;">Pasirašoma tik atskirame lange — spauskite „Pasirašyti“ (arba spustelėkite parašo laukelį), arba išsiųskite šaliai nuorodą el. paštu (gavėjas patvirtina tapatybę 6 skaitmenų kodu). Išsaugojus aktą parašas užfiksuojamas ir apsaugomas nuo pakeitimų.</div>
           <div class="row">
             <div>
               <label class="label">Perduodančio asmens parašas</label>
@@ -2415,7 +2415,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-14-r16';
+    const APP_VERSION='2026-08-17-r17';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -6649,8 +6649,11 @@
       onActTypeChange();
       // parašai
       setupSig('sigHandover'); setupSig('sigReceiver');
-      if(a.sig_handover)drawSigFromData('sigHandover',a.sig_handover); else clearSig('sigHandover');
-      if(a.sig_receiver)drawSigFromData('sigReceiver',a.sig_receiver); else clearSig('sigReceiver');
+      SIG_SAVED.sigHandover=a.sig_handover||null; SIG_LOCKED.sigHandover=!!a.sig_handover;
+      SIG_SAVED.sigReceiver=a.sig_receiver||null; SIG_LOCKED.sigReceiver=!!a.sig_receiver;
+      if(a.sig_handover)drawSigFromData('sigHandover',a.sig_handover); else wipeSig('sigHandover');
+      if(a.sig_receiver)drawSigFromData('sigReceiver',a.sig_receiver); else wipeSig('sigReceiver');
+      renderSigLocks();
       // el. parašai (pasirašymas el. paštu)
       ACT_ESIGN={ handover:a.esign_handover||null, receiver:a.esign_receiver||null };
       ESIGN_REQS=[];
@@ -6716,6 +6719,8 @@
     // ----- PARAŠO POPUP (2x dydžio) -----
     let SIG_TARGET=null;
     window.openSigModal=id=>{
+      if(SIG_LOCKED[id]&&!canSigEdit()){ alert('Parašas užfiksuotas — pakartotinai pasirašyti ar keisti gali tik superadministratorius.'); return; }
+      if(SIG_LOCKED[id]&&canSigEdit()&&!confirm('Parašas jau užfiksuotas. Pasirašius iš naujo dabartinis parašas bus pakeistas. Tęsti?'))return;
       SIG_TARGET=id;
       $('sigModalTitle').textContent = id==='sigHandover' ? 'Perduodančio asmens parašas' : 'Perimančio asmens parašas';
       $('sigModal').style.display='flex';
@@ -6728,6 +6733,7 @@
       if(!sigState['sigModalCanvas']){ alert('Pirmiausia pasirašykite lange.'); return; }
       const src=$('sigModalCanvas'), dst=$(SIG_TARGET);
       if(dst){ const ctx=dst.getContext('2d'); ctx.clearRect(0,0,dst.width,dst.height); ctx.drawImage(src,0,0,dst.width,dst.height); sigState[SIG_TARGET]=true; }
+      if(SIG_TARGET in SIG_SAVED) SIG_SAVED[SIG_TARGET]=null;
       closeSigModal();
     };
     function renderActRows(){
@@ -6745,8 +6751,33 @@
 
     // ----- PARAŠAI (canvas, touch+pelė) -----
     const sigState={};
+    // Aktų parašų apsauga: užfiksuoti parašai ir jų originalūs duomenys (byte-tikslus išsaugojimas)
+    const SIG_LOCKED={ sigHandover:false, sigReceiver:false };
+    const SIG_SAVED={ sigHandover:null, sigReceiver:null };
+    function canSigEdit(){ return typeof IS_SUPERADMIN!=='undefined' && IS_SUPERADMIN; }
+    function renderSigLocks(){
+      [['sigHandover','H'],['sigReceiver','R']].forEach(pair=>{
+        const id=pair[0], k=pair[1];
+        const locked=!!SIG_LOCKED[id], can=canSigEdit();
+        const c=$(id); if(!c)return;
+        const btnSign=document.querySelector('[onclick="openSigModal(\''+id+'\')"]');
+        const btnClear=document.querySelector('[onclick="clearSig(\''+id+'\')"]');
+        if(btnSign) btnSign.style.display=(locked&&!can)?'none':'';
+        if(btnClear) btnClear.style.display=(locked&&!can)?'none':'';
+        c.style.cursor=(locked&&!can)?'default':'pointer';
+        let b=document.getElementById('sigLock'+k);
+        if(!b){ c.insertAdjacentHTML('afterend','<div id="sigLock'+k+'" style="display:none;font-size:12px;color:#0B6E2E;margin-top:2px;">Parašas užfiksuotas — keisti ar išvalyti gali tik superadministratorius.</div>'); b=document.getElementById('sigLock'+k); }
+        b.style.display=locked?'':'none';
+      });
+    }
     function setupSig(id){
       const c=$(id); if(c._wired)return; c._wired=true;
+      if(id==='sigHandover'||id==='sigReceiver'){
+        // Tiesioginis piešimas ekrane IŠJUNGTAS — pasirašoma tik per popup langą.
+        c.style.cursor='pointer';
+        c.addEventListener('click',()=>openSigModal(id));
+        return;
+      }
       const ctx=c.getContext('2d'); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#0B1E3F';
       let drawing=false;
       const pos=e=>{ const r=c.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return { x:(t.clientX-r.left)*(c.width/r.width), y:(t.clientY-r.top)*(c.height/r.height) }; };
@@ -6756,9 +6787,18 @@
       c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
       c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',end);
     }
-    window.clearSig=id=>{ const c=$(id); c.getContext('2d').clearRect(0,0,c.width,c.height); sigState[id]=false; };
+    function wipeSig(id){ const c=$(id); c.getContext('2d').clearRect(0,0,c.width,c.height); sigState[id]=false; }
+    window.clearSig=id=>{
+      if(SIG_LOCKED[id]){
+        if(!canSigEdit()){ alert('Parašas užfiksuotas — jį keisti ar išvalyti gali tik superadministratorius.'); return; }
+        if(!confirm('Parašas užfiksuotas. Ar tikrai jį išvalyti? Pakeitimas įsigalios išsaugojus aktą, veiksmas fiksuojamas veiklos žurnale.'))return;
+        SIG_LOCKED[id]=false; renderSigLocks();
+      }
+      if(id in SIG_SAVED) SIG_SAVED[id]=null;
+      wipeSig(id);
+    };
     function drawSigFromData(id,data){ const c=$(id); const ctx=c.getContext('2d'); const img=new Image(); img.onload=()=>{ ctx.clearRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height); }; img.src=data; sigState[id]=true; }
-    function sigData(id){ return sigState[id] ? $(id).toDataURL('image/png') : null; }
+    function sigData(id){ if(SIG_SAVED[id]) return SIG_SAVED[id]; return sigState[id] ? $(id).toDataURL('image/png') : null; }
 
     // ----- PASIRAŠYMAS EL. PAŠTU (su OTP) -----
     let ACT_ESIGN={ handover:null, receiver:null }, ESIGN_REQS=[];
@@ -6836,6 +6876,9 @@
         $('actMsg').innerHTML='<div class="error">'+esc(msg)+'</div>'; return null;
       }
       if(!id)$('actId').value=res.data.id;
+      if(p.sig_handover){ SIG_LOCKED.sigHandover=true; SIG_SAVED.sigHandover=p.sig_handover; }
+      if(p.sig_receiver){ SIG_LOCKED.sigReceiver=true; SIG_SAVED.sigReceiver=p.sig_receiver; }
+      renderSigLocks();
       return res.data.id;
     }
     $('actSaveDraft').onclick=async()=>{ const id=await saveAct('draft'); if(id)$('actMsg').innerHTML='<div class="success">Tarpinė informacija išsaugota.</div>'; };
@@ -8414,7 +8457,35 @@
       if(!blob){ alert('Nepavyko suformuoti PDF.'); return; }
       dlBlob(blob,'Reikalavimo_dokumentai_'+latin(credName(c.creditor_id)).replace(/[^\w]+/g,'_')+'.pdf');
     };
-    async function buildAllClaimsBundle(){
+    // --- Tomų variklis: jungia dokumentus į kelis PDF, neviršijant dydžio limito ---
+    async function mergeDocsToPdfVolumes(sections, volLimitBytes, onProgress){
+      const { PDFDocument, StandardFonts, rgb }=PDFLib;
+      const vols=[]; let out=null, font=null, curBytes=0, curDocs=0;
+      const newVol=async()=>{ out=await PDFDocument.create(); font=await out.embedFont(StandardFonts.HelveticaBold); curBytes=0; curDocs=0; };
+      const closeVol=async()=>{ if(out&&curDocs>0){ const bytes=await out.save(); vols.push({ blob:new Blob([new Uint8Array(bytes)],{ type:'application/pdf' }), docs:curDocs }); } };
+      const heading=(txt,sub)=>{ const pg=out.addPage([595,842]); pg.drawText(latin(txt),{ x:50, y:780, size:16, font, color:rgb(0,0,0) });
+        if(sub)pg.drawText(latin(sub),{ x:50, y:756, size:10, font, color:rgb(0.3,0.3,0.3) }); };
+      await newVol();
+      let si=0;
+      for(const sec of sections){
+        si++; if(onProgress)onProgress(si,sections.length,vols.length+1);
+        let headed=false, rolled=false;
+        for(const it of (sec.paths||[])){
+          try{
+            const { data, error }=await sb.storage.from('insolvency-docs').download(it.path); if(error||!data)continue;
+            const buf=await data.arrayBuffer();
+            if(volLimitBytes&&curDocs>0&&(curBytes+buf.byteLength)>volLimitBytes){ await closeVol(); await newVol(); headed=false; rolled=true; }
+            if(!headed&&sec.heading){ heading(sec.heading+(rolled?' (tęsinys)':''), sec.sub); headed=true; }
+            if(/\.pdf$/i.test(it.path)){ const src=await PDFDocument.load(buf,{ ignoreEncryption:true }); const ps=await out.copyPages(src,src.getPageIndices()); ps.forEach(p=>out.addPage(p)); curBytes+=buf.byteLength; curDocs++; }
+            else if(/\.png$/i.test(it.path)){ const img=await out.embedPng(buf); const pg=out.addPage([img.width,img.height]); pg.drawImage(img,{x:0,y:0,width:img.width,height:img.height}); curBytes+=buf.byteLength; curDocs++; }
+            else if(/\.jpe?g$/i.test(it.path)){ const img=await out.embedJpg(buf); const pg=out.addPage([img.width,img.height]); pg.drawImage(img,{x:0,y:0,width:img.width,height:img.height}); curBytes+=buf.byteLength; curDocs++; }
+          }catch(_){}
+        }
+      }
+      await closeVol();
+      return vols;
+    }
+    async function buildAllClaimsBundle(volLimitMb, onProgress){
       // Visų gautų reikalavimų pagrindimo dokumentai — po sekciją kiekvienam reikalavimui (įsk. kelis to paties kreditoriaus)
       const sections=[];
       for(const c of CREDITORS){
@@ -8426,15 +8497,19 @@
         }
       }
       if(!sections.length)return null;
-      return await mergeDocsToPdf(sections);
+      const lim=(volLimitMb&&volLimitMb>0)?Math.round(volLimitMb*1024*1024):0;
+      const vols=await mergeDocsToPdfVolumes(sections, lim, onProgress);
+      return vols.length?vols:null;
     }
     window.rcnBundleAllReceived=async()=>{
       if(!CLAIMS.length){ alert('Gautų reikalavimų nėra.'); return; }
       $('credReconMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Ruošiamas bendras PDF (gali užtrukti)…</div>';
-      const blob=await buildAllClaimsBundle();
+      const vols=await buildAllClaimsBundle(19,(i,n,v)=>{ $('credReconMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Jungiami dokumentai… '+i+'/'+n+' (tomas '+v+')</div>'; });
       $('credReconMsg').innerHTML='';
-      if(!blob){ alert('Prie gautų reikalavimų dokumentų nepridėta arba nepavyko suformuoti PDF.'); return; }
-      dlBlob(blob,'Visi_gauti_reikalavimai_dokumentai_'+(CURRENT.case_short_code||'byla')+'.pdf');
+      if(!vols){ alert('Prie gautų reikalavimų dokumentų nepridėta arba nepavyko suformuoti PDF.'); return; }
+      const base='Visi_gauti_reikalavimai_dokumentai_'+(CURRENT.case_short_code||'byla');
+      vols.forEach((v,i)=>dlBlob(v.blob, base+(vols.length>1?('_T'+(i+1)):'')+'.pdf'));
+      if(vols.length>1)$('credReconMsg').innerHTML='<div class="success">Dėl apimties paketas padalytas į '+vols.length+' tomus (po ≤19 MB) — atsisiųsti visi.</div>';
     };
 
     // --- Papildomi eksportai (gauti / pagal apskaitą / teismui pilna) ---
@@ -8519,7 +8594,7 @@
           <td>${r.category?('<span style="background:#EFF4FB;border:1px solid var(--bd);border-radius:6px;padding:1px 8px;font-size:11px;">'+esc(DOC_CATS_MAP[r.category]||r.category)+'</span>'):'<span class="muted">—</span>'}</td>
           <td>${esc(r.counterparty_name||'—')}</td>
           <td>${esc(r.document_title)}${r.notes?'<div class="muted" style="font-size:12px;">'+esc(r.notes)+'</div>':''}${r.voided_at?'<div style="font-size:12px;color:#B3261E;">Anuliavimo priežastis: '+esc(r.void_reason||'')+'</div>':''}</td>
-          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')"><span class="ic ic-eye"></span></button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')"><span class="ic ic-down"></span></button>${r.doc_type==='sent'&&!r.voided_at?(r.signed_file_path?` <button class="btn btn-sm btn-ghost" title="Peržiūrėti įkeltą pasirašytą dokumentą" onclick="regSignedView('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-eye"></span></button>`:` <button class="btn btn-sm btn-ghost" title="Įkelti pasirašytą (galutinę siųstą) dokumento versiją" onclick="regSignedUpload('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-up"></span></button>`):''}${(PERM_LEVEL==='full'||IS_SUPERADMIN)?` <button class="btn btn-sm btn-ghost" title="Koreguoti" onclick="openRegEdit('${r.id}')"><span class="ic ic-pencil"></span></button>`:''}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')"><span class="ic ic-eye"></span></button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')"><span class="ic ic-down"></span></button>${typeof regAttachBtns==='function'?regAttachBtns(r):''}${r.doc_type==='sent'&&!r.voided_at?(r.signed_file_path?` <button class="btn btn-sm btn-ghost" title="Peržiūrėti įkeltą pasirašytą dokumentą" onclick="regSignedView('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-eye"></span></button>`:` <button class="btn btn-sm btn-ghost" title="Įkelti pasirašytą (galutinę siųstą) dokumento versiją" onclick="regSignedUpload('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-up"></span></button>`):''}${(PERM_LEVEL==='full'||IS_SUPERADMIN)?` <button class="btn btn-sm btn-ghost" title="Koreguoti" onclick="openRegEdit('${r.id}')"><span class="ic ic-pencil"></span></button>`:''}</td>
         </tr>`).join('')+'</tbody></table>';
     }
 
@@ -9120,8 +9195,15 @@
         '</div>'+
         '<div class="hint" style="margin-top:6px;">Numeris galutinai suteikiamas generavimo metu (jei žurnale tuo metu atsiras naujų įrašų — bus suteiktas kitas eilės numeris) ir <b>įrašomas į patį dokumentą</b>. Sugeneruotą dokumentą peržiūrėję ir pasirašę, galutinę pasirašytą versiją įkelkite Dok. registravimas → Siunčiami, mygtuku „🖊️⬆“ prie šio įrašo.</div>'+
         '</div>';
-      h+='<label class="fchk" style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;font-size:14px;"><input type="checkbox" id="reqBundleChk" checked> 📎 Pridėti priedą — visų gautų reikalavimų dokumentai (1 PDF)</label>';
-      h+='<div class="hint" style="margin-left:24px;">Suformuojamas visų kreditorinių reikalavimų pagrindimo dokumentų paketas (kaip Sutikrinime): atsisiunčiamas atskiru PDF failu, o registruojant žurnale — įtraukiamas į žurnalo kopiją po prašymo teksto.</div>';
+      h+='<label class="fchk" style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;font-size:14px;"><input type="checkbox" id="reqBundleChk" checked> 📎 Pridėti priedus — visų gautų reikalavimų dokumentai (PDF)</label>';
+      h+='<div style="margin-left:24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px;">'+
+        '<label class="label" style="margin:0;">Tomo dydis:</label>'+
+        '<select id="reqVolSel" class="select" style="max-width:230px;">'+
+        '<option value="19" selected>iki 19 MB (numatyta — tinka EPP)</option>'+
+        '<option value="45">iki 45 MB (saugyklos riba)</option>'+
+        '<option value="0">neskaidyti (vienas failas)</option>'+
+        '</select></div>';
+      h+='<div class="hint" style="margin-left:24px;">Suformuojamas visų kreditorinių reikalavimų pagrindimo dokumentų paketas (kaip Sutikrinime). Esant didelei apimčiai jis automatiškai skaidomas į tomus (Priedas T.1, T.2, …) — kiekvienas atsisiunčiamas atskiru PDF, o registruojant žurnale tomai prisegami prie žurnalo įrašo kaip atskiri failai (matomi „📎T1…“ mygtukais Siunčiamų žurnale).</div>';
       h+='<div style="margin-top:12px;font-size:13px;color:var(--gray);">Į prašymą bus įtraukta: apskaitos kreditorių — <b>'+CRED_ACC.length+'</b>, gautų reikalavimų — <b>'+CLAIMS.length+'</b>, tvirtinamų — <b>'+sub.length+'</b>'+(rej.length?', netvirtinamų (ar dalių) — <b>'+rej.length+'</b>':'')+(reqNotSubmitted().length?', reikalavimų nepateikė — <b>'+reqNotSubmitted().length+'</b> kreditoriai(-ų)':'')+'.</div>';
       if(warn.length)h+='<div class="error" style="margin-top:10px;"><span class="ic ic-alert"></span> Patikrinkite: '+esc(warn.join('; '))+'.</div>';
       h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">'+
@@ -9381,35 +9463,48 @@
         msg.innerHTML='<div class="muted"><span class="ic ic-clock"></span> Generuojamas PDF…</div>';
         const pdfBlob=await reqBuildPdf(blocks);
         dlBlob(pdfBlob, baseName+'.pdf');
-        // 3b) priedai — visų gautų reikalavimų dokumentai (1 PDF)
-        let bundleBlob=null;
+        // 3b) priedai — visų gautų reikalavimų dokumentai (tomais pagal pasirinktą dydį)
+        let bundleVols=null;
         if($('reqBundleChk')&&$('reqBundleChk').checked&&CLAIMS.length){
-          msg.innerHTML='<div class="muted"><span class="ic ic-clock"></span> Ruošiami priedai — reikalavimų dokumentų paketas (gali užtrukti)…</div>';
-          try{ bundleBlob=await buildAllClaimsBundle(); }catch(_){ bundleBlob=null; }
-          if(bundleBlob)dlBlob(bundleBlob, 'Priedas_reikalavimu_dokumentai_'+(CURRENT.case_short_code||'byla')+'.pdf');
+          const volMb=Number(($('reqVolSel')&&$('reqVolSel').value)||19);
+          try{ bundleVols=await buildAllClaimsBundle(volMb,(i,n,v)=>{ msg.innerHTML='<div class="muted"><span class="ic ic-clock"></span> Ruošiami priedai — jungiami reikalavimų dokumentai '+i+'/'+n+' (tomas '+v+')…</div>'; }); }catch(_){ bundleVols=null; }
+          if(bundleVols){ const pb='Priedas_reikalavimu_dokumentai_'+(CURRENT.case_short_code||'byla');
+            bundleVols.forEach((v,i)=>dlBlob(v.blob, pb+(bundleVols.length>1?('_T'+(i+1)):'')+'.pdf')); }
         }
-        // 4) registracija siunčiamų žurnale (PDF su registracijos žyma; priedai įtraukiami po prašymo)
+        // 4) registracija siunčiamų žurnale (žurnalo kopija — prašymas su žyma; priedų tomai prisegami atskirais failais)
         if(doReg){
           msg.innerHTML='<div class="muted"><span class="ic ic-clock"></span> Registruojama siunčiamų dokumentų žurnale…</div>';
           const regFiles=[new File([pdfBlob], baseName+'.pdf', { type:'application/pdf' })];
-          if(bundleBlob)regFiles.push(new File([bundleBlob], 'Priedas_reikalavimu_dokumentai.pdf', { type:'application/pdf' }));
           const { blob:regBlob, pageCount }=await buildRegisteredPdf(regFiles,{ regNumber, dateStr:(opts.sendDate||opts.date), dateLabel:'Išsiųsta', admName:CURRENT_ADM.name, caseName:CURRENT.debtor_name });
-          const path=`${CURRENT.case_short_code}/registered/${regNumber.replace(/[^A-Za-z0-9._-]+/g,'_')}_${Date.now()}.pdf`;
+          const regSafe=regNumber.replace(/[^A-Za-z0-9._-]+/g,'_');
+          const path=`${CURRENT.case_short_code}/registered/${regSafe}_${Date.now()}.pdf`;
           const up=await sb.storage.from('insolvency-docs').upload(path,regBlob,{ upsert:false, contentType:'application/pdf' });
           if(up.error)throw new Error('Įkėlimo klaida: '+up.error.message);
+          // priedų tomai — atskirais failais prie žurnalo įrašo
+          const volMeta=[];
+          if(bundleVols){
+            for(let i=0;i<bundleVols.length;i++){
+              msg.innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliamas priedų tomas '+(i+1)+'/'+bundleVols.length+'…</div>';
+              const vName='Priedas_reikalavimu_dokumentai'+(bundleVols.length>1?('_T'+(i+1)):'')+'.pdf';
+              const vPath=`${CURRENT.case_short_code}/registered/${regSafe}_priedas_T${i+1}_${Date.now()}.pdf`;
+              const vUp=await sb.storage.from('insolvency-docs').upload(vPath,bundleVols[i].blob,{ upsert:false, contentType:'application/pdf' });
+              if(vUp.error){ console.warn('Priedo tomo įkėlimo klaida:',vUp.error.message); continue; }
+              volMeta.push({ name:vName, size:bundleVols[i].blob.size, path:vPath, kind:'priedas' });
+            }
+          }
           const reg=await sb.rpc('register_insolvency_document',{ p:{
             case_id:CURRENT.id, registration_number:regNumber, doc_type:'sent', registration_date:(opts.sendDate||opts.date),
             document_title:(opts.regDesc||'Prašymas teismui dėl kreditorių reikalavimų patvirtinimo'), counterparty_name:CURRENT.court||'',
-            notes:'Sugeneruota: Kreditoriai → Prašymas teismui'+(bundleBlob?'; su priedais (reikalavimų dokumentai)':'')+(docxPath?'; DOCX: '+docxPath:''),
+            notes:'Sugeneruota: Kreditoriai → Prašymas teismui'+(volMeta.length?('; priedai — reikalavimų dokumentai ('+volMeta.length+' tomas(-ai))'):'')+(docxPath?'; DOCX: '+docxPath:''),
             storage_path:path, file_size:regBlob.size, page_count:pageCount,
-            original_files_metadata:bundleBlob?[{ name:baseName+'.pdf', size:pdfBlob.size },{ name:'Priedas_reikalavimu_dokumentai.pdf', size:bundleBlob.size }]:[{ name:baseName+'.pdf', size:pdfBlob.size }],
+            original_files_metadata:[{ name:baseName+'.pdf', size:pdfBlob.size }].concat(volMeta),
             source_type:'court_request', category:'court' } });
           if(reg.error)throw new Error(reg.error.message);
           if(!reg.data.ok)throw new Error('Registracijos klaida: '+reg.data.error_code);
         }
         try{ await credLog('court_request_generated',{ reg_number:regNumber||null, docx:docxPath||null, approved:sub.length }); }catch(_){ }
         msg.innerHTML='<div class="success"><span class="ic ic-check"></span> Prašymas sugeneruotas'+(regNumber?(' ir užregistruotas Nr. <b>'+esc(regNumber)+'</b>'):'')+'. DOCX ir PDF atsisiųsti į jūsų kompiuterį.'+
-          (($('reqBundleChk')&&$('reqBundleChk').checked)?(bundleBlob?' Priedų paketas (reikalavimų dokumentai) atsisiųstas atskiru PDF'+(regNumber?' ir įtrauktas į žurnalo kopiją':'')+'.':' <span style="color:#8A6D00;">Priedų paketas nesuformuotas — prie reikalavimų nepridėta dokumentų.</span>'):'')+
+          (($('reqBundleChk')&&$('reqBundleChk').checked)?(bundleVols?(' Priedai (reikalavimų dokumentai) atsisiųsti — '+bundleVols.length+' tomas(-ai)'+(regNumber?', prisegti prie žurnalo įrašo (📎 mygtukai Siunčiamų žurnale)':'')+'.'):' <span style="color:#8A6D00;">Priedų paketas nesuformuotas — prie reikalavimų nepridėta dokumentų.</span>'):'')+
           (regNumber?(' Dokumentą peržiūrėję ir pasirašę, galutinę pasirašytą versiją įkelkite skirtuke „Dok. registravimas“ → Siunčiami, mygtuku „🖊️⬆“ prie įrašo <b>'+esc(regNumber)+'</b> — ji bus saugoma prie žurnalo įrašo atskaitingumui.'):'')+'</div>';
         if(!(CURRENT_ADM&&CURRENT_ADM.blank_docx_path))msg.innerHTML+='<div class="error">DOCX nesugeneruotas — administratoriui neįkeltas firminis blankas (Nustatymai → Administratoriai).</div>';
       }catch(err){ msg.innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
@@ -9417,6 +9512,10 @@
     }
 
     // --- pasirašyto (galutinio siųsto) dokumento įkėlimas prie žurnalo įrašo ---
+    function regAttachBtns(r){
+      const ms=(r&&Array.isArray(r.original_files_metadata)?r.original_files_metadata:[]).filter(m=>m&&m.path&&m.kind==='priedas');
+      return ms.map((m,i)=>` <button class="btn btn-sm btn-ghost" title="${esc(m.name||('Priedas T'+(i+1)))}${m.size?(' · '+(m.size/1048576).toFixed(1)+' MB'):''}" onclick="downloadDocDl('${esc(m.path)}')">📎T${i+1}</button>`).join('');
+    }
     function regSignedBadge(r){
       return (r&&r.signed_file_path)
         ? ' <span class="badge" title="Pasirašytas dokumentas įkeltas '+esc((r.signed_uploaded_at||'').slice(0,10))+'" style="background:#EEF7F1;color:#0B6E2E;border:1px solid #C3E4CE;"><span class="ic ic-pencil"></span></span>'
