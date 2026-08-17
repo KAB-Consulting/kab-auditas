@@ -23,622 +23,235 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
 
   <style>
+    /* =========================================================================
+       KAB Admin — dizaino sistema (minimalistinis stilius, CWC maketas)
+       Atnaujinta 2026-08-14. Ta pati sistema kaip admin-bankrotas.html.
+       Visi seni klasių pavadinimai išlikę — JS ir inline stiliai nepakeisti.
+       ========================================================================= */
     :root {
-      --kab-navy: #0B1E3F;
-      --kab-gold: #C9A961;
-      --kab-cream: #F7F4EC;
-      --kab-gray: #5A5A5A;
-      --kab-light: #F9F9F9;
-      --kab-border: #E5E5E5;
+      --navy:#0B1E3F; --navy2:#16304F;
+      --gold:#C9A961; --gold-bg:#FBF6EA; --gold-bd:#E3D3AC; --gold-tx:#7A5F12;
+      --ink:#23364B; --txt:#425A70; --muted:#7B8C9B; --faint:#9AA8B4;
+      --bd:rgba(66,90,112,.16); --bd2:rgba(66,90,112,.09);
+      --bg:#F5F6F8; --sb:#F8F9FA; --hov:rgba(66,90,112,.06);
+      --ok:#0B6E2E; --ok-bg:#EEF7F1; --ok-bd:#C3E4CE;
+      --err:#B3261E; --err-bg:#FDF1F0; --err-bd:#F2C7C2;
+      --warn:#8A6D00; --warn-bg:#FFF8E6; --warn-bd:#EBDCAE;
+      --info:#1B4F9C; --info-bg:#EFF4FB; --info-bd:#CCD9EE;
+      --r:6px; --r-sm:4px; --sb-w:214px;
+      /* senų pavadinimų suderinamumas */
+      --kab-navy:#0B1E3F; --kab-gold:#C9A961; --kab-cream:#F5F6F8;
+      --kab-gray:#7B8C9B; --kab-light:#F7F9FB; --kab-border:rgba(66,90,112,.16);
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+      background:var(--bg); color:var(--txt); font-size:14px; line-height:1.45;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    a{ color:var(--navy); }
+
+    /* ===================== APP SHELL ===================== */
+    .app-layout{ display:grid; grid-template-columns:var(--sb-w) 1fr; min-height:100vh; }
+    .sidebar{ background:var(--sb); border-right:1px solid var(--bd); color:var(--txt);
+      padding:0; position:sticky; top:0; height:100vh; overflow-y:auto;
+      display:flex; flex-direction:column; }
+    .sidebar-brand{ padding:14px 14px 12px; border-bottom:1px solid var(--bd2);
+      display:flex; align-items:center; gap:10px; }
+    .sidebar-brand-logo{ width:30px; height:30px; background:var(--navy); border-radius:var(--r);
+      display:flex; align-items:center; justify-content:center; color:#fff;
+      font-weight:800; font-size:12px; letter-spacing:-.3px; flex:0 0 30px; }
+    .sidebar-brand-name{ font-weight:700; font-size:14px; color:var(--navy); letter-spacing:-.2px; }
+    .sidebar-brand-sub{ font-size:11px; color:var(--muted); margin-top:1px; }
+    .sidebar-section{ padding:12px 10px 4px; }
+    .sidebar-section-label{ font-size:10px; text-transform:uppercase; letter-spacing:.08em;
+      color:var(--faint); padding:10px 9px 5px; font-weight:700; }
+    .sidebar-nav{ flex:1; padding:8px 10px 12px; }
+    .sidebar-nav-item{ display:flex; align-items:center; gap:9px; padding:6px 9px;
+      border-radius:var(--r-sm); color:var(--txt); text-decoration:none; font-size:13.5px;
+      font-weight:500; cursor:pointer; transition:background .12s,color .12s; margin-bottom:1px;
+      border:none; background:transparent; width:100%; text-align:left; font-family:inherit; }
+    .sidebar-nav-item:hover{ background:var(--hov); color:var(--ink); }
+    .sidebar-nav-item.active{ background:var(--navy); color:#fff; font-weight:600; }
+    .sidebar-nav-icon{ width:15px; height:15px; display:inline-flex; align-items:center;
+      justify-content:center; flex:0 0 15px; }
+    .sidebar-nav-badge{ margin-left:auto; background:var(--gold-bg); color:var(--gold-tx);
+      border:1px solid var(--gold-bd); font-size:10.5px; font-weight:700; padding:0 6px;
+      border-radius:9px; min-width:18px; line-height:16px; text-align:center; }
+    .sidebar-nav-item.active .sidebar-nav-badge{ background:rgba(255,255,255,.16); color:#fff;
+      border-color:rgba(255,255,255,.3); }
+    .sidebar-user{ padding:10px 12px; border-top:1px solid var(--bd2);
+      display:flex; align-items:center; gap:9px; }
+    .sidebar-user-avatar{ width:28px; height:28px; border-radius:50%; background:var(--navy);
+      color:#fff; display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:11px; flex:0 0 28px; }
+    .sidebar-user-info{ flex:1; min-width:0; }
+    .sidebar-user-name{ font-size:12.5px; font-weight:600; color:var(--ink);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sidebar-user-email{ font-size:11px; color:var(--muted);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sidebar-logout{ background:none; border:1px solid var(--bd); color:var(--muted);
+      width:26px; height:26px; border-radius:var(--r-sm); cursor:pointer;
+      display:flex; align-items:center; justify-content:center; flex:0 0 26px; }
+    .sidebar-logout:hover{ background:var(--hov); color:var(--ink); }
+
+    .content-area{ min-width:0; display:flex; flex-direction:column; }
+    .topbar{ background:#fff; border-bottom:1px solid var(--bd); padding:0 24px; height:56px;
+      display:flex; align-items:center; position:sticky; top:0; z-index:40; gap:14px; }
+    .topbar-title{ font-size:15px; font-weight:600; color:var(--ink); margin:0; letter-spacing:-.2px; }
+    .topbar-subtitle{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+    .topbar-search{ flex:1; max-width:340px; margin-left:auto; position:relative; }
+    .topbar-search input{ width:100%; padding:6px 12px 6px 30px; border:1px solid var(--bd);
+      border-radius:var(--r-sm); background:#fff; font-size:13px; font-family:inherit;
+      color:var(--ink); transition:border-color .12s,box-shadow .12s; }
+    .topbar-search input:focus{ outline:none; border-color:var(--navy);
+      box-shadow:0 0 0 3px rgba(11,30,63,.07); background:#fff; }
+    .topbar-search::before{ content:''; position:absolute; left:10px; top:50%;
+      width:13px; height:13px; transform:translateY(-50%); background:var(--faint);
+      -webkit-mask:center/contain no-repeat; mask:center/contain no-repeat;
+      -webkit-mask-image:var(--ic-search); mask-image:var(--ic-search); }
+    main{ max-width:1560px; margin:0; padding:18px 24px 48px; width:100%; }
+    .sidebar-toggle{ display:none; background:#fff; color:var(--txt); border:1px solid var(--bd);
+      padding:5px 9px; border-radius:var(--r-sm); font-size:16px; cursor:pointer; }
+
+    /* ===================== KORTELĖS ===================== */
+    .card{ background:#fff; border:1px solid var(--bd); border-radius:var(--r);
+      padding:16px 18px; margin-bottom:14px; box-shadow:none; }
+    h2{ color:var(--ink); font-size:15px; font-weight:600; margin:0 0 12px;
+      border-bottom:1px solid var(--bd2); padding-bottom:9px; letter-spacing:-.2px; }
+    .page-section{ background:#fff; border:1px solid var(--bd); border-radius:var(--r);
+      padding:16px 18px; margin-bottom:14px; box-shadow:none; }
+    .page-section-header{ display:flex; justify-content:space-between; align-items:center;
+      gap:10px; flex-wrap:wrap; margin-bottom:14px; padding-bottom:11px; border-bottom:1px solid var(--bd2); }
+    .page-section-title{ font-size:14.5px; font-weight:600; color:var(--ink); margin:0;
+      display:flex; align-items:center; gap:8px; letter-spacing:-.2px; }
+
+    /* ===================== STATISTIKA ===================== */
+    .stats-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:12px; margin-bottom:14px; }
+    .stat-card{ background:#fff; border:1px solid var(--bd); padding:16px 18px;
+      border-radius:var(--r); text-align:left; }
+    .stat-value{ font-size:24px; font-weight:700; color:var(--ink); line-height:1.1; }
+    .stat-label{ color:var(--muted); font-size:12px; margin-top:5px; }
+    .stat-card-v2{ background:#fff; padding:14px 16px; border-radius:var(--r);
+      box-shadow:none; border:1px solid var(--bd); display:flex; align-items:center;
+      gap:12px; transition:border-color .12s; }
+    .stat-card-v2:hover{ border-color:var(--navy); }
+    .stat-card-v2-icon{ width:36px; height:36px; border-radius:var(--r); display:flex;
+      align-items:center; justify-content:center; font-size:16px; flex-shrink:0;
+      border:1px solid transparent; }
+    .stat-card-v2-icon.gold{ background:var(--warn-bg); color:var(--warn); border-color:var(--warn-bd); }
+    .stat-card-v2-icon.blue{ background:var(--info-bg); color:var(--info); border-color:var(--info-bd); }
+    .stat-card-v2-icon.green{ background:var(--ok-bg); color:var(--ok); border-color:var(--ok-bd); }
+    .stat-card-v2-icon.purple{ background:#F1EFFB; color:#5B45B8; border-color:#DBD4F2; }
+    .stat-card-v2-icon.red{ background:var(--err-bg); color:var(--err); border-color:var(--err-bd); }
+    .stat-card-v2-icon.gray{ background:#F1F3F5; color:var(--muted); border-color:var(--bd); }
+    .stat-card-v2-value{ font-size:22px; font-weight:700; color:var(--ink); line-height:1.1; }
+    .stat-card-v2-label{ font-size:11.5px; color:var(--muted); margin-top:3px; }
+
+    /* ===================== MYGTUKAI ===================== */
+    .btn{ display:inline-flex; align-items:center; gap:6px; background:#fff; color:var(--txt);
+      border:1px solid var(--bd); padding:7px 14px; border-radius:var(--r-sm); font-size:13px;
+      font-weight:600; font-family:inherit; cursor:pointer; line-height:1.35;
+      transition:.12s; text-decoration:none; white-space:nowrap; }
+    .btn:hover{ background:var(--hov); color:var(--ink); }
+    .btn-primary,.btn-navy{ background:var(--navy); color:#fff; border-color:var(--navy); }
+    .btn-primary:hover,.btn-navy:hover{ background:var(--navy2); border-color:var(--navy2); color:#fff; }
+    .btn-gold{ background:var(--gold-bg); color:var(--gold-tx); border-color:var(--gold-bd); }
+    .btn-gold:hover{ background:#F6EEDA; border-color:#D9C591; color:var(--gold-tx); }
+    .btn-ghost{ background:#fff; color:var(--txt); border-color:var(--bd); }
+    .btn-ghost:hover{ background:var(--hov); color:var(--ink); }
+    .btn-small{ padding:5px 10px; font-size:12px; }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+    /* ===================== FORMOS ===================== */
+    .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .form-field label{ display:block; font-size:11.5px; color:var(--muted); font-weight:600;
+      margin-bottom:4px; letter-spacing:.02em; }
+    .form-field input,.form-field textarea,.form-field select{ width:100%; padding:7px 10px;
+      border:1px solid var(--bd); border-radius:var(--r-sm); font-size:13.5px;
+      font-family:inherit; color:var(--ink); background:#fff;
+      transition:border-color .12s,box-shadow .12s; }
+    .form-field input:focus,.form-field textarea:focus,.form-field select:focus{ outline:none;
+      border-color:var(--navy); box-shadow:0 0 0 3px rgba(11,30,63,.07); }
+    .form-field textarea{ min-height:76px; resize:vertical; line-height:1.5; }
+
+    /* ===================== LENTELĖS ===================== */
+    table{ width:100%; border-collapse:collapse; font-size:13px; }
+    th{ text-align:left; background:transparent; padding:8px 12px; border-bottom:1px solid var(--bd);
+      font-size:10.5px; font-weight:700; color:var(--faint); text-transform:uppercase;
+      letter-spacing:.06em; white-space:nowrap; }
+    td{ padding:9px 12px; border-bottom:1px solid var(--bd2); vertical-align:top; }
+    tr:hover{ background:#F8FAFC; }
+    .actions-cell{ display:flex; gap:5px; flex-wrap:wrap; }
+
+    /* ===================== ŽENKLIUKAI ===================== */
+    .badge{ display:inline-block; padding:2px 7px; border-radius:3px; font-size:10.5px;
+      font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+      border:1px solid transparent; line-height:1.55; }
+    .badge-draft{ background:#F1F3F5; color:var(--muted); border-color:var(--bd); }
+    .badge-submitted{ background:var(--info-bg); color:var(--info); border-color:var(--info-bd); }
+    .badge-reviewed{ background:var(--ok-bg); color:var(--ok); border-color:var(--ok-bd); }
+    .badge-archived{ background:#F1F3F5; color:var(--faint); border-color:var(--bd); }
+    .pending-star{ color:var(--err); font-size:13px; font-weight:700; margin-left:4px; }
+    .pending-badge{ background:var(--err-bg); color:var(--err); border:1px solid var(--err-bd);
+      padding:1px 6px; border-radius:3px; font-size:10.5px; font-weight:700; margin-left:6px; }
+
+    /* ===================== MODALĖS ===================== */
+    .modal-backdrop{ position:fixed; inset:0; background:rgba(23,38,54,.42); display:flex;
+      align-items:flex-start; justify-content:center; padding:40px 16px; z-index:200; overflow:auto; }
+    .modal{ background:#fff; border:1px solid var(--bd); border-radius:8px; max-width:760px;
+      width:100%; padding:22px 24px; box-shadow:0 10px 34px rgba(11,30,63,.18); }
+    .modal h2{ margin-top:0; }
+
+    /* ===================== SUSKLEIDŽIAMI SKYRIAI ===================== */
+    .collapsible-section{ border:1px solid var(--bd); border-radius:var(--r);
+      margin-bottom:10px; background:#fff; overflow:hidden; }
+    .collapsible-section.collapsed .collapsible-body{ display:none; }
+    .collapsible-header{ background:#F7F9FB; color:var(--ink); padding:10px 14px; cursor:pointer;
+      display:flex; align-items:center; justify-content:space-between; user-select:none;
+      border-bottom:1px solid var(--bd2); transition:background .12s; }
+    .collapsible-header:hover{ background:#F1F4F7; }
+    .collapsible-section.collapsed .collapsible-header{ border-bottom-color:transparent; }
+    .collapsible-header .toggle-icon{ font-size:12px; color:var(--muted); transition:transform .2s; }
+    .collapsible-section.collapsed .collapsible-header .toggle-icon{ transform:rotate(-90deg); }
+    .collapsible-header .section-title{ font-weight:600; font-size:13.5px; flex:1; }
+    .collapsible-header .section-meta{ font-size:11px; color:var(--muted); margin-left:10px; }
+    .collapsible-body{ padding:14px 16px; }
+
+    /* ===================== KITA ===================== */
+    .copy-link-box{ background:#F7F9FB; padding:12px 14px; border-radius:var(--r-sm);
+      border:1px solid var(--bd); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+      font-size:12.5px; word-break:break-all; margin:12px 0; position:relative; color:var(--ink); }
+    .login-box{ max-width:400px; margin:9vh auto; background:#fff; padding:28px 30px;
+      border:1px solid var(--bd); border-radius:8px; box-shadow:0 10px 34px rgba(11,30,63,.10); }
+    .login-box h1{ color:var(--ink); font-size:18px; font-weight:600; text-align:center; margin:0 0 16px; }
+    .hidden{ display:none !important; }
+    .file-list-item{ display:flex; align-items:center; justify-content:space-between;
+      padding:8px 11px; background:#F7F9FB; border:1px solid var(--bd2);
+      border-radius:var(--r-sm); margin-bottom:6px; font-size:12.5px; }
+    .alert{ padding:8px 11px; border-radius:var(--r-sm); margin:8px 0; font-size:12.5px;
+      border:1px solid transparent; }
+    .alert-success{ background:var(--ok-bg); color:var(--ok); border-color:var(--ok-bd); }
+    .alert-error{ background:var(--err-bg); color:var(--err); border-color:var(--err-bd); }
+    .alert-info{ background:var(--info-bg); color:var(--info); border-color:var(--info-bd); }
+    .empty-state{ text-align:center; padding:34px; color:var(--muted); font-size:13px; }
+
+    /* ===================== ADAPTYVUMAS ===================== */
+    @media (max-width:900px){
+      .app-layout{ grid-template-columns:1fr; }
+      .sidebar{ position:fixed; left:calc(-1 * var(--sb-w)); top:0; width:var(--sb-w);
+        z-index:200; transition:left .22s ease; }
+      .sidebar.open{ left:0; box-shadow:2px 0 24px rgba(11,30,63,.22); }
+      .sidebar-toggle{ display:block; }
+      .topbar-search{ display:none; }
+      main{ padding:14px; }
+    }
+    @media (max-width:768px){
+      .form-row{ grid-template-columns:1fr; }
+      table{ font-size:12px; }
+      th,td{ padding:7px 8px; }
     }
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-      background: #F4F6FA;
-      color: #1F2937;
-    }
-
-    /* ========================================
-       V6.0 — SIDEBAR LAYOUT (eventcast-inspired)
-       ======================================== */
-    .app-layout {
-      display: grid;
-      grid-template-columns: 240px 1fr;
-      min-height: 100vh;
-    }
-
-    .sidebar {
-      background: var(--kab-navy);
-      color: white;
-      padding: 0;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .sidebar-brand {
-      padding: 22px 22px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .sidebar-brand-logo {
-      width: 36px;
-      height: 36px;
-      background: var(--kab-gold);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--kab-navy);
-      font-weight: 800;
-      font-size: 16px;
-      letter-spacing: -0.5px;
-    }
-
-    .sidebar-brand-name {
-      font-weight: 600;
-      font-size: 15px;
-      letter-spacing: 0.3px;
-    }
-
-    .sidebar-brand-sub {
-      font-size: 11px;
-      opacity: 0.6;
-      margin-top: 2px;
-    }
-
-    .sidebar-section {
-      padding: 18px 16px 6px;
-    }
-
-    .sidebar-section-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      opacity: 0.5;
-      padding: 0 8px 8px;
-      font-weight: 600;
-    }
-
-    .sidebar-nav {
-      flex: 1;
-      padding: 8px 12px 12px;
-    }
-
-    .sidebar-nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      color: rgba(255,255,255,0.78);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      margin-bottom: 2px;
-      border: none;
-      background: transparent;
-      width: 100%;
-      text-align: left;
-    }
-    .sidebar-nav-item:hover {
-      background: rgba(255,255,255,0.07);
-      color: #FFF;
-    }
-    .sidebar-nav-item.active {
-      background: rgba(201,169,97,0.18);
-      color: var(--kab-gold);
-      font-weight: 600;
-    }
-    .sidebar-nav-item.active::before {
-      content: '';
-      width: 3px;
-      height: 18px;
-      background: var(--kab-gold);
-      border-radius: 2px;
-      margin-right: -5px;
-      margin-left: -12px;
-    }
-    .sidebar-nav-icon {
-      width: 20px;
-      text-align: center;
-      font-size: 16px;
-      opacity: 0.9;
-    }
-    .sidebar-nav-badge {
-      margin-left: auto;
-      background: var(--kab-gold);
-      color: var(--kab-navy);
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 10px;
-      min-width: 22px;
-      text-align: center;
-    }
-
-    .sidebar-user {
-      padding: 16px 18px;
-      border-top: 1px solid rgba(255,255,255,0.08);
-      display: flex;
-      align-items: center;
-      gap: 11px;
-    }
-    .sidebar-user-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--kab-gold), #A88B4D);
-      color: var(--kab-navy);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 13px;
-    }
-    .sidebar-user-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .sidebar-user-name {
-      font-size: 13px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .sidebar-user-email {
-      font-size: 11px;
-      opacity: 0.6;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .sidebar-logout {
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.9);
-      border: 1px solid rgba(255,255,255,0.12);
-      width: 32px;
-      height: 32px;
-      border-radius: 7px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-    }
-    .sidebar-logout:hover { background: rgba(255,255,255,0.15); }
-
-    /* Content area */
-    .content-area {
-      padding: 0;
-      overflow-x: hidden;
-    }
-
-    .topbar {
-      background: white;
-      border-bottom: 1px solid #E5E7EB;
-      padding: 14px 30px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
-    .topbar-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--kab-navy);
-      margin: 0;
-    }
-    .topbar-subtitle {
-      font-size: 12px;
-      color: #6B7280;
-      margin-top: 2px;
-    }
-    .topbar-search {
-      flex: 1;
-      max-width: 380px;
-      margin: 0 30px;
-      position: relative;
-    }
-    .topbar-search input {
-      width: 100%;
-      padding: 9px 14px 9px 36px;
-      border: 1px solid #E5E7EB;
-      border-radius: 8px;
-      background: #F9FAFB;
-      font-size: 13px;
-      transition: all 0.15s;
-    }
-    .topbar-search input:focus {
-      outline: none;
-      border-color: var(--kab-gold);
-      background: #FFF;
-      box-shadow: 0 0 0 3px rgba(201,169,97,0.1);
-    }
-    .topbar-search::before {
-      content: '🔍';
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 13px;
-      opacity: 0.5;
-    }
-
-    main { max-width: 1320px; margin: 0 auto; padding: 24px 30px 60px; }
-
-    /* Toggle button for mobile */
-    .sidebar-toggle {
-      display: none;
-      background: var(--kab-navy);
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-    .card {
-      background: white;
-      border-radius: 6px;
-      padding: 25px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    h2 {
-      color: var(--kab-navy);
-      font-size: 17px;
-      margin: 0 0 15px 0;
-      border-bottom: 2px solid var(--kab-gold);
-      padding-bottom: 10px;
-    }
-
-    /* Stats */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .stat-card {
-      background: white;
-      padding: 20px;
-      border-radius: 6px;
-      text-align: center;
-      border-left: 4px solid var(--kab-gold);
-    }
-
-    .stat-value { font-size: 32px; font-weight: 700; color: var(--kab-navy); }
-    .stat-label { color: var(--kab-gray); font-size: 13px; margin-top: 5px; }
-
-    /* Buttons */
-    .btn {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 4px;
-      font-size: 14px;
-      cursor: pointer;
-      font-weight: 500;
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .btn-primary { background: var(--kab-navy); color: white; }
-    .btn-primary:hover { background: #1a3055; }
-    .btn-navy { background: var(--kab-navy); color: white; font-weight: 600; }
-    .btn-navy:hover { background: #1a3055; }
-    .btn-gold { background: var(--kab-gold); color: var(--kab-navy); font-weight: 600; }
-    .btn-gold:hover { background: #b59552; }
-    .btn-small { padding: 6px 12px; font-size: 12px; }
-    .btn-ghost { background: transparent; color: var(--kab-navy); border: 1px solid var(--kab-border); }
-    .btn-ghost:hover { background: var(--kab-light); }
-
-    /* Forma */
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-bottom: 12px;
-    }
-
-    .form-field label {
-      display: block;
-      font-size: 13px;
-      color: var(--kab-gray);
-      margin-bottom: 4px;
-    }
-
-    .form-field input, .form-field textarea, .form-field select {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1px solid var(--kab-border);
-      border-radius: 4px;
-      font-size: 14px;
-      font-family: inherit;
-    }
-
-    /* Table */
-    table { width: 100%; border-collapse: collapse; }
-    th {
-      background: var(--kab-cream);
-      padding: 12px;
-      text-align: left;
-      font-size: 12px;
-      color: var(--kab-navy);
-      border-bottom: 2px solid var(--kab-gold);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    td { padding: 12px; border-bottom: 1px solid var(--kab-border); font-size: 14px; }
-    tr:hover { background: var(--kab-light); }
-
-    /* Status badges */
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .badge-draft { background: #FFF3E0; color: #E65100; }
-    .badge-submitted { background: #E8F5E9; color: #2E7D32; }
-    .badge-reviewed { background: #E3F2FD; color: #1565C0; }
-    .badge-archived { background: #EEE; color: #666; }
-
-    /* Modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(11, 30, 63, 0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 20px;
-    }
-
-    .modal {
-      background: white;
-      border-radius: 6px;
-      max-width: 1200px;
-      width: 100%;
-      max-height: 92vh;
-      overflow-y: auto;
-      padding: 25px;
-    }
-
-    .modal h2 { margin-top: 0; }
-
-    /* V5.2 — suskleidžiami skyriai */
-    .collapsible-section {
-      border: 1px solid #E5E5E5;
-      border-radius: 6px;
-      margin-bottom: 12px;
-      background: #FFF;
-      overflow: hidden;
-    }
-    .collapsible-section.collapsed .collapsible-body {
-      display: none;
-    }
-    .collapsible-header {
-      background: linear-gradient(135deg, var(--kab-navy), #1a3258);
-      color: #FFF;
-      padding: 12px 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      user-select: none;
-      transition: background 0.2s;
-    }
-    .collapsible-header:hover { background: linear-gradient(135deg, #112a55, #234070); }
-    .collapsible-header .toggle-icon {
-      font-size: 14px;
-      transition: transform 0.2s;
-    }
-    .collapsible-section.collapsed .collapsible-header .toggle-icon {
-      transform: rotate(-90deg);
-    }
-    .collapsible-header .section-title {
-      font-weight: 600;
-      font-size: 14px;
-      flex: 1;
-    }
-    .collapsible-header .section-meta {
-      font-size: 11px;
-      opacity: 0.85;
-      margin-left: 10px;
-    }
-    .collapsible-body {
-      padding: 15px 18px;
-    }
-    .pending-star {
-      color: #C62828;
-      font-size: 14px;
-      font-weight: bold;
-      margin-left: 4px;
-    }
-    .pending-badge {
-      background: #FFEBEE;
-      color: #C62828;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 11px;
-      font-weight: 600;
-      margin-left: 6px;
-    }
-
-    .copy-link-box {
-      background: var(--kab-cream);
-      padding: 15px;
-      border-radius: 4px;
-      border-left: 4px solid var(--kab-gold);
-      font-family: monospace;
-      font-size: 13px;
-      word-break: break-all;
-      margin: 15px 0;
-      position: relative;
-    }
-
-    /* Login */
-    .login-box {
-      max-width: 400px;
-      margin: 100px auto;
-      background: white;
-      padding: 40px;
-      border-radius: 6px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-
-    .login-box h1 {
-      color: var(--kab-navy);
-      text-align: center;
-      margin: 0 0 20px 0;
-    }
-
-    .hidden { display: none !important; }
-
-    /* File list in modal */
-    .file-list-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      background: var(--kab-light);
-      border-radius: 4px;
-      margin-bottom: 6px;
-      font-size: 13px;
-    }
-
-    .alert {
-      padding: 12px 15px;
-      border-radius: 4px;
-      margin: 10px 0;
-      font-size: 13px;
-    }
-
-    .alert-success { background: #E8F5E9; color: #2E7D32; border-left: 4px solid #2E7D32; }
-    .alert-error { background: #FFEBEE; color: #C62828; border-left: 4px solid #C62828; }
-    .alert-info { background: #E3F2FD; color: #1565C0; border-left: 4px solid #1565C0; }
-
-    .empty-state { text-align: center; padding: 40px; color: var(--kab-gray); }
-
-    .actions-cell { display: flex; gap: 5px; flex-wrap: wrap; }
-
-    @media (max-width: 900px) {
-      .app-layout { grid-template-columns: 1fr; }
-      .sidebar {
-        position: fixed;
-        left: -240px;
-        top: 0;
-        width: 240px;
-        z-index: 200;
-        transition: left 0.25s ease;
-      }
-      .sidebar.open { left: 0; box-shadow: 4px 0 20px rgba(0,0,0,0.3); }
-      .sidebar-toggle { display: block; }
-      .topbar-search { display: none; }
-      main { padding: 16px; }
-    }
-    @media (max-width: 768px) {
-      .form-row { grid-template-columns: 1fr; }
-      table { font-size: 12px; }
-      th, td { padding: 8px 6px; }
-    }
-
-    /* V6.0 — atnaujintos statistikų kortelės */
-    .stat-card-v2 {
-      background: white;
-      padding: 18px 20px;
-      border-radius: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      border: 1px solid #F3F4F6;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      transition: all 0.15s;
-    }
-    .stat-card-v2:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      border-color: #E5E7EB;
-    }
-    .stat-card-v2-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-    .stat-card-v2-icon.gold { background: #FEF3C7; color: #D97706; }
-    .stat-card-v2-icon.blue { background: #DBEAFE; color: #2563EB; }
-    .stat-card-v2-icon.green { background: #D1FAE5; color: #059669; }
-    .stat-card-v2-icon.purple { background: #EDE9FE; color: #7C3AED; }
-    .stat-card-v2-icon.red { background: #FEE2E2; color: #DC2626; }
-    .stat-card-v2-icon.gray { background: #F3F4F6; color: #6B7280; }
-
-    .stat-card-v2-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--kab-navy);
-      line-height: 1;
-    }
-    .stat-card-v2-label {
-      font-size: 12px;
-      color: #6B7280;
-      margin-top: 4px;
-    }
-
-    /* V6.0 — page section */
-    .page-section {
-      background: white;
-      border-radius: 12px;
-      padding: 22px 24px;
-      margin-bottom: 18px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-      border: 1px solid #F3F4F6;
-    }
-    .page-section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid #F3F4F6;
-    }
-    .page-section-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--kab-navy);
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
     /* ============ TEISIŲ SISTEMA (v7) ============ */
-    /* View-only režimas: paslepiami rašymo veiksmai */
     body.perm-view [onclick*="openCreateModal"],
     body.perm-view [onclick*="openSpecModal"],
     body.perm-view [onclick*="createSubmission"],
@@ -659,18 +272,100 @@
     body.perm-view select[onchange] {
       display: none !important;
     }
+    .perm-grid{ width:100%; border-collapse:collapse; font-size:13px; }
+    .perm-grid th,.perm-grid td{ padding:8px 10px; border-bottom:1px solid var(--bd2); text-align:left; }
+    .perm-grid th{ font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--faint); font-weight:700; }
+    .perm-grid td.center,.perm-grid th.center{ text-align:center; }
+    .role-badge{ padding:2px 7px; border-radius:3px; font-size:10.5px; font-weight:700;
+      text-transform:uppercase; letter-spacing:.04em; border:1px solid transparent; }
+    .role-badge.superadmin{ background:var(--warn-bg); color:var(--warn); border-color:var(--warn-bd); }
+    .role-badge.user{ background:var(--info-bg); color:var(--info); border-color:var(--info-bd); }
+    .perm-level-badge{ padding:1px 6px; border-radius:3px; font-size:10.5px; font-weight:700;
+      border:1px solid transparent; }
+    .perm-level-badge.full{ background:var(--ok-bg); color:var(--ok); border-color:var(--ok-bd); }
+    .perm-level-badge.view{ background:var(--info-bg); color:var(--info); border-color:var(--info-bd); }
+    .perm-level-badge.none{ background:#F1F3F5; color:var(--faint); border-color:var(--bd); }
 
-    .perm-grid { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .perm-grid th, .perm-grid td { padding: 8px 10px; border-bottom: 1px solid #F3F4F6; text-align: left; }
-    .perm-grid th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; }
-    .perm-grid td.center, .perm-grid th.center { text-align: center; }
-    .role-badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-    .role-badge.superadmin { background: #FEF3C7; color: #D97706; }
-    .role-badge.user { background: #DBEAFE; color: #2563EB; }
-    .perm-level-badge { padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-    .perm-level-badge.full { background: #D1FAE5; color: #047857; }
-    .perm-level-badge.view { background: #E0E7FF; color: #4338CA; }
-    .perm-level-badge.none { background: #F3F4F6; color: #9CA3AF; }
+
+
+    /* ===================== IKONOS (monochrominės, paveldi teksto spalvą) ===================== */
+    .ic{ display:inline-block; width:14px; height:14px; vertical-align:-2px; background:currentColor;
+      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center;
+      -webkit-mask-size:contain; mask-size:contain; flex:0 0 14px; opacity:.9; }
+    .btn .ic{ margin-right:2px; } .sec-title .ic{ width:13px; height:13px; opacity:.7; }
+    .ic-ai{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203l1.9%204.6L18.5%209.5l-4.6%201.9L12%2016l-1.9-4.6L5.5%209.5l4.6-1.9z%27%2F%3E%3Cpath%20d%3D%27M18%2015l.7%201.8%201.8.7-1.8.7L18%2020l-.7-1.8-1.8-.7%201.8-.7z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203l1.9%204.6L18.5%209.5l-4.6%201.9L12%2016l-1.9-4.6L5.5%209.5l4.6-1.9z%27%2F%3E%3Cpath%20d%3D%27M18%2015l.7%201.8%201.8.7-1.8.7L18%2020l-.7-1.8-1.8-.7%201.8-.7z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-alarm{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cpath%20d%3D%27M5%203L2%206M19%203l3%203%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cpath%20d%3D%27M5%203L2%206M19%203l3%203%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-alert{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10.29%203.86L1.82%2018a2%202%200%200%200%201.71%203h16.94a2%202%200%200%200%201.71-3L13.71%203.86a2%202%200%200%200-3.42%200z%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%279%27%20x2%3D%2712%27%20y2%3D%2713%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2717%27%20x2%3D%2712.01%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10.29%203.86L1.82%2018a2%202%200%200%200%201.71%203h16.94a2%202%200%200%200%201.71-3L13.71%203.86a2%202%200%200%200-3.42%200z%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%279%27%20x2%3D%2712%27%20y2%3D%2713%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2717%27%20x2%3D%2712.01%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-archive{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%275%27%20rx%3D%271%27%2F%3E%3Cpath%20d%3D%27M4%209v10a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V9%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2713%27%20x2%3D%2714%27%20y2%3D%2713%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%275%27%20rx%3D%271%27%2F%3E%3Cpath%20d%3D%27M4%209v10a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V9%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2713%27%20x2%3D%2714%27%20y2%3D%2713%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-arrowl{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2719%27%20y1%3D%2712%27%20x2%3D%275%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%2019%205%2012%2012%205%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2719%27%20y1%3D%2712%27%20x2%3D%275%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%2019%205%2012%2012%205%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-arrowr{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%205%2019%2012%2012%2019%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%205%2019%2012%2012%2019%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-arrowu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%2719%27%20x2%3D%2712%27%20y2%3D%275%27%2F%3E%3Cpolyline%20points%3D%275%2012%2012%205%2019%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%2719%27%20x2%3D%2712%27%20y2%3D%275%27%2F%3E%3Cpolyline%20points%3D%275%2012%2012%205%2019%2012%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-back{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%279%2014%204%209%209%204%27%2F%3E%3Cpath%20d%3D%27M20%2020v-7a4%204%200%200%200-4-4H4%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%279%2014%204%209%209%204%27%2F%3E%3Cpath%20d%3D%27M20%2020v-7a4%204%200%200%200-4-4H4%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-ban{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%274.93%27%20y1%3D%274.93%27%20x2%3D%2719.07%27%20y2%3D%2719.07%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%274.93%27%20y1%3D%274.93%27%20x2%3D%2719.07%27%20y2%3D%2719.07%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-bank{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2721%27%20x2%3D%2721%27%20y2%3D%2721%27%2F%3E%3Cpolyline%20points%3D%273%209%2012%203%2021%209%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2721%27%20x2%3D%276%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2721%27%20x2%3D%2710%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2721%27%20x2%3D%2714%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2718%27%20y1%3D%2721%27%20x2%3D%2718%27%20y2%3D%2711%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2721%27%20x2%3D%2721%27%20y2%3D%2721%27%2F%3E%3Cpolyline%20points%3D%273%209%2012%203%2021%209%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2721%27%20x2%3D%276%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2721%27%20x2%3D%2710%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2721%27%20x2%3D%2714%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2718%27%20y1%3D%2721%27%20x2%3D%2718%27%20y2%3D%2711%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-bell{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%208A6%206%200%200%200%206%208c0%207-3%209-3%209h18s-3-2-3-9%27%2F%3E%3Cpath%20d%3D%27M13.73%2021a2%202%200%200%201-3.46%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%208A6%206%200%200%200%206%208c0%207-3%209-3%209h18s-3-2-3-9%27%2F%3E%3Cpath%20d%3D%27M13.73%2021a2%202%200%200%201-3.46%200%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-book{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20%27%2F%3E%3Cpath%20d%3D%27M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20%27%2F%3E%3Cpath%20d%3D%27M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-briefcase{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%277%27%20width%3D%2720%27%20height%3D%2714%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M16%2021V5a2%202%200%200%200-2-2h-4a2%202%200%200%200-2%202v16%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%277%27%20width%3D%2720%27%20height%3D%2714%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M16%2021V5a2%202%200%200%200-2-2h-4a2%202%200%200%200-2%202v16%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-building{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%2021h18%27%2F%3E%3Cpath%20d%3D%27M5%2021V5a2%202%200%200%201%202-2h10a2%202%200%200%201%202%202v16%27%2F%3E%3Cpath%20d%3D%27M9%207h1M9%2011h1M9%2015h1M14%207h1M14%2011h1M14%2015h1%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%2021h18%27%2F%3E%3Cpath%20d%3D%27M5%2021V5a2%202%200%200%201%202-2h10a2%202%200%200%201%202%202v16%27%2F%3E%3Cpath%20d%3D%27M9%207h1M9%2011h1M9%2015h1M14%207h1M14%2011h1M14%2015h1%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-bulb{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2018h6%27%2F%3E%3Cpath%20d%3D%27M10%2022h4%27%2F%3E%3Cpath%20d%3D%27M12%202a7%207%200%200%200-4%2012.7V17h8v-2.3A7%207%200%200%200%2012%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2018h6%27%2F%3E%3Cpath%20d%3D%27M10%2022h4%27%2F%3E%3Cpath%20d%3D%27M12%202a7%207%200%200%200-4%2012.7V17h8v-2.3A7%207%200%200%200%2012%202z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-calc{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%274%27%20y%3D%272%27%20width%3D%2716%27%20height%3D%2720%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2711%27%20x2%3D%278.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2711%27%20x2%3D%2712.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2711%27%20x2%3D%2716.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2716%27%20x2%3D%278.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2716%27%20x2%3D%2712.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2716%27%20x2%3D%2716.01%27%20y2%3D%2716%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%274%27%20y%3D%272%27%20width%3D%2716%27%20height%3D%2720%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2711%27%20x2%3D%278.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2711%27%20x2%3D%2712.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2711%27%20x2%3D%2716.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2716%27%20x2%3D%278.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2716%27%20x2%3D%2712.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2716%27%20x2%3D%2716.01%27%20y2%3D%2716%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-calendar{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%274%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%272%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%272%27%20x2%3D%278%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2710%27%20x2%3D%2721%27%20y2%3D%2710%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%274%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%272%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%272%27%20x2%3D%278%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2710%27%20x2%3D%2721%27%20y2%3D%2710%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-cam{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M23%2019a2%202%200%200%201-2%202H3a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h4l2-3h6l2%203h4a2%202%200%200%201%202%202z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M23%2019a2%202%200%200%201-2%202H3a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h4l2-3h6l2%203h4a2%202%200%200%201%202%202z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-cart{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%279%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Ccircle%20cx%3D%2720%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Cpath%20d%3D%27M1%201h4l2.68%2013.39a2%202%200%200%200%202%201.61h9.72a2%202%200%200%200%202-1.61L23%206H6%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%279%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Ccircle%20cx%3D%2720%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Cpath%20d%3D%27M1%201h4l2.68%2013.39a2%202%200%200%200%202%201.61h9.72a2%202%200%200%200%202-1.61L23%206H6%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chart{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%2720%27%20x2%3D%2718%27%20y2%3D%2710%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2720%27%20x2%3D%2712%27%20y2%3D%274%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2720%27%20x2%3D%276%27%20y2%3D%2714%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%2720%27%20x2%3D%2718%27%20y2%3D%2710%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2720%27%20x2%3D%2712%27%20y2%3D%274%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2720%27%20x2%3D%276%27%20y2%3D%2714%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chat{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2011.5a8.38%208.38%200%200%201-.9%203.8%208.5%208.5%200%200%201-7.6%204.7%208.38%208.38%200%200%201-3.8-.9L3%2021l1.9-5.7a8.38%208.38%200%200%201-.9-3.8%208.5%208.5%200%200%201%204.7-7.6%208.38%208.38%200%200%201%203.8-.9h.5a8.48%208.48%200%200%201%208%208z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2011.5a8.38%208.38%200%200%201-.9%203.8%208.5%208.5%200%200%201-7.6%204.7%208.38%208.38%200%200%201-3.8-.9L3%2021l1.9-5.7a8.38%208.38%200%200%201-.9-3.8%208.5%208.5%200%200%201%204.7-7.6%208.38%208.38%200%200%201%203.8-.9h.5a8.48%208.48%200%200%201%208%208z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-check{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2720%206%209%2017%204%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2720%206%209%2017%204%2012%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chevrond{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chevronu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2718%2015%2012%209%206%2015%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2718%2015%2012%209%206%2015%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-circle{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-clip{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.44%2011.05l-9.19%209.19a6%206%200%200%201-8.49-8.49l9.19-9.19a4%204%200%200%201%205.66%205.66l-9.2%209.19a2%202%200%200%201-2.83-2.83l8.49-8.48%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.44%2011.05l-9.19%209.19a6%206%200%200%201-8.49-8.49l9.19-9.19a4%204%200%200%201%205.66%205.66l-9.2%209.19a2%202%200%200%201-2.83-2.83l8.49-8.48%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-clipboard{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%272%27%20width%3D%278%27%20height%3D%274%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%272%27%20width%3D%278%27%20height%3D%274%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-clock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cpolyline%20points%3D%2712%206%2012%2012%2016%2014%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cpolyline%20points%3D%2712%206%2012%2012%2016%2014%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-down{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%277%2010%2012%2015%2017%2010%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2715%27%20x2%3D%2712%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%277%2010%2012%2015%2017%2010%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2715%27%20x2%3D%2712%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-euro{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%271%27%20x2%3D%2712%27%20y2%3D%2723%27%2F%3E%3Cpath%20d%3D%27M17%205H9.5a3.5%203.5%200%200%200%200%207h5a3.5%203.5%200%200%201%200%207H6%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%271%27%20x2%3D%2712%27%20y2%3D%2723%27%2F%3E%3Cpath%20d%3D%27M17%205H9.5a3.5%203.5%200%200%200%200%207h5a3.5%203.5%200%200%201%200%207H6%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-external{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%2013v6a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h6%27%2F%3E%3Cpolyline%20points%3D%2715%203%2021%203%2021%209%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2714%27%20x2%3D%2721%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%2013v6a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h6%27%2F%3E%3Cpolyline%20points%3D%2715%203%2021%203%2021%209%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2714%27%20x2%3D%2721%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-eye{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M1%2012s4-8%2011-8%2011%208%2011%208-4%208-11%208-11-8-11-8z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M1%2012s4-8%2011-8%2011%208%2011%208-4%208-11%208-11-8-11-8z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-file{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V8z%27%2F%3E%3Cpolyline%20points%3D%2714%202%2014%208%2020%208%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V8z%27%2F%3E%3Cpolyline%20points%3D%2714%202%2014%208%2020%208%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-folder{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-gear{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M19.4%2015a1.65%201.65%200%200%200%20.33%201.82l.06.06a2%202%200%201%201-2.83%202.83l-.06-.06a1.65%201.65%200%200%200-1.82-.33%201.65%201.65%200%200%200-1%201.51V21a2%202%200%200%201-4%200v-.09A1.65%201.65%200%200%200%209%2019.4a1.65%201.65%200%200%200-1.82.33l-.06.06a2%202%200%201%201-2.83-2.83l.06-.06a1.65%201.65%200%200%200%20.33-1.82%201.65%201.65%200%200%200-1.51-1H3a2%202%200%200%201%200-4h.09A1.65%201.65%200%200%200%204.6%209a1.65%201.65%200%200%200-.33-1.82l-.06-.06a2%202%200%201%201%202.83-2.83l.06.06a1.65%201.65%200%200%200%201.82.33H9a1.65%201.65%200%200%200%201-1.51V3a2%202%200%200%201%204%200v.09a1.65%201.65%200%200%200%201%201.51%201.65%201.65%200%200%200%201.82-.33l.06-.06a2%202%200%201%201%202.83%202.83l-.06.06a1.65%201.65%200%200%200-.33%201.82V9a1.65%201.65%200%200%200%201.51%201H21a2%202%200%200%201%200%204h-.09a1.65%201.65%200%200%200-1.51%201z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M19.4%2015a1.65%201.65%200%200%200%20.33%201.82l.06.06a2%202%200%201%201-2.83%202.83l-.06-.06a1.65%201.65%200%200%200-1.82-.33%201.65%201.65%200%200%200-1%201.51V21a2%202%200%200%201-4%200v-.09A1.65%201.65%200%200%200%209%2019.4a1.65%201.65%200%200%200-1.82.33l-.06.06a2%202%200%201%201-2.83-2.83l.06-.06a1.65%201.65%200%200%200%20.33-1.82%201.65%201.65%200%200%200-1.51-1H3a2%202%200%200%201%200-4h.09A1.65%201.65%200%200%200%204.6%209a1.65%201.65%200%200%200-.33-1.82l-.06-.06a2%202%200%201%201%202.83-2.83l.06.06a1.65%201.65%200%200%200%201.82.33H9a1.65%201.65%200%200%200%201-1.51V3a2%202%200%200%201%204%200v.09a1.65%201.65%200%200%200%201%201.51%201.65%201.65%200%200%200%201.82-.33l.06-.06a2%202%200%201%201%202.83%202.83l-.06.06a1.65%201.65%200%200%200-.33%201.82V9a1.65%201.65%200%200%200%201.51%201H21a2%202%200%200%201%200%204h-.09a1.65%201.65%200%200%200-1.51%201z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-globe{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%272%27%20y1%3D%2712%27%20x2%3D%2722%27%20y2%3D%2712%27%2F%3E%3Cpath%20d%3D%27M12%202a15.3%2015.3%200%200%201%204%2010%2015.3%2015.3%200%200%201-4%2010%2015.3%2015.3%200%200%201-4-10%2015.3%2015.3%200%200%201%204-10z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%272%27%20y1%3D%2712%27%20x2%3D%2722%27%20y2%3D%2712%27%2F%3E%3Cpath%20d%3D%27M12%202a15.3%2015.3%200%200%201%204%2010%2015.3%2015.3%200%200%201-4%2010%2015.3%2015.3%200%200%201-4-10%2015.3%2015.3%200%200%201%204-10z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-grid{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%273%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%273%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-hash{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%274%27%20y1%3D%279%27%20x2%3D%2720%27%20y2%3D%279%27%2F%3E%3Cline%20x1%3D%274%27%20y1%3D%2715%27%20x2%3D%2720%27%20y2%3D%2715%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%273%27%20x2%3D%278%27%20y2%3D%2721%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%273%27%20x2%3D%2714%27%20y2%3D%2721%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%274%27%20y1%3D%279%27%20x2%3D%2720%27%20y2%3D%279%27%2F%3E%3Cline%20x1%3D%274%27%20y1%3D%2715%27%20x2%3D%2720%27%20y2%3D%2715%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%273%27%20x2%3D%278%27%20y2%3D%2721%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%273%27%20x2%3D%2714%27%20y2%3D%2721%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-home{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2z%27%2F%3E%3Cpolyline%20points%3D%279%2022%209%2012%2015%2012%2015%2022%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2z%27%2F%3E%3Cpolyline%20points%3D%279%2022%209%2012%2015%2012%2015%2022%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-image{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Ccircle%20cx%3D%278.5%27%20cy%3D%278.5%27%20r%3D%271.5%27%2F%3E%3Cpolyline%20points%3D%2721%2015%2016%2010%205%2021%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Ccircle%20cx%3D%278.5%27%20cy%3D%278.5%27%20r%3D%271.5%27%2F%3E%3Cpolyline%20points%3D%2721%2015%2016%2010%205%2021%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-key{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%202l-2%202%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61a5.5%205.5%200%201%201-7.78%207.78%205.5%205.5%200%200%201%207.78-7.78z%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61L15.5%207.5l3%203L22%207l-3-3-3.5%203.5%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%202l-2%202%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61a5.5%205.5%200%201%201-7.78%207.78%205.5%205.5%200%200%201%207.78-7.78z%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61L15.5%207.5l3%203L22%207l-3-3-3.5%203.5%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-layers{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%202%207%2012%2012%2022%207%2012%202%27%2F%3E%3Cpolyline%20points%3D%272%2017%2012%2022%2022%2017%27%2F%3E%3Cpolyline%20points%3D%272%2012%2012%2017%2022%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%202%207%2012%2012%2022%207%2012%202%27%2F%3E%3Cpolyline%20points%3D%272%2017%2012%2022%2022%2017%27%2F%3E%3Cpolyline%20points%3D%272%2012%2012%2017%2022%2012%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-link{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10%2013a5%205%200%200%200%207.54.54l3-3a5%205%200%200%200-7.07-7.07l-1.72%201.71%27%2F%3E%3Cpath%20d%3D%27M14%2011a5%205%200%200%200-7.54-.54l-3%203a5%205%200%200%200%207.07%207.07l1.71-1.71%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10%2013a5%205%200%200%200%207.54.54l3-3a5%205%200%200%200-7.07-7.07l-1.72%201.71%27%2F%3E%3Cpath%20d%3D%27M14%2011a5%205%200%200%200-7.54-.54l-3%203a5%205%200%200%200%207.07%207.07l1.71-1.71%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-list{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%273.01%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%273.01%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%273.01%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%273.01%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%273.01%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%273.01%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-lock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%2010%200v4%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%2010%200v4%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-logout{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h4%27%2F%3E%3Cpolyline%20points%3D%2716%2017%2021%2012%2016%207%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2712%27%20x2%3D%279%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h4%27%2F%3E%3Cpolyline%20points%3D%2716%2017%2021%2012%2016%207%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2712%27%20x2%3D%279%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-mail{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%2716%27%20rx%3D%272%27%2F%3E%3Cpolyline%20points%3D%2722%206%2012%2013%202%206%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%2716%27%20rx%3D%272%27%2F%3E%3Cpolyline%20points%3D%2722%206%2012%2013%202%206%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-menu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-package{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2716.5%27%20y1%3D%279.4%27%20x2%3D%277.5%27%20y2%3D%274.21%27%2F%3E%3Cpath%20d%3D%27M21%2016V8a2%202%200%200%200-1-1.73l-7-4a2%202%200%200%200-2%200l-7%204A2%202%200%200%200%203%208v8a2%202%200%200%200%201%201.73l7%204a2%202%200%200%200%202%200l7-4A2%202%200%200%200%2021%2016z%27%2F%3E%3Cpolyline%20points%3D%273.27%206.96%2012%2012.01%2020.73%206.96%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2716.5%27%20y1%3D%279.4%27%20x2%3D%277.5%27%20y2%3D%274.21%27%2F%3E%3Cpath%20d%3D%27M21%2016V8a2%202%200%200%200-1-1.73l-7-4a2%202%200%200%200-2%200l-7%204A2%202%200%200%200%203%208v8a2%202%200%200%200%201%201.73l7%204a2%202%200%200%200%202%200l7-4A2%202%200%200%200%2021%2016z%27%2F%3E%3Cpolyline%20points%3D%273.27%206.96%2012%2012.01%2020.73%206.96%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-pencil{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%203a2.828%202.828%200%201%201%204%204L7.5%2020.5%202%2022l1.5-5.5L17%203z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%203a2.828%202.828%200%201%201%204%204L7.5%2020.5%202%2022l1.5-5.5L17%203z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-pin{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2010c0%207-9%2013-9%2013s-9-6-9-13a9%209%200%200%201%2018%200z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2710%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2010c0%207-9%2013-9%2013s-9-6-9-13a9%209%200%200%201%2018%200z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2710%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-plus{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%275%27%20x2%3D%2712%27%20y2%3D%2719%27%2F%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%275%27%20x2%3D%2712%27%20y2%3D%2719%27%2F%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-puzzle{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%207h4V5a2%202%200%201%201%204%200v2h4a1%201%200%200%201%201%201v4h2a2%202%200%201%201%200%204h-2v4a1%201%200%200%201-1%201h-4v-2a2%202%200%201%200-4%200v2H4a1%201%200%200%201-1-1v-4h2a2%202%200%201%200%200-4H3V8a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%207h4V5a2%202%200%201%201%204%200v2h4a1%201%200%200%201%201%201v4h2a2%202%200%201%201%200%204h-2v4a1%201%200%200%201-1%201h-4v-2a2%202%200%201%200-4%200v2H4a1%201%200%200%201-1-1v-4h2a2%202%200%201%200%200-4H3V8a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-receipt{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M6%202h12v20l-3-2-3%202-3-2-3%202z%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%278%27%20x2%3D%2715%27%20y2%3D%278%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%2712%27%20x2%3D%2715%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M6%202h12v20l-3-2-3%202-3-2-3%202z%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%278%27%20x2%3D%2715%27%20y2%3D%278%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%2712%27%20x2%3D%2715%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-refresh{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2723%204%2023%2010%2017%2010%27%2F%3E%3Cpolyline%20points%3D%271%2020%201%2014%207%2014%27%2F%3E%3Cpath%20d%3D%27M3.51%209a9%209%200%200%201%2014.85-3.36L23%2010M1%2014l4.64%204.36A9%209%200%200%200%2020.49%2015%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2723%204%2023%2010%2017%2010%27%2F%3E%3Cpolyline%20points%3D%271%2020%201%2014%207%2014%27%2F%3E%3Cpath%20d%3D%27M3.51%209a9%209%200%200%201%2014.85-3.36L23%2010M1%2014l4.64%204.36A9%209%200%200%200%2020.49%2015%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-rocket{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4.5%2016.5c-1.5%201.26-2%205-2%205s3.74-.5%205-2c.71-.84.7-2.13-.09-2.91a2.18%202.18%200%200%200-2.91-.09z%27%2F%3E%3Cpath%20d%3D%27M12%2015l-3-3a22%2022%200%200%201%202-3.95A12.88%2012.88%200%200%201%2022%202c0%202.72-.78%207.5-6%2011a22.35%2022.35%200%200%201-4%202z%27%2F%3E%3Cpath%20d%3D%27M9%2012H4s.55-3.03%202-4c1.62-1.08%205%200%205%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4.5%2016.5c-1.5%201.26-2%205-2%205s3.74-.5%205-2c.71-.84.7-2.13-.09-2.91a2.18%202.18%200%200%200-2.91-.09z%27%2F%3E%3Cpath%20d%3D%27M12%2015l-3-3a22%2022%200%200%201%202-3.95A12.88%2012.88%200%200%201%2022%202c0%202.72-.78%207.5-6%2011a22.35%2022.35%200%200%201-4%202z%27%2F%3E%3Cpath%20d%3D%27M9%2012H4s.55-3.03%202-4c1.62-1.08%205%200%205%200%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-ruler{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.3%208.7L8.7%2021.3a1%201%200%200%201-1.4%200l-4.6-4.6a1%201%200%200%201%200-1.4L15.3%202.7a1%201%200%200%201%201.4%200l4.6%204.6a1%201%200%200%201%200%201.4z%27%2F%3E%3Cpath%20d%3D%27M7.5%2010.5l2%202M10.5%207.5l2%202M13.5%204.5l2%202M4.5%2013.5l2%202%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.3%208.7L8.7%2021.3a1%201%200%200%201-1.4%200l-4.6-4.6a1%201%200%200%201%200-1.4L15.3%202.7a1%201%200%200%201%201.4%200l4.6%204.6a1%201%200%200%201%200%201.4z%27%2F%3E%3Cpath%20d%3D%27M7.5%2010.5l2%202M10.5%207.5l2%202M13.5%204.5l2%202M4.5%2013.5l2%202%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-save{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M19%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h11l5%205v11a2%202%200%200%201-2%202z%27%2F%3E%3Cpolyline%20points%3D%2717%2021%2017%2013%207%2013%207%2021%27%2F%3E%3Cpolyline%20points%3D%277%203%207%208%2015%208%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M19%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h11l5%205v11a2%202%200%200%201-2%202z%27%2F%3E%3Cpolyline%20points%3D%2717%2021%2017%2013%207%2013%207%2021%27%2F%3E%3Cpolyline%20points%3D%277%203%207%208%2015%208%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-scale{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203v18%27%2F%3E%3Cpath%20d%3D%27M5%207h14%27%2F%3E%3Cpath%20d%3D%27M7%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M17%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203v18%27%2F%3E%3Cpath%20d%3D%27M5%207h14%27%2F%3E%3Cpath%20d%3D%27M7%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M17%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-search{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-star{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%2015.09%208.26%2022%209.27%2017%2014.14%2018.18%2021.02%2012%2017.77%205.82%2021.02%207%2014.14%202%209.27%208.91%208.26%2012%202%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%2015.09%208.26%2022%209.27%2017%2014.14%2018.18%2021.02%2012%2017.77%205.82%2021.02%207%2014.14%202%209.27%208.91%208.26%2012%202%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-swap{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2717%201%2021%205%2017%209%27%2F%3E%3Cpath%20d%3D%27M3%2011V9a4%204%200%200%201%204-4h14%27%2F%3E%3Cpolyline%20points%3D%277%2023%203%2019%207%2015%27%2F%3E%3Cpath%20d%3D%27M21%2013v2a4%204%200%200%201-4%204H3%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2717%201%2021%205%2017%209%27%2F%3E%3Cpath%20d%3D%27M3%2011V9a4%204%200%200%201%204-4h14%27%2F%3E%3Cpolyline%20points%3D%277%2023%203%2019%207%2015%27%2F%3E%3Cpath%20d%3D%27M21%2013v2a4%204%200%200%201-4%204H3%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-timer{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%272%27%20x2%3D%2715%27%20y2%3D%272%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%272%27%20x2%3D%2715%27%20y2%3D%272%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-tool{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14.7%206.3a1%201%200%200%200%200%201.4l1.6%201.6a1%201%200%200%200%201.4%200l3.77-3.77a6%206%200%200%201-7.94%207.94l-6.91%206.91a2.12%202.12%200%200%201-3-3l6.91-6.91a6%206%200%200%201%207.94-7.94l-3.76%203.76z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14.7%206.3a1%201%200%200%200%200%201.4l1.6%201.6a1%201%200%200%200%201.4%200l3.77-3.77a6%206%200%200%201-7.94%207.94l-6.91%206.91a2.12%202.12%200%200%201-3-3l6.91-6.91a6%206%200%200%201%207.94-7.94l-3.76%203.76z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-trash{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%273%206%205%206%2021%206%27%2F%3E%3Cpath%20d%3D%27M19%206v14a2%202%200%200%201-2%202H7a2%202%200%200%201-2-2V6m3%200V4a2%202%200%200%201%202-2h4a2%202%200%200%201%202%202v2%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2711%27%20x2%3D%2710%27%20y2%3D%2717%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2711%27%20x2%3D%2714%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%273%206%205%206%2021%206%27%2F%3E%3Cpath%20d%3D%27M19%206v14a2%202%200%200%201-2%202H7a2%202%200%200%201-2-2V6m3%200V4a2%202%200%200%201%202-2h4a2%202%200%200%201%202%202v2%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2711%27%20x2%3D%2710%27%20y2%3D%2717%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2711%27%20x2%3D%2714%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-trophy{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3Cpath%20d%3D%27M12%2017v4%27%2F%3E%3Cpath%20d%3D%27M7%204h10v5a5%205%200%200%201-10%200z%27%2F%3E%3Cpath%20d%3D%27M7%206H4a2%202%200%200%200%200%204h3%27%2F%3E%3Cpath%20d%3D%27M17%206h3a2%202%200%200%201%200%204h-3%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3Cpath%20d%3D%27M12%2017v4%27%2F%3E%3Cpath%20d%3D%27M7%204h10v5a5%205%200%200%201-10%200z%27%2F%3E%3Cpath%20d%3D%27M7%206H4a2%202%200%200%200%200%204h3%27%2F%3E%3Cpath%20d%3D%27M17%206h3a2%202%200%200%201%200%204h-3%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-unlock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%209.9-1%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%209.9-1%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-up{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%2717%208%2012%203%207%208%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%273%27%20x2%3D%2712%27%20y2%3D%2715%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%2717%208%2012%203%207%208%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%273%27%20x2%3D%2712%27%20y2%3D%2715%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-user{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-users{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%2021v-2a4%204%200%200%200-4-4H5a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M23%2021v-2a4%204%200%200%200-3-3.87%27%2F%3E%3Cpath%20d%3D%27M16%203.13a4%204%200%200%201%200%207.75%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%2021v-2a4%204%200%200%200-4-4H5a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M23%2021v-2a4%204%200%200%200-3-3.87%27%2F%3E%3Cpath%20d%3D%27M16%203.13a4%204%200%200%201%200%207.75%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-worker{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M5%208a7%207%200%200%201%2014%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M5%208a7%207%200%200%201%2014%200%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-x{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%276%27%20x2%3D%276%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%276%27%20x2%3D%2718%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%276%27%20x2%3D%276%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%276%27%20x2%3D%2718%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
+    :root{ --ic-search:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); }
   </style>
 </head>
 <body>
@@ -678,7 +373,7 @@
   <!-- LOGIN -->
   <div id="login-view" class="hidden">
     <div class="login-box">
-      <h1>🔐 KAB Admin</h1>
+      <h1>KAB Admin</h1>
       <p style="text-align: center; color: var(--kab-gray); font-size: 13px;">Prisijungimas prie klausimynų valdymo sistemos</p>
 
       <div class="form-field" style="margin-bottom: 12px;">
@@ -700,7 +395,7 @@
   <!-- SLAPTAŽODŽIO SUSIKŪRIMAS (pakvietimo srautas) -->
   <div id="setpw-view" class="hidden">
     <div class="login-box">
-      <h1>🔑 Sveiki atvykę!</h1>
+      <h1>Sveiki atvykę!</h1>
       <p style="text-align: center; color: var(--kab-gray); font-size: 13px;">Susikurkite slaptažodį paskyrai <strong id="setpw-email"></strong></p>
 
       <div class="form-field" style="margin-bottom: 12px;">
@@ -736,42 +431,42 @@
         <nav class="sidebar-nav">
           <div class="sidebar-section-label">Pagrindinis</div>
           <button class="sidebar-nav-item active" data-view="dashboard" onclick="navigateTo('dashboard')">
-            <span class="sidebar-nav-icon">⊞</span>
+            <span class="sidebar-nav-icon"><span class="ic ic-grid"></span></span>
             <span>Apžvalga</span>
           </button>
 
           <div class="sidebar-section-label" style="margin-top: 16px;">Moduliai</div>
           <button class="sidebar-nav-item" data-view="submissions" data-module="klausimynai" onclick="navigateTo('submissions')">
-            <span class="sidebar-nav-icon">📋</span>
+            <span class="sidebar-nav-icon"><span class="ic ic-clipboard"></span></span>
             <span>Klausimynai</span>
             <span class="sidebar-nav-badge" id="sidebar-badge-submissions">—</span>
           </button>
           <a class="sidebar-nav-item" data-module="dokumentai" href="admin-dokumentai.html" style="text-decoration:none;">
-            <span class="sidebar-nav-icon">📂</span>
+            <span class="sidebar-nav-icon"><span class="ic ic-folder"></span></span>
             <span>Dokumentai kreditoriams</span>
           </a>
           <a class="sidebar-nav-item" data-module="bankrotas" href="admin-bankrotas.html" style="text-decoration:none;">
-            <span class="sidebar-nav-icon">⚖️</span>
+            <span class="sidebar-nav-icon"><span class="ic ic-scale"></span></span>
             <span>Nemokumo procesai</span>
           </a>
           <a class="sidebar-nav-item" data-module="avnis" href="admin-avnis.html" style="text-decoration:none;">
-            <span class="sidebar-nav-icon">📢</span>
-            <span>AVNIS skelbimai</span>
+            <span class="sidebar-nav-icon"><span class="ic ic-trophy"></span></span>
+            <span>Konkursai</span>
           </a>
 
           <div class="sidebar-section-label" style="margin-top: 16px;">Konfigūracija</div>
           <button class="sidebar-nav-item" data-view="templates" data-module="klausimynai" onclick="navigateTo('templates')">
-            <span class="sidebar-nav-icon">📐</span>
+            <span class="sidebar-nav-icon"><span class="ic ic-layers"></span></span>
             <span>Klausimynų šablonai</span>
           </button>
           <button class="sidebar-nav-item" data-view="users" onclick="navigateTo('users')">
-            <span class="sidebar-nav-icon">👥</span>
+            <span class="sidebar-nav-icon"><span class="ic ic-users"></span></span>
             <span>Vartotojai</span>
           </button>
 
           <div class="sidebar-section-label" style="margin-top: 16px;">Pagalba</div>
           <button class="sidebar-nav-item" data-view="help" onclick="navigateTo('help')">
-            <span class="sidebar-nav-icon">📖</span>
+            <span class="sidebar-nav-icon"><span class="ic ic-book"></span></span>
             <span>Instrukcijos</span>
           </button>
         </nav>
@@ -782,7 +477,7 @@
             <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
             <div class="sidebar-user-email" id="user-email">—</div>
           </div>
-          <button class="sidebar-logout" onclick="doLogout()" title="Atsijungti">⎋</button>
+          <button class="sidebar-logout" onclick="doLogout()" title="Atsijungti"><span class="ic ic-logout"></span></button>
         </div>
       </aside>
 
@@ -790,7 +485,7 @@
       <div class="content-area">
         <div class="topbar">
           <div style="display:flex; align-items:center; gap:14px;">
-            <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+            <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><span class="ic ic-menu"></span></button>
             <div>
               <h1 class="topbar-title" id="topbar-title">Apžvalga</h1>
               <div class="topbar-subtitle" id="topbar-subtitle">Visų klausimynų ir bylų santrauka</div>
@@ -811,28 +506,28 @@
         <!-- Statistikos kortelės — modernios (klausimynų modulis) -->
         <div id="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 22px;">
           <div class="stat-card-v2">
-            <div class="stat-card-v2-icon gold">📝</div>
+            <div class="stat-card-v2-icon gold"><span class="ic ic-pencil"></span></div>
             <div>
               <div class="stat-card-v2-value" id="stat-draft">—</div>
               <div class="stat-card-v2-label">Laukia užpildymo</div>
             </div>
           </div>
           <div class="stat-card-v2">
-            <div class="stat-card-v2-icon blue">📬</div>
+            <div class="stat-card-v2-icon blue"><span class="ic ic-mail"></span></div>
             <div>
               <div class="stat-card-v2-value" id="stat-submitted">—</div>
               <div class="stat-card-v2-label">Nauji pateikti</div>
             </div>
           </div>
           <div class="stat-card-v2">
-            <div class="stat-card-v2-icon green">✓</div>
+            <div class="stat-card-v2-icon green"><span class="ic ic-check"></span></div>
             <div>
               <div class="stat-card-v2-value" id="stat-reviewed">—</div>
               <div class="stat-card-v2-label">Peržiūrėti</div>
             </div>
           </div>
           <div class="stat-card-v2">
-            <div class="stat-card-v2-icon purple">📊</div>
+            <div class="stat-card-v2-icon purple"><span class="ic ic-chart"></span></div>
             <div>
               <div class="stat-card-v2-value" id="stat-total">—</div>
               <div class="stat-card-v2-label">Iš viso</div>
@@ -843,13 +538,13 @@
         <!-- Greitos prieigos kortelės moduliams -->
         <div class="page-section">
           <div class="page-section-header">
-            <h2 class="page-section-title">🚀 Moduliai</h2>
+            <h2 class="page-section-title"><span class="ic ic-rocket"></span> Moduliai</h2>
           </div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
             <a href="admin-dokumentai.html" id="card-dokumentai" style="text-decoration:none; color: inherit; display: block;">
               <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
-                  <div style="width:42px; height:42px; background:#FEF3C7; color:#D97706; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📂</div>
+                  <div style="width:42px; height:42px; background:#FEF3C7; color:#D97706; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;"><span class="ic ic-folder"></span></div>
                   <strong style="color: var(--kab-navy); font-size: 14px;">Dokumentai kreditoriams</strong>
                 </div>
                 <p style="font-size: 12px; color: #6B7280; margin: 0;">Bylos, gavėjai, dokumentų įkėlimas, prisijungimų istorija</p>
@@ -858,7 +553,7 @@
             <a href="admin-bankrotas.html" id="card-bankrotas" style="text-decoration:none; color: inherit; display: block;">
               <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
-                  <div style="width:42px; height:42px; background:#FEE2E2; color:#DC2626; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">⚖️</div>
+                  <div style="width:42px; height:42px; background:#FEE2E2; color:#DC2626; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;"><span class="ic ic-scale"></span></div>
                   <strong style="color: var(--kab-navy); font-size: 14px;">Nemokumo procesai</strong>
                 </div>
                 <p style="font-size: 12px; color: #6B7280; margin: 0;">Nemokumo proceso valdymas: pirminiai raštai, blankai, registras</p>
@@ -867,15 +562,15 @@
             <a href="admin-avnis.html" id="card-avnis" data-module="avnis" style="text-decoration:none; color: inherit; display: block;">
               <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
-                  <div style="width:42px; height:42px; background:#E0F2FE; color:#0369A1; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📢</div>
-                  <strong style="color: var(--kab-navy); font-size: 14px;">AVNIS skelbimai</strong>
+                  <div style="width:42px; height:42px; background:#E0F2FE; color:#0369A1; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;"><span class="ic ic-trophy"></span></div>
+                  <strong style="color: var(--kab-navy); font-size: 14px;">Konkursai</strong>
                 </div>
-                <p style="font-size: 12px; color: #6B7280; margin: 0;">Teisiniai skelbimai apie nemokumo procesus — automatinis rinkimas kasdien</p>
+                <p style="font-size: 12px; color: #6B7280; margin: 0;">Konkursai: AVNIS skelbimai ir nemokumo administratoriai</p>
               </div>
             </a>
             <div id="card-spec" data-module="klausimynai" onclick="openSpecModal()" style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
               <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
-                <div style="width:42px; height:42px; background:#DBEAFE; color:#2563EB; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🗂️</div>
+                <div style="width:42px; height:42px; background:#DBEAFE; color:#2563EB; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;"><span class="ic ic-folder"></span></div>
                 <strong style="color: var(--kab-navy); font-size: 14px;">Pavieniai klausimynai</strong>
               </div>
               <p style="font-size: 12px; color: #6B7280; margin: 0;">Spec. šablonai konkretiems klientams (multi-entity)</p>
@@ -895,26 +590,26 @@
       <section id="submissions-section">
       <div class="page-section">
         <div class="page-section-header">
-          <h2 class="page-section-title">📋 Klausimynų sąrašas</h2>
-          <button class="btn btn-ghost btn-small" onclick="loadSubmissions()">🔄 Atnaujinti</button>
+          <h2 class="page-section-title"><span class="ic ic-clipboard"></span> Klausimynų sąrašas</h2>
+          <button class="btn btn-ghost btn-small" onclick="loadSubmissions()"><span class="ic ic-refresh"></span> Atnaujinti</button>
         </div>
 
         <!-- TABS pagal šabloną -->
         <div style="border-bottom: 2px solid var(--kab-border); margin-bottom: 15px; display: flex; gap: 0; flex-wrap: wrap;">
           <button class="template-tab active" data-template="all" onclick="filterByTemplate('all')">
-            📋 Visi <span class="tab-count" id="count-all">0</span>
+            <span class="ic ic-clipboard"></span> Visi <span class="tab-count" id="count-all">0</span>
           </button>
           <button class="template-tab" data-template="auditas" onclick="filterByTemplate('auditas')">
-            🔍 Auditas <span class="tab-count" id="count-audit">0</span>
+            <span class="ic ic-search"></span> Auditas <span class="tab-count" id="count-audit">0</span>
           </button>
           <button class="template-tab" data-template="restrukturizavimas" onclick="filterByTemplate('restrukturizavimas')">
-            📊 Restruktūrizavimas <span class="tab-count" id="count-restr">0</span>
+            <span class="ic ic-chart"></span> Restruktūrizavimas <span class="tab-count" id="count-restr">0</span>
           </button>
           <button class="template-tab" data-template="bankrotas_fizinis" onclick="filterByTemplate('bankrotas_fizinis')">
-            ⚖️ Fizinių asmenų bankrotas <span class="tab-count" id="count-bankr">0</span>
+            <span class="ic ic-scale"></span> Fizinių asmenų bankrotas <span class="tab-count" id="count-bankr">0</span>
           </button>
           <button class="template-tab" data-template="imoniu_grupes_duomenys" onclick="filterByTemplate('imoniu_grupes_duomenys')">
-            🗂️ Pavieniai <span class="tab-count" id="count-spec">0</span>
+            <span class="ic ic-folder"></span> Pavieniai <span class="tab-count" id="count-spec">0</span>
           </button>
         </div>
 
@@ -922,12 +617,12 @@
         <div style="margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
           <span style="font-size: 12px; color: #666; margin-right: 5px;">Statusas:</span>
           <button class="btn btn-ghost btn-small" onclick="filterBy('all')">Visi</button>
-          <button class="btn btn-ghost btn-small" onclick="filterBy('draft')">📝 Laukiantys</button>
-          <button class="btn btn-ghost btn-small" onclick="filterBy('submitted')">📬 Nauji</button>
-          <button class="btn btn-ghost btn-small" onclick="filterBy('submitted_interim')">⏳ Tarpiniai</button>
-          <button class="btn btn-ghost btn-small" onclick="filterBy('submitted_final')">✅ Galutiniai</button>
-          <button class="btn btn-ghost btn-small" onclick="filterBy('reviewed')">✓ Peržiūrėti</button>
-          <button class="btn btn-ghost btn-small" onclick="filterBy('archived')">🗄️ Archyvas</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('draft')"><span class="ic ic-pencil"></span> Laukiantys</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('submitted')"><span class="ic ic-mail"></span> Nauji</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('submitted_interim')"><span class="ic ic-clock"></span> Tarpiniai</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('submitted_final')"><span class="ic ic-check"></span> Galutiniai</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('reviewed')"><span class="ic ic-check"></span> Peržiūrėti</button>
+          <button class="btn btn-ghost btn-small" onclick="filterBy('archived')"><span class="ic ic-archive"></span> Archyvas</button>
         </div>
 
         <div id="submissions-table-container">
@@ -939,7 +634,7 @@
       <!-- =============== KREDITORIAMS =============== -->
       <section id="credit-section" class="page-section" style="text-align:center;">
         <div class="page-section-header">
-          <h2 class="page-section-title">📑 Dokumentų pateikimas kreditoriams</h2>
+          <h2 class="page-section-title"><span class="ic ic-layers"></span> Dokumentų pateikimas kreditoriams</h2>
         </div>
         <p style="color:#6B7280; margin-bottom: 18px;">Atskiras modulis: bylos, gavėjai, dokumentų įkėlimas ir prisijungimų istorija</p>
         <a href="admin-dokumentai.html" class="btn btn-gold" style="text-decoration:none; padding: 12px 28px;">Atidaryti modulį →</a>
@@ -948,24 +643,24 @@
       <!-- =============== ŠABLONAI =============== -->
       <section id="templates-section" class="page-section">
         <div class="page-section-header">
-          <h2 class="page-section-title">📐 Klausimynų šablonai</h2>
+          <h2 class="page-section-title"><span class="ic ic-ruler"></span> Klausimynų šablonai</h2>
         </div>
         <p style="color:#6B7280; margin: 0 0 12px;">Sistemoje veikiantys šablonai. Naujus šablonus pridėti per Supabase SQL Editor (lentelė <code>questionnaire_templates</code>).</p>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
           <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
-            <div style="font-weight: 600; color: var(--kab-navy);">🔍 Auditas</div>
+            <div style="font-weight: 600; color: var(--kab-navy);"><span class="ic ic-search"></span> Auditas</div>
             <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">Standartinis audito klausimynas</div>
           </div>
           <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
-            <div style="font-weight: 600; color: var(--kab-navy);">📊 Restrukturizavimas</div>
+            <div style="font-weight: 600; color: var(--kab-navy);"><span class="ic ic-chart"></span> Restrukturizavimas</div>
             <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">RSP-1 plėtros klausimynas</div>
           </div>
           <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
-            <div style="font-weight: 600; color: var(--kab-navy);">⚖️ Fizinių asmenų bankrotas</div>
+            <div style="font-weight: 600; color: var(--kab-navy);"><span class="ic ic-scale"></span> Fizinių asmenų bankrotas</div>
             <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">FAB klausimynas</div>
           </div>
           <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
-            <div style="font-weight: 600; color: var(--kab-navy);">🗂️ Įmonių grupės duomenys (spec.)</div>
+            <div style="font-weight: 600; color: var(--kab-navy);"><span class="ic ic-folder"></span> Įmonių grupės duomenys (spec.)</div>
             <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">Multi-entity pavienis šablonas</div>
           </div>
         </div>
@@ -974,8 +669,8 @@
       <!-- =============== VARTOTOJAI =============== -->
       <section id="users-section" class="page-section">
         <div class="page-section-header">
-          <h2 class="page-section-title">👥 Sistemos vartotojai</h2>
-          <button class="btn btn-gold btn-small" id="btn-new-user" onclick="openUserModal()">➕ Naujas vartotojas</button>
+          <h2 class="page-section-title"><span class="ic ic-users"></span> Sistemos vartotojai</h2>
+          <button class="btn btn-gold btn-small" id="btn-new-user" onclick="openUserModal()"><span class="ic ic-plus"></span> Naujas vartotojas</button>
         </div>
         <p style="color:#6B7280; margin: 0 0 12px;">Vartotojų paskyros ir jų teisės moduliuose. Naujas vartotojas gauna el. laišką su slaptažodžio susikūrimo nuoroda.</p>
         <div id="admin-users-list" style="font-size: 13px; color: #6B7280;">Kraunama...</div>
@@ -984,10 +679,10 @@
       <!-- =============== INSTRUKCIJOS =============== -->
       <section id="help-section" class="page-section">
         <div class="page-section-header">
-          <h2 class="page-section-title">📖 Instrukcijos ir pagalba</h2>
+          <h2 class="page-section-title"><span class="ic ic-book"></span> Instrukcijos ir pagalba</h2>
         </div>
         <ul style="line-height: 1.8; color: #4B5563; font-size: 13px;">
-          <li><strong>Pirmas žingsnis:</strong> sukurkite naują klausimyną viršuje (➕ mygtukas) — pasirinkite šabloną ir įveskite kliento duomenis</li>
+          <li><strong>Pirmas žingsnis:</strong> sukurkite naują klausimyną viršuje (mygtukas „+ Naujas klausimynas") — pasirinkite šabloną ir įveskite kliento duomenis</li>
           <li><strong>Nuoroda klientui:</strong> sukūrus, gausite unikalią nuorodą — siųskite ją el. paštu</li>
           <li><strong>Prisijungimo apsauga:</strong> klientas atidaręs nuorodą įvedęs el. paštą gauna 6 skaitm. OTP kodą</li>
           <li><strong>Daugiavartotojų klausimynai:</strong> klausimyno kortelėje galite pridėti papildomus vartotojus (collaborators)</li>
@@ -1005,7 +700,7 @@
   <!-- Modal: sistemos vartotojo kūrimas/redagavimas -->
   <div id="user-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeUserModal()">
     <div class="modal" style="max-width: 560px;">
-      <h2 style="color: var(--kab-navy); margin: 0 0 4px;" id="user-modal-title">➕ Naujas vartotojas</h2>
+      <h2 style="color: var(--kab-navy); margin: 0 0 4px;" id="user-modal-title"><span class="ic ic-plus"></span> Naujas vartotojas</h2>
       <p style="color:#6B7280; font-size: 12px; margin: 0 0 16px;">Sukūrus paskyrą, vartotojui bus išsiųstas laiškas su slaptažodžio susikūrimo nuoroda.</p>
       <input type="hidden" id="um-id">
       <div class="form-field" style="margin-bottom: 10px;">
@@ -1048,7 +743,7 @@
   <!-- Modal: užduočių perdavimas prieš trynimą -->
   <div id="transfer-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeTransferModal()">
     <div class="modal" style="max-width: 560px;">
-      <h2 style="color: var(--kab-navy); margin: 0 0 4px;">⚠️ Vartotojas turi nebaigtų užduočių</h2>
+      <h2 style="color: var(--kab-navy); margin: 0 0 4px;"><span class="ic ic-alert"></span> Vartotojas turi nebaigtų užduočių</h2>
       <p style="color:#6B7280; font-size: 13px; margin: 0 0 14px;">Prieš ištrinant vartotoją <strong id="tm-user-label"></strong>, jo atsakomybes reikia perduoti kitam vartotojui.</p>
       <div id="tm-responsibilities" style="max-height: 260px; overflow-y: auto; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px; margin-bottom: 14px; font-size: 13px;"></div>
       <div class="form-field" style="margin-bottom: 10px;">
@@ -1075,13 +770,13 @@
   <!-- Modal: naujai sukurta nuoroda -->
   <div id="link-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeLinkModal()">
     <div class="modal">
-      <h2>✅ Nuoroda sukurta</h2>
+      <h2><span class="ic ic-check"></span> Nuoroda sukurta</h2>
       <p>Nuoroda kliento klausimynui:</p>
       <div class="copy-link-box" id="generated-link"></div>
 
       <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button class="btn btn-gold" onclick="copyGeneratedLink()">📋 Kopijuoti nuorodą</button>
-        <button class="btn btn-primary" id="email-btn">📧 Siųsti klientui email'u</button>
+        <button class="btn btn-gold" onclick="copyGeneratedLink()"><span class="ic ic-clipboard"></span> Kopijuoti nuorodą</button>
+        <button class="btn btn-primary" id="email-btn"><span class="ic ic-mail"></span> Siųsti klientui email'u</button>
         <button class="btn btn-ghost" onclick="closeLinkModal()">Uždaryti</button>
       </div>
 
@@ -1096,7 +791,7 @@
     <div class="modal" style="max-width: 600px;">
       <button class="modal-close" onclick="closeCreateModal()">×</button>
       <div class="modal-content">
-        <h2 style="margin-top: 0;">➕ Kurti naują klausimyną</h2>
+        <h2 style="margin-top: 0;"><span class="ic ic-plus"></span> Kurti naują klausimyną</h2>
 
         <div id="create-modal-alert"></div>
 
@@ -1151,7 +846,7 @@
     <div class="modal" style="max-width: 640px;">
       <button class="modal-close" onclick="closeSpecModal()">×</button>
       <div class="modal-content">
-        <h2 style="margin-top: 0;">🗂️ Kurti pavienį klausimyną</h2>
+        <h2 style="margin-top: 0;"><span class="ic ic-folder"></span> Kurti pavienį klausimyną</h2>
         <p style="color:#666;margin-top:-6px;">Spec. klausimynas konkrečiam klientui. Pasirinkite spec. šabloną ir nurodykite, kurioms įmonėms taikyti.</p>
 
         <div id="spec-modal-alert"></div>
@@ -1211,197 +906,67 @@
   </div>
 
   <style>
-    /* Template tabs */
-    .template-tab {
-      background: none;
-      border: none;
-      padding: 12px 20px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      color: #666;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: inherit;
-    }
-    .template-tab:hover {
-      color: var(--kab-navy);
-      background: var(--kab-cream);
-    }
-    .template-tab.active {
-      color: var(--kab-navy);
-      border-bottom-color: var(--kab-gold);
-      font-weight: 700;
-    }
-    .tab-count {
-      background: #E5E5E5;
-      color: #666;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .template-tab.active .tab-count {
-      background: var(--kab-gold);
-      color: var(--kab-navy);
-    }
+    /* ===================== ŠABLONŲ SKIRTUKAI ===================== */
+    .template-tab{ background:transparent; border:0; padding:7px 13px; cursor:pointer;
+      font-size:12.5px; font-weight:600; color:var(--muted); border-radius:var(--r-sm);
+      margin-bottom:0; transition:background .12s,color .12s; display:inline-flex;
+      align-items:center; gap:7px; font-family:inherit; white-space:nowrap; }
+    .template-tab:hover{ color:var(--ink); background:transparent; }
+    .template-tab.active{ color:var(--navy); background:#fff; font-weight:700;
+      box-shadow:0 1px 2px rgba(11,30,63,.10); }
+    .tab-count{ background:rgba(66,90,112,.12); color:var(--muted); padding:1px 6px;
+      border-radius:9px; font-size:10.5px; font-weight:700; }
+    .template-tab.active .tab-count{ background:var(--navy); color:#fff; }
 
-    /* Template badge lentelėje */
-    .template-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 3px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    .template-badge.audit {
-      background: #E3F2FD;
-      color: #0D47A1;
-    }
-    .template-badge.restrukturizavimas {
-      background: #FFF3E0;
-      color: #E65100;
-    }
-    .template-badge.bankrotas {
-      background: #EDE7F6;
-      color: #4527A0;
-    }
-    .template-badge.legacy {
-      background: #F5F5F5;
-      color: #666;
-    }
+    /* ===================== ŠABLONŲ ŽENKLIUKAI ===================== */
+    .template-badge{ display:inline-block; padding:2px 7px; border-radius:3px; font-size:10.5px;
+      font-weight:700; text-transform:uppercase; letter-spacing:.04em; border:1px solid transparent; }
+    .template-badge.audit{ background:var(--info-bg); color:var(--info); border-color:var(--info-bd); }
+    .template-badge.restrukturizavimas{ background:var(--warn-bg); color:var(--warn); border-color:var(--warn-bd); }
+    .template-badge.bankrotas{ background:#F1EFFB; color:#4B3796; border-color:#DBD4F2; }
+    .template-badge.legacy{ background:#F1F3F5; color:var(--muted); border-color:var(--bd); }
+    .badge-submitted_interim{ background:var(--warn-bg); color:var(--warn); border-color:var(--warn-bd); }
+    .badge-submitted_final{ background:var(--ok-bg); color:var(--ok); border-color:var(--ok-bd); }
 
-    /* Naujos būsenų spalvos */
-    .badge-submitted_interim {
-      background: #FFF9E6;
-      color: #F57C00;
-    }
-    .badge-submitted_final {
-      background: #E8F5E9;
-      color: #2E7D32;
-    }
+    /* ===================== KLAUSIMYNO PERŽIŪRA ===================== */
+    .admin-section{ background:#fff; border:1px solid var(--bd); border-radius:var(--r);
+      margin-bottom:12px; overflow:hidden; }
+    .admin-section-header{ background:#F7F9FB; padding:9px 14px; display:flex;
+      justify-content:space-between; align-items:center; gap:10px;
+      border-bottom:1px solid var(--bd2); font-size:13px; font-weight:600; color:var(--ink); }
+    .section-num-badge{ display:inline-block; background:var(--navy); color:#fff; padding:1px 7px;
+      border-radius:3px; font-size:10.5px; font-weight:700; margin-right:8px;
+      min-width:20px; text-align:center; }
+    .admin-item{ padding:11px 15px; border-top:1px solid var(--bd2); }
+    .admin-item:first-of-type{ border-top:none; }
+    .admin-item-header{ display:flex; justify-content:space-between; align-items:flex-start;
+      gap:10px; margin-bottom:5px; }
+    .item-num{ color:var(--faint); font-weight:700; margin-right:6px; }
+    .badge-small{ padding:2px 6px; border-radius:3px; font-size:10px; font-weight:700;
+      text-transform:uppercase; letter-spacing:.04em; white-space:nowrap;
+      border:1px solid transparent; }
+    .badge-small.na{ background:var(--info-bg); color:var(--info); border-color:var(--info-bd); }
+    .badge-small.answered{ background:var(--ok-bg); color:var(--ok); border-color:var(--ok-bd); }
+    .badge-small.pending{ background:#F1F3F5; color:var(--muted); border-color:var(--bd); }
 
-    /* V4.0 Admin detail modal stiliai */
-    .admin-section {
-      background: white;
-      border: 1px solid var(--kab-border);
-      border-left: 3px solid var(--kab-gold);
-      border-radius: 5px;
-      margin-bottom: 14px;
-      overflow: hidden;
-    }
-    .admin-section-header {
-      background: linear-gradient(135deg, #F9F7F0, #F7F4EC);
-      padding: 10px 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--kab-border);
-    }
-    .section-num-badge {
-      display: inline-block;
-      background: var(--kab-gold);
-      color: var(--kab-navy);
-      padding: 2px 8px;
-      border-radius: 3px;
-      font-size: 11px;
-      font-weight: 700;
-      margin-right: 8px;
-      min-width: 22px;
-      text-align: center;
-    }
-
-    .admin-item {
-      padding: 12px 16px;
-      border-top: 1px solid #F0F0F0;
-    }
-    .admin-item:first-of-type { border-top: none; }
-    .admin-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
-    .item-num {
-      color: var(--kab-gold);
-      font-weight: 700;
-      margin-right: 6px;
-    }
-    .badge-small {
-      padding: 2px 7px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      white-space: nowrap;
-    }
-    .badge-small.na {
-      background: #E3F2FD;
-      color: #1565C0;
-    }
-    .badge-small.answered {
-      background: #E8F5E9;
-      color: #2E7D32;
-    }
-    .badge-small.pending {
-      background: #F5F5F5;
-      color: #666;
-    }
-
-    /* Komentarai */
-    .admin-comment {
-      padding: 8px 12px;
-      border-radius: 5px;
-      margin-bottom: 6px;
-      font-size: 13px;
-    }
-    .admin-comment.admin {
-      background: #FFF9E6;
-      border-left: 3px solid var(--kab-gold);
-    }
-    .admin-comment.client {
-      background: #F0F4F8;
-      border-left: 3px solid var(--kab-navy);
-    }
-    .admin-comment-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
-      font-size: 11px;
-    }
-    .role-chip {
-      padding: 1px 6px;
-      border-radius: 3px;
-      font-size: 9px;
-      font-weight: 700;
-    }
-    .role-chip.admin { background: var(--kab-gold); color: var(--kab-navy); }
-    .role-chip.client { background: var(--kab-navy); color: white; }
-
-    .admin-comment-form {
-      margin-top: 10px;
-      padding: 10px;
-      background: #FAFAFA;
-      border: 1px dashed var(--kab-border);
-      border-radius: 5px;
-    }
-    .admin-comment-form textarea {
-      width: 100%;
-      padding: 6px 10px;
-      border: 1px solid var(--kab-border);
-      border-radius: 4px;
-      font-family: inherit;
-      font-size: 13px;
-      resize: vertical;
-      min-height: 50px;
-    }
+    /* ===================== KOMENTARAI ===================== */
+    .admin-comment{ padding:8px 11px; border-radius:var(--r-sm); margin-bottom:6px;
+      font-size:12.5px; border:1px solid var(--bd2); }
+    .admin-comment.admin{ background:var(--warn-bg); border-color:var(--warn-bd); }
+    .admin-comment.client{ background:var(--info-bg); border-color:var(--info-bd); }
+    .admin-comment-header{ display:flex; align-items:center; gap:8px; margin-bottom:4px;
+      font-size:11px; color:var(--muted); }
+    .role-chip{ padding:1px 6px; border-radius:3px; font-size:9.5px; font-weight:700;
+      text-transform:uppercase; letter-spacing:.04em; }
+    .role-chip.admin{ background:var(--gold-bg); color:var(--gold-tx); border:1px solid var(--gold-bd); }
+    .role-chip.client{ background:var(--navy); color:#fff; }
+    .admin-comment-form{ margin-top:10px; padding:10px; background:#F7F9FB;
+      border:1px solid var(--bd); border-radius:var(--r-sm); }
+    .admin-comment-form textarea{ width:100%; padding:7px 10px; border:1px solid var(--bd);
+      border-radius:var(--r-sm); font-family:inherit; font-size:13px; color:var(--ink);
+      resize:vertical; min-height:52px; }
+    .admin-comment-form textarea:focus{ outline:none; border-color:var(--navy);
+      box-shadow:0 0 0 3px rgba(11,30,63,.07); }
   </style>
 
   <script>
@@ -1517,6 +1082,7 @@
   }
 
   // Init
+  function applyPendingView(){ try{ if(window.__pendingView){ const v=window.__pendingView; window.__pendingView=null; setTimeout(()=>{ try{ navigateTo(v); }catch(_){} }, 350); } }catch(_){} }
   (async function init() {
     // 1. Pakvietimo nuoroda? (#invite_token=...&email=...)
     const hash = window.location.hash || '';
@@ -1525,10 +1091,17 @@
       return;
     }
 
+    // 1b. Gili nuoroda iš kito modulio (#view=submissions ir pan.)
+    if (hash.includes('view=')) {
+      const v = (hash.match(/view=([a-z]+)/) || [])[1];
+      if (v) window.__pendingView = v;
+    }
+
     // 2. Įprastas srautas
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       await bootstrapAfterLogin(session.user);
+      applyPendingView();
     } else {
       showLogin();
     }
@@ -1650,7 +1223,7 @@
     const description = opt ? opt.dataset.description : '';
     const descEl = document.getElementById('spec-template-description');
     if (description) {
-      descEl.innerHTML = '💡 ' + description;
+      descEl.innerHTML = description;
       descEl.style.display = 'block';
     } else {
       descEl.style.display = 'none';
@@ -1771,7 +1344,7 @@
     const descEl = document.getElementById('template-description');
 
     if (description) {
-      descEl.innerHTML = '💡 ' + description;
+      descEl.innerHTML = description;
       descEl.style.display = 'block';
     } else {
       descEl.style.display = 'none';
@@ -1873,19 +1446,19 @@
         return `<td class="center"><span class="perm-level-badge ${lvl}">${label}</span></td>`;
       }).join('');
       const status = !u.is_active
-        ? '<span title="Neaktyvus">⛔</span>'
-        : (u.has_auth && u.last_login_at ? '<span title="Aktyvus">✅</span>' : '<span title="Pakviestas, dar neprisijungė">✉️</span>');
+        ? '<span title="Neaktyvus"><span class="ic ic-ban"></span></span>'
+        : (u.has_auth && u.last_login_at ? '<span title="Aktyvus"><span class="ic ic-check"></span></span>' : '<span title="Pakviestas, dar neprisijungė"><span class="ic ic-mail"></span></span>');
       const resendBtn = u.is_active && u.id !== MY_ACCESS.id
-        ? `<button class="btn btn-ghost btn-small" title="Siųsti prisijungimo nuorodą iš naujo" onclick="resendInvite('${u.id}')">✉️</button>` : '';
+        ? `<button class="btn btn-ghost btn-small" title="Siųsti prisijungimo nuorodą iš naujo" onclick="resendInvite('${u.id}')"><span class="ic ic-mail"></span></button>` : '';
       const deleteBtn = u.id !== MY_ACCESS.id
-        ? `<button class="btn btn-ghost btn-small" title="Ištrinti" style="color:#C00000;" onclick="deleteSystemUser('${u.id}')">🗑️</button>` : '';
+        ? `<button class="btn btn-ghost btn-small" title="Ištrinti" style="color:#C00000;" onclick="deleteSystemUser('${u.id}')"><span class="ic ic-trash"></span></button>` : '';
       html += `<tr>
         <td><strong>${escapeHtml(u.full_name || '—')}</strong><br><small style="color:#9CA3AF;">${escapeHtml(u.email)}</small></td>
         <td><span class="role-badge ${u.role}">${u.role === 'superadmin' ? 'SUPERADMIN' : 'Vartotojas'}</span></td>
         ${modCells}
         <td class="center">${status}</td>
         <td class="center" style="white-space:nowrap;">
-          <button class="btn btn-ghost btn-small" title="Redaguoti" onclick="openUserModal('${u.id}')">✏️</button>
+          <button class="btn btn-ghost btn-small" title="Redaguoti" onclick="openUserModal('${u.id}')"><span class="ic ic-pencil"></span></button>
           ${resendBtn}${deleteBtn}
         </td>
       </tr>`;
@@ -1925,7 +1498,7 @@
     await loadSystemModules();
     const u = userId ? SYSTEM_USERS.find(x => x.id === userId) : null;
     document.getElementById('um-id').value = u ? u.id : '';
-    document.getElementById('user-modal-title').textContent = u ? '✏️ Redaguoti vartotoją' : '➕ Naujas vartotojas';
+    document.getElementById('user-modal-title').textContent = u ? 'Redaguoti vartotoją' : 'Naujas vartotojas';
     document.getElementById('um-name').value = u ? (u.full_name || '') : '';
     document.getElementById('um-email').value = u ? u.email : '';
     document.getElementById('um-email').disabled = !!u;
@@ -1982,7 +1555,7 @@
           await loadSystemUsers();
           return;
         }
-        alertEl.innerHTML = '<div class="alert alert-success">✅ Vartotojas sukurtas, pakvietimas išsiųstas!</div>';
+        alertEl.innerHTML = '<div class="alert alert-success"><span class="ic ic-check"></span> Vartotojas sukurtas, pakvietimas išsiųstas!</div>';
         setTimeout(() => { closeUserModal(); }, 1200);
       } else {
         const { data, error } = await supabase.rpc('admin_update_system_user', {
@@ -2314,12 +1887,12 @@
     `;
 
     const statusLabels = {
-      draft: { label: '📝 Juodraštis', class: 'badge-draft' },
-      submitted: { label: '📬 Pateiktas', class: 'badge-submitted' },
+      draft: { label: 'Juodraštis', class: 'badge-draft' },
+      submitted: { label: 'Pateiktas', class: 'badge-submitted' },
       submitted_interim: { label: '⏳ Tarpinis', class: 'badge-submitted_interim' },
       submitted_final: { label: '✅ Galutinis', class: 'badge-submitted_final' },
       reviewed: { label: '✓ Peržiūrėtas', class: 'badge-reviewed' },
-      archived: { label: '🗄️ Archyvas', class: 'badge-archived' }
+      archived: { label: 'Archyvas', class: 'badge-archived' }
     };
 
     for (const s of filtered) {
@@ -2332,13 +1905,13 @@
       const tplCode = getTemplateCode(s);
       let tplBadge;
       if (tplCode === 'restrukturizavimas') {
-        tplBadge = '<span class="template-badge restrukturizavimas">📊 Restrukt.</span>';
+        tplBadge = '<span class="template-badge restrukturizavimas"><span class="ic ic-chart"></span> Restrukt.</span>';
       } else if (tplCode === 'auditas') {
-        tplBadge = '<span class="template-badge audit">🔍 Auditas</span>';
+        tplBadge = '<span class="template-badge audit"><span class="ic ic-search"></span> Auditas</span>';
       } else if (tplCode === 'bankrotas_fizinis') {
-        tplBadge = '<span class="template-badge bankrotas">⚖️ FA bankrotas</span>';
+        tplBadge = '<span class="template-badge bankrotas"><span class="ic ic-scale"></span> FA bankrotas</span>';
       } else {
-        tplBadge = '<span class="template-badge legacy">📋 Auditas (senas)</span>';
+        tplBadge = '<span class="template-badge legacy"><span class="ic ic-clipboard"></span> Auditas (senas)</span>';
       }
 
       html += `
@@ -2354,11 +1927,11 @@
           <td style="font-size: 12px;">${dateStr}</td>
           <td class="actions-cell">
             <button class="btn btn-primary btn-small" onclick="viewDetail('${s.id}')">Peržiūrėti</button>
-            ${s.status === 'draft' ? `<button class="btn btn-ghost btn-small" onclick="copyLinkForSubmission('${s.id}')" title="Kopijuoti nuorodą">🔗</button>` : ''}
+            ${s.status === 'draft' ? `<button class="btn btn-ghost btn-small" onclick="copyLinkForSubmission('${s.id}')" title="Kopijuoti nuorodą"><span class="ic ic-link"></span></button>` : ''}
             ${s.status === 'archived'
-              ? `<button class="btn btn-ghost btn-small" onclick="unarchiveSubmission('${s.id}')" title="Grąžinti iš archyvo">↩️</button>`
-              : `<button class="btn btn-ghost btn-small" onclick="archiveSubmission('${s.id}')" title="Archyvuoti">🗄️</button>`}
-            <button class="btn btn-ghost btn-small" onclick="deleteSubmission('${s.id}', '${escapeHtml((s.client_name || '').replace(/'/g, ''))}')" title="Ištrinti visam laikui" style="color:#C00000;">🗑️</button>
+              ? `<button class="btn btn-ghost btn-small" onclick="unarchiveSubmission('${s.id}')" title="Grąžinti iš archyvo"><span class="ic ic-back"></span></button>`
+              : `<button class="btn btn-ghost btn-small" onclick="archiveSubmission('${s.id}')" title="Archyvuoti"><span class="ic ic-archive"></span></button>`}
+            <button class="btn btn-ghost btn-small" onclick="deleteSubmission('${s.id}', '${escapeHtml((s.client_name || '').replace(/'/g, ''))}')" title="Ištrinti visam laikui" style="color:#C00000;"><span class="ic ic-trash"></span></button>
           </td>
         </tr>
       `;
@@ -2582,11 +2155,11 @@
       });
 
       for (const [sec, secFiles] of Object.entries(sections)) {
-        filesHtml += `<h4 style="color: var(--kab-navy); margin: 15px 0 8px 0;">📁 ${escapeHtml(sec)}</h4>`;
+        filesHtml += `<h4 style="color: var(--kab-navy); margin: 15px 0 8px 0;"><span class="ic ic-folder"></span> ${escapeHtml(sec)}</h4>`;
         for (const f of secFiles) {
           filesHtml += `
             <div class="file-list-item">
-              <span>📄 ${escapeHtml(f.original_name)} <small style="color:#999;">(${formatBytes(f.file_size)})</small></span>
+              <span><span class="ic ic-file"></span> ${escapeHtml(f.original_name)} <small style="color:#999;">(${formatBytes(f.file_size)})</small></span>
               <a href="${f.download_url}" class="btn btn-gold btn-small" download>Parsisiųsti</a>
             </div>
           `;
@@ -2602,9 +2175,9 @@
       <div style="display: flex; justify-content: space-between; align-items: start;">
         <h2 style="margin-top:0;">
           ${escapeHtml(sub.client_name || '-')}
-          <span class="template-badge legacy" style="font-size: 11px; margin-left: 10px; vertical-align: middle;">📋 Auditas (senas)</span>
+          <span class="template-badge legacy" style="font-size: 11px; margin-left: 10px; vertical-align: middle;"><span class="ic ic-clipboard"></span> Auditas (senas)</span>
         </h2>
-        <button class="btn btn-ghost btn-small" onclick="closeModal()">✕ Uždaryti</button>
+        <button class="btn btn-ghost btn-small" onclick="closeModal()"><span class="ic ic-x"></span> Uždaryti</button>
       </div>
 
       <table style="width:100%; margin-bottom: 20px;">
@@ -2627,11 +2200,11 @@
 
       ${renderAdminActionsBlock(sub)}
 
-      <h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px;">📝 Atsakymai</h3>
+      <h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px;"><span class="ic ic-pencil"></span> Atsakymai</h3>
       ${answersHtml}
 
-      <h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px; margin-top: 25px;">📎 Dokumentai (${files.length})</h3>
-      <p style="font-size: 12px; color: #999;">⏱️ Parsisiuntimo nuorodos galioja 7 dienas</p>
+      <h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px; margin-top: 25px;"><span class="ic ic-clip"></span> Dokumentai (${files.length})</h3>
+      <p style="font-size: 12px; color: #999;"><span class="ic ic-timer"></span> Parsisiuntimo nuorodos galioja 7 dienas</p>
       ${filesHtml}
 
       ${sub.status === 'draft' ? `
@@ -2803,12 +2376,12 @@
     const { submission: sub, template, sections, items, files, comments, customSections } = state;
 
     const statusLabels = {
-      draft: '📝 Juodraštis',
-      submitted: '📬 Pateikta',
+      draft: 'Juodraštis',
+      submitted: 'Pateikta',
       submitted_interim: '⏳ Tarpinis pateikimas',
       submitted_final: '✅ Galutinis pateikimas',
       reviewed: '✓ Peržiūrėta',
-      archived: '🗄️ Archyvuota'
+      archived: 'Archyvuota'
     };
 
     const statusSelectOptions = Object.keys(statusLabels).map(s =>
@@ -2833,7 +2406,7 @@
 
     // Template badge
     const tplBadgeClass = template.code === 'restrukturizavimas' ? 'restrukturizavimas' : 'audit';
-    const tplBadgeIcon = template.code === 'restrukturizavimas' ? '📊' : '🔍';
+    const tplBadgeIcon = template.code === 'restrukturizavimas' ? '<span class=\'ic ic-chart\'></span>' : '<span class=\'ic ic-search\'></span>';
 
     let sectionsHtml = '';
     let lastEntityIdx = null;
@@ -2852,7 +2425,7 @@
     // Custom sections
     let customHtml = '';
     if (customSections.length > 0) {
-      customHtml = '<h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px; margin-top: 25px;">➕ Kliento pridėti straipsniai</h3>';
+      customHtml = '<h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px; margin-top: 25px;"><span class="ic ic-plus"></span> Kliento pridėti straipsniai</h3>';
       for (const cs of customSections) {
         const csFiles = files[`custom_${cs.id}`] || [];
         customHtml += `
@@ -2880,10 +2453,10 @@
           <div style="color: #666; font-size: 13px;">
             Kontaktinis asmuo: <strong>${escapeHtml(sub.client_contact || '-')}</strong>
             · ${escapeHtml(sub.client_email || '-')}
-            · <button class="btn btn-ghost btn-small" style="font-size:11px; padding:2px 8px;" onclick="openEditClientCard('${sub.id}')">✏️ Redaguoti</button>
+            · <button class="btn btn-ghost btn-small" style="font-size:11px; padding:2px 8px;" onclick="openEditClientCard('${sub.id}')"><span class="ic ic-pencil"></span> Redaguoti</button>
           </div>
         </div>
-        <button class="btn btn-ghost btn-small" onclick="closeModal()">✕ Uždaryti</button>
+        <button class="btn btn-ghost btn-small" onclick="closeModal()"><span class="ic ic-x"></span> Uždaryti</button>
       </div>
 
       <!-- Progreso juosta -->
@@ -2901,25 +2474,25 @@
 
       <!-- Meta -->
       <div style="display: flex; gap: 15px; font-size: 12px; color: #666; margin-bottom: 15px; flex-wrap: wrap;">
-        <span>📅 Sukurta: <strong>${new Date(sub.created_at).toLocaleString('lt-LT')}</strong></span>
-        ${sub.interim_submitted_at ? `<span>⏳ Tarpinis: <strong>${new Date(sub.interim_submitted_at).toLocaleString('lt-LT')}</strong></span>` : ''}
-        ${sub.submitted_at ? `<span>✅ Galutinis: <strong>${new Date(sub.submitted_at).toLocaleString('lt-LT')}</strong></span>` : ''}
-        ${sub.reviewed_at ? `<span>✓ Peržiūrėta: <strong>${new Date(sub.reviewed_at).toLocaleString('lt-LT')}</strong></span>` : ''}
+        <span><span class="ic ic-calendar"></span> Sukurta: <strong>${new Date(sub.created_at).toLocaleString('lt-LT')}</strong></span>
+        ${sub.interim_submitted_at ? `<span><span class="ic ic-clock"></span> Tarpinis: <strong>${new Date(sub.interim_submitted_at).toLocaleString('lt-LT')}</strong></span>` : ''}
+        ${sub.submitted_at ? `<span><span class="ic ic-check"></span> Galutinis: <strong>${new Date(sub.submitted_at).toLocaleString('lt-LT')}</strong></span>` : ''}
+        ${sub.reviewed_at ? `<span><span class="ic ic-check"></span> Peržiūrėta: <strong>${new Date(sub.reviewed_at).toLocaleString('lt-LT')}</strong></span>` : ''}
       </div>
 
       <!-- Ataskaitos generavimas -->
       <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; padding: 12px 15px; background: linear-gradient(135deg, var(--kab-cream), #FFF); border-radius: 5px; border: 1px solid var(--kab-gold);">
         <div style="flex: 1;">
-          <strong style="color: var(--kab-navy); font-size: 13px;">📊 Generuoti ataskaitą:</strong>
+          <strong style="color: var(--kab-navy); font-size: 13px;"><span class="ic ic-chart"></span> Generuoti ataskaitą:</strong>
           <div style="font-size: 11px; color: #666; margin-top: 2px;">
             Excel — tik tekstinė ataskaita · ZIP — tekstinė ataskaita + visi failai (visos versijos)
           </div>
         </div>
         <button class="btn btn-gold btn-small" onclick="generateReport('${sub.id}', 'xlsx')" id="btn-gen-xlsx">
-          📄 Excel
+          <span class="ic ic-file"></span> Excel
         </button>
         <button class="btn btn-navy btn-small" onclick="generateReport('${sub.id}', 'zip')" id="btn-gen-zip">
-          📦 ZIP archyvas
+          <span class="ic ic-package"></span> ZIP archyvas
         </button>
       </div>
 
@@ -2930,7 +2503,7 @@
           ${statusSelectOptions}
         </select>
         <button class="btn btn-ghost btn-small" onclick="copyLinkForSubmission('${sub.id}')" style="margin-left: auto;">
-          🔗 Kopijuoti kliento nuorodą
+          <span class="ic ic-link"></span> Kopijuoti kliento nuorodą
         </button>
       </div>
 
@@ -2945,7 +2518,7 @@
       ` : ''}
 
       <!-- Skyriai -->
-      <h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px;">📋 Klausimyno skyriai</h3>
+      <h3 style="color: var(--kab-navy); border-bottom: 1px solid var(--kab-gold); padding-bottom: 5px;"><span class="ic ic-clipboard"></span> Klausimyno skyriai</h3>
       ${sectionsHtml}
 
       ${customHtml}
@@ -2973,11 +2546,11 @@
       }
     }
     const sectionStatus = answered === section.items.length
-      ? '<span style="color: var(--kab-success); font-size: 11px; font-weight: 700;">✓ ATLIKTA</span>'
-      : `<span style="color: #FFE0B2; font-size: 11px; font-weight: 700;">⏳ ${answered}/${section.items.length}</span>`;
+      ? '<span style="color: var(--kab-success); font-size: 11px; font-weight: 700;"><span class="ic ic-check"></span> ATLIKTA</span>'
+      : `<span style="color: #FFE0B2; font-size: 11px; font-weight: 700;"><span class="ic ic-clock"></span> ${answered}/${section.items.length}</span>`;
 
     const pendingBadge = pendingCount > 0
-      ? `<span class="pending-badge">⚠ ${pendingCount} nauja</span>`
+      ? `<span class="pending-badge"><span class="ic ic-alert"></span> ${pendingCount} nauja</span>`
       : '';
 
     // Skyriai sukleidiami pagal nutylėjimą, IŠSKYRUS tuos kur yra pending review
@@ -2986,7 +2559,7 @@
     return `
       <div class="collapsible-section ${collapsedClass}">
         <div class="collapsible-header" onclick="this.parentElement.classList.toggle('collapsed')">
-          <span class="toggle-icon">▼</span>
+          <span class="toggle-icon"><span class="ic ic-chevrond"></span></span>
           <span class="section-title">
             <span style="background:var(--kab-gold);color:var(--kab-navy);padding:2px 7px;border-radius:3px;font-weight:700;font-size:11px;margin-right:8px;">${section.number}</span>
             ${escapeHtml(section.title)}
@@ -3014,9 +2587,9 @@
     if (isNA) {
       statusBadge = '<span class="badge-small na">Neaktualu</span>';
     } else if (hasContent) {
-      statusBadge = '<span class="badge-small answered">✓ Pateikta</span>';
+      statusBadge = '<span class="badge-small answered"><span class="ic ic-check"></span> Pateikta</span>';
     } else {
-      statusBadge = '<span class="badge-small pending">○ Laukia</span>';
+      statusBadge = '<span class="badge-small pending"><span class="ic ic-circle"></span> Laukia</span>';
     }
 
     const numberLabel = itemDef._period_label || `${section.number}.${section.items.indexOf(itemDef) + 1}`;
@@ -3030,7 +2603,7 @@
       if (itemState?.client_comment && itemState.client_comment.trim().length > 0) {
         contentHtml += `
           <div style="margin: 8px 0; padding: 10px 12px; background: #F9F9F9; border-left: 3px solid #999; border-radius: 3px;">
-            <div style="font-size: 11px; color: #999; margin-bottom: 4px;">💬 Kliento atsakymas:</div>
+            <div style="font-size: 11px; color: #999; margin-bottom: 4px;"><span class="ic ic-chat"></span> Kliento atsakymas:</div>
             <div style="white-space: pre-wrap;">${escapeHtml(itemState.client_comment)}</div>
           </div>
         `;
@@ -3080,14 +2653,14 @@
               <input type="checkbox" id="comment-visible-${itemDef.id}" checked>
               Matomas klientui (paklausimas)
             </label>
-            <button class="btn btn-gold btn-small" onclick="addAdminComment('${itemDef.id}')">💬 Siųsti</button>
+            <button class="btn btn-gold btn-small" onclick="addAdminComment('${itemDef.id}')"><span class="ic ic-chat"></span> Siųsti</button>
           </div>
         </div>
       `;
     }
 
     const pendingStar = itemState?.pending_review
-      ? `<span class="pending-star" title="Klientas atnaujino informaciją${itemState.last_updated_by_email ? ' (' + escapeHtml(itemState.last_updated_by_email) + ')' : ''}">★</span>`
+      ? `<span class="pending-star" title="Klientas atnaujino informaciją${itemState.last_updated_by_email ? ' (' + escapeHtml(itemState.last_updated_by_email) + ')' : ''}"><span class="ic ic-star"></span></span>`
       : '';
 
     const itemHighlight = itemState?.pending_review
@@ -3121,7 +2694,7 @@
 
       html += `
         <div class="file-list-item">
-          <span>📄 ${escapeHtml(f.original_name)} ${badge}
+          <span><span class="ic ic-file"></span> ${escapeHtml(f.original_name)} ${badge}
             <small style="color:#999; margin-left: 8px;">${formatBytes(f.file_size)} · ${new Date(f.uploaded_at).toLocaleDateString('lt-LT')}</small>
           </span>
           <a href="${f.download_url}" class="btn btn-gold btn-small" download>Parsisiųsti</a>
@@ -3355,7 +2928,7 @@
 
   // ===== ARCHYVAVIMAS =====
   async function archiveSubmission(id) {
-    if (!confirm('Archyvuoti šį klausimyną?\n\nJis bus paslėptas iš pagrindinio sąrašo, bet duomenys išliks. Galėsite jį rasti per „🗄️ Archyvas" filtrą ir bet kada grąžinti.')) return;
+    if (!confirm('Archyvuoti šį klausimyną?\n\nJis bus paslėptas iš pagrindinio sąrašo, bet duomenys išliks. Galėsite jį rasti per „Archyvas" filtrą ir bet kada grąžinti.')) return;
     const { error } = await supabase
       .from('questionnaire_submissions')
       .update({ status: 'archived' })
@@ -3438,7 +3011,7 @@
         <strong style="font-size:13px; color:${color};">${statusHtml}</strong>
         <span style="font-size:12px; color:#999;">iki ${expStr}</span>
         <button class="btn btn-navy btn-small" style="margin-left:auto;" onclick="extendToken('${sub.id}', 90)">
-          🔄 Pratęsti 90 d.
+          <span class="ic ic-refresh"></span> Pratęsti 90 d.
         </button>
       </div>
     `;
@@ -3448,14 +3021,14 @@
   function renderAdminActionsBlock(sub) {
     const nameSafe = escapeHtml((sub.client_name || '').replace(/'/g, ''));
     const archiveBtn = sub.status === 'archived'
-      ? `<button class="btn btn-ghost btn-small" onclick="unarchiveSubmission('${sub.id}')">↩️ Grąžinti iš archyvo</button>`
-      : `<button class="btn btn-ghost btn-small" onclick="archiveSubmission('${sub.id}')">🗄️ Archyvuoti</button>`;
+      ? `<button class="btn btn-ghost btn-small" onclick="unarchiveSubmission('${sub.id}')"><span class="ic ic-back"></span> Grąžinti iš archyvo</button>`
+      : `<button class="btn btn-ghost btn-small" onclick="archiveSubmission('${sub.id}')"><span class="ic ic-archive"></span> Archyvuoti</button>`;
     return `
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:20px; padding:10px; background:#F9F9F9; border-radius:5px;">
         <span style="font-size:13px; color:#666;">Veiksmai:</span>
         ${archiveBtn}
         <button class="btn btn-ghost btn-small" style="margin-left:auto; color:#C00000;" onclick="deleteSubmission('${sub.id}', '${nameSafe}')">
-          🗑️ Ištrinti visam laikui
+          <span class="ic ic-trash"></span> Ištrinti visam laikui
         </button>
       </div>
       <div id="collaborators-block-${sub.id}" data-submission-id="${sub.id}">
@@ -3466,7 +3039,7 @@
       </div>
       <div style="margin-bottom: 16px;">
         <button class="btn btn-ghost btn-small" onclick="clearPendingReview('${sub.id}')">
-          ✓ Pažymėti naują medžiagą kaip peržiūrėtą (nuvalyti raudonas žvaigždutes)
+          <span class="ic ic-check"></span> Pažymėti naują medžiagą kaip peržiūrėtą (nuvalyti raudonas žvaigždutes)
         </button>
       </div>
     `;
@@ -3481,9 +3054,9 @@
     return `
       <div style="margin-bottom: 20px; padding: 12px 15px; background: #F0F7FF; border: 1px solid #5B7CB5; border-radius: 5px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-          <strong style="color: var(--kab-navy); font-size: 14px;">🏢 KAB stebėtojai (peržiūrai, gaus pranešimus)</strong>
+          <strong style="color: var(--kab-navy); font-size: 14px;"><span class="ic ic-building"></span> KAB stebėtojai (peržiūrai, gaus pranešimus)</strong>
           <button class="btn btn-navy btn-small" onclick="openAddObserverDialog('${submissionId}')">
-            ➕ Pridėti stebėtoją
+            <span class="ic ic-plus"></span> Pridėti stebėtoją
           </button>
         </div>
         <div id="observers-list-${submissionId}" style="font-size: 13px; color: #666;">
@@ -3529,7 +3102,7 @@
         <td style="padding: 6px 4px; text-align:center;">${o.notify ? '✅' : '⏸️'}</td>
         <td style="padding: 6px 4px; font-size:11px; color:#666;">${lastNotif}</td>
         <td style="padding: 6px 4px; text-align:center;">
-          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px; color:#C00000;" onclick="removeObserver('${o.id}','${submissionId}','${escapeHtml(o.email).replace(/'/g, '&#39;')}')">🗑️</button>
+          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px; color:#C00000;" onclick="removeObserver('${o.id}','${submissionId}','${escapeHtml(o.email).replace(/'/g, '&#39;')}')"><span class="ic ic-trash"></span></button>
         </td>
       </tr>`;
     }
@@ -3668,9 +3241,9 @@
     return `
       <div style="margin-bottom: 20px; padding: 12px 15px; background: #FFFEF7; border: 1px solid var(--kab-gold); border-radius: 5px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-          <strong style="color: var(--kab-navy); font-size: 14px;">👥 Klausimyno vartotojai (prisijungimo el. paštai)</strong>
+          <strong style="color: var(--kab-navy); font-size: 14px;"><span class="ic ic-users"></span> Klausimyno vartotojai (prisijungimo el. paštai)</strong>
           <button class="btn btn-navy btn-small" onclick="openAddCollaboratorDialog('${submissionId}')">
-            ➕ Pridėti vartotoją
+            <span class="ic ic-plus"></span> Pridėti vartotoją
           </button>
         </div>
         <div id="collaborators-list-${submissionId}" style="font-size: 13px; color: #666;">
@@ -3724,11 +3297,11 @@
         <td style="padding: 6px 4px;">${c.login_count || 0}</td>
         <td style="padding: 6px 4px; font-size:11px; color:#666;">${lastLogin}</td>
         <td style="padding: 6px 4px; text-align:center; white-space:nowrap;">
-          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px;" onclick="sendCollaboratorInvite('${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')" title="Siųsti laišką su nuoroda">📧 Siųsti</button>
-          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px;" onclick="copyCollaboratorLink('${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')" title="Kopijuoti nuorodą rankiniam pasiuntimui">🔗 Kopijuoti</button>
+          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px;" onclick="sendCollaboratorInvite('${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')" title="Siųsti laišką su nuoroda"><span class="ic ic-mail"></span> Siųsti</button>
+          <button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px;" onclick="copyCollaboratorLink('${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')" title="Kopijuoti nuorodą rankiniam pasiuntimui"><span class="ic ic-link"></span> Kopijuoti</button>
           ${c.is_owner
               ? ''
-              : `<button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px; color:#C00000;" onclick="removeCollaborator('${c.id}','${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')">🗑️</button>`}
+              : `<button class="btn btn-ghost btn-small" style="font-size:11px; padding:3px 6px; color:#C00000;" onclick="removeCollaborator('${c.id}','${submissionId}','${escapeHtml(c.email).replace(/'/g, '&#39;')}')"><span class="ic ic-trash"></span></button>`}
         </td>
       </tr>`;
     }
@@ -3771,7 +3344,7 @@
       if (sendInvite) {
         await sendCollaboratorInvite(submissionId, email);
       } else {
-        alert('Vartotojas pridėtas. Kad jis galėtų prisijungti, paspauskite „📧 Siųsti nuorodą".');
+        alert('Vartotojas pridėtas. Kad jis galėtų prisijungti, paspauskite „Siųsti nuorodą".');
       }
     } catch (e) {
       console.error('addCollaborator error', e);
@@ -3845,25 +3418,25 @@
       modal.innerHTML = `
         <div class="modal" style="max-width: 720px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-            <h2 style="margin:0;">🔗 Nuoroda klientui</h2>
-            <button class="btn btn-ghost btn-small" onclick="this.closest('.modal-backdrop').remove()">✕</button>
+            <h2 style="margin:0;"><span class="ic ic-link"></span> Nuoroda klientui</h2>
+            <button class="btn btn-ghost btn-small" onclick="this.closest('.modal-backdrop').remove()"><span class="ic ic-x"></span></button>
           </div>
           <p style="font-size: 13px; color: #5A5A5A;">Nuoroda vartotojui <strong>${safeEmail}</strong>. Galite nukopijuoti ir įklijuoti į savo el. paštą.</p>
 
           <div style="margin: 15px 0;">
             <label style="font-weight: 600; color: var(--kab-navy); font-size: 13px;">Tiesioginė nuoroda:</label>
             <div id="copy-link-url-box" style="background: #F7F4EC; border: 1px solid var(--kab-gold); border-radius: 5px; padding: 10px 14px; margin-top: 6px; font-family: monospace; font-size: 12px; word-break: break-all; color: var(--kab-navy);">${safeUrl}</div>
-            <button class="btn btn-gold" style="margin-top: 8px;" onclick="copyToClipboard(this, document.getElementById('copy-link-url-box').textContent, '📋 Kopijuoti nuorodą')">📋 Kopijuoti nuorodą</button>
+            <button class="btn btn-gold" style="margin-top: 8px;" onclick="copyToClipboard(this, document.getElementById('copy-link-url-box').textContent, 'Kopijuoti nuorodą')"><span class="ic ic-clipboard"></span> Kopijuoti nuorodą</button>
           </div>
 
           <div style="margin: 20px 0 8px 0;">
-            <label style="font-weight: 600; color: var(--kab-navy); font-size: 13px;">📧 Paruoštas laiško šablonas (su instrukcija):</label>
+            <label style="font-weight: 600; color: var(--kab-navy); font-size: 13px;"><span class="ic ic-mail"></span> Paruoštas laiško šablonas (su instrukcija):</label>
             <textarea id="copy-email-template" readonly style="width:100%; min-height: 280px; margin-top: 6px; padding: 12px; font-size: 12px; font-family: monospace; border: 1px solid #E5E5E5; border-radius: 5px; background: #FAFAFA; color: #333; resize: vertical;">${safeTemplate}</textarea>
-            <button class="btn btn-navy" style="margin-top: 8px;" onclick="copyToClipboard(this, document.getElementById('copy-email-template').value, '📋 Kopijuoti laiško tekstą')">📋 Kopijuoti laiško tekstą</button>
+            <button class="btn btn-navy" style="margin-top: 8px;" onclick="copyToClipboard(this, document.getElementById('copy-email-template').value, 'Kopijuoti laiško tekstą')"><span class="ic ic-clipboard"></span> Kopijuoti laiško tekstą</button>
           </div>
 
           <div style="margin-top: 16px; padding: 10px 14px; background: #E3F2FD; border-radius: 5px; font-size: 12px; color: #1565C0;">
-            💡 <strong>Patarimas:</strong> nukopijavę, įklijuokite į savo Outlook arba kitą el. pašto klientą ir nusiųskite vartotojui per savo paštą. Tai padidina laiško pasitikėjimo lygį (gavėjas pamato Jūsų vardą).
+            <strong>Patarimas:</strong> nukopijavę, įklijuokite į savo Outlook arba kitą el. pašto klientą ir nusiųskite vartotojui per savo paštą. Tai padidina laiško pasitikėjimo lygį (gavėjas pamato Jūsų vardą).
           </div>
         </div>
       `;
@@ -3896,7 +3469,7 @@
       alert(`✅ Kvietimas išsiųstas į ${email}`);
     } catch (e) {
       console.error('sendCollaboratorInvite error', e);
-      alert(`Nepavyko išsiųsti kvietimo: ${e.message || e}\n\nGalite nukopijuoti nuorodą rankiniu būdu paspaudę „🔗 Kopijuoti kliento nuorodą".`);
+      alert(`Nepavyko išsiųsti kvietimo: ${e.message || e}\n\nGalite nukopijuoti nuorodą rankiniu būdu paspaudę „Kopijuoti kliento nuorodą".`);
     }
   }
 

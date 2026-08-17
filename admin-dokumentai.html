@@ -6,63 +6,338 @@
   <title>KAB Admin — Dokumentų pateikimas kreditoriams</title>
   <meta name="robots" content="noindex, nofollow">
   <style>
-    :root { --navy:#0B1E3F; --navy2:#1A3660; --gold:#C9A961; --cream:#F7F4EC; --gray:#5A5A5A; --bd:#E5E5E5; --light:#F9F9F9; }
-    * { box-sizing:border-box; margin:0; padding:0; }
-    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; background:var(--cream); color:#333; line-height:1.55; }
-    .header { background:var(--navy); border-bottom:4px solid var(--gold); padding:14px 24px; display:flex; justify-content:space-between; align-items:center; }
-    .header h1 { color:#fff; font-size:18px; font-weight:600; }
-    .header .right { color:rgba(255,255,255,.85); font-size:13px; display:flex; gap:14px; align-items:center; }
-    .container { max-width:1100px; margin:0 auto; padding:24px 20px; }
-    .card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
-    .btn { background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; }
-    .btn:hover { background:var(--navy2); } .btn:disabled { opacity:.55; cursor:not-allowed; }
-    .btn-ghost { background:#fff; color:var(--navy); border:1px solid var(--navy); }
-    .btn-gold { background:var(--gold); color:var(--navy); } .btn-danger { background:#C0392B; }
-    .btn-sm { padding:6px 12px; font-size:13px; }
-    .input,.textarea,.select { width:100%; padding:10px 12px; border:1px solid var(--bd); border-radius:6px; font-size:14px; font-family:inherit; }
-    .input:focus,.textarea:focus,.select:focus { outline:none; border-color:var(--gold); }
-    .textarea { min-height:80px; resize:vertical; }
-    .label { display:block; font-size:13px; color:var(--gray); margin-bottom:5px; font-weight:600; margin-top:12px; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; } .row > * { flex:1; min-width:180px; }
-    .error { background:#FDECEA; color:#C0392B; border:1px solid #F5B7B1; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
-    .success { background:#E8F8F0; color:#1E8449; border:1px solid #ABEBC6; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
-    .hidden { display:none !important; } .center { text-align:center; } .muted { color:var(--gray); font-size:13px; }
-    table { width:100%; border-collapse:collapse; font-size:14px; }
-    th { text-align:left; background:var(--light); padding:10px 12px; border-bottom:2px solid var(--bd); font-size:12px; color:var(--gray); text-transform:uppercase; }
-    td { padding:10px 12px; border-bottom:1px solid #F0F0F0; }
-    tr:hover td { background:#FBFAF6; }
-    .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; }
-    .badge-green { background:#E8F8F0; color:#1E8449; } .badge-gray { background:#EEE; color:#777; } .badge-gold { background:#FBF3DF; color:#9A7B24; }
-    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; z-index:100; overflow:auto; }
-    .modal { background:#fff; border-radius:12px; max-width:640px; width:100%; padding:26px; }
-    .modal h2 { color:var(--navy); font-size:19px; margin-bottom:14px; }
-    .crumb { font-size:13px; color:var(--gray); margin-bottom:14px; cursor:pointer; }
-    .crumb:hover { color:var(--navy); text-decoration:underline; }
-    .tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
-    .tab { padding:8px 16px; border:1px solid var(--bd); border-radius:20px; background:#fff; cursor:pointer; font-size:13px; font-weight:600; color:var(--gray); }
-    .tab.active { background:var(--navy); color:#fff; border-color:var(--navy); }
-    .filebox { border:2px dashed var(--bd); border-radius:8px; padding:20px; text-align:center; cursor:pointer; }
-    .filebox:hover { border-color:var(--gold); }
-    .file-item { display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:var(--light); border-radius:6px; margin-top:6px; font-size:13px; }
-    .spinner { border:3px solid #eee; border-top:3px solid var(--gold); border-radius:50%; width:28px; height:28px; animation:spin 1s linear infinite; margin:20px auto; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .import-report { font-size:13px; } .import-report .ok { color:#1E8449; } .import-report .bad { color:#C0392B; }
+    /* =========================================================================
+       KAB Admin — dizaino sistema (minimalistinis stilius, CWC maketas)
+       Atnaujinta: 2026-08-14. Spalvos: KAB brandas (navy/auksas) sušvelnintas
+       neutraliais pilkai mėlynais tonais. Visi seni klasių pavadinimai išlikę.
+       ========================================================================= */
+    :root{
+      /* --- KAB brandas --- */
+      --navy:#0B1E3F;        /* pirminis veiksmas, aktyvi navigacija */
+      --navy2:#16304F;       /* hover */
+      --gold:#C9A961;        /* retas akcentas */
+      --gold-bg:#FBF6EA; --gold-bd:#E3D3AC; --gold-tx:#7A5F12;
+      /* --- neutralai --- */
+      --ink:#23364B;         /* antraštės */
+      --txt:#425A70;         /* bazinis tekstas */
+      --muted:#7B8C9B;       /* antrinis tekstas */
+      --faint:#9AA8B4;       /* lentelių antraštės, hint */
+      --bd:rgba(66,90,112,.16);
+      --bd2:rgba(66,90,112,.09);
+      --bg:#F5F6F8;          /* darbo srities fonas */
+      --sb:#F8F9FA;          /* šoninio meniu fonas */
+      --hov:rgba(66,90,112,.06);
+      --card:#fff;
+      /* --- semantinės --- */
+      --ok:#0B6E2E;   --ok-bg:#EEF7F1;  --ok-bd:#C3E4CE;
+      --err:#B3261E;  --err-bg:#FDF1F0; --err-bd:#F2C7C2;
+      --warn:#8A6D00; --warn-bg:#FFF8E6;--warn-bd:#EBDCAE;
+      --info:#1B4F9C; --info-bg:#EFF4FB;--info-bd:#CCD9EE;
+      /* --- forma --- */
+      --r:6px; --r-sm:4px; --sb-w:214px;
+      /* --- suderinamumas su senais inline stiliais --- */
+      --cream:#F5F6F8; --gray:#7B8C9B; --light:#F7F9FB;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{ height:100%; }
+    body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+      background:var(--bg); color:var(--txt); font-size:14px; line-height:1.45;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    h1,h2,h3,h4{ color:var(--ink); font-weight:600; letter-spacing:-.2px; line-height:1.3; }
+    a{ color:var(--navy); }
+
+    /* ===================== APP SHELL ===================== */
+    .app{ display:flex; min-height:100vh; align-items:stretch; }
+    .sidebar{ width:var(--sb-w); flex:0 0 var(--sb-w); background:var(--sb);
+      border-right:1px solid var(--bd); display:flex; flex-direction:column;
+      padding:14px 10px 10px; position:sticky; top:0; height:100vh; overflow-y:auto; }
+    .sb-brand{ padding:0 8px 11px; border-bottom:1px solid var(--bd2); margin-bottom:8px; }
+    .sb-brand b{ display:block; font-size:15px; font-weight:700; color:var(--navy); letter-spacing:-.3px; }
+    .sb-brand span{ display:block; font-size:11px; color:var(--muted); margin-top:1px; }
+    .sb-user{ display:flex; align-items:center; gap:7px; padding:2px 8px 8px; font-size:11.5px;
+      color:var(--muted); word-break:break-all; }
+    .sb-user svg{ width:13px; height:13px; flex:0 0 13px; stroke:currentColor; fill:none; stroke-width:1.8;
+      stroke-linecap:round; stroke-linejoin:round; opacity:.7; }
+    .sb-sec{ font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--faint); padding:12px 9px 5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .sb-nav{ display:flex; flex-direction:column; gap:1px; }
+    .nav-i{ display:flex; align-items:center; gap:9px; padding:6px 9px; border-radius:var(--r-sm);
+      font-size:13.5px; font-weight:500; color:var(--txt); cursor:pointer; user-select:none;
+      text-decoration:none; transition:background .12s,color .12s; }
+    .nav-i:hover{ background:var(--hov); color:var(--ink); }
+    .nav-i.active{ background:var(--navy); color:#fff; font-weight:600; }
+    .nav-i svg,.tab svg{ width:15px; height:15px; flex:0 0 15px; stroke:currentColor; fill:none;
+      stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; opacity:.75; }
+    .nav-i.active svg{ opacity:1; }
+    .sb-spacer{ flex:1 1 auto; min-height:14px; }
+    .sb-foot{ border-top:1px solid var(--bd2); padding-top:7px; margin-top:7px; }
+    .sb-foot .nav-i{ font-size:12.5px; color:var(--muted); }
+    .sb-foot .nav-i:hover{ color:var(--ink); }
+
+    .main{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
+    .topbar{ flex:0 0 46px; height:46px; background:#fff; border-bottom:1px solid var(--bd);
+      display:flex; align-items:center; gap:12px; padding:0 22px; position:sticky; top:0; z-index:40; }
+    .topbar h1{ font-size:15px; font-weight:600; color:var(--ink);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1 1 auto; }
+    .topbar .tb-r{ font-size:12px; color:var(--muted); display:flex; align-items:center; gap:12px; }
+    .sb-toggle{ display:none; align-items:center; justify-content:center; width:30px; height:30px;
+      border:1px solid var(--bd); background:#fff; border-radius:var(--r-sm); cursor:pointer; color:var(--txt); }
+    .sb-toggle svg{ width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; }
+    .container{ width:100%; max-width:1560px; margin:0; padding:18px 22px 48px; }
+
+    /* ===================== KORTELĖS ===================== */
+    .card{ background:var(--card); border:1px solid var(--bd); border-radius:var(--r);
+      padding:16px 18px; margin-bottom:14px; box-shadow:none; }
+    .adm-card{ background:#fff; border:1px solid var(--bd); border-radius:var(--r); padding:15px 16px;
+      cursor:pointer; transition:.12s; }
+    .adm-card:hover{ border-color:var(--navy); background:#FCFDFE; }
+    .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+    .bigbtn{ border:1px solid var(--bd); border-radius:var(--r); padding:22px 18px; cursor:pointer;
+      text-align:center; transition:.12s; background:#fff; }
+    .bigbtn:hover{ border-color:var(--navy); background:#FAFCFE; }
+    .bigbtn .bb-ico{ font-size:24px; opacity:.85; }
+    .bigbtn .bb-t{ font-weight:600; color:var(--ink); margin-top:6px; font-size:13.5px; }
+
+    /* ===================== MYGTUKAI ===================== */
+    .btn{ background:var(--navy); color:#fff; border:1px solid var(--navy); padding:7px 14px;
+      border-radius:var(--r-sm); font-size:13px; font-weight:600; font-family:inherit; cursor:pointer;
+      line-height:1.35; transition:.12s; white-space:nowrap; }
+    .btn:hover{ background:var(--navy2); border-color:var(--navy2); }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; }
+    .btn-ghost{ background:#fff; color:var(--txt); border-color:var(--bd); }
+    .btn-ghost:hover{ background:var(--hov); color:var(--ink); border-color:var(--bd); }
+    .btn-gold{ background:var(--gold-bg); color:var(--gold-tx); border-color:var(--gold-bd); }
+    .btn-gold:hover{ background:#F6EEDA; border-color:#D9C591; }
+    .btn-danger{ background:#fff; color:var(--err); border-color:var(--err-bd); }
+    .btn-danger:hover{ background:var(--err-bg); border-color:#E2A7A0; }
+    .btn-sm{ padding:5px 10px; font-size:12px; }
+
+    /* ===================== FORMOS ===================== */
+    .input,.textarea,.select{ width:100%; padding:7px 10px; border:1px solid var(--bd);
+      border-radius:var(--r-sm); font-size:13.5px; font-family:inherit; color:var(--ink);
+      background:#fff; transition:border-color .12s,box-shadow .12s; }
+    .input::placeholder,.textarea::placeholder{ color:var(--faint); }
+    .input:focus,.textarea:focus,.select:focus{ outline:none; border-color:var(--navy);
+      box-shadow:0 0 0 3px rgba(11,30,63,.07); }
+    .textarea{ min-height:76px; resize:vertical; line-height:1.5; }
+    .label{ display:block; font-size:11.5px; color:var(--muted); margin:12px 0 4px;
+      font-weight:600; letter-spacing:.02em; }
+    .row{ display:flex; gap:12px; flex-wrap:wrap; } .row > *{ flex:1; min-width:180px; }
+    .hint{ font-size:11.5px; color:var(--faint); margin-top:3px; line-height:1.45; }
+    .field-ai{ border-color:#DDC58A!important; background:#FFFCF3; }
+
+    /* ===================== PRANEŠIMAI ===================== */
+    .error{ background:var(--err-bg); color:var(--err); border:1px solid var(--err-bd);
+      padding:8px 11px; border-radius:var(--r-sm); font-size:12.5px; margin:8px 0; }
+    .success{ background:var(--ok-bg); color:var(--ok); border:1px solid var(--ok-bd);
+      padding:8px 11px; border-radius:var(--r-sm); font-size:12.5px; margin:8px 0; }
+    .hidden{ display:none !important; } .center{ text-align:center; }
+    .muted{ color:var(--muted); font-size:12.5px; }
+
+    /* ===================== LENTELĖS ===================== */
+    table{ width:100%; border-collapse:collapse; font-size:13px; }
+    th{ text-align:left; background:transparent; padding:8px 12px; border-bottom:1px solid var(--bd);
+      font-size:10.5px; font-weight:700; color:var(--faint); text-transform:uppercase;
+      letter-spacing:.06em; white-space:nowrap; }
+    td{ padding:9px 12px; border-bottom:1px solid var(--bd2); vertical-align:top; }
+    tr:hover td{ background:#F8FAFC; }
+
+    /* ===================== ŽENKLIUKAI ===================== */
+    .badge{ display:inline-block; padding:2px 7px; border-radius:3px; font-size:10.5px; font-weight:700;
+      letter-spacing:.04em; text-transform:uppercase; border:1px solid transparent; line-height:1.55;
+      vertical-align:middle; }
+    .badge-green{ background:var(--ok-bg); color:var(--ok); border-color:var(--ok-bd); }
+    .badge-gray{ background:#F1F3F5; color:var(--muted); border-color:var(--bd); }
+    .badge-gold{ background:var(--warn-bg); color:var(--warn); border-color:var(--warn-bd); }
+
+    /* ===================== SKIRTUKAI (turinyje) ===================== */
+    .tabs{ display:inline-flex; gap:2px; margin-bottom:14px; flex-wrap:wrap; background:#EBEEF2;
+      padding:3px; border-radius:var(--r); max-width:100%; vertical-align:middle; }
+    .tab{ padding:5px 12px; border:0; background:transparent; cursor:pointer; font-size:12.5px;
+      font-weight:600; color:var(--muted); border-radius:var(--r-sm); white-space:nowrap;
+      transition:background .12s,color .12s; user-select:none; }
+    .tab:hover{ color:var(--ink); }
+    .tab.active{ background:#fff; color:var(--navy); box-shadow:0 1px 2px rgba(11,30,63,.10); }
+    .subtabs{ margin:-6px 0 12px; }
+    .subtabs .tab{ padding:4px 11px; font-size:12px; }
+
+    /* ===================== MODALĖS ===================== */
+    .modal-bg{ position:fixed; inset:0; background:rgba(23,38,54,.42); display:flex;
+      align-items:flex-start; justify-content:center; padding:40px 16px; z-index:100; overflow:auto; }
+    .modal{ background:#fff; border:1px solid var(--bd); border-radius:8px; max-width:720px; width:100%;
+      padding:22px 24px; box-shadow:0 10px 34px rgba(11,30,63,.18); }
+    .modal h2{ color:var(--ink); font-size:16px; font-weight:600; margin-bottom:12px; }
+
+    /* ===================== KITA ===================== */
+    .crumb{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; color:var(--muted);
+      margin-bottom:12px; cursor:pointer; font-weight:500; }
+    .crumb:hover{ color:var(--navy); }
+    .sec-title{ color:var(--ink); font-size:11.5px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.07em; margin:20px 0 8px; border-bottom:1px solid var(--bd2); padding-bottom:6px; }
+    .spinner{ border:2.5px solid var(--bd); border-top-color:var(--navy); border-radius:50%;
+      width:26px; height:26px; animation:spin .8s linear infinite; margin:20px auto; }
+    @keyframes spin{ to{ transform:rotate(360deg); } }
+
+    /* Kompaktiškas kortelės laukų tinklelis
+       --fld-min — minimalus lauko plotis; .fld-sm — siauras laukas (datos, kodai) */
+    :root{ --fld-min:210px; }
+    .fgrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(var(--fld-min),1fr));
+      gap:2px 14px; align-items:end; }
+    .fgrid .sec-title, .fgrid .fchk{ grid-column:1/-1; }
+    .fgrid .fld-sm{ max-width:185px; }
+    .fgrid .input{ padding:6px 9px; font-size:13px; }
+    .fgrid .label{ margin-top:8px; font-size:11px; }
+
+    /* ===================== ADAPTYVUMAS ===================== */
+    @media (max-width:1080px){
+      .container{ padding:16px 16px 40px; }
+    }
+    @media (max-width:980px){
+      .app{ display:block; }
+      .sidebar{ position:fixed; left:0; top:0; bottom:0; z-index:70; transform:translateX(-100%);
+        transition:transform .18s ease; height:100vh; }
+      body.sb-open .sidebar{ transform:none; box-shadow:2px 0 24px rgba(11,30,63,.22); }
+      body.sb-open::after{ content:''; position:fixed; inset:0; background:rgba(23,38,54,.35); z-index:65; }
+      .sb-toggle{ display:inline-flex; }
+      .main{ width:100%; }
+      .container{ padding:14px 14px 40px; }
+      .row > *{ min-width:140px; }
+    }
+
+
+
+
+    /* ===================== IKONOS (monochrominės, paveldi teksto spalvą) ===================== */
+    .ic{ display:inline-block; width:14px; height:14px; vertical-align:-2px; background:currentColor;
+      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center;
+      -webkit-mask-size:contain; mask-size:contain; flex:0 0 14px; opacity:.9; }
+    .btn .ic{ margin-right:2px; } .sec-title .ic{ width:13px; height:13px; opacity:.7; }
+    .ic-ai{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203l1.9%204.6L18.5%209.5l-4.6%201.9L12%2016l-1.9-4.6L5.5%209.5l4.6-1.9z%27%2F%3E%3Cpath%20d%3D%27M18%2015l.7%201.8%201.8.7-1.8.7L18%2020l-.7-1.8-1.8-.7%201.8-.7z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203l1.9%204.6L18.5%209.5l-4.6%201.9L12%2016l-1.9-4.6L5.5%209.5l4.6-1.9z%27%2F%3E%3Cpath%20d%3D%27M18%2015l.7%201.8%201.8.7-1.8.7L18%2020l-.7-1.8-1.8-.7%201.8-.7z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-alarm{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cpath%20d%3D%27M5%203L2%206M19%203l3%203%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cpath%20d%3D%27M5%203L2%206M19%203l3%203%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-alert{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10.29%203.86L1.82%2018a2%202%200%200%200%201.71%203h16.94a2%202%200%200%200%201.71-3L13.71%203.86a2%202%200%200%200-3.42%200z%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%279%27%20x2%3D%2712%27%20y2%3D%2713%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2717%27%20x2%3D%2712.01%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10.29%203.86L1.82%2018a2%202%200%200%200%201.71%203h16.94a2%202%200%200%200%201.71-3L13.71%203.86a2%202%200%200%200-3.42%200z%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%279%27%20x2%3D%2712%27%20y2%3D%2713%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2717%27%20x2%3D%2712.01%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-archive{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%275%27%20rx%3D%271%27%2F%3E%3Cpath%20d%3D%27M4%209v10a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V9%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2713%27%20x2%3D%2714%27%20y2%3D%2713%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%275%27%20rx%3D%271%27%2F%3E%3Cpath%20d%3D%27M4%209v10a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V9%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2713%27%20x2%3D%2714%27%20y2%3D%2713%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-arrowl{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2719%27%20y1%3D%2712%27%20x2%3D%275%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%2019%205%2012%2012%205%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2719%27%20y1%3D%2712%27%20x2%3D%275%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%2019%205%2012%2012%205%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-arrowr{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%205%2019%2012%2012%2019%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%205%2019%2012%2012%2019%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-arrowu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%2719%27%20x2%3D%2712%27%20y2%3D%275%27%2F%3E%3Cpolyline%20points%3D%275%2012%2012%205%2019%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%2719%27%20x2%3D%2712%27%20y2%3D%275%27%2F%3E%3Cpolyline%20points%3D%275%2012%2012%205%2019%2012%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-back{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%279%2014%204%209%209%204%27%2F%3E%3Cpath%20d%3D%27M20%2020v-7a4%204%200%200%200-4-4H4%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%279%2014%204%209%209%204%27%2F%3E%3Cpath%20d%3D%27M20%2020v-7a4%204%200%200%200-4-4H4%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-ban{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%274.93%27%20y1%3D%274.93%27%20x2%3D%2719.07%27%20y2%3D%2719.07%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%274.93%27%20y1%3D%274.93%27%20x2%3D%2719.07%27%20y2%3D%2719.07%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-bank{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2721%27%20x2%3D%2721%27%20y2%3D%2721%27%2F%3E%3Cpolyline%20points%3D%273%209%2012%203%2021%209%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2721%27%20x2%3D%276%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2721%27%20x2%3D%2710%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2721%27%20x2%3D%2714%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2718%27%20y1%3D%2721%27%20x2%3D%2718%27%20y2%3D%2711%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2721%27%20x2%3D%2721%27%20y2%3D%2721%27%2F%3E%3Cpolyline%20points%3D%273%209%2012%203%2021%209%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2721%27%20x2%3D%276%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2721%27%20x2%3D%2710%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2721%27%20x2%3D%2714%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2718%27%20y1%3D%2721%27%20x2%3D%2718%27%20y2%3D%2711%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-bell{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%208A6%206%200%200%200%206%208c0%207-3%209-3%209h18s-3-2-3-9%27%2F%3E%3Cpath%20d%3D%27M13.73%2021a2%202%200%200%201-3.46%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%208A6%206%200%200%200%206%208c0%207-3%209-3%209h18s-3-2-3-9%27%2F%3E%3Cpath%20d%3D%27M13.73%2021a2%202%200%200%201-3.46%200%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-book{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20%27%2F%3E%3Cpath%20d%3D%27M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20%27%2F%3E%3Cpath%20d%3D%27M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-briefcase{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%277%27%20width%3D%2720%27%20height%3D%2714%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M16%2021V5a2%202%200%200%200-2-2h-4a2%202%200%200%200-2%202v16%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%277%27%20width%3D%2720%27%20height%3D%2714%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M16%2021V5a2%202%200%200%200-2-2h-4a2%202%200%200%200-2%202v16%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-building{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%2021h18%27%2F%3E%3Cpath%20d%3D%27M5%2021V5a2%202%200%200%201%202-2h10a2%202%200%200%201%202%202v16%27%2F%3E%3Cpath%20d%3D%27M9%207h1M9%2011h1M9%2015h1M14%207h1M14%2011h1M14%2015h1%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%2021h18%27%2F%3E%3Cpath%20d%3D%27M5%2021V5a2%202%200%200%201%202-2h10a2%202%200%200%201%202%202v16%27%2F%3E%3Cpath%20d%3D%27M9%207h1M9%2011h1M9%2015h1M14%207h1M14%2011h1M14%2015h1%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-bulb{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2018h6%27%2F%3E%3Cpath%20d%3D%27M10%2022h4%27%2F%3E%3Cpath%20d%3D%27M12%202a7%207%200%200%200-4%2012.7V17h8v-2.3A7%207%200%200%200%2012%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2018h6%27%2F%3E%3Cpath%20d%3D%27M10%2022h4%27%2F%3E%3Cpath%20d%3D%27M12%202a7%207%200%200%200-4%2012.7V17h8v-2.3A7%207%200%200%200%2012%202z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-calc{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%274%27%20y%3D%272%27%20width%3D%2716%27%20height%3D%2720%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2711%27%20x2%3D%278.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2711%27%20x2%3D%2712.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2711%27%20x2%3D%2716.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2716%27%20x2%3D%278.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2716%27%20x2%3D%2712.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2716%27%20x2%3D%2716.01%27%20y2%3D%2716%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%274%27%20y%3D%272%27%20width%3D%2716%27%20height%3D%2720%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2711%27%20x2%3D%278.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2711%27%20x2%3D%2712.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2711%27%20x2%3D%2716.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2716%27%20x2%3D%278.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2716%27%20x2%3D%2712.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2716%27%20x2%3D%2716.01%27%20y2%3D%2716%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-calendar{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%274%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%272%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%272%27%20x2%3D%278%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2710%27%20x2%3D%2721%27%20y2%3D%2710%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%274%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%272%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%272%27%20x2%3D%278%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2710%27%20x2%3D%2721%27%20y2%3D%2710%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-cam{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M23%2019a2%202%200%200%201-2%202H3a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h4l2-3h6l2%203h4a2%202%200%200%201%202%202z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M23%2019a2%202%200%200%201-2%202H3a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h4l2-3h6l2%203h4a2%202%200%200%201%202%202z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-cart{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%279%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Ccircle%20cx%3D%2720%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Cpath%20d%3D%27M1%201h4l2.68%2013.39a2%202%200%200%200%202%201.61h9.72a2%202%200%200%200%202-1.61L23%206H6%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%279%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Ccircle%20cx%3D%2720%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Cpath%20d%3D%27M1%201h4l2.68%2013.39a2%202%200%200%200%202%201.61h9.72a2%202%200%200%200%202-1.61L23%206H6%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chart{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%2720%27%20x2%3D%2718%27%20y2%3D%2710%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2720%27%20x2%3D%2712%27%20y2%3D%274%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2720%27%20x2%3D%276%27%20y2%3D%2714%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%2720%27%20x2%3D%2718%27%20y2%3D%2710%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2720%27%20x2%3D%2712%27%20y2%3D%274%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2720%27%20x2%3D%276%27%20y2%3D%2714%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chat{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2011.5a8.38%208.38%200%200%201-.9%203.8%208.5%208.5%200%200%201-7.6%204.7%208.38%208.38%200%200%201-3.8-.9L3%2021l1.9-5.7a8.38%208.38%200%200%201-.9-3.8%208.5%208.5%200%200%201%204.7-7.6%208.38%208.38%200%200%201%203.8-.9h.5a8.48%208.48%200%200%201%208%208z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2011.5a8.38%208.38%200%200%201-.9%203.8%208.5%208.5%200%200%201-7.6%204.7%208.38%208.38%200%200%201-3.8-.9L3%2021l1.9-5.7a8.38%208.38%200%200%201-.9-3.8%208.5%208.5%200%200%201%204.7-7.6%208.38%208.38%200%200%201%203.8-.9h.5a8.48%208.48%200%200%201%208%208z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-check{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2720%206%209%2017%204%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2720%206%209%2017%204%2012%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chevrond{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chevronu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2718%2015%2012%209%206%2015%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2718%2015%2012%209%206%2015%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-circle{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-clip{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.44%2011.05l-9.19%209.19a6%206%200%200%201-8.49-8.49l9.19-9.19a4%204%200%200%201%205.66%205.66l-9.2%209.19a2%202%200%200%201-2.83-2.83l8.49-8.48%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.44%2011.05l-9.19%209.19a6%206%200%200%201-8.49-8.49l9.19-9.19a4%204%200%200%201%205.66%205.66l-9.2%209.19a2%202%200%200%201-2.83-2.83l8.49-8.48%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-clipboard{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%272%27%20width%3D%278%27%20height%3D%274%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%272%27%20width%3D%278%27%20height%3D%274%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-clock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cpolyline%20points%3D%2712%206%2012%2012%2016%2014%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cpolyline%20points%3D%2712%206%2012%2012%2016%2014%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-down{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%277%2010%2012%2015%2017%2010%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2715%27%20x2%3D%2712%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%277%2010%2012%2015%2017%2010%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2715%27%20x2%3D%2712%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-euro{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%271%27%20x2%3D%2712%27%20y2%3D%2723%27%2F%3E%3Cpath%20d%3D%27M17%205H9.5a3.5%203.5%200%200%200%200%207h5a3.5%203.5%200%200%201%200%207H6%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%271%27%20x2%3D%2712%27%20y2%3D%2723%27%2F%3E%3Cpath%20d%3D%27M17%205H9.5a3.5%203.5%200%200%200%200%207h5a3.5%203.5%200%200%201%200%207H6%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-external{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%2013v6a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h6%27%2F%3E%3Cpolyline%20points%3D%2715%203%2021%203%2021%209%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2714%27%20x2%3D%2721%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%2013v6a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h6%27%2F%3E%3Cpolyline%20points%3D%2715%203%2021%203%2021%209%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2714%27%20x2%3D%2721%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-eye{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M1%2012s4-8%2011-8%2011%208%2011%208-4%208-11%208-11-8-11-8z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M1%2012s4-8%2011-8%2011%208%2011%208-4%208-11%208-11-8-11-8z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-file{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V8z%27%2F%3E%3Cpolyline%20points%3D%2714%202%2014%208%2020%208%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V8z%27%2F%3E%3Cpolyline%20points%3D%2714%202%2014%208%2020%208%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-folder{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-gear{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M19.4%2015a1.65%201.65%200%200%200%20.33%201.82l.06.06a2%202%200%201%201-2.83%202.83l-.06-.06a1.65%201.65%200%200%200-1.82-.33%201.65%201.65%200%200%200-1%201.51V21a2%202%200%200%201-4%200v-.09A1.65%201.65%200%200%200%209%2019.4a1.65%201.65%200%200%200-1.82.33l-.06.06a2%202%200%201%201-2.83-2.83l.06-.06a1.65%201.65%200%200%200%20.33-1.82%201.65%201.65%200%200%200-1.51-1H3a2%202%200%200%201%200-4h.09A1.65%201.65%200%200%200%204.6%209a1.65%201.65%200%200%200-.33-1.82l-.06-.06a2%202%200%201%201%202.83-2.83l.06.06a1.65%201.65%200%200%200%201.82.33H9a1.65%201.65%200%200%200%201-1.51V3a2%202%200%200%201%204%200v.09a1.65%201.65%200%200%200%201%201.51%201.65%201.65%200%200%200%201.82-.33l.06-.06a2%202%200%201%201%202.83%202.83l-.06.06a1.65%201.65%200%200%200-.33%201.82V9a1.65%201.65%200%200%200%201.51%201H21a2%202%200%200%201%200%204h-.09a1.65%201.65%200%200%200-1.51%201z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M19.4%2015a1.65%201.65%200%200%200%20.33%201.82l.06.06a2%202%200%201%201-2.83%202.83l-.06-.06a1.65%201.65%200%200%200-1.82-.33%201.65%201.65%200%200%200-1%201.51V21a2%202%200%200%201-4%200v-.09A1.65%201.65%200%200%200%209%2019.4a1.65%201.65%200%200%200-1.82.33l-.06.06a2%202%200%201%201-2.83-2.83l.06-.06a1.65%201.65%200%200%200%20.33-1.82%201.65%201.65%200%200%200-1.51-1H3a2%202%200%200%201%200-4h.09A1.65%201.65%200%200%200%204.6%209a1.65%201.65%200%200%200-.33-1.82l-.06-.06a2%202%200%201%201%202.83-2.83l.06.06a1.65%201.65%200%200%200%201.82.33H9a1.65%201.65%200%200%200%201-1.51V3a2%202%200%200%201%204%200v.09a1.65%201.65%200%200%200%201%201.51%201.65%201.65%200%200%200%201.82-.33l.06-.06a2%202%200%201%201%202.83%202.83l-.06.06a1.65%201.65%200%200%200-.33%201.82V9a1.65%201.65%200%200%200%201.51%201H21a2%202%200%200%201%200%204h-.09a1.65%201.65%200%200%200-1.51%201z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-globe{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%272%27%20y1%3D%2712%27%20x2%3D%2722%27%20y2%3D%2712%27%2F%3E%3Cpath%20d%3D%27M12%202a15.3%2015.3%200%200%201%204%2010%2015.3%2015.3%200%200%201-4%2010%2015.3%2015.3%200%200%201-4-10%2015.3%2015.3%200%200%201%204-10z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%272%27%20y1%3D%2712%27%20x2%3D%2722%27%20y2%3D%2712%27%2F%3E%3Cpath%20d%3D%27M12%202a15.3%2015.3%200%200%201%204%2010%2015.3%2015.3%200%200%201-4%2010%2015.3%2015.3%200%200%201-4-10%2015.3%2015.3%200%200%201%204-10z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-grid{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%273%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%273%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-hash{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%274%27%20y1%3D%279%27%20x2%3D%2720%27%20y2%3D%279%27%2F%3E%3Cline%20x1%3D%274%27%20y1%3D%2715%27%20x2%3D%2720%27%20y2%3D%2715%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%273%27%20x2%3D%278%27%20y2%3D%2721%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%273%27%20x2%3D%2714%27%20y2%3D%2721%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%274%27%20y1%3D%279%27%20x2%3D%2720%27%20y2%3D%279%27%2F%3E%3Cline%20x1%3D%274%27%20y1%3D%2715%27%20x2%3D%2720%27%20y2%3D%2715%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%273%27%20x2%3D%278%27%20y2%3D%2721%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%273%27%20x2%3D%2714%27%20y2%3D%2721%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-home{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2z%27%2F%3E%3Cpolyline%20points%3D%279%2022%209%2012%2015%2012%2015%2022%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2z%27%2F%3E%3Cpolyline%20points%3D%279%2022%209%2012%2015%2012%2015%2022%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-image{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Ccircle%20cx%3D%278.5%27%20cy%3D%278.5%27%20r%3D%271.5%27%2F%3E%3Cpolyline%20points%3D%2721%2015%2016%2010%205%2021%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Ccircle%20cx%3D%278.5%27%20cy%3D%278.5%27%20r%3D%271.5%27%2F%3E%3Cpolyline%20points%3D%2721%2015%2016%2010%205%2021%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-key{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%202l-2%202%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61a5.5%205.5%200%201%201-7.78%207.78%205.5%205.5%200%200%201%207.78-7.78z%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61L15.5%207.5l3%203L22%207l-3-3-3.5%203.5%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%202l-2%202%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61a5.5%205.5%200%201%201-7.78%207.78%205.5%205.5%200%200%201%207.78-7.78z%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61L15.5%207.5l3%203L22%207l-3-3-3.5%203.5%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-layers{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%202%207%2012%2012%2022%207%2012%202%27%2F%3E%3Cpolyline%20points%3D%272%2017%2012%2022%2022%2017%27%2F%3E%3Cpolyline%20points%3D%272%2012%2012%2017%2022%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%202%207%2012%2012%2022%207%2012%202%27%2F%3E%3Cpolyline%20points%3D%272%2017%2012%2022%2022%2017%27%2F%3E%3Cpolyline%20points%3D%272%2012%2012%2017%2022%2012%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-link{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10%2013a5%205%200%200%200%207.54.54l3-3a5%205%200%200%200-7.07-7.07l-1.72%201.71%27%2F%3E%3Cpath%20d%3D%27M14%2011a5%205%200%200%200-7.54-.54l-3%203a5%205%200%200%200%207.07%207.07l1.71-1.71%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10%2013a5%205%200%200%200%207.54.54l3-3a5%205%200%200%200-7.07-7.07l-1.72%201.71%27%2F%3E%3Cpath%20d%3D%27M14%2011a5%205%200%200%200-7.54-.54l-3%203a5%205%200%200%200%207.07%207.07l1.71-1.71%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-list{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%273.01%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%273.01%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%273.01%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%273.01%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%273.01%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%273.01%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-lock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%2010%200v4%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%2010%200v4%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-logout{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h4%27%2F%3E%3Cpolyline%20points%3D%2716%2017%2021%2012%2016%207%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2712%27%20x2%3D%279%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h4%27%2F%3E%3Cpolyline%20points%3D%2716%2017%2021%2012%2016%207%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2712%27%20x2%3D%279%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-mail{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%2716%27%20rx%3D%272%27%2F%3E%3Cpolyline%20points%3D%2722%206%2012%2013%202%206%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%2716%27%20rx%3D%272%27%2F%3E%3Cpolyline%20points%3D%2722%206%2012%2013%202%206%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-menu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-package{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2716.5%27%20y1%3D%279.4%27%20x2%3D%277.5%27%20y2%3D%274.21%27%2F%3E%3Cpath%20d%3D%27M21%2016V8a2%202%200%200%200-1-1.73l-7-4a2%202%200%200%200-2%200l-7%204A2%202%200%200%200%203%208v8a2%202%200%200%200%201%201.73l7%204a2%202%200%200%200%202%200l7-4A2%202%200%200%200%2021%2016z%27%2F%3E%3Cpolyline%20points%3D%273.27%206.96%2012%2012.01%2020.73%206.96%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2716.5%27%20y1%3D%279.4%27%20x2%3D%277.5%27%20y2%3D%274.21%27%2F%3E%3Cpath%20d%3D%27M21%2016V8a2%202%200%200%200-1-1.73l-7-4a2%202%200%200%200-2%200l-7%204A2%202%200%200%200%203%208v8a2%202%200%200%200%201%201.73l7%204a2%202%200%200%200%202%200l7-4A2%202%200%200%200%2021%2016z%27%2F%3E%3Cpolyline%20points%3D%273.27%206.96%2012%2012.01%2020.73%206.96%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-pencil{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%203a2.828%202.828%200%201%201%204%204L7.5%2020.5%202%2022l1.5-5.5L17%203z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%203a2.828%202.828%200%201%201%204%204L7.5%2020.5%202%2022l1.5-5.5L17%203z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-pin{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2010c0%207-9%2013-9%2013s-9-6-9-13a9%209%200%200%201%2018%200z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2710%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2010c0%207-9%2013-9%2013s-9-6-9-13a9%209%200%200%201%2018%200z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2710%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-plus{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%275%27%20x2%3D%2712%27%20y2%3D%2719%27%2F%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%275%27%20x2%3D%2712%27%20y2%3D%2719%27%2F%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-puzzle{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%207h4V5a2%202%200%201%201%204%200v2h4a1%201%200%200%201%201%201v4h2a2%202%200%201%201%200%204h-2v4a1%201%200%200%201-1%201h-4v-2a2%202%200%201%200-4%200v2H4a1%201%200%200%201-1-1v-4h2a2%202%200%201%200%200-4H3V8a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%207h4V5a2%202%200%201%201%204%200v2h4a1%201%200%200%201%201%201v4h2a2%202%200%201%201%200%204h-2v4a1%201%200%200%201-1%201h-4v-2a2%202%200%201%200-4%200v2H4a1%201%200%200%201-1-1v-4h2a2%202%200%201%200%200-4H3V8a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-receipt{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M6%202h12v20l-3-2-3%202-3-2-3%202z%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%278%27%20x2%3D%2715%27%20y2%3D%278%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%2712%27%20x2%3D%2715%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M6%202h12v20l-3-2-3%202-3-2-3%202z%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%278%27%20x2%3D%2715%27%20y2%3D%278%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%2712%27%20x2%3D%2715%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-refresh{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2723%204%2023%2010%2017%2010%27%2F%3E%3Cpolyline%20points%3D%271%2020%201%2014%207%2014%27%2F%3E%3Cpath%20d%3D%27M3.51%209a9%209%200%200%201%2014.85-3.36L23%2010M1%2014l4.64%204.36A9%209%200%200%200%2020.49%2015%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2723%204%2023%2010%2017%2010%27%2F%3E%3Cpolyline%20points%3D%271%2020%201%2014%207%2014%27%2F%3E%3Cpath%20d%3D%27M3.51%209a9%209%200%200%201%2014.85-3.36L23%2010M1%2014l4.64%204.36A9%209%200%200%200%2020.49%2015%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-rocket{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4.5%2016.5c-1.5%201.26-2%205-2%205s3.74-.5%205-2c.71-.84.7-2.13-.09-2.91a2.18%202.18%200%200%200-2.91-.09z%27%2F%3E%3Cpath%20d%3D%27M12%2015l-3-3a22%2022%200%200%201%202-3.95A12.88%2012.88%200%200%201%2022%202c0%202.72-.78%207.5-6%2011a22.35%2022.35%200%200%201-4%202z%27%2F%3E%3Cpath%20d%3D%27M9%2012H4s.55-3.03%202-4c1.62-1.08%205%200%205%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4.5%2016.5c-1.5%201.26-2%205-2%205s3.74-.5%205-2c.71-.84.7-2.13-.09-2.91a2.18%202.18%200%200%200-2.91-.09z%27%2F%3E%3Cpath%20d%3D%27M12%2015l-3-3a22%2022%200%200%201%202-3.95A12.88%2012.88%200%200%201%2022%202c0%202.72-.78%207.5-6%2011a22.35%2022.35%200%200%201-4%202z%27%2F%3E%3Cpath%20d%3D%27M9%2012H4s.55-3.03%202-4c1.62-1.08%205%200%205%200%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-ruler{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.3%208.7L8.7%2021.3a1%201%200%200%201-1.4%200l-4.6-4.6a1%201%200%200%201%200-1.4L15.3%202.7a1%201%200%200%201%201.4%200l4.6%204.6a1%201%200%200%201%200%201.4z%27%2F%3E%3Cpath%20d%3D%27M7.5%2010.5l2%202M10.5%207.5l2%202M13.5%204.5l2%202M4.5%2013.5l2%202%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.3%208.7L8.7%2021.3a1%201%200%200%201-1.4%200l-4.6-4.6a1%201%200%200%201%200-1.4L15.3%202.7a1%201%200%200%201%201.4%200l4.6%204.6a1%201%200%200%201%200%201.4z%27%2F%3E%3Cpath%20d%3D%27M7.5%2010.5l2%202M10.5%207.5l2%202M13.5%204.5l2%202M4.5%2013.5l2%202%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-save{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M19%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h11l5%205v11a2%202%200%200%201-2%202z%27%2F%3E%3Cpolyline%20points%3D%2717%2021%2017%2013%207%2013%207%2021%27%2F%3E%3Cpolyline%20points%3D%277%203%207%208%2015%208%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M19%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h11l5%205v11a2%202%200%200%201-2%202z%27%2F%3E%3Cpolyline%20points%3D%2717%2021%2017%2013%207%2013%207%2021%27%2F%3E%3Cpolyline%20points%3D%277%203%207%208%2015%208%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-scale{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203v18%27%2F%3E%3Cpath%20d%3D%27M5%207h14%27%2F%3E%3Cpath%20d%3D%27M7%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M17%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203v18%27%2F%3E%3Cpath%20d%3D%27M5%207h14%27%2F%3E%3Cpath%20d%3D%27M7%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M17%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-search{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-star{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%2015.09%208.26%2022%209.27%2017%2014.14%2018.18%2021.02%2012%2017.77%205.82%2021.02%207%2014.14%202%209.27%208.91%208.26%2012%202%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%2015.09%208.26%2022%209.27%2017%2014.14%2018.18%2021.02%2012%2017.77%205.82%2021.02%207%2014.14%202%209.27%208.91%208.26%2012%202%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-swap{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2717%201%2021%205%2017%209%27%2F%3E%3Cpath%20d%3D%27M3%2011V9a4%204%200%200%201%204-4h14%27%2F%3E%3Cpolyline%20points%3D%277%2023%203%2019%207%2015%27%2F%3E%3Cpath%20d%3D%27M21%2013v2a4%204%200%200%201-4%204H3%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2717%201%2021%205%2017%209%27%2F%3E%3Cpath%20d%3D%27M3%2011V9a4%204%200%200%201%204-4h14%27%2F%3E%3Cpolyline%20points%3D%277%2023%203%2019%207%2015%27%2F%3E%3Cpath%20d%3D%27M21%2013v2a4%204%200%200%201-4%204H3%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-timer{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%272%27%20x2%3D%2715%27%20y2%3D%272%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%272%27%20x2%3D%2715%27%20y2%3D%272%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-tool{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14.7%206.3a1%201%200%200%200%200%201.4l1.6%201.6a1%201%200%200%200%201.4%200l3.77-3.77a6%206%200%200%201-7.94%207.94l-6.91%206.91a2.12%202.12%200%200%201-3-3l6.91-6.91a6%206%200%200%201%207.94-7.94l-3.76%203.76z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14.7%206.3a1%201%200%200%200%200%201.4l1.6%201.6a1%201%200%200%200%201.4%200l3.77-3.77a6%206%200%200%201-7.94%207.94l-6.91%206.91a2.12%202.12%200%200%201-3-3l6.91-6.91a6%206%200%200%201%207.94-7.94l-3.76%203.76z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-trash{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%273%206%205%206%2021%206%27%2F%3E%3Cpath%20d%3D%27M19%206v14a2%202%200%200%201-2%202H7a2%202%200%200%201-2-2V6m3%200V4a2%202%200%200%201%202-2h4a2%202%200%200%201%202%202v2%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2711%27%20x2%3D%2710%27%20y2%3D%2717%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2711%27%20x2%3D%2714%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%273%206%205%206%2021%206%27%2F%3E%3Cpath%20d%3D%27M19%206v14a2%202%200%200%201-2%202H7a2%202%200%200%201-2-2V6m3%200V4a2%202%200%200%201%202-2h4a2%202%200%200%201%202%202v2%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2711%27%20x2%3D%2710%27%20y2%3D%2717%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2711%27%20x2%3D%2714%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-trophy{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3Cpath%20d%3D%27M12%2017v4%27%2F%3E%3Cpath%20d%3D%27M7%204h10v5a5%205%200%200%201-10%200z%27%2F%3E%3Cpath%20d%3D%27M7%206H4a2%202%200%200%200%200%204h3%27%2F%3E%3Cpath%20d%3D%27M17%206h3a2%202%200%200%201%200%204h-3%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3Cpath%20d%3D%27M12%2017v4%27%2F%3E%3Cpath%20d%3D%27M7%204h10v5a5%205%200%200%201-10%200z%27%2F%3E%3Cpath%20d%3D%27M7%206H4a2%202%200%200%200%200%204h3%27%2F%3E%3Cpath%20d%3D%27M17%206h3a2%202%200%200%201%200%204h-3%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-unlock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%209.9-1%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%209.9-1%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-up{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%2717%208%2012%203%207%208%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%273%27%20x2%3D%2712%27%20y2%3D%2715%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%2717%208%2012%203%207%208%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%273%27%20x2%3D%2712%27%20y2%3D%2715%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-user{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-users{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%2021v-2a4%204%200%200%200-4-4H5a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M23%2021v-2a4%204%200%200%200-3-3.87%27%2F%3E%3Cpath%20d%3D%27M16%203.13a4%204%200%200%201%200%207.75%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%2021v-2a4%204%200%200%200-4-4H5a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M23%2021v-2a4%204%200%200%200-3-3.87%27%2F%3E%3Cpath%20d%3D%27M16%203.13a4%204%200%200%201%200%207.75%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-worker{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M5%208a7%207%200%200%201%2014%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M5%208a7%207%200%200%201%2014%200%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-x{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%276%27%20x2%3D%276%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%276%27%20x2%3D%2718%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%276%27%20x2%3D%276%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%276%27%20x2%3D%2718%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
+    :root{ --ic-search:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); }
+
+    /* Prisijungimo / krovimo ekranas — be šoninio meniu */
+    body.shell-off .sidebar, body.shell-off .topbar{ display:none !important; }
+    body.shell-off .container{ max-width:520px; margin:0 auto; padding-top:9vh; }
+    .sb-brand{ display:flex; align-items:center; gap:9px; padding:0 6px 11px;
+      border-bottom:1px solid var(--bd2); margin-bottom:6px; }
+    .sb-logo{ width:30px; height:30px; flex:0 0 30px; background:var(--navy); color:#fff;
+      border-radius:var(--r); display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:12px; letter-spacing:-.3px; }
+    .sb-brand b{ display:block; font-size:13.5px; font-weight:700; color:var(--navy); letter-spacing:-.2px; }
+    .sb-brand span{ display:block; font-size:10.5px; color:var(--muted); margin-top:1px; }
   </style>
 </head>
-<body>
-  <div class="header">
-    <h1>KAB Admin — Dokumentų pateikimas kreditoriams</h1>
-    <div class="right">
-      <a href="admin.html" style="color:#fff;text-decoration:underline;font-size:12px;">← Klausimynai</a>
-      <span id="userEmail"></span>
-      <button class="btn btn-sm btn-ghost" id="logoutBtn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4);">Atsijungti</button>
-    </div>
-  </div>
+<body class="shell-off">
+  <div class="app">
 
-  <div class="container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-brand"><div class="sb-logo">KAB</div><div><b>KAB Consulting</b><span>Valdymo sistema</span></div></div>
+      <div class="sb-user"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg><span id="userEmail"></span></div>
+
+      <div class="sb-sec">Sistema</div>
+      <div class="sb-nav">
+        <a class="nav-i" href="admin.html"><svg viewBox='0 0 24 24' aria-hidden='true'><rect x='3' y='3' width='7' height='7' rx='1'/><rect x='14' y='3' width='7' height='7' rx='1'/><rect x='3' y='14' width='7' height='7' rx='1'/><rect x='14' y='14' width='7' height='7' rx='1'/></svg><span>Apžvalga</span></a>
+        <a class="nav-i" href="admin.html#view=submissions"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><rect x='8' y='2' width='8' height='4' rx='1'/></svg><span>Klausimynai</span></a>
+        <div class="nav-i active"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/></svg><span>Dokumentai kreditoriams</span></div>
+        <a class="nav-i" href="admin-bankrotas.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 3v18'/><path d='M5 7h14'/><path d='M7 7l-4 7h8z'/><path d='M17 7l-4 7h8z'/><path d='M8 21h8'/></svg><span>Nemokumo procesai</span></a>
+        <a class="nav-i" href="admin-avnis.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M8 21h8'/><path d='M12 17v4'/><path d='M7 4h10v5a5 5 0 0 1-10 0z'/><path d='M7 6H4a2 2 0 0 0 0 4h3'/><path d='M17 6h3a2 2 0 0 1 0 4h-3'/></svg><span>Konkursai</span></a>
+      </div>
+      <div class="sb-sec">Konfigūracija</div>
+      <div class="sb-nav">
+        <a class="nav-i" href="admin.html#view=templates"><svg viewBox='0 0 24 24' aria-hidden='true'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg><span>Klausimynų šablonai</span></a>
+        <a class="nav-i" href="admin.html#view=users"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M23 21v-2a4 4 0 0 0-3-3.87'/><path d='M16 3.13a4 4 0 0 1 0 7.75'/></svg><span>Vartotojai</span></a>
+      </div>
+
+      <div class="sb-spacer"></div>
+
+      <div class="sb-foot">
+        <a class="nav-i" href="admin.html#view=help"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg><span>Instrukcijos</span></a>
+        <div class="nav-i" id="logoutBtn"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/><polyline points='16 17 21 12 16 7'/><line x1='21' y1='12' x2='9' y2='12'/></svg><span>Atsijungti</span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <button class="sb-toggle" id="sbToggle" type="button" aria-label="Meniu"><svg viewBox='0 0 24 24' aria-hidden='true'><line x1='3' y1='12' x2='21' y2='12'/><line x1='3' y1='6' x2='21' y2='6'/><line x1='3' y1='18' x2='21' y2='18'/></svg></button>
+        <h1 id="pageTitle">Dokumentai kreditoriams</h1>
+        <div class="tb-r" id="topbarRight"></div>
+      </div>
+
+      <div class="container">
     <!-- LOGIN -->
     <div id="loginView" class="card hidden" style="max-width:420px;margin:60px auto;">
-      <h2 style="color:var(--navy);font-size:20px;margin-bottom:12px;">Administratoriaus prisijungimas</h2>
+      <h2 style="font-size:18px;margin-bottom:12px;">Administratoriaus prisijungimas</h2>
       <label class="label">El. paštas</label><input id="loginEmail" class="input" type="email">
       <label class="label">Slaptažodis</label><input id="loginPassword" class="input" type="password">
       <div id="loginError" class="error hidden"></div>
@@ -75,12 +350,12 @@
     <div id="casesView" class="hidden">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-          <h2 style="color:var(--navy);font-size:18px;">Bylos (juridiniai asmenys)</h2>
+          <h2 style="font-size:16px;">Bylos (juridiniai asmenys)</h2>
           <button class="btn" id="newCaseBtn">+ Sukurti naują bylą</button>
         </div>
         <div class="tabs" style="margin-top:14px;">
           <div class="tab active" data-cases="active">Aktyvios</div>
-          <div class="tab" data-cases="archived">📦 Archyvuotos</div>
+          <div class="tab" data-cases="archived"><span class="ic ic-package"></span> Archyvuotos</div>
         </div>
         <input id="caseSearch" class="input" placeholder="Paieška pagal pavadinimą…" style="margin-top:8px;">
       </div>
@@ -89,16 +364,16 @@
 
     <!-- BYLOS VIDUS -->
     <div id="caseDetailView" class="hidden">
-      <div class="crumb" id="backToCases">← Grįžti į bylų sąrašą</div>
+      <div class="crumb" id="backToCases"><span class="ic ic-arrowl"></span> Grįžti į bylų sąrašą</div>
       <div class="card">
-        <h2 style="color:var(--navy);font-size:19px;" id="cdTitle"></h2>
+        <h2 style="font-size:17px;" id="cdTitle"></h2>
         <div class="muted" id="cdSub"></div>
       </div>
       <div class="tabs">
-        <div class="tab active" data-pane="recipients">👥 Gavėjai</div>
-        <div class="tab" data-pane="upload">⬆️ Įkelti naują dokumentą</div>
-        <div class="tab" data-pane="documents">📑 Dokumentai</div>
-        <div class="tab" data-pane="history">🕓 Prisijungimo istorija</div>
+        <div class="tab active" data-pane="recipients"><span class="ic ic-users"></span> Gavėjai</div>
+        <div class="tab" data-pane="upload"><span class="ic ic-up"></span> Įkelti naują dokumentą</div>
+        <div class="tab" data-pane="documents"><span class="ic ic-layers"></span> Dokumentai</div>
+        <div class="tab" data-pane="history"><span class="ic ic-clock"></span> Prisijungimo istorija</div>
       </div>
 
       <!-- GAVĖJAI -->
@@ -107,14 +382,14 @@
           <strong>Gavėjų sąrašas</strong>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-sm btn-ghost" id="addRecipientBtn">+ Pridėti gavėją</button>
-            <button class="btn btn-sm btn-ghost" id="importRecipientsBtn">📋 Importuoti (Excel/CSV/įklijuoti)</button>
+            <button class="btn btn-sm btn-ghost" id="importRecipientsBtn"><span class="ic ic-clipboard"></span> Importuoti (Excel/CSV/įklijuoti)</button>
           </div>
         </div>
         <!-- Bendra bylos nuoroda (visiems gavėjams) -->
         <div style="background:#EEF3FB;border:1px solid #C9D6EC;border-radius:8px;padding:12px 14px;margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
             <div>
-              <strong style="color:var(--navy);">🔗 Bendra bylos nuoroda</strong>
+              <strong style="color:var(--navy);"><span class="ic ic-link"></span> Bendra bylos nuoroda</strong>
               <div class="muted" style="font-size:12px;">Viena nuoroda visiems gavėjams. Jie įveda savo el. paštą + OTP. Tinka kai gavėjų daug (nereikia siųsti šimtų laiškų).</div>
             </div>
             <button class="btn btn-sm" id="copyCaseLinkBtn">Kopijuoti bendrą nuorodą</button>
@@ -131,8 +406,8 @@
             <span class="muted" id="selectionCount">Pažymėta: 0</span>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-sm" id="bulkInviteBtn" disabled>📧 Siųsti pakvietimą pažymėtiems</button>
-            <button class="btn btn-sm btn-ghost" id="bulkRemindBtn" disabled>🔔 Siųsti priminimą</button>
+            <button class="btn btn-sm" id="bulkInviteBtn" disabled><span class="ic ic-mail"></span> Siųsti pakvietimą pažymėtiems</button>
+            <button class="btn btn-sm btn-ghost" id="bulkRemindBtn" disabled><span class="ic ic-bell"></span> Siųsti priminimą</button>
           </div>
         </div>
         <div id="recipientsTable"></div>
@@ -153,7 +428,7 @@
           <input type="checkbox" id="notifyCheck"> Pranešti gavėjams el. paštu apie naujus dokumentus
         </label>
         <div class="muted" style="font-size:12px;margin-top:6px;">
-          💡 Jei gavėjų daug (pvz. 100+), vietoj masinio el. laiškų siuntimo naudokite <strong>bendrą bylos nuorodą</strong> (skiltis „Gavėjai“) — taip išvengsite Resend limito ir Microsoft/Outlook spam filtrų.
+          Jei gavėjų daug (pvz. 100+), vietoj masinio el. laiškų siuntimo naudokite <strong>bendrą bylos nuorodą</strong> (skiltis „Gavėjai“) — taip išvengsite Resend limito ir Microsoft/Outlook spam filtrų.
         </div>
         <div id="uploadAlert"></div>
         <button class="btn" id="uploadBtn" style="margin-top:14px;">Pateikti</button>
@@ -172,7 +447,7 @@
       <div id="paneHistory" class="card hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
           <strong>Audito žurnalas</strong>
-          <button class="btn btn-sm btn-ghost" id="exportCsvBtn">⬇️ Eksportuoti CSV</button>
+          <button class="btn btn-sm btn-ghost" id="exportCsvBtn"><span class="ic ic-down"></span> Eksportuoti CSV</button>
         </div>
         <div class="row" style="margin-bottom:12px;">
           <select id="filterAction" class="select">
@@ -198,6 +473,10 @@
       </div>
     </div>
   </div>
+
+      </div><!-- /.container -->
+    </main>
+  </div><!-- /.app -->
 
   <!-- MODALAI -->
   <div id="modalRoot"></div>
@@ -239,7 +518,7 @@
       }catch(e){ PERM_LEVEL = 'none'; }
 
       if (PERM_LEVEL === 'none'){
-        document.body.innerHTML = '<div style="max-width:480px;margin:15vh auto;text-align:center;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0B1E3F;"><h2>⛔ Prieiga negalima</h2><p style="color:#6B7280;">Jūsų paskyra neturi prieigos prie šio modulio. Kreipkitės į administratorių.</p><a href="admin.html" style="color:#C9A961;font-weight:600;text-decoration:none;">← Grįžti į pagrindinį</a></div>';
+        document.body.innerHTML = '<div style="max-width:480px;margin:15vh auto;text-align:center;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0B1E3F;"><h2><span class="ic ic-ban"></span> Prieiga negalima</h2><p style="color:#6B7280;">Jūsų paskyra neturi prieigos prie šio modulio. Kreipkitės į administratorių.</p><a href="admin.html" style="color:#C9A961;font-weight:600;text-decoration:none;"><span class="ic ic-arrowl"></span> Grįžti į pagrindinį</a></div>';
       } else if (PERM_LEVEL === 'view'){
         const st = document.createElement('style');
         st.textContent = `
@@ -255,7 +534,7 @@
         document.body.classList.add('perm-view');
         const banner = document.createElement('div');
         banner.style.cssText = 'background:#E0E7FF;color:#4338CA;text-align:center;padding:8px;font-size:13px;font-weight:600;';
-        banner.textContent = '👁️ Peržiūros režimas — duomenų keitimas šiame modulyje negalimas';
+        banner.textContent = '<span class="ic ic-eye"></span> Peržiūros režimas — duomenų keitimas šiame modulyje negalimas';
         document.body.prepend(banner);
       }
       return PERM_LEVEL;
@@ -265,7 +544,7 @@
       const lvl = await checkModuleAccess('dokumentai');
       if (lvl === 'none') return;
       $('userEmail').textContent = user.email;
-      hide('loginView'); hide('loadingView'); show('casesView');
+      hide('loginView'); hide('loadingView'); show('casesView'); document.body.classList.remove('shell-off');
       await loadCases();
     }
     $('loginBtn').addEventListener('click', async () => {
@@ -310,10 +589,10 @@
         const badge=c.status==='active'?'<span class="badge badge-green">Aktyvi</span>':'<span class="badge badge-gray">Archyvuota</span>';
         const actions = c.status === 'active'
           ? `<button class="btn btn-sm" onclick="openCase('${c.id}')">Atidaryti</button>
-             <button class="btn btn-sm btn-ghost" onclick="archiveCase('${c.id}','${esc(c.legal_entity_name)}')">📦 Archyvuoti</button>`
+             <button class="btn btn-sm btn-ghost" onclick="archiveCase('${c.id}','${esc(c.legal_entity_name)}')"><span class="ic ic-package"></span> Archyvuoti</button>`
           : `<button class="btn btn-sm btn-ghost" onclick="openCase('${c.id}')">Peržiūrėti</button>
-             <button class="btn btn-sm" onclick="restoreCase('${c.id}')">↩ Atstatyti</button>
-             <button class="btn btn-sm btn-danger" onclick="purgeCase('${c.id}','${esc(c.legal_entity_name)}')">🗑 Pašalinti</button>`;
+             <button class="btn btn-sm" onclick="restoreCase('${c.id}')"><span class="ic ic-back"></span> Atstatyti</button>
+             <button class="btn btn-sm btn-danger" onclick="purgeCase('${c.id}','${esc(c.legal_entity_name)}')"><span class="ic ic-trash"></span> Pašalinti</button>`;
         h+=`<tr><td><strong>${esc(c.legal_entity_name)}</strong>${c.legal_entity_code?'<div class="muted">'+esc(c.legal_entity_code)+'</div>':''}</td>
         <td>${esc(c.case_title)}</td><td>${rc}</td><td>${bc}</td><td>${badge}</td>
         <td style="text-align:right;white-space:nowrap;">${actions}</td></tr>`;
@@ -492,8 +771,8 @@
         const canInvite = r.email && !r.token_revoked_at;
         h+=`<tr>
           <td><input type="checkbox" class="recipient-cb" data-id="${r.id}" ${cbDisabled} style="transform:scale(1.2);cursor:pointer;"></td>
-          <td><strong>${r.recipient_name?esc(r.recipient_name):'<span style="color:#C0392B;">(nenurodyta)</span>'}</strong></td>
-          <td>${r.email?esc(r.email):'<span style="color:#C0392B;">(nenurodytas)</span>'}</td>
+          <td><strong>${r.recipient_name?esc(r.recipient_name):'<span style="color:#B3261E;">(nenurodyta)</span>'}</strong></td>
+          <td>${r.email?esc(r.email):'<span style="color:#B3261E;">(nenurodytas)</span>'}</td>
           <td class="muted">${esc(rep)||'—'}</td>
           <td>${st}</td>
           <td class="muted">${r.last_login_at?fmtDate(r.last_login_at):'—'}</td>
@@ -674,13 +953,13 @@
         if(trukstama.length) incomplete.push(rec); else complete.push(rec);
       });
       _importValid = complete.concat(incomplete);  // visi keliami
-      let h=`<div style="margin-top:10px;"><div class="ok">✓ Bus pridėta iš viso: ${_importValid.length}</div>`;
+      let h=`<div style="margin-top:10px;"><div class="ok"><span class="ic ic-check"></span> Bus pridėta iš viso: ${_importValid.length}</div>`;
       if(complete.length) h+=`<div class="ok" style="margin-top:4px;">• Pilni (galės prisijungti): ${complete.length}</div>`;
       if(incomplete.length){
-        h+=`<div style="margin-top:6px;color:#9A7B24;">⚠ Nepilni (bus sąraše, bet negalės prisijungti, kol nepapildysite): ${incomplete.length}</div><ul style="margin:6px 0 0 18px;">`+
+        h+=`<div style="margin-top:6px;color:#9A7B24;"><span class="ic ic-alert"></span> Nepilni (bus sąraše, bet negalės prisijungti, kol nepapildysite): ${incomplete.length}</div><ul style="margin:6px 0 0 18px;">`+
           incomplete.map(x=>`<li style="color:#9A7B24;">${esc((x._line||'').slice(0,55))} — trūksta: ${x._trukstama.join(', ')}</li>`).join('')+'</ul>';
       }
-      if(skipped.length){ h+=`<div class="bad" style="margin-top:6px;">✗ Praleista (dublikatai): ${skipped.length}</div>`; }
+      if(skipped.length){ h+=`<div class="bad" style="margin-top:6px;"><span class="ic ic-x"></span> Praleista (dublikatai): ${skipped.length}</div>`; }
       h+='</div>'; $('mImpReport').innerHTML=h;
       $('mImpSave').disabled = _importValid.length===0;
     }
@@ -703,14 +982,14 @@
       const r=(window._recipients||[]).find(x=>x.id===id); if(!r)return;
       $('modalRoot').innerHTML=`<div class="modal-bg"><div class="modal">
         <h2>Gavėjo kortelė</h2>
-        ${(!r.email||!r.recipient_name)?'<div style="background:#FBF3DF;color:#9A7B24;border-radius:6px;padding:8px 12px;font-size:13px;margin-bottom:8px;">⚠ Šis gavėjas nepilnas — jis negali prisijungti, kol nebus įvestas pavadinimas ir galiojantis el. paštas.</div>':''}
+        ${(!r.email||!r.recipient_name)?'<div style="background:#FBF3DF;color:#9A7B24;border-radius:6px;padding:8px 12px;font-size:13px;margin-bottom:8px;"><span class="ic ic-alert"></span> Šis gavėjas nepilnas — jis negali prisijungti, kol nebus įvestas pavadinimas ir galiojantis el. paštas.</div>':''}
         <label class="label">Gavėjo pavadinimas</label><input id="eRName" class="input" value="${esc(r.recipient_name)}">
         <label class="label">El. paštas</label><input id="eREmail" class="input" type="email" value="${esc(r.email)}">
         <label class="label">Atstovo vardas ir pavardė</label><input id="eRRep" class="input" value="${esc(r.rep_full_name)}">
         <label class="label">Atstovo telefonas</label><input id="eRPhone" class="input" value="${esc(r.rep_phone)}">
         <div id="eRAlert"></div>
         <div style="display:flex;gap:10px;margin-top:16px;justify-content:space-between;align-items:center;">
-          <button class="btn btn-sm btn-danger" id="eRDelete">🗑 Ištrinti gavėją</button>
+          <button class="btn btn-sm btn-danger" id="eRDelete"><span class="ic ic-trash"></span> Ištrinti gavėją</button>
           <div style="display:flex;gap:10px;">
             <button class="btn btn-ghost" onclick="closeModal()">Atšaukti</button>
             <button class="btn" id="eRSave">Išsaugoti</button>
@@ -810,7 +1089,7 @@
           if(nr.success) notifyMsg=` Pranešimai — išsiųsta: ${nr.summary.sent_count}, nepavyko: ${nr.summary.failed_count}.`;
           else notifyMsg=' Pranešimų išsiųsti nepavyko.';
         }
-        $('uploadAlert').innerHTML='<div class="success">✓ Dokumentai įkelti.'+notifyMsg+'</div>';
+        $('uploadAlert').innerHTML='<div class="success"><span class="ic ic-check"></span> Dokumentai įkelti.'+notifyMsg+'</div>';
         pendingFiles=[]; renderFileList(); $('batchTitle').value=''; $('batchDesc').value=''; $('notifyCheck').checked=false;
       } catch(e){
         $('uploadAlert').innerHTML='<div class="error">Klaida: '+esc(e.message||e)+'</div>';
@@ -859,9 +1138,9 @@
             <td>${d.view_count || 0}</td>
             <td>${d.download_count || 0}</td>
             <td style="text-align:right;white-space:nowrap;">
-              <button class="btn btn-sm btn-ghost" onclick="adminViewDocument('${d.document_id}')">👁 Peržiūrėti</button>
-              <button class="btn btn-sm" onclick="adminDownloadDocument('${d.document_id}')">⬇ Atsisiųsti</button>
-              <button class="btn btn-sm btn-danger" onclick="adminDeleteDocument('${d.document_id}','${esc(d.original_name)}')">🗑</button>
+              <button class="btn btn-sm btn-ghost" onclick="adminViewDocument('${d.document_id}')"><span class="ic ic-eye"></span> Peržiūrėti</button>
+              <button class="btn btn-sm" onclick="adminDownloadDocument('${d.document_id}')"><span class="ic ic-down"></span> Atsisiųsti</button>
+              <button class="btn btn-sm btn-danger" onclick="adminDeleteDocument('${d.document_id}','${esc(d.original_name)}')"><span class="ic ic-trash"></span></button>
             </td></tr>`;
         });
         h += '</tbody></table></div>';
@@ -1042,6 +1321,7 @@
     });
 
     window.closeModal=()=>{ $('modalRoot').innerHTML=''; };
+    try{ document.getElementById('sbToggle').onclick=()=>document.body.classList.toggle('sb-open'); }catch(_){}
   </script>
 </body>
 </html>
