@@ -2457,7 +2457,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-17-r18';
+    const APP_VERSION='2026-08-17-r19';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -6761,8 +6761,7 @@
     // ----- PARAŠO POPUP (2x dydžio) -----
     let SIG_TARGET=null;
     window.openSigModal=id=>{
-      if(SIG_LOCKED[id]&&!canSigEdit()){ alert('Parašas užfiksuotas — pakartotinai pasirašyti ar keisti gali tik superadministratorius.'); return; }
-      if(SIG_LOCKED[id]&&canSigEdit()&&!confirm('Parašas jau užfiksuotas. Pasirašius iš naujo dabartinis parašas bus pakeistas. Tęsti?'))return;
+      if(SIG_LOCKED[id]&&!confirm('DĖMESIO: šis parašas jau IŠSAUGOTAS akte.\n\nPasirašius iš naujo dabartinis parašas bus PAKEISTAS. Tęsti?'))return;
       SIG_TARGET=id;
       $('sigModalTitle').textContent = id==='sigHandover' ? 'Perduodančio asmens parašas' : 'Perimančio asmens parašas';
       $('sigModal').style.display='flex';
@@ -6800,15 +6799,11 @@
     function renderSigLocks(){
       [['sigHandover','H'],['sigReceiver','R']].forEach(pair=>{
         const id=pair[0], k=pair[1];
-        const locked=!!SIG_LOCKED[id], can=canSigEdit();
+        const locked=!!SIG_LOCKED[id];
         const c=$(id); if(!c)return;
-        const btnSign=document.querySelector('[onclick="openSigModal(\''+id+'\')"]');
-        const btnClear=document.querySelector('[onclick="clearSig(\''+id+'\')"]');
-        if(btnSign) btnSign.style.display=(locked&&!can)?'none':'';
-        if(btnClear) btnClear.style.display=(locked&&!can)?'none':'';
-        c.style.cursor=(locked&&!can)?'default':'pointer';
+        c.style.cursor='pointer';
         let b=document.getElementById('sigLock'+k);
-        if(!b){ c.insertAdjacentHTML('afterend','<div id="sigLock'+k+'" style="display:none;font-size:12px;color:#0B6E2E;margin-top:2px;">Parašas užfiksuotas — keisti ar išvalyti gali tik superadministratorius.</div>'); b=document.getElementById('sigLock'+k); }
+        if(!b){ c.insertAdjacentHTML('afterend','<div id="sigLock'+k+'" style="display:none;font-size:12px;color:#0B6E2E;margin-top:2px;">Parašas išsaugotas ir apsaugotas — ištrinti ar pakeisti galima tik patvirtinus.</div>'); b=document.getElementById('sigLock'+k); }
         b.style.display=locked?'':'none';
       });
     }
@@ -6832,8 +6827,7 @@
     function wipeSig(id){ const c=$(id); c.getContext('2d').clearRect(0,0,c.width,c.height); sigState[id]=false; }
     window.clearSig=id=>{
       if(SIG_LOCKED[id]){
-        if(!canSigEdit()){ alert('Parašas užfiksuotas — jį keisti ar išvalyti gali tik superadministratorius.'); return; }
-        if(!confirm('Parašas užfiksuotas. Ar tikrai jį išvalyti? Pakeitimas įsigalios išsaugojus aktą, veiksmas fiksuojamas veiklos žurnale.'))return;
+        if(!confirm('DĖMESIO: šis parašas jau IŠSAUGOTAS akte.\n\nAr tikrai norite jį IŠTRINTI?\n\nIštrynimas įsigalios paspaudus „Išsaugoti (tarpinis)".'))return;
         SIG_LOCKED[id]=false; renderSigLocks();
       }
       if(id in SIG_SAVED) SIG_SAVED[id]=null;
