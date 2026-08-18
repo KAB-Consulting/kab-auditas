@@ -324,32 +324,61 @@
     .nav-badge{ margin-left:auto; background:var(--gold-bg); color:var(--gold-tx); border:1px solid var(--gold-bd);
       border-radius:9px; padding:0 6px; font-size:10.5px; font-weight:700; line-height:16px; min-width:17px; text-align:center; }
     #sbCase .tab.active .nav-badge{ background:rgba(255,255,255,.16); color:#fff; border-color:rgba(255,255,255,.3); }
+
+    /* ===================== VIRŠUTINĖ MODULIŲ JUOSTA ===================== */
+    .modbar{ display:flex; align-items:center; height:52px; flex:0 0 52px; padding:0 16px 0 14px;
+      background:#fff; border-bottom:1px solid var(--bd); position:sticky; top:0; z-index:60; }
+    .tb-logo{ display:flex; align-items:center; gap:9px; text-decoration:none; margin-right:20px; flex:0 0 auto; }
+    .tb-logo .sb-logo{ width:28px; height:28px; flex:0 0 28px; font-size:11px; background:var(--navy);
+      color:#fff; border-radius:var(--r); display:flex; align-items:center; justify-content:center;
+      font-weight:800; letter-spacing:-.3px; }
+    .tb-logo b{ font-size:13.5px; font-weight:700; color:var(--navy); letter-spacing:-.2px; white-space:nowrap; }
+    .mods{ display:flex; align-items:center; gap:2px; flex:1 1 auto; min-width:0;
+      overflow-x:auto; scrollbar-width:none; }
+    .mods::-webkit-scrollbar{ display:none; }
+    .mod{ display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:var(--r-sm);
+      font-size:13px; font-weight:600; color:var(--muted); text-decoration:none; white-space:nowrap;
+      border:none; background:transparent; font-family:inherit; cursor:pointer; transition:.12s; }
+    .mod:hover{ background:var(--hov); color:var(--ink); }
+    .mod.active{ background:var(--navy); color:#fff; }
+    .mod svg{ width:15px; height:15px; flex:0 0 15px; stroke:currentColor; fill:none; stroke-width:1.7;
+      stroke-linecap:round; stroke-linejoin:round; opacity:.75; }
+    .mod.active svg{ opacity:1; }
+    .tb-user{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted);
+      white-space:nowrap; flex:0 0 auto; margin-left:16px; }
+    .tb-user svg{ width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:1.8; opacity:.7; }
+    @media (max-width:1100px){ .tb-logo b{ display:none; } .tb-logo{ margin-right:12px; } }
+    @media (max-width:760px){ .tb-user span{ display:none; } }
+
+    .app{ min-height:calc(100vh - 52px); }
+    .sidebar{ height:calc(100vh - 52px); top:52px; }
+    .topbar{ top:0; }
+
+    body.shell-off .modbar{ display:none !important; }
+    @media (max-width:980px){
+      .sidebar{ top:52px; height:calc(100vh - 52px); }
+      body.sb-open::after{ top:52px; }
+    }
   </style>
 </head>
 <body class="shell-off">
+  <div class="modbar">
+    <a class="tb-logo" href="admin.html"><span class="sb-logo">KAB</span><b>KAB Consulting</b></a>
+    <nav class="mods">
+      <a class="mod" href="admin.html"><svg viewBox='0 0 24 24' aria-hidden='true'><rect x='3' y='3' width='7' height='7' rx='1'/><rect x='14' y='3' width='7' height='7' rx='1'/><rect x='3' y='14' width='7' height='7' rx='1'/><rect x='14' y='14' width='7' height='7' rx='1'/></svg><span>Apžvalga</span></a>
+      <a class="mod" href="admin.html#view=submissions"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><rect x='8' y='2' width='8' height='4' rx='1'/></svg><span>Klausimynai</span></a>
+      <a class="mod" href="admin-dokumentai.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/></svg><span>Dokumentai kreditoriams</span></a>
+      <span class="mod active"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 3v18'/><path d='M5 7h14'/><path d='M7 7l-4 7h8z'/><path d='M17 7l-4 7h8z'/><path d='M8 21h8'/></svg><span>Nemokumo procesai</span></span>
+      <a class="mod" href="admin-avnis.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M8 21h8'/><path d='M12 17v4'/><path d='M7 4h10v5a5 5 0 0 1-10 0z'/><path d='M7 6H4a2 2 0 0 0 0 4h3'/><path d='M17 6h3a2 2 0 0 1 0 4h-3'/></svg><span>Konkursai</span></a>
+    </nav>
+    <div class="tb-user"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg><span id="userEmail"></span></div>
+  </div>
   <div class="app">
 
     <!-- ============ ŠONINIS MENIU ============ -->
     <aside class="sidebar" id="sidebar">
-      <div class="sb-brand"><div class="sb-logo">KAB</div><div><b>KAB Consulting</b><span>Valdymo sistema</span></div></div>
-      <div class="sb-user"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg><span id="userEmail"></span></div>
-
-      <div class="sb-sec">Sistema</div>
-      <div class="sb-nav">
-        <a class="nav-i" href="admin.html"><svg viewBox='0 0 24 24' aria-hidden='true'><rect x='3' y='3' width='7' height='7' rx='1'/><rect x='14' y='3' width='7' height='7' rx='1'/><rect x='3' y='14' width='7' height='7' rx='1'/><rect x='14' y='14' width='7' height='7' rx='1'/></svg><span>Apžvalga</span></a>
-        <a class="nav-i" href="admin.html#view=submissions"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><rect x='8' y='2' width='8' height='4' rx='1'/></svg><span>Klausimynai</span></a>
-        <a class="nav-i" href="admin-dokumentai.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/></svg><span>Dokumentai kreditoriams</span></a>
-        <div class="nav-i active"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 3v18'/><path d='M5 7h14'/><path d='M7 7l-4 7h8z'/><path d='M17 7l-4 7h8z'/><path d='M8 21h8'/></svg><span>Nemokumo procesai</span></div>
-        <a class="nav-i" href="admin-avnis.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M8 21h8'/><path d='M12 17v4'/><path d='M7 4h10v5a5 5 0 0 1-10 0z'/><path d='M7 6H4a2 2 0 0 0 0 4h3'/><path d='M17 6h3a2 2 0 0 1 0 4h-3'/></svg><span>Konkursai</span></a>
-      </div>
-      <div class="sb-sec">Konfigūracija</div>
-      <div class="sb-nav">
-        <a class="nav-i" href="admin.html#view=templates"><svg viewBox='0 0 24 24' aria-hidden='true'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg><span>Klausimynų šablonai</span></a>
-        <a class="nav-i" href="admin.html#view=users"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M23 21v-2a4 4 0 0 0-3-3.87'/><path d='M16 3.13a4 4 0 0 1 0 7.75'/></svg><span>Vartotojai</span></a>
-      </div>
-
-      <div class="sb-sec">Nemokumo procesai</div>
       <div class="sb-nav" id="sbGlobal">
+        <div class="sb-sec">Nemokumo procesai</div>
         <div class="nav-i" id="navAdmins"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M3 21h18'/><path d='M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16'/><path d='M9 7h1M9 11h1M9 15h1M14 7h1M14 11h1M14 15h1'/></svg><span>Administratoriai</span></div>
         <div class="nav-i" id="navSettings"><svg viewBox='0 0 24 24' aria-hidden='true'><line x1='4' y1='21' x2='4' y2='14'/><line x1='4' y1='10' x2='4' y2='3'/><line x1='12' y1='21' x2='12' y2='12'/><line x1='12' y1='8' x2='12' y2='3'/><line x1='20' y1='21' x2='20' y2='16'/><line x1='20' y1='12' x2='20' y2='3'/><line x1='1' y1='14' x2='7' y2='14'/><line x1='9' y1='8' x2='15' y2='8'/><line x1='17' y1='16' x2='23' y2='16'/></svg><span>Nustatymai</span></div>
       </div>
@@ -371,6 +400,9 @@
       <div class="sb-spacer"></div>
 
       <div class="sb-foot">
+        <div class="sb-sec">Konfigūracija</div>
+        <a class="nav-i" href="admin.html#view=templates"><svg viewBox='0 0 24 24' aria-hidden='true'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg><span>Klausimynų šablonai</span></a>
+        <a class="nav-i" href="admin.html#view=users"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M23 21v-2a4 4 0 0 0-3-3.87'/><path d='M16 3.13a4 4 0 0 1 0 7.75'/></svg><span>Vartotojai</span></a>
         <a class="nav-i" href="admin.html#view=help"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg><span>Instrukcijos</span></a>
         <div class="nav-i" id="logoutBtn"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/><polyline points='16 17 21 12 16 7'/><line x1='21' y1='12' x2='9' y2='12'/></svg><span>Atsijungti</span></div>
       </div>
@@ -1064,7 +1096,7 @@
 
           <!-- parašai -->
           <div class="sec-title" style="margin-top:18px;">Parašai</div>
-          <div class="hint" style="margin-bottom:8px;">Pasirašoma tik atskirame lange — spauskite „Pasirašyti“ (arba spustelėkite parašo laukelį), arba išsiųskite šaliai nuorodą el. paštu (gavėjas patvirtina tapatybę 6 skaitmenų kodu). Išsaugojus aktą parašas užfiksuojamas ir apsaugomas nuo pakeitimų.</div>
+          <div class="hint" style="margin-bottom:8px;">Pasirašyti galima ekrane (touch pad / pelė) arba išsiųsti šaliai nuorodą el. paštu — gavėjas patvirtina tapatybę 6 skaitmenų kodu ir pasirašo nuotoliniu būdu.</div>
           <div class="row">
             <div>
               <label class="label">Perduodančio asmens parašas</label>
@@ -2457,7 +2489,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-17-r19';
+    const APP_VERSION='2026-08-14-r18';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -6691,11 +6723,8 @@
       onActTypeChange();
       // parašai
       setupSig('sigHandover'); setupSig('sigReceiver');
-      SIG_SAVED.sigHandover=a.sig_handover||null; SIG_LOCKED.sigHandover=!!a.sig_handover;
-      SIG_SAVED.sigReceiver=a.sig_receiver||null; SIG_LOCKED.sigReceiver=!!a.sig_receiver;
-      if(a.sig_handover)drawSigFromData('sigHandover',a.sig_handover); else wipeSig('sigHandover');
-      if(a.sig_receiver)drawSigFromData('sigReceiver',a.sig_receiver); else wipeSig('sigReceiver');
-      renderSigLocks();
+      if(a.sig_handover)drawSigFromData('sigHandover',a.sig_handover); else clearSig('sigHandover');
+      if(a.sig_receiver)drawSigFromData('sigReceiver',a.sig_receiver); else clearSig('sigReceiver');
       // el. parašai (pasirašymas el. paštu)
       ACT_ESIGN={ handover:a.esign_handover||null, receiver:a.esign_receiver||null };
       ESIGN_REQS=[];
@@ -6761,7 +6790,6 @@
     // ----- PARAŠO POPUP (2x dydžio) -----
     let SIG_TARGET=null;
     window.openSigModal=id=>{
-      if(SIG_LOCKED[id]&&!confirm('DĖMESIO: šis parašas jau IŠSAUGOTAS akte.\n\nPasirašius iš naujo dabartinis parašas bus PAKEISTAS. Tęsti?'))return;
       SIG_TARGET=id;
       $('sigModalTitle').textContent = id==='sigHandover' ? 'Perduodančio asmens parašas' : 'Perimančio asmens parašas';
       $('sigModal').style.display='flex';
@@ -6774,7 +6802,6 @@
       if(!sigState['sigModalCanvas']){ alert('Pirmiausia pasirašykite lange.'); return; }
       const src=$('sigModalCanvas'), dst=$(SIG_TARGET);
       if(dst){ const ctx=dst.getContext('2d'); ctx.clearRect(0,0,dst.width,dst.height); ctx.drawImage(src,0,0,dst.width,dst.height); sigState[SIG_TARGET]=true; }
-      if(SIG_TARGET in SIG_SAVED) SIG_SAVED[SIG_TARGET]=null;
       closeSigModal();
     };
     function renderActRows(){
@@ -6792,29 +6819,8 @@
 
     // ----- PARAŠAI (canvas, touch+pelė) -----
     const sigState={};
-    // Aktų parašų apsauga: užfiksuoti parašai ir jų originalūs duomenys (byte-tikslus išsaugojimas)
-    const SIG_LOCKED={ sigHandover:false, sigReceiver:false };
-    const SIG_SAVED={ sigHandover:null, sigReceiver:null };
-    function canSigEdit(){ return typeof IS_SUPERADMIN!=='undefined' && IS_SUPERADMIN; }
-    function renderSigLocks(){
-      [['sigHandover','H'],['sigReceiver','R']].forEach(pair=>{
-        const id=pair[0], k=pair[1];
-        const locked=!!SIG_LOCKED[id];
-        const c=$(id); if(!c)return;
-        c.style.cursor='pointer';
-        let b=document.getElementById('sigLock'+k);
-        if(!b){ c.insertAdjacentHTML('afterend','<div id="sigLock'+k+'" style="display:none;font-size:12px;color:#0B6E2E;margin-top:2px;">Parašas išsaugotas ir apsaugotas — ištrinti ar pakeisti galima tik patvirtinus.</div>'); b=document.getElementById('sigLock'+k); }
-        b.style.display=locked?'':'none';
-      });
-    }
     function setupSig(id){
       const c=$(id); if(c._wired)return; c._wired=true;
-      if(id==='sigHandover'||id==='sigReceiver'){
-        // Tiesioginis piešimas ekrane IŠJUNGTAS — pasirašoma tik per popup langą.
-        c.style.cursor='pointer';
-        c.addEventListener('click',()=>openSigModal(id));
-        return;
-      }
       const ctx=c.getContext('2d'); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#0B1E3F';
       let drawing=false;
       const pos=e=>{ const r=c.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return { x:(t.clientX-r.left)*(c.width/r.width), y:(t.clientY-r.top)*(c.height/r.height) }; };
@@ -6824,17 +6830,9 @@
       c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
       c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',end);
     }
-    function wipeSig(id){ const c=$(id); c.getContext('2d').clearRect(0,0,c.width,c.height); sigState[id]=false; }
-    window.clearSig=id=>{
-      if(SIG_LOCKED[id]){
-        if(!confirm('DĖMESIO: šis parašas jau IŠSAUGOTAS akte.\n\nAr tikrai norite jį IŠTRINTI?\n\nIštrynimas įsigalios paspaudus „Išsaugoti (tarpinis)".'))return;
-        SIG_LOCKED[id]=false; renderSigLocks();
-      }
-      if(id in SIG_SAVED) SIG_SAVED[id]=null;
-      wipeSig(id);
-    };
+    window.clearSig=id=>{ const c=$(id); c.getContext('2d').clearRect(0,0,c.width,c.height); sigState[id]=false; };
     function drawSigFromData(id,data){ const c=$(id); const ctx=c.getContext('2d'); const img=new Image(); img.onload=()=>{ ctx.clearRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height); }; img.src=data; sigState[id]=true; }
-    function sigData(id){ if(SIG_SAVED[id]) return SIG_SAVED[id]; return sigState[id] ? $(id).toDataURL('image/png') : null; }
+    function sigData(id){ return sigState[id] ? $(id).toDataURL('image/png') : null; }
 
     // ----- PASIRAŠYMAS EL. PAŠTU (su OTP) -----
     let ACT_ESIGN={ handover:null, receiver:null }, ESIGN_REQS=[];
@@ -6912,9 +6910,6 @@
         $('actMsg').innerHTML='<div class="error">'+esc(msg)+'</div>'; return null;
       }
       if(!id)$('actId').value=res.data.id;
-      if(p.sig_handover){ SIG_LOCKED.sigHandover=true; SIG_SAVED.sigHandover=p.sig_handover; }
-      if(p.sig_receiver){ SIG_LOCKED.sigReceiver=true; SIG_SAVED.sigReceiver=p.sig_receiver; }
-      renderSigLocks();
       return res.data.id;
     }
     $('actSaveDraft').onclick=async()=>{ const id=await saveAct('draft'); if(id)$('actMsg').innerHTML='<div class="success">Tarpinė informacija išsaugota.</div>'; };

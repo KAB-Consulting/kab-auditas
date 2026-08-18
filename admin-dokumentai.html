@@ -296,32 +296,69 @@
       font-weight:800; font-size:12px; letter-spacing:-.3px; }
     .sb-brand b{ display:block; font-size:13.5px; font-weight:700; color:var(--navy); letter-spacing:-.2px; }
     .sb-brand span{ display:block; font-size:10.5px; color:var(--muted); margin-top:1px; }
+
+    /* ===================== VIRŠUTINĖ MODULIŲ JUOSTA ===================== */
+    .modbar{ display:flex; align-items:center; height:52px; flex:0 0 52px; padding:0 16px 0 14px;
+      background:#fff; border-bottom:1px solid var(--bd); position:sticky; top:0; z-index:60; }
+    .tb-logo{ display:flex; align-items:center; gap:9px; text-decoration:none; margin-right:20px; flex:0 0 auto; }
+    .tb-logo .sb-logo{ width:28px; height:28px; flex:0 0 28px; font-size:11px; background:var(--navy);
+      color:#fff; border-radius:var(--r); display:flex; align-items:center; justify-content:center;
+      font-weight:800; letter-spacing:-.3px; }
+    .tb-logo b{ font-size:13.5px; font-weight:700; color:var(--navy); letter-spacing:-.2px; white-space:nowrap; }
+    .mods{ display:flex; align-items:center; gap:2px; flex:1 1 auto; min-width:0;
+      overflow-x:auto; scrollbar-width:none; }
+    .mods::-webkit-scrollbar{ display:none; }
+    .mod{ display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:var(--r-sm);
+      font-size:13px; font-weight:600; color:var(--muted); text-decoration:none; white-space:nowrap;
+      border:none; background:transparent; font-family:inherit; cursor:pointer; transition:.12s; }
+    .mod:hover{ background:var(--hov); color:var(--ink); }
+    .mod.active{ background:var(--navy); color:#fff; }
+    .mod svg{ width:15px; height:15px; flex:0 0 15px; stroke:currentColor; fill:none; stroke-width:1.7;
+      stroke-linecap:round; stroke-linejoin:round; opacity:.75; }
+    .mod.active svg{ opacity:1; }
+    .tb-user{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted);
+      white-space:nowrap; flex:0 0 auto; margin-left:16px; }
+    .tb-user svg{ width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:1.8; opacity:.7; }
+    @media (max-width:1100px){ .tb-logo b{ display:none; } .tb-logo{ margin-right:12px; } }
+    @media (max-width:760px){ .tb-user span{ display:none; } }
+
+    .app{ min-height:calc(100vh - 52px); }
+    .sidebar{ height:calc(100vh - 52px); top:52px; }
+    .topbar{ top:0; }
+
+    body.shell-off .modbar{ display:none !important; }
+    @media (max-width:980px){
+      .sidebar{ top:52px; height:calc(100vh - 52px); }
+      body.sb-open::after{ top:52px; }
+    }
   </style>
 </head>
 <body class="shell-off">
+  <div class="modbar">
+    <a class="tb-logo" href="admin.html"><span class="sb-logo">KAB</span><b>KAB Consulting</b></a>
+    <nav class="mods">
+      <a class="mod" href="admin.html"><svg viewBox='0 0 24 24' aria-hidden='true'><rect x='3' y='3' width='7' height='7' rx='1'/><rect x='14' y='3' width='7' height='7' rx='1'/><rect x='3' y='14' width='7' height='7' rx='1'/><rect x='14' y='14' width='7' height='7' rx='1'/></svg><span>Apžvalga</span></a>
+      <a class="mod" href="admin.html#view=submissions"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><rect x='8' y='2' width='8' height='4' rx='1'/></svg><span>Klausimynai</span></a>
+      <span class="mod active"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/></svg><span>Dokumentai kreditoriams</span></span>
+      <a class="mod" href="admin-bankrotas.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 3v18'/><path d='M5 7h14'/><path d='M7 7l-4 7h8z'/><path d='M17 7l-4 7h8z'/><path d='M8 21h8'/></svg><span>Nemokumo procesai</span></a>
+      <a class="mod" href="admin-avnis.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M8 21h8'/><path d='M12 17v4'/><path d='M7 4h10v5a5 5 0 0 1-10 0z'/><path d='M7 6H4a2 2 0 0 0 0 4h3'/><path d='M17 6h3a2 2 0 0 1 0 4h-3'/></svg><span>Konkursai</span></a>
+    </nav>
+    <div class="tb-user"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg><span id="userEmail"></span></div>
+  </div>
   <div class="app">
 
     <aside class="sidebar" id="sidebar">
-      <div class="sb-brand"><div class="sb-logo">KAB</div><div><b>KAB Consulting</b><span>Valdymo sistema</span></div></div>
-      <div class="sb-user"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg><span id="userEmail"></span></div>
-
-      <div class="sb-sec">Sistema</div>
       <div class="sb-nav">
-        <a class="nav-i" href="admin.html"><svg viewBox='0 0 24 24' aria-hidden='true'><rect x='3' y='3' width='7' height='7' rx='1'/><rect x='14' y='3' width='7' height='7' rx='1'/><rect x='3' y='14' width='7' height='7' rx='1'/><rect x='14' y='14' width='7' height='7' rx='1'/></svg><span>Apžvalga</span></a>
-        <a class="nav-i" href="admin.html#view=submissions"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><rect x='8' y='2' width='8' height='4' rx='1'/></svg><span>Klausimynai</span></a>
-        <div class="nav-i active"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/></svg><span>Dokumentai kreditoriams</span></div>
-        <a class="nav-i" href="admin-bankrotas.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 3v18'/><path d='M5 7h14'/><path d='M7 7l-4 7h8z'/><path d='M17 7l-4 7h8z'/><path d='M8 21h8'/></svg><span>Nemokumo procesai</span></a>
-        <a class="nav-i" href="admin-avnis.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M8 21h8'/><path d='M12 17v4'/><path d='M7 4h10v5a5 5 0 0 1-10 0z'/><path d='M7 6H4a2 2 0 0 0 0 4h3'/><path d='M17 6h3a2 2 0 0 1 0 4h-3'/></svg><span>Konkursai</span></a>
-      </div>
-      <div class="sb-sec">Konfigūracija</div>
-      <div class="sb-nav">
-        <a class="nav-i" href="admin.html#view=templates"><svg viewBox='0 0 24 24' aria-hidden='true'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg><span>Klausimynų šablonai</span></a>
-        <a class="nav-i" href="admin.html#view=users"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M23 21v-2a4 4 0 0 0-3-3.87'/><path d='M16 3.13a4 4 0 0 1 0 7.75'/></svg><span>Vartotojai</span></a>
+        <div class="sb-sec">Dokumentai kreditoriams</div>
+        <a class="nav-i active" href="admin-dokumentai.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/></svg><span>Bylos</span></a>
       </div>
 
       <div class="sb-spacer"></div>
 
       <div class="sb-foot">
+        <div class="sb-sec">Konfigūracija</div>
+        <a class="nav-i" href="admin.html#view=templates"><svg viewBox='0 0 24 24' aria-hidden='true'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg><span>Klausimynų šablonai</span></a>
+        <a class="nav-i" href="admin.html#view=users"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M23 21v-2a4 4 0 0 0-3-3.87'/><path d='M16 3.13a4 4 0 0 1 0 7.75'/></svg><span>Vartotojai</span></a>
         <a class="nav-i" href="admin.html#view=help"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg><span>Instrukcijos</span></a>
         <div class="nav-i" id="logoutBtn"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/><polyline points='16 17 21 12 16 7'/><line x1='21' y1='12' x2='9' y2='12'/></svg><span>Atsijungti</span></div>
       </div>

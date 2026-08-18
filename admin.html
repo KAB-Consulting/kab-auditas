@@ -366,6 +366,45 @@
     .ic-worker{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M5%208a7%207%200%200%201%2014%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M5%208a7%207%200%200%201%2014%200%27%2F%3E%3C%2Fsvg%3E"); }
     .ic-x{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%276%27%20x2%3D%276%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%276%27%20x2%3D%2718%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%276%27%20x2%3D%276%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%276%27%20x2%3D%2718%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
     :root{ --ic-search:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); }
+
+    /* ===================== VIRŠUTINĖ MODULIŲ JUOSTA ===================== */
+    .modbar{ display:flex; align-items:center; height:52px; flex:0 0 52px; padding:0 16px 0 14px;
+      background:#fff; border-bottom:1px solid var(--bd); position:sticky; top:0; z-index:60; }
+    .tb-logo{ display:flex; align-items:center; gap:9px; text-decoration:none; margin-right:20px; flex:0 0 auto; }
+    .tb-logo .sb-logo{ width:28px; height:28px; flex:0 0 28px; font-size:11px; background:var(--navy);
+      color:#fff; border-radius:var(--r); display:flex; align-items:center; justify-content:center;
+      font-weight:800; letter-spacing:-.3px; }
+    .tb-logo b{ font-size:13.5px; font-weight:700; color:var(--navy); letter-spacing:-.2px; white-space:nowrap; }
+    .mods{ display:flex; align-items:center; gap:2px; flex:1 1 auto; min-width:0;
+      overflow-x:auto; scrollbar-width:none; }
+    .mods::-webkit-scrollbar{ display:none; }
+    .mod{ display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:var(--r-sm);
+      font-size:13px; font-weight:600; color:var(--muted); text-decoration:none; white-space:nowrap;
+      border:none; background:transparent; font-family:inherit; cursor:pointer; transition:.12s; }
+    .mod:hover{ background:var(--hov); color:var(--ink); }
+    .mod.active{ background:var(--navy); color:#fff; }
+    .mod svg{ width:15px; height:15px; flex:0 0 15px; stroke:currentColor; fill:none; stroke-width:1.7;
+      stroke-linecap:round; stroke-linejoin:round; opacity:.75; }
+    .mod.active svg{ opacity:1; }
+    .tb-user{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted);
+      white-space:nowrap; flex:0 0 auto; margin-left:16px; }
+    .tb-user svg{ width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:1.8; opacity:.7; }
+    @media (max-width:1100px){ .tb-logo b{ display:none; } .tb-logo{ margin-right:12px; } }
+    @media (max-width:760px){ .tb-user span{ display:none; } }
+
+    .app-layout{ min-height:calc(100vh - 52px); }
+    .sidebar{ height:calc(100vh - 52px); top:52px; }
+    .sidebar-nav{ display:flex; flex-direction:column; }
+    .tmpl-nav{ display:flex; flex-direction:column; gap:1px; }
+    .tmpl-nav .template-tab{ display:flex; align-items:center; gap:9px; width:100%;
+      padding:6px 9px; border-radius:var(--r-sm); font-size:13px; font-weight:500;
+      color:var(--txt); text-align:left; box-shadow:none; background:transparent; }
+    .tmpl-nav .template-tab:hover{ background:var(--hov); color:var(--ink); }
+    .tmpl-nav .template-tab.active{ background:var(--navy); color:#fff; font-weight:600; box-shadow:none; }
+    .tmpl-nav .tab-count{ margin-left:auto; }
+    .tmpl-nav .template-tab.active .tab-count{ background:rgba(255,255,255,.18); color:#fff; }
+
+    @media (max-width:900px){ .sidebar{ top:52px; height:calc(100vh - 52px); } }
   </style>
 </head>
 <body>
@@ -417,58 +456,44 @@
   <!-- DASHBOARD -->
   <div id="dashboard-view" class="hidden">
 
+      <div class="modbar">
+        <a class="tb-logo" href="admin.html"><span class="sb-logo">KAB</span><b>KAB Consulting</b></a>
+        <nav class="mods">
+          <button class="mod active" data-mod="dashboard" onclick="navigateTo('dashboard')"><svg viewBox='0 0 24 24' aria-hidden='true'><rect x='3' y='3' width='7' height='7' rx='1'/><rect x='14' y='3' width='7' height='7' rx='1'/><rect x='3' y='14' width='7' height='7' rx='1'/><rect x='14' y='14' width='7' height='7' rx='1'/></svg><span>Apžvalga</span></button>
+          <button class="mod" data-mod="submissions" onclick="navigateTo('submissions')"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><rect x='8' y='2' width='8' height='4' rx='1'/></svg><span>Klausimynai</span></button>
+          <a class="mod" href="admin-dokumentai.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/></svg><span>Dokumentai kreditoriams</span></a>
+          <a class="mod" href="admin-bankrotas.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 3v18'/><path d='M5 7h14'/><path d='M7 7l-4 7h8z'/><path d='M17 7l-4 7h8z'/><path d='M8 21h8'/></svg><span>Nemokumo procesai</span></a>
+          <a class="mod" href="admin-avnis.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M8 21h8'/><path d='M12 17v4'/><path d='M7 4h10v5a5 5 0 0 1-10 0z'/><path d='M7 6H4a2 2 0 0 0 0 4h3'/><path d='M17 6h3a2 2 0 0 1 0 4h-3'/></svg><span>Konkursai</span></a>
+        </nav>
+        <div class="tb-user"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg><span id="user-email-top"></span></div>
+      </div>
     <div class="app-layout">
       <!-- SIDEBAR -->
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-          <div class="sidebar-brand-logo">KAB</div>
-          <div>
-            <div class="sidebar-brand-name">KAB Consulting</div>
-            <div class="sidebar-brand-sub">Valdymo sistema</div>
-          </div>
-        </div>
-
+      <aside class="sidebar" id="sidebar" style="padding-top:8px;">
         <nav class="sidebar-nav">
-          <div class="sidebar-section-label">Pagrindinis</div>
-          <button class="sidebar-nav-item active" data-view="dashboard" onclick="navigateTo('dashboard')">
-            <span class="sidebar-nav-icon"><span class="ic ic-grid"></span></span>
-            <span>Apžvalga</span>
+          <div class="sidebar-section-label">Klausimynų tipai</div>
+          <div class="tmpl-nav" id="templateFilters">
+          <button class="template-tab active" data-template="all" onclick="filterByTemplate('all')">
+            <span class="ic ic-clipboard"></span> Visi <span class="tab-count" id="count-all">0</span>
           </button>
-
-          <div class="sidebar-section-label" style="margin-top: 16px;">Moduliai</div>
-          <button class="sidebar-nav-item" data-view="submissions" data-module="klausimynai" onclick="navigateTo('submissions')">
-            <span class="sidebar-nav-icon"><span class="ic ic-clipboard"></span></span>
-            <span>Klausimynai</span>
-            <span class="sidebar-nav-badge" id="sidebar-badge-submissions">—</span>
+          <button class="template-tab" data-template="auditas" onclick="filterByTemplate('auditas')">
+            <span class="ic ic-search"></span> Auditas <span class="tab-count" id="count-audit">0</span>
           </button>
-          <a class="sidebar-nav-item" data-module="dokumentai" href="admin-dokumentai.html" style="text-decoration:none;">
-            <span class="sidebar-nav-icon"><span class="ic ic-folder"></span></span>
-            <span>Dokumentai kreditoriams</span>
-          </a>
-          <a class="sidebar-nav-item" data-module="bankrotas" href="admin-bankrotas.html" style="text-decoration:none;">
-            <span class="sidebar-nav-icon"><span class="ic ic-scale"></span></span>
-            <span>Nemokumo procesai</span>
-          </a>
-          <a class="sidebar-nav-item" data-module="avnis" href="admin-avnis.html" style="text-decoration:none;">
-            <span class="sidebar-nav-icon"><span class="ic ic-trophy"></span></span>
-            <span>Konkursai</span>
-          </a>
-
-          <div class="sidebar-section-label" style="margin-top: 16px;">Konfigūracija</div>
-          <button class="sidebar-nav-item" data-view="templates" data-module="klausimynai" onclick="navigateTo('templates')">
-            <span class="sidebar-nav-icon"><span class="ic ic-layers"></span></span>
-            <span>Klausimynų šablonai</span>
+          <button class="template-tab" data-template="restrukturizavimas" onclick="filterByTemplate('restrukturizavimas')">
+            <span class="ic ic-chart"></span> Restruktūrizavimas <span class="tab-count" id="count-restr">0</span>
           </button>
-          <button class="sidebar-nav-item" data-view="users" onclick="navigateTo('users')">
-            <span class="sidebar-nav-icon"><span class="ic ic-users"></span></span>
-            <span>Vartotojai</span>
+          <button class="template-tab" data-template="bankrotas_fizinis" onclick="filterByTemplate('bankrotas_fizinis')">
+            <span class="ic ic-scale"></span> Fizinių asmenų bankrotas <span class="tab-count" id="count-bankr">0</span>
           </button>
-
-          <div class="sidebar-section-label" style="margin-top: 16px;">Pagalba</div>
-          <button class="sidebar-nav-item" data-view="help" onclick="navigateTo('help')">
-            <span class="sidebar-nav-icon"><span class="ic ic-book"></span></span>
-            <span>Instrukcijos</span>
+          <button class="template-tab" data-template="imoniu_grupes_duomenys" onclick="filterByTemplate('imoniu_grupes_duomenys')">
+            <span class="ic ic-folder"></span> Pavieniai <span class="tab-count" id="count-spec">0</span>
           </button>
+          </div>
+          <div style="flex:1;min-height:14px;"></div>
+          <div class="sidebar-section-label" style="margin-top:14px;">Konfigūracija</div>
+          <button class="sidebar-nav-item" data-view="templates" onclick="navigateTo('templates')"><span class="sidebar-nav-icon"><span class="ic ic-layers"></span></span><span>Klausimynų šablonai</span></button>
+          <button class="sidebar-nav-item" data-view="users" onclick="navigateTo('users')"><span class="sidebar-nav-icon"><span class="ic ic-users"></span></span><span>Vartotojai</span></button>
+          <button class="sidebar-nav-item" data-view="help" onclick="navigateTo('help')"><span class="sidebar-nav-icon"><span class="ic ic-book"></span></span><span>Instrukcijos</span></button>
         </nav>
 
         <div class="sidebar-user">
@@ -594,24 +619,6 @@
           <button class="btn btn-ghost btn-small" onclick="loadSubmissions()"><span class="ic ic-refresh"></span> Atnaujinti</button>
         </div>
 
-        <!-- TABS pagal šabloną -->
-        <div style="border-bottom: 2px solid var(--kab-border); margin-bottom: 15px; display: flex; gap: 0; flex-wrap: wrap;">
-          <button class="template-tab active" data-template="all" onclick="filterByTemplate('all')">
-            <span class="ic ic-clipboard"></span> Visi <span class="tab-count" id="count-all">0</span>
-          </button>
-          <button class="template-tab" data-template="auditas" onclick="filterByTemplate('auditas')">
-            <span class="ic ic-search"></span> Auditas <span class="tab-count" id="count-audit">0</span>
-          </button>
-          <button class="template-tab" data-template="restrukturizavimas" onclick="filterByTemplate('restrukturizavimas')">
-            <span class="ic ic-chart"></span> Restruktūrizavimas <span class="tab-count" id="count-restr">0</span>
-          </button>
-          <button class="template-tab" data-template="bankrotas_fizinis" onclick="filterByTemplate('bankrotas_fizinis')">
-            <span class="ic ic-scale"></span> Fizinių asmenų bankrotas <span class="tab-count" id="count-bankr">0</span>
-          </button>
-          <button class="template-tab" data-template="imoniu_grupes_duomenys" onclick="filterByTemplate('imoniu_grupes_duomenys')">
-            <span class="ic ic-folder"></span> Pavieniai <span class="tab-count" id="count-spec">0</span>
-          </button>
-        </div>
 
         <!-- Statuso filter -->
         <div style="margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
@@ -1397,6 +1404,7 @@
     document.getElementById('login-view').classList.add('hidden');
     document.getElementById('dashboard-view').classList.remove('hidden');
     document.getElementById('user-email').textContent = user.email;
+    { const _t=document.getElementById('user-email-top'); if(_t)_t.textContent = user.email; }
     // Avatar pirmas raides
     const initials = (user.email || '?').split('@')[0].slice(0, 2).toUpperCase();
     const avatar = document.getElementById('user-avatar');
@@ -1695,6 +1703,9 @@
   // ============================================================
 
   function navigateTo(view) {
+    try{ document.querySelectorAll('.modbar .mod[data-mod]').forEach(m=>
+      m.classList.toggle('active', m.dataset.mod===(view==='submissions'?'submissions':'dashboard'))); }catch(_){}
+    try{ document.getElementById('templateFilters').style.display=(view==='submissions'||view==='dashboard')?'':'none'; }catch(_){}
     // Atnaujinti active item
     document.querySelectorAll('.sidebar-nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.view === view);
