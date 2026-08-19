@@ -1199,6 +1199,19 @@
       </div>
       <div class="hint">Blanke header (logo), footer (rekvizitai), korpuse žymė {{turinys}}.</div>
 
+      <label class="label" style="margin-top:12px;">Firminis blankas (PDF) — PDF generavimui</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="admBlankPdf" class="input" placeholder="dar neįkeltas" readonly style="background:#F7F9FB;">
+        <input type="file" id="admBlankPdfFile" accept=".pdf" class="hidden">
+        <button class="btn btn-sm btn-gold" id="admBlankPdfBtn" type="button"><span class="ic ic-up"></span> Įkelti PDF blanką</button>
+      </div>
+      <div class="hint">Tas pats firminis blankas, išsaugotas PDF formatu (tuščias — tik antraštė ir poraštė, be {{turinys}}). Ant jo bus dedamas pranešimo tekstas generuojant PDF be išorinio serviso.</div>
+      <div class="row" style="margin-top:8px;">
+        <div><label class="label">Turinio viršutinė paraštė (mm)</label><input id="admPdfTop" class="input" type="number" min="0" max="120" value="40" placeholder="40"></div>
+        <div><label class="label">Turinio apatinė paraštė (mm)</label><input id="admPdfBottom" class="input" type="number" min="0" max="120" value="26" placeholder="26"></div>
+      </div>
+      <div class="hint">Viršutinė paraštė turi būti didesnė už blanko antraštės (logo) aukštį, apatinė — už poraštės aukštį, kad tekstas jų neuždengtų. Kairė/dešinė nustatytos pagal raštvedybą (30/10 mm).</div>
+
       <div class="sec-title" id="personsSection" style="margin-top:20px;">Įgalioti fiziniai asmenys</div>
       <div id="personsList" class="hint" style="margin-bottom:8px;"></div>
       <div class="row">
@@ -2554,7 +2567,7 @@
           body.perm-view #assetPasteSave, body.perm-view #newRegBtn, body.perm-view #attachUploadBtn, body.perm-view #newActBtn,
           body.perm-view #pasteRowsBtn, body.perm-view #addRowBtn, body.perm-view #pasteParseBtn, body.perm-view #pasteApplyBtn,
           body.perm-view #photoUploadBtn, body.perm-view #photoCamBtn, body.perm-view #actSaveDraft, body.perm-view #actGenPdf,
-          body.perm-view #admBlankBtn, body.perm-view #addPersonBtn, body.perm-view #admSave, body.perm-view #recSave,
+          body.perm-view #admBlankBtn, body.perm-view #admBlankPdfBtn, body.perm-view #addPersonBtn, body.perm-view #admSave, body.perm-view #recSave,
           body.perm-view #impFileBtn, body.perm-view #impSheetBtn, body.perm-view #impSave, body.perm-view #pdfAttUploadBtn, body.perm-view #pdfGenerate,
           body.perm-view #ntSave, body.perm-view #asPhotoUploadBtn, body.perm-view #asPhotoCamBtn, body.perm-view #asActPhotoBtn, body.perm-view #asActPhotoAdd, body.perm-view #assetSave, body.perm-view #priceSave,
           body.perm-view [onclick*="clearSig"], body.perm-view [onclick*="delRecipient"], body.perm-view [onclick*="editRecipient"],
@@ -3547,7 +3560,9 @@
       $('admModalTitle').textContent = id ? 'Redaguoti administratorių' : 'Naujas nemokumo administratorius';
       $('admId').value=a.id||''; $('admName').value=a.name||''; $('admCode').value=a.code||'';
       $('admAddress').value=a.address||''; $('admPhone').value=a.phone||''; $('admEmail').value=a.email||'';
-      $('admBlank').value=a.blank_docx_path||''; $('admMsg').innerHTML='';
+      $('admBlank').value=a.blank_docx_path||'';
+      $('admBlankPdf').value=a.blank_pdf_path||''; $('admPdfTop').value=(a.pdf_top_mm??40); $('admPdfBottom').value=(a.pdf_bottom_mm??26);
+      $('admMsg').innerHTML='';
       $('pName').value=''; $('pEmail').value='';
       if(id){ show('personsSection'); loadPersons(id); } else { $('personsList').innerHTML='<span class="muted">Asmenis galėsite pridėti išsaugoję administratorių.</span>'; }
       show('admModal');
@@ -3580,9 +3595,23 @@
       }catch(err){ $('admMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
       finally{ e.target.value=''; }
     };
+    $('admBlankPdfBtn').onclick=()=>$('admBlankPdfFile').click();
+    $('admBlankPdfFile').onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file)return;
+      $('admMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliama…</div>';
+      try{
+        const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
+        const path=`blanks/${Date.now()}_${safe}`;
+        const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+        if(error)throw error;
+        $('admBlankPdf').value=path; $('admMsg').innerHTML='<div class="success">PDF blankas įkeltas. Spauskite „Išsaugoti administratorių“.</div>';
+      }catch(err){ $('admMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    };
     $('admSave').onclick=async()=>{
       const p={ name:$('admName').value.trim(), code:$('admCode').value.trim(), address:$('admAddress').value.trim(),
-        phone:$('admPhone').value.trim(), email:$('admEmail').value.trim(), blank_docx_path:$('admBlank').value.trim() };
+        phone:$('admPhone').value.trim(), email:$('admEmail').value.trim(), blank_docx_path:$('admBlank').value.trim(),
+        blank_pdf_path:$('admBlankPdf').value.trim(), pdf_top_mm:parseInt($('admPdfTop').value||'40',10), pdf_bottom_mm:parseInt($('admPdfBottom').value||'26',10) };
       if(!p.name){ $('admMsg').innerHTML='<div class="error">Įveskite pavadinimą.</div>'; return; }
       const id=$('admId').value||null;
       const res=await sb.rpc('upsert_insolvency_administrator',{ p_id:id, p });
@@ -3689,7 +3718,7 @@
       const { data:cs }=await sb.from('insolvency_cases').select('id,administrator_id');
       const cnt={}; (cs||[]).forEach(c=>{ cnt[c.administrator_id]=(cnt[c.administrator_id]||0)+1; });
       $('setAdminsList').innerHTML = ADMINS.length ? '<table><thead><tr><th>Pavadinimas</th><th>Kodas</th><th>Bylų</th><th></th></tr></thead><tbody>'+
-        ADMINS.map(a=>`<tr><td><b>${esc(a.name)}</b></td><td>${esc(a.code||'')}</td><td>${cnt[a.id]||0}</td><td style="text-align:right;"><button class="btn btn-sm btn-danger" onclick="delAdmin('${a.id}')"><span class="ic ic-trash"></span> Trinti</button></td></tr>`).join('')+'</tbody></table>'
+        ADMINS.map(a=>`<tr><td><b>${esc(a.name)}</b>${a.blank_pdf_path?' <span class="badge badge-green" title="PDF blankas įkeltas">PDF</span>':''}</td><td>${esc(a.code||'')}</td><td>${cnt[a.id]||0}</td><td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" id="setAdmEdit_${a.id}" onclick="openAdmModal('${a.id}')"><span class="ic ic-pencil"></span> Redaguoti</button> <button class="btn btn-sm btn-danger" onclick="delAdmin('${a.id}')"><span class="ic ic-trash"></span> Trinti</button></td></tr>`).join('')+'</tbody></table>'
         : '<div class="muted">Administratorių nėra.</div>';
     }
     window.delAdmin=async id=>{
@@ -4091,6 +4120,113 @@
       page.drawText(fit(T('Byla: '+(meta.caseName||'')),fonts.reg,4,w-8),{ x:x+4, y:y+h-28, size:4, font:fonts.reg, color:black });
       const bytes=await out.save();
       return { blob:new Blob([new Uint8Array(bytes)],{ type:'application/pdf' }), pageCount:out.getPageCount() };
+    }
+
+    // ===== PRANEŠIMO PDF GENERAVIMAS ANT FIRMINIO BLANKO (pdf-lib, be išorinio serviso) =====
+    // Perskaito sugeneruotą DOCX (pastraipos, bold, sulygiavimas, sąrašai), atkuria tekstą vektoriumi
+    // ant administratoriaus PDF blanko (fonas), su raštvedybos paraštėmis (kairė 30 / dešinė 10 mm).
+    let SERIF_FONT_BYTES=null;
+    async function getSerifFonts(pdfDoc){
+      if(!SERIF_FONT_BYTES){
+        try{
+          const [r,b]=await Promise.all([
+            fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSerif.ttf'),
+            fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSerif-Bold.ttf')]);
+          if(!r.ok||!b.ok)throw 0;
+          SERIF_FONT_BYTES={reg:await r.arrayBuffer(),bold:await b.arrayBuffer()};
+        }catch(_){
+          const [r,b]=await Promise.all([
+            fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf'),
+            fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf')]);
+          SERIF_FONT_BYTES={reg:await r.arrayBuffer(),bold:await b.arrayBuffer()};
+        }
+      }
+      pdfDoc.registerFontkit(window.fontkit);
+      return { reg:await pdfDoc.embedFont(SERIF_FONT_BYTES.reg,{subset:true}), bold:await pdfDoc.embedFont(SERIF_FONT_BYTES.bold,{subset:true}) };
+    }
+    async function parseNoticeDocx(docxBytes){
+      const zip=await JSZip.loadAsync(docxBytes);
+      const dx=await zip.file("word/document.xml").async("string");
+      const numMap={};
+      const numFile=zip.file("word/numbering.xml");
+      if(numFile){
+        const nx=await numFile.async("string");
+        const num2abs={};
+        (nx.match(/<w:num w:numId="(\d+)"[\s\S]*?<w:abstractNumId w:val="(\d+)"/g)||[]).forEach(m=>{const a=m.match(/numId="(\d+)"[\s\S]*?abstractNumId w:val="(\d+)"/);num2abs[a[1]]=a[2];});
+        const absFmt={};
+        (nx.match(/<w:abstractNum w:abstractNumId="(\d+)"[\s\S]*?<\/w:abstractNum>/g)||[]).forEach(a=>{const id=a.match(/abstractNumId="(\d+)"/)[1];const l0=a.match(/<w:lvl w:ilvl="0"[\s\S]*?<\/w:lvl>/);absFmt[id]=l0?((l0[0].match(/<w:numFmt w:val="(\w+)"/)||[])[1]||"decimal"):"decimal";});
+        Object.keys(num2abs).forEach(nid=>numMap[nid]={fmt:absFmt[num2abs[nid]]||"decimal"});
+      }
+      const paras=[];
+      const pblocks=dx.match(/<w:p\b[\s\S]*?<\/w:p>/g)||[];
+      for(const p of pblocks){
+        const jc=(p.match(/<w:jc w:val="(\w+)"/)||[])[1]||null;
+        const numId=(p.match(/<w:numId w:val="(\d+)"/)||[])[1]||null;
+        const ilvl=parseInt((p.match(/<w:ilvl w:val="(\d+)"/)||[])[1]||"0",10);
+        const runs=[];
+        const rblocks=p.match(/<w:r\b[\s\S]*?<\/w:r>/g)||[];
+        for(const r of rblocks){
+          const bold=/<w:b\/>|<w:b w:val="(?:1|true|on)"/.test(r);
+          const ts=r.match(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)||[];
+          let txt=ts.map(t=>t.replace(/<[^>]*>/g,"")).join("");
+          txt=txt.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
+          if(txt)runs.push({txt,bold});
+        }
+        const text=runs.map(r=>r.txt).join("");
+        if(!text.trim()&&!numId){paras.push({empty:true});continue;}
+        paras.push({jc,numId,ilvl,runs,listFmt:numId?(numMap[numId]?numMap[numId].fmt:"decimal"):null});
+      }
+      return paras;
+    }
+    async function buildNoticePdf(docxBytes,letterheadPdfBytes,opts){
+      opts=opts||{};
+      const { PDFDocument, rgb }=PDFLib;
+      const MM=72/25.4;
+      const leftMM=opts.leftMM??30,rightMM=opts.rightMM??10,topMM=opts.topMM??40,bottomMM=opts.bottomMM??26;
+      const size=opts.size??11,lineGap=opts.lineGap??1.32;
+      const paras=await parseNoticeDocx(docxBytes);
+      const out=await PDFDocument.create();
+      const { reg:fReg, bold:fBold }=await getSerifFonts(out);
+      let lhPage=null;
+      if(letterheadPdfBytes){ const lh=await PDFDocument.load(letterheadPdfBytes); [lhPage]=await out.embedPdf(lh,[0]); }
+      const A4=[595.28,841.89];
+      const left=leftMM*MM,right=A4[0]-rightMM*MM,top=A4[1]-topMM*MM,bottom=bottomMM*MM;
+      const contentW=right-left,lineH=size*lineGap;
+      let page=null,y=0;
+      function newPage(){ page=out.addPage(A4); if(lhPage)page.drawPage(lhPage,{x:0,y:0,width:A4[0],height:A4[1]}); y=top; }
+      newPage();
+      const wOf=(s,bold)=>(bold?fBold:fReg).widthOfTextAtSize(s,size);
+      const spaceW=(bold)=>wOf(" ",bold);
+      let prevNum=null;const cnt={};
+      for(const par of paras){ if(par.numId){ if(par.listFmt!=="bullet"){ if(par.numId!==prevNum)cnt[par.numId]=1; else cnt[par.numId]=(cnt[par.numId]||0)+1; par._num=cnt[par.numId]; } prevNum=par.numId; } else prevNum=null; }
+      function drawPar(par){
+        if(par.empty){ y-=lineH*0.6; return; }
+        const align=par.jc==="center"?"center":par.jc==="right"?"right":par.jc==="left"?"left":"justify";
+        let indent=0,marker=null,hang=0;
+        if(par.numId){ indent=(par.ilvl+1)*14; marker=par.listFmt==="bullet"?"•":(par._num||1)+"."; hang=Math.max(wOf(marker+" ",false),12); }
+        const words=[];
+        for(const r of par.runs){ for(const part of r.txt.split(/(\s+)/)){ if(part===""||/^\s+$/.test(part))continue; words.push({t:part,bold:r.bold}); } }
+        if(!words.length){ y-=lineH; return; }
+        const avail=contentW-indent;
+        const lines=[];let cur=[],curW=0;
+        for(const w of words){ const ww=wOf(w.t,w.bold); const add=(cur.length?spaceW(w.bold):0)+ww; if(curW+add>avail&&cur.length){ lines.push(cur); cur=[w]; curW=ww; } else { cur.push(w); curW+=add; } }
+        if(cur.length)lines.push(cur);
+        for(let li=0;li<lines.length;li++){
+          if(y-lineH<bottom)newPage();
+          const ln=lines[li],isLast=li===lines.length-1;
+          let natural=0;for(let i=0;i<ln.length;i++){ natural+=wOf(ln[i].t,ln[i].bold); if(i)natural+=spaceW(ln[i].bold); }
+          let x=left+indent,gap=null;
+          if(marker&&li===0)page.drawText(marker,{x:left+indent-hang+(par.listFmt==="bullet"?2:0),y:y-size,size,font:fReg,color:rgb(0,0,0)});
+          if(align==="center")x=left+indent+(avail-natural)/2;
+          else if(align==="right")x=right-natural;
+          else if(align==="justify"&&!isLast&&ln.length>1)gap=(avail-natural)/(ln.length-1);
+          for(let i=0;i<ln.length;i++){ const w=ln[i]; if(i)x+=spaceW(w.bold)+(gap||0); page.drawText(w.t,{x,y:y-size,size,font:w.bold?fBold:fReg,color:rgb(0,0,0)}); x+=wOf(w.t,w.bold); }
+          y-=lineH;
+        }
+        y-=lineH*0.28;
+      }
+      for(const par of paras)drawPar(par);
+      return await out.save();
     }
 
     // --- registravimo submit ---
@@ -6288,15 +6424,34 @@
     $('pdfGenerate').onclick=async()=>{
       const withAtt=document.querySelector('input[name="pdfAtt"]:checked').value==='yes';
       const paths=withAtt ? Array.from(document.querySelectorAll('.pdf-att-cb:checked')).map(cb=>cb.value) : [];
-      $('pdfMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Konvertuojama į PDF…</div>'; $('pdfGenerate').disabled=true;
+      $('pdfMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Generuojamas PDF…</div>'; $('pdfGenerate').disabled=true;
       try{
         const { data:{ session } } = await sb.auth.getSession();
+        let mainPdfPath=null;
+        // Jei administratorius turi firminį PDF blanką — pranešimo PDF suformuojamas naršyklėje (be Gotenberg)
+        if(CURRENT_ADM && CURRENT_ADM.blank_pdf_path){
+          const docRow=DOCUMENTS.find(d=>d.id===PDF_DOC_ID);
+          if(!docRow||!docRow.docx_path)throw new Error('Nerastas šaltinio DOCX.');
+          $('pdfMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Formuojamas pranešimas ant blanko…</div>';
+          const [dlDocx,dlLh]=await Promise.all([
+            sb.storage.from('insolvency-docs').download(docRow.docx_path),
+            sb.storage.from('insolvency-docs').download(CURRENT_ADM.blank_pdf_path)]);
+          if(dlDocx.error||!dlDocx.data)throw new Error('Nepavyko atsisiųsti DOCX.');
+          if(dlLh.error||!dlLh.data)throw new Error('Nepavyko atsisiųsti PDF blanko.');
+          const docxBytes=new Uint8Array(await dlDocx.data.arrayBuffer());
+          const lhBytes=new Uint8Array(await dlLh.data.arrayBuffer());
+          const pdfBytes=await buildNoticePdf(docxBytes,lhBytes,{ topMM:CURRENT_ADM.pdf_top_mm||40, bottomMM:CURRENT_ADM.pdf_bottom_mm||26 });
+          mainPdfPath=`${CURRENT.case_short_code}/tmp/${Date.now()}_main.pdf`;
+          const upTmp=await sb.storage.from('insolvency-docs').upload(mainPdfPath,new Blob([pdfBytes],{type:'application/pdf'}),{ upsert:true, contentType:'application/pdf' });
+          if(upTmp.error)throw new Error('Laikino PDF įkėlimo klaida: '+upTmp.error.message);
+          $('pdfMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Jungiami priedai…</div>';
+        }
         const res=await fetch(`${SUPABASE_URL}/functions/v1/convert-and-merge-pdf`,{
           method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
-          body:JSON.stringify({ document_id:PDF_DOC_ID, attachment_paths:paths })});
+          body:JSON.stringify({ document_id:PDF_DOC_ID, attachment_paths:paths, main_pdf_path:mainPdfPath })});
         const r=await res.json();
         if(!r.success){
-          const hint=r.error==='gotenberg_not_configured'?' — PDF konvertavimo servisas dar nesukonfigūruotas (GOTENBERG_URL).':r.error==='convert_failed'?' — konvertavimo klaida.':'';
+          const hint=r.error==='gotenberg_not_configured'?' — administratoriui neįkeltas firminis PDF blankas (Nustatymai → Administratoriai → „Firminis blankas (PDF)“). Įkėlus, PDF bus generuojamas be išorinio serviso.':r.error==='convert_failed'?' — konvertavimo klaida.':'';
           $('pdfMsg').innerHTML='<div class="error">Klaida: '+esc(r.error||'')+hint+'</div>'; return;
         }
         $('pdfMsg').innerHTML='<div class="success">PDF sugeneruotas: '+esc(r.file_name)+'. Rasite Dokumentų bibliotekoje.</div>';
