@@ -4125,24 +4125,25 @@
     // ===== PRANEŠIMO PDF GENERAVIMAS ANT FIRMINIO BLANKO (pdf-lib, be išorinio serviso) =====
     // Perskaito sugeneruotą DOCX (pastraipos, bold, sulygiavimas, sąrašai), atkuria tekstą vektoriumi
     // ant administratoriaus PDF blanko (fonas), su raštvedybos paraštėmis (kairė 30 / dešinė 10 mm).
-    let SERIF_FONT_BYTES=null;
-    async function getSerifFonts(pdfDoc){
-      if(!SERIF_FONT_BYTES){
+    let BODY_FONT_BYTES=null;
+    async function getBodyFonts(pdfDoc){
+      if(!BODY_FONT_BYTES){
+        // Arimo = Arial metrikos atitikmuo su lietuviškomis raidėmis; atsarginis — DejaVu Sans
         try{
           const [r,b]=await Promise.all([
-            fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSerif.ttf'),
-            fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSerif-Bold.ttf')]);
+            fetch('https://cdn.jsdelivr.net/gh/google/fonts@main/apache/arimo/static/Arimo-Regular.ttf'),
+            fetch('https://cdn.jsdelivr.net/gh/google/fonts@main/apache/arimo/static/Arimo-Bold.ttf')]);
           if(!r.ok||!b.ok)throw 0;
-          SERIF_FONT_BYTES={reg:await r.arrayBuffer(),bold:await b.arrayBuffer()};
+          BODY_FONT_BYTES={reg:await r.arrayBuffer(),bold:await b.arrayBuffer()};
         }catch(_){
           const [r,b]=await Promise.all([
             fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf'),
             fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf')]);
-          SERIF_FONT_BYTES={reg:await r.arrayBuffer(),bold:await b.arrayBuffer()};
+          BODY_FONT_BYTES={reg:await r.arrayBuffer(),bold:await b.arrayBuffer()};
         }
       }
       pdfDoc.registerFontkit(window.fontkit);
-      return { reg:await pdfDoc.embedFont(SERIF_FONT_BYTES.reg,{subset:true}), bold:await pdfDoc.embedFont(SERIF_FONT_BYTES.bold,{subset:true}) };
+      return { reg:await pdfDoc.embedFont(BODY_FONT_BYTES.reg,{subset:true}), bold:await pdfDoc.embedFont(BODY_FONT_BYTES.bold,{subset:true}) };
     }
     async function ensureJSZip(){
       if(window.JSZip)return;
@@ -4188,10 +4189,14 @@
       const { PDFDocument, rgb }=PDFLib;
       const MM=72/25.4;
       const leftMM=opts.leftMM??30,rightMM=opts.rightMM??10,topMM=opts.topMM??40,bottomMM=opts.bottomMM??26;
-      const size=opts.size??11,lineGap=opts.lineGap??1.32;
+      const size=opts.size??9,lineGap=opts.lineGap??1.5;               // Arial 9, tarpas tarp eilučių 1,5
+      const afterNormal=opts.paraAfter??(size*1.1);                     // tarpas po įprastos pastraipos
+      const afterList=size*0.55;                                        // tarpas po sąrašo punkto (kompaktiškesnis)
+      const headBefore=size*1.35;                                       // papildomas tarpas prieš antraštę/sekciją
+      const emptyGap=size*lineGap*0.6;
       const paras=await parseNoticeDocx(docxBytes);
       const out=await PDFDocument.create();
-      const { reg:fReg, bold:fBold }=await getSerifFonts(out);
+      const { reg:fReg, bold:fBold }=await getBodyFonts(out);
       let lhPage=null;
       if(letterheadPdfBytes){ const lh=await PDFDocument.load(letterheadPdfBytes); [lhPage]=await out.embedPdf(lh,[0]); }
       const A4=[595.28,841.89];
@@ -4204,9 +4209,14 @@
       const spaceW=(bold)=>wOf(" ",bold);
       let prevNum=null;const cnt={};
       for(const par of paras){ if(par.numId){ if(par.listFmt!=="bullet"){ if(par.numId!==prevNum)cnt[par.numId]=1; else cnt[par.numId]=(cnt[par.numId]||0)+1; par._num=cnt[par.numId]; } prevNum=par.numId; } else prevNum=null; }
+      let firstContent=true;
       function drawPar(par){
-        if(par.empty){ y-=lineH*0.6; return; }
+        if(par.empty){ y-=emptyGap; return; }
         const align=par.jc==="center"?"center":par.jc==="right"?"right":par.jc==="left"?"left":"justify";
+        const isHeading=!par.numId&&par.runs.length&&par.runs.every(r=>r.bold);
+        const isSection=isHeading||par.jc==="center";
+        if(isSection&&!firstContent)y-=headBefore;
+        firstContent=false;
         let indent=0,marker=null,hang=0;
         if(par.numId){ indent=(par.ilvl+1)*14; marker=par.listFmt==="bullet"?"•":(par._num||1)+"."; hang=Math.max(wOf(marker+" ",false),12); }
         const words=[];
@@ -4228,7 +4238,7 @@
           for(let i=0;i<ln.length;i++){ const w=ln[i]; if(i)x+=spaceW(w.bold)+(gap||0); page.drawText(w.t,{x,y:y-size,size,font:w.bold?fBold:fReg,color:rgb(0,0,0)}); x+=wOf(w.t,w.bold); }
           y-=lineH;
         }
-        y-=lineH*0.28;
+        y-=par.numId?afterList:afterNormal;
       }
       for(const par of paras)drawPar(par);
       return await out.save();
