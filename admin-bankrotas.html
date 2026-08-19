@@ -4144,7 +4144,12 @@
       pdfDoc.registerFontkit(window.fontkit);
       return { reg:await pdfDoc.embedFont(SERIF_FONT_BYTES.reg,{subset:true}), bold:await pdfDoc.embedFont(SERIF_FONT_BYTES.bold,{subset:true}) };
     }
+    async function ensureJSZip(){
+      if(window.JSZip)return;
+      await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'; s.onload=res; s.onerror=()=>rej(new Error('Nepavyko įkelti JSZip bibliotekos.')); document.head.appendChild(s); });
+    }
     async function parseNoticeDocx(docxBytes){
+      await ensureJSZip();
       const zip=await JSZip.loadAsync(docxBytes);
       const dx=await zip.file("word/document.xml").async("string");
       const numMap={};
