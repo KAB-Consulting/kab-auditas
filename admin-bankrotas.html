@@ -381,6 +381,7 @@
         <div class="sb-sec">Nemokumo procesai</div>
         <div class="nav-i" id="navAdmins"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M3 21h18'/><path d='M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16'/><path d='M9 7h1M9 11h1M9 15h1M14 7h1M14 11h1M14 15h1'/></svg><span>Administratoriai</span></div>
         <div class="nav-i" id="navSettings"><svg viewBox='0 0 24 24' aria-hidden='true'><line x1='4' y1='21' x2='4' y2='14'/><line x1='4' y1='10' x2='4' y2='3'/><line x1='12' y1='21' x2='12' y2='12'/><line x1='12' y1='8' x2='12' y2='3'/><line x1='20' y1='21' x2='20' y2='16'/><line x1='20' y1='12' x2='20' y2='3'/><line x1='1' y1='14' x2='7' y2='14'/><line x1='9' y1='8' x2='15' y2='8'/><line x1='17' y1='16' x2='23' y2='16'/></svg><span>Nustatymai</span></div>
+        <div class="nav-i" id="navContragents"><svg viewBox='0 0 24 24' aria-hidden='true'><rect x='2' y='7' width='20' height='14' rx='2'/><path d='M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16'/></svg><span>Kontragentai</span></div>
       </div>
 
       <div id="sbCase" class="hidden">
@@ -547,6 +548,25 @@
         </div>
       </div>
       <div id="settingsMsg"></div>
+    </div>
+
+    <!-- KONTRAGENTŲ REGISTRAS (bendras, per visas bylas — tik skaitymas) -->
+    <div id="contragentsView" class="hidden">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+          <div><h2 style="font-size:16px;"><span class="ic ic-briefcase"></span> Kontragentų registras</h2>
+            <div class="muted" style="font-size:12px;">Visi kreditoriai ir debitoriai iš visų bylų, sujungti pagal įmonės/asmens kodą. Gyvas vaizdas — duomenys imami iš esamų bylų, nieko nedubliuojant.</div></div>
+          <button class="btn btn-sm btn-ghost" onclick="loadContragents()"><span class="ic ic-refresh"></span> Atnaujinti</button>
+        </div>
+        <input id="ctgSearch" class="input" placeholder="Paieška: pavadinimas arba kodas…" oninput="renderContragents()" style="margin-bottom:10px;">
+        <div id="ctgBody"></div>
+      </div>
+    </div>
+    <div id="ctgModal" class="modal-bg hidden">
+      <div class="modal" style="max-width:900px;">
+        <div id="ctgModalBody"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn btn-ghost" onclick="hide('ctgModal')">Uždaryti</button></div>
+      </div>
     </div>
 
     <!-- LYGIS 2: ADMINISTRATORIAUS APLINKA (jo bylos) -->
@@ -2502,7 +2522,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-14-r21';
+    const APP_VERSION='2026-08-14-r22';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -11021,6 +11041,113 @@
       if(sel)s.value=sel;
       clmComboEnsure(); clmComboSync();
     }
+
+    /* ============================================================
+       r22: KONTRAGENTŲ REGISTRAS (bendras, per visas bylas)
+       Gyva agreguota peržiūra — TIK skaitymas iš esamų lentelių,
+       jokių naujų lentelių ar RLS pakeitimų. Unikalu pagal kodą.
+       ============================================================ */
+    var CTG_DATA=null;
+    function ctgTile(l,v){ return '<div style="background:#fff;border:1px solid var(--bd);border-radius:6px;padding:10px 12px;min-width:150px;flex:1;"><div style="font-size:11px;color:var(--gray);">'+esc(l)+'</div><div style="font-size:17px;font-weight:700;color:var(--navy);">'+v+'</div></div>'; }
+    function ctgNum(x){ return Number(x||0); }
+    function ctgKeyOf(row){ var c=(row.id_code||'').replace(/\s+/g,''); return c?('K:'+c):('N:'+((typeof cimpNorm==='function')?cimpNorm(row.name||''):(row.name||'').toLowerCase())); }
+    function ctgAggregate(d){
+      var caseById={}; (d.cases||[]).forEach(function(c){caseById[c.id]=c;});
+      var accByCred={}; (d.acc||[]).forEach(function(a){ var t=accByCred[a.creditor_id]||(accByCred[a.creditor_id]={p:0,n:0}); t.p+=ctgNum(a.principal); t.n+=ctgNum(a.late_fees)+ctgNum(a.fines); });
+      var clmByCred={}; (d.claims||[]).forEach(function(c){ var t=clmByCred[c.creditor_id]||(clmByCred[c.creditor_id]={sub:0,appr:0});
+        t.sub+=ctgNum(c.principal)+ctgNum(c.late_fees)+ctgNum(c.interest)+ctgNum(c.fines);
+        t.appr+=ctgNum(c.approved_principal)+ctgNum(c.approved_late_fees)+ctgNum(c.approved_interest)+ctgNum(c.approved_fines); });
+      var recvByDebt={}; (d.recv||[]).forEach(function(r){ var t=recvByDebt[r.debtor_id]||(recvByDebt[r.debtor_id]={p:0,pen:0}); t.p+=ctgNum(r.principal); t.pen+=ctgNum(r.penalties); });
+      var payByDebt={}; (d.pays||[]).forEach(function(p){ var t=payByDebt[p.debtor_id]||(payByDebt[p.debtor_id]={paid:0}); t.paid+=ctgNum(p.amount); });
+      var map={};
+      function ensure(row){ var k=ctgKeyOf(row); var m=map[k]; if(!m){ m=map[k]={ key:k, code:(row.id_code||'').replace(/\s+/g,''), name:row.name||'', kind:row.kind||'', asCred:0, asDebt:0, credTotal:0, credApproved:0, debtReceivable:0, debtPaid:0, debtBalance:0, apps:[] }; }
+        if((row.name||'').length>(m.name||'').length) m.name=row.name||m.name;
+        if(row.kind) m.kind=row.kind; return m; }
+      (d.creds||[]).forEach(function(cr){ var m=ensure(cr); var a=accByCred[cr.id]||{p:0,n:0}; var cl=clmByCred[cr.id]||{sub:0,appr:0};
+        var accTot=a.p+a.n; m.asCred++; m.credTotal+=accTot; m.credApproved+=cl.appr; var cs=caseById[cr.case_id]||{};
+        m.apps.push({ role:'creditor', caseName:cs.debtor_name||cs.debtor_short_name||'—', caseCode:cs.case_short_code||'',
+          accTot:accTot, submitted:cl.sub, approved:cl.appr, status:cl.appr>0?'Patvirtinta':(cl.sub>0?'Gautas reikalavimas':'Pagal apskaitą') }); });
+      (d.debts||[]).forEach(function(db){ var m=ensure(db); var r=recvByDebt[db.id]||{p:0,pen:0}; var pay=payByDebt[db.id]||{paid:0};
+        var recvTot=r.p+r.pen; var bal=recvTot-pay.paid; m.asDebt++; m.debtReceivable+=recvTot; m.debtPaid+=pay.paid; m.debtBalance+=bal; var cs=caseById[db.case_id]||{};
+        m.apps.push({ role:'debtor', caseName:cs.debtor_name||cs.debtor_short_name||'—', caseCode:cs.case_short_code||'',
+          recvP:r.p, recvPen:r.pen, paid:pay.paid, balance:bal, status:db.status||'' }); });
+      return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){ return (b.credTotal+b.debtReceivable)-(a.credTotal+a.debtReceivable); });
+    }
+    async function loadContragents(){
+      var body=$('ctgBody'); if(body) body.innerHTML='<div class="muted center" style="padding:24px;"><div class="spinner"></div>Kraunama…</div>';
+      try{
+        var res=await Promise.all([
+          sb.from('insolvency_cases').select('id,debtor_name,debtor_short_name,case_short_code,status'),
+          sb.from('insolvency_creditors').select('id,case_id,name,id_code,kind'),
+          sb.from('insolvency_creditor_accounting').select('creditor_id,principal,late_fees,fines'),
+          sb.from('insolvency_creditor_claims').select('creditor_id,case_id,status,principal,late_fees,interest,fines,approved_principal,approved_late_fees,approved_interest,approved_fines'),
+          sb.from('insolvency_debtors').select('id,case_id,name,id_code,kind,status'),
+          sb.from('insolvency_debtor_receivables').select('debtor_id,case_id,principal,penalties'),
+          sb.from('insolvency_debtor_payments').select('debtor_id,case_id,amount')
+        ]);
+        var bad=res.filter(function(r){return r.error;});
+        if(bad.length){ if(body)body.innerHTML='<div class="error">'+esc(bad[0].error.message)+'</div>'; return; }
+        CTG_DATA=ctgAggregate({cases:res[0].data,creds:res[1].data,acc:res[2].data,claims:res[3].data,debts:res[4].data,recv:res[5].data,pays:res[6].data});
+        renderContragents();
+      }catch(e){ if(body) body.innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
+    }
+    function renderContragents(){
+      var body=$('ctgBody'); if(!body||!CTG_DATA) return;
+      var qv=($('ctgSearch')&&$('ctgSearch').value)||'';
+      var q=(typeof cimpNorm==='function')?cimpNorm(qv):qv.toLowerCase();
+      var rows=CTG_DATA.filter(function(m){ if(!q) return true; var hay=(typeof cimpNorm==='function')?cimpNorm((m.name||'')+' '+(m.code||'')):((m.name||'')+' '+(m.code||'')).toLowerCase(); return hay.indexOf(q)>-1; });
+      var totCred=CTG_DATA.filter(function(m){return m.asCred>0;}).length, totDebt=CTG_DATA.filter(function(m){return m.asDebt>0;}).length, both=CTG_DATA.filter(function(m){return m.asCred>0&&m.asDebt>0;}).length;
+      var tiles='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'+ctgTile('Iš viso kontragentų',CTG_DATA.length)+ctgTile('Kaip kreditoriai',totCred)+ctgTile('Kaip debitoriai',totDebt)+ctgTile('Ir kreditorius, ir debitorius',both)+'</div>';
+      if(!CTG_DATA.length){ body.innerHTML=tiles+'<div class="muted center" style="padding:20px;">Duomenų kol kas nėra. Kontragentai atsiranda, kai bylose įvedami kreditoriai ar debitoriai.</div>'; return; }
+      if(!rows.length){ body.innerHTML=tiles+'<div class="muted center" style="padding:20px;">Nerasta pagal „'+esc(qv)+'".</div>'; return; }
+      var h=tiles+'<table><thead><tr><th>Kontragentas</th><th>Kodas</th><th>Tipas</th><th style="text-align:center;">Bylų</th><th style="text-align:right;">Kaip kreditorius</th><th style="text-align:right;">Kaip debitorius (likutis)</th><th></th></tr></thead><tbody>';
+      rows.slice(0,500).forEach(function(m){
+        h+='<tr style="cursor:pointer;" onclick="ctgOpen(\''+encodeURIComponent(m.key)+'\')">'+
+          '<td><b>'+esc(m.name)+'</b></td>'+
+          '<td>'+(m.code?esc(m.code):'<span class="muted">be kodo</span>')+'</td>'+
+          '<td>'+(m.kind==='person'?'Fiz.':'Jur.')+'</td>'+
+          '<td style="text-align:center;">'+(m.asCred+m.asDebt)+'</td>'+
+          '<td style="text-align:right;">'+(m.asCred?eur(m.credTotal)+(m.credApproved?' <span style="color:#0B6E2E;font-size:11px;">(patv. '+eur(m.credApproved)+')</span>':''):'<span class="muted">—</span>')+'</td>'+
+          '<td style="text-align:right;">'+(m.asDebt?eur(m.debtBalance):'<span class="muted">—</span>')+'</td>'+
+          '<td style="text-align:right;"><button class="btn btn-sm btn-ghost"><span class="ic ic-eye"></span></button></td></tr>';
+      });
+      h+='</tbody></table>'+(rows.length>500?'<div class="muted" style="margin-top:6px;">…rodoma pirmi 500 iš '+rows.length+'. Patikslinkite paiešką.</div>':'');
+      body.innerHTML=h;
+    }
+    window.ctgOpen=function(keyEnc){
+      var key=decodeURIComponent(keyEnc); var m=(CTG_DATA||[]).find(function(x){return x.key===key;}); if(!m) return;
+      var el=$('ctgModalBody'); if(!el) return;
+      var credApps=m.apps.filter(function(a){return a.role==='creditor';}), debtApps=m.apps.filter(function(a){return a.role==='debtor';});
+      var h='<div><div style="font-size:16px;font-weight:700;">'+esc(m.name)+'</div>'+
+        '<div class="muted" style="font-size:12px;">'+(m.code?('Kodas: '+esc(m.code)):'Be kodo')+' · '+(m.kind==='person'?'Fizinis asmuo':'Juridinis asmuo')+'</div></div>';
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;">'+ctgTile('Bylų',m.asCred+m.asDebt)+ctgTile('Kreditorius (pagal apskaitą)',eur(m.credTotal))+ctgTile('Patvirtinta',eur(m.credApproved))+ctgTile('Debitorius — likutis',eur(m.debtBalance))+'</div>';
+      if(credApps.length){
+        h+='<div style="font-weight:600;margin:10px 0 4px;">Kaip kreditorius</div><div style="overflow:auto;"><table style="font-size:12.5px;"><thead><tr><th>Byla</th><th>Statusas</th><th style="text-align:right;">Pagal apskaitą</th><th style="text-align:right;">Pateikta</th><th style="text-align:right;">Patvirtinta</th></tr></thead><tbody>';
+        credApps.forEach(function(a){ h+='<tr><td>'+esc(a.caseName)+(a.caseCode?' <span class="muted">('+esc(a.caseCode)+')</span>':'')+'</td><td>'+esc(a.status)+'</td><td style="text-align:right;">'+eur(a.accTot)+'</td><td style="text-align:right;">'+eur(a.submitted)+'</td><td style="text-align:right;">'+eur(a.approved)+'</td></tr>'; });
+        h+='</tbody></table></div>';
+      }
+      if(debtApps.length){
+        h+='<div style="font-weight:600;margin:14px 0 4px;">Kaip debitorius</div><div style="overflow:auto;"><table style="font-size:12.5px;"><thead><tr><th>Byla</th><th>Statusas</th><th style="text-align:right;">Pagr. skola</th><th style="text-align:right;">Netesybos</th><th style="text-align:right;">Sumokėta</th><th style="text-align:right;">Likutis</th></tr></thead><tbody>';
+        debtApps.forEach(function(a){ h+='<tr><td>'+esc(a.caseName)+(a.caseCode?' <span class="muted">('+esc(a.caseCode)+')</span>':'')+'</td><td>'+esc(a.status)+'</td><td style="text-align:right;">'+eur(a.recvP)+'</td><td style="text-align:right;">'+eur(a.recvPen)+'</td><td style="text-align:right;">'+eur(a.paid)+'</td><td style="text-align:right;font-weight:600;">'+eur(a.balance)+'</td></tr>'; });
+        h+='</tbody></table></div>';
+      }
+      el.innerHTML=h; show('ctgModal');
+    };
+    function openContragents(){
+      ['loginView','loadingView','admListView','workspaceView','caseDetailView','settingsView'].forEach(hide);
+      var sc=$('sbCase'); if(sc) sc.classList.add('hidden');
+      document.body.classList.remove('shell-off');
+      var v=$('contragentsView'); if(v) v.classList.remove('hidden');
+      var t=$('pageTitle'); if(t) t.textContent='Kontragentų registras';
+      ['navAdmins','navSettings'].forEach(function(id){ var n=$(id); if(n)n.classList.remove('active'); });
+      var nc=$('navContragents'); if(nc) nc.classList.add('active');
+      loadContragents();
+    }
+    /* views() perrašymas: papildomai paslepia kontragentų vaizdą pereinant kitur */
+    function views(v){ syncShell(v); ['loginView','loadingView','admListView','workspaceView','caseDetailView','settingsView'].forEach(function(x){hide(x);});
+      var cv=$('contragentsView'); if(cv) cv.classList.add('hidden'); var nc=$('navContragents'); if(nc) nc.classList.remove('active');
+      show(v); if(v!=='caseDetailView'&&typeof isGranular==='function'&&isGranular()){ document.body.classList.remove('perm-cred-nodelete'); document.body.classList.add('perm-view'); } }
+    (function(){ var n=$('navContragents'); if(n) n.onclick=openContragents; })();
 
     bindCredButtons();
     bindClaimExtras();
