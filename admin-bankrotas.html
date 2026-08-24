@@ -2502,7 +2502,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-14-r20';
+    const APP_VERSION='2026-08-14-r21';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -10961,6 +10961,65 @@
       html+='</tbody></table>';
       el.innerHTML=html;
       renderCredRegistryBar();
+    }
+
+    /* ============================================================
+       r21: Ieškomas kreditoriaus pasirinkimas gautų reikalavimų suvedime
+       (combobox su paieška pagal pavadinimą/kodą; native select lieka
+       kaip reikšmės saugykla, todėl visa žemesnė logika nepakinta)
+       ============================================================ */
+    function clmComboEnsure(){
+      var sel=$('clmCredSelect'); if(!sel) return null;
+      if($('clmCredCombo')) return $('clmCredCombo');
+      sel.style.display='none';
+      var combo=document.createElement('div'); combo.id='clmCredCombo'; combo.style.cssText='position:relative;flex:1;';
+      combo.innerHTML='<input id="clmCredSearch" class="input" autocomplete="off" placeholder="Ieškoti kreditoriaus: pavadinimas arba kodas…">'+
+        '<div id="clmCredList" style="position:absolute;z-index:60;left:0;right:0;top:calc(100% + 2px);max-height:280px;overflow:auto;background:#fff;border:1px solid var(--bd);border-radius:8px;box-shadow:0 8px 24px rgba(11,30,63,.16);display:none;"></div>';
+      sel.parentNode.insertBefore(combo, sel);
+      var inp=$('clmCredSearch'), list=$('clmCredList');
+      inp.addEventListener('input', function(){ clmComboRender(inp.value); });
+      inp.addEventListener('focus', function(){ clmComboRender(inp.value); });
+      inp.addEventListener('keydown', function(e){ if(e.key==='Escape'){ list.style.display='none'; } });
+      document.addEventListener('click', function(e){ if(combo && !combo.contains(e.target)) list.style.display='none'; });
+      return combo;
+    }
+    function clmComboRender(q){
+      var list=$('clmCredList'); if(!list) return;
+      var nq=(typeof cimpNorm==='function')?cimpNorm(q||''):String(q||'').toLowerCase();
+      var rows=(CREDITORS||[]).filter(function(c){ if(!nq) return true;
+        var hay=(typeof cimpNorm==='function')?cimpNorm((c.name||'')+' '+(c.id_code||'')):((c.name||'')+' '+(c.id_code||'')).toLowerCase();
+        return hay.indexOf(nq)>-1; });
+      var total=rows.length; rows=rows.slice(0,60);
+      if(!rows.length){ list.innerHTML='<div style="padding:9px 11px;color:var(--gray);font-size:13px;">Nerasta pagal „'+esc(q||'')+'". Spauskite „+ Naujas", kad sukurtumėte naują kreditorių.</div>'; list.style.display='block'; return; }
+      list.innerHTML=rows.map(function(c){
+        return '<div class="clmco-item" data-id="'+c.id+'" style="padding:7px 11px;cursor:pointer;font-size:13px;border-bottom:1px solid #F0F2F6;">'+
+          '<b>'+esc(c.name)+'</b>'+(c.id_code?' <span style="color:var(--gray);">('+esc(c.id_code)+')</span>':'')+
+          (c.kind==='person'?' <span style="font-size:11px;color:#8A6D00;">fiz.</span>':'')+'</div>';
+      }).join('')+(total>rows.length?'<div style="padding:6px 11px;color:var(--gray);font-size:11.5px;">…rodomi pirmi '+rows.length+' iš '+total+'. Patikslinkite paiešką.</div>':'');
+      Array.prototype.forEach.call(list.querySelectorAll('.clmco-item'), function(el){
+        el.onmouseenter=function(){ el.style.background='#F3F6FB'; };
+        el.onmouseleave=function(){ el.style.background=''; };
+        el.onclick=function(){ clmComboPick(el.getAttribute('data-id')); };
+      });
+      list.style.display='block';
+    }
+    function clmComboPick(id){
+      var sel=$('clmCredSelect'); if(!sel) return;
+      sel.value=id; try{ sel.dispatchEvent(new Event('change')); }catch(_){ if(typeof renderClaimCreditorInfo==='function')renderClaimCreditorInfo(); }
+      var c=(typeof credById==='function')?credById(id):null, inp=$('clmCredSearch');
+      if(inp&&c) inp.value=(c.name||'')+(c.id_code?' ('+c.id_code+')':'');
+      var list=$('clmCredList'); if(list) list.style.display='none';
+    }
+    function clmComboSync(){
+      var sel=$('clmCredSelect'), inp=$('clmCredSearch'); if(!sel||!inp) return;
+      var c=sel.value&&typeof credById==='function'?credById(sel.value):null;
+      inp.value=c?((c.name||'')+(c.id_code?' ('+c.id_code+')':'')):'';
+    }
+    function fillClaimCredSelect(sel){
+      var s=$('clmCredSelect'); if(!s) return;
+      s.innerHTML='<option value="">— pasirinkti kreditorių —</option>'+(CREDITORS||[]).map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+(c.id_code?' ('+esc(c.id_code)+')':'')+'</option>';}).join('');
+      if(sel)s.value=sel;
+      clmComboEnsure(); clmComboSync();
     }
 
     bindCredButtons();
