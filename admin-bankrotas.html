@@ -647,10 +647,13 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-sm btn-ghost" id="addRecipientBtn">+ Pridėti</button>
             <button class="btn btn-sm btn-ghost" id="importRecipientsBtn"><span class="ic ic-clipboard"></span> Importuoti</button>
+            <button class="btn btn-sm btn-ghost hidden" id="syncCredBtn"><span class="ic ic-refresh"></span> Sinchronizuoti su Kreditorių moduliu</button>
             <button class="btn btn-sm btn-gold" id="enrichBtn"><span class="ic ic-globe"></span> Surinkti kontaktus (AI)</button>
+            <button class="btn btn-sm btn-ghost" id="recColsBtn"><span class="ic ic-list"></span> Stulpeliai</button>
             <button class="btn btn-sm btn-danger" id="delSelectedBtn"><span class="ic ic-trash"></span> Ištrinti pažymėtus</button>
           </div>
         </div>
+        <div id="recColsPop" class="hidden"></div>
         <div class="hint" style="margin-bottom:6px;">Pažymėkite įrašus ir spauskite „Surinkti kontaktus (AI)“ — bus tikslinami tik pažymėti. Jei nieko nepažymėta, tikslinami visi be kontaktų (tik šio skirtuko). AI atnaujinti laukai paryškinami sutikrinimui; netikslumus koreguokite ✎.</div>
         <div id="enrichMsg"></div>
         <div id="recipientsTable"></div>
@@ -1991,6 +1994,21 @@
         <div><label class="label">El. paštas</label><input id="credEmail" class="input" type="email"></div>
         <div><label class="label">Telefonas</label><input id="credPhone" class="input"></div>
       </div>
+      <div style="border:1px solid var(--bd);border-radius:8px;padding:10px;margin:10px 0;background:#FAFBFD;">
+        <div style="font-weight:600;font-size:13px;margin-bottom:6px;"><span class="ic ic-globe"></span> Rekvizitai iš viešų registrų</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+          <button type="button" class="btn btn-sm btn-ghost" onclick="credEnrichOpen('okredo')"><span class="ic ic-external"></span> Atidaryti Okredo</button>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="credEnrichOpen('rekvizitai')"><span class="ic ic-external"></span> Atidaryti Rekvizitai.lt</button>
+          <span class="muted" style="font-size:11.5px;">Atsidarys paieška su kodu/pavadinimu (per jūsų prisijungimą); kodas nukopijuojamas į iškarpinę.</span>
+        </div>
+        <textarea id="credEnrichPaste" class="textarea" style="min-height:56px;font-size:12px;" placeholder="Nukopijuokite rekvizitus iš Okredo / Rekvizitai.lt ir įklijuokite čia (kodas, PVM, adresas, vadovas, el. paštas)…"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap;">
+          <select id="credEnrichSrc" class="select" style="max-width:160px;padding:4px 8px;font-size:12px;"><option value="Okredo">Šaltinis: Okredo</option><option value="Rekvizitai.lt">Šaltinis: Rekvizitai.lt</option></select>
+          <button type="button" class="btn btn-sm" onclick="credEnrichFill()"><span class="ic ic-ai"></span> Užpildyti iš įklijuoto</button>
+          <span id="credEnrichMsg" style="font-size:12px;"></span>
+        </div>
+        <div class="muted" style="font-size:11px;margin-top:6px;">Esami kodas/PVM neperrašomi. Naujas adresas ar el. paštas, jei jau yra kitoks — pridedamas į pastabas su šaltiniu ir data (BDAR: fizinių asmenų kodai dokumentuose lieka nuasmeninti).</div>
+      </div>
       <label style="display:flex;align-items:center;gap:6px;margin:8px 0;font-size:13px;"><input type="checkbox" id="credSecured" style="width:auto;"> Reikalavimas užtikrintas įkeitimu / hipoteka</label>
       <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 4px;">
         <label style="font-size:13px;font-weight:600;">Atstovai <span class="muted" style="font-weight:400;">(gali būti keli: vadovas, buhalteris, advokatas, teisininkas ir kt.)</span></label>
@@ -2522,7 +2540,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-14-r22';
+    const APP_VERSION='2026-08-14-r25';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -3520,9 +3538,11 @@
       const r=await res.json();
       if(!r.success){
         const hint = r.error==='no_administrator_blank'?' (administratoriui neįkeltas blankas)':r.error==='no_template_file'?' (šablonui neįkeltas DOCX)':r.error==='no_recipients'?' (nėra gavėjų)':'';
-        $('docsMsg').innerHTML='<div class="error">Klaida: '+esc(r.error||'')+hint+'</div>'; return;
+        const det = r.detail?'<div class="muted" style="font-size:12px;margin-top:4px;">Detalės: '+esc(r.detail)+'</div>':'';
+        $('docsMsg').innerHTML='<div class="error">Klaida: '+esc(r.error||'')+hint+det+'</div>'; return;
       }
       let msg='Sugeneruota dokumentų: <b>'+r.count+'</b>.';
+      if(r.failures&&r.failures.length){ msg+=' <span style="color:#B3261E;"><span class="ic ic-alert"></span> Nepavyko '+r.failures.length+': '+esc(r.failures.map(function(f){return f.recipient+' ('+f.error+')';}).join('; '))+'</span>'; }
       // registracija siunčiamų žurnale (jei pasirinkta)
       if(docNo&&regMeta&&r.documents&&r.documents.length){
         const reg=await sb.rpc('register_insolvency_document',{ p:{
@@ -11148,6 +11168,129 @@
       var cv=$('contragentsView'); if(cv) cv.classList.add('hidden'); var nc=$('navContragents'); if(nc) nc.classList.remove('active');
       show(v); if(v!=='caseDetailView'&&typeof isGranular==='function'&&isGranular()){ document.body.classList.remove('perm-cred-nodelete'); document.body.classList.add('perm-view'); } }
     (function(){ var n=$('navContragents'); if(n) n.onclick=openContragents; })();
+
+    /* ============================================================
+       r23: Rekvizitai iš viešų registrų (Okredo / Rekvizitai.lt)
+       Saugu — atidaro paiešką per vartotojo naršyklės prisijungimą,
+       jokių slaptažodžių nesaugom. Įklijuotų rekvizitų parseris
+       užpildo TUŠČIUS laukus; PVM/vadovas/papildomas adresas/el.paštas
+       → į pastabas su šaltiniu ir data. Esamo kodo/PVM neliečia.
+       ============================================================ */
+    window.credEnrichOpen=function(src){
+      var code=($('credCode')&&$('credCode').value.trim())||'';
+      var name=($('credName')&&$('credName').value.trim())||'';
+      var q=code||name; if(!q){ alert('Įveskite įmonės kodą arba pavadinimą.'); return; }
+      try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(q); }catch(_){}
+      var url = src==='okredo'
+        ? ('https://okredo.com/lt-lt/imones?q='+encodeURIComponent(q))
+        : ('https://rekvizitai.vz.lt/en/search/?q='+encodeURIComponent(q));
+      try{ window.open(url,'_blank','noopener'); }catch(_){ location.href=url; }
+    };
+    function credEnrichParse(t){
+      t=String(t||''); var out={};
+      var email=t.match(/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/); if(email) out.email=email[0];
+      var vat=t.match(/\bLT\d{9}(?:\d{3})?\b/i); if(vat) out.vat=vat[0].toUpperCase();
+      var codeL=t.match(/(?:įmonės\s*kodas|imon[ėe]s\s*kodas|company\s*code|kodas)\D{0,6}(\d{6,9})/i);
+      if(codeL) out.code=codeL[1];
+      else { var c9=t.match(/(?:^|[^\d])(\d{9})(?:[^\d]|$)/); if(c9) out.code=c9[1]; }
+      var phone=t.match(/(?:tel|telefonas|phone|mob)\D{0,4}(\+?[\d][\d\s]{5,14}\d)/i); if(phone) out.phone=phone[1].trim().replace(/\s{2,}/g,' ');
+      var addr=t.match(/(?:registracijos\s*adresas|buvein[ėe]s?\s*adresas|adresas|address)\s*[:\-]?\s*([^\n\r]+)/i); if(addr) out.address=addr[1].trim().replace(/\s{2,}/g,' ');
+      var dir=t.match(/(?:vadovas|vadov[ėe]|direktorius|manager|ceo|director)\s*[:\-]?\s*([^\n\r,;]+)/i); if(dir) out.director=dir[1].trim();
+      return out;
+    }
+    window.credEnrichFill=function(){
+      var raw=($('credEnrichPaste')&&$('credEnrichPaste').value)||''; var msgEl=$('credEnrichMsg');
+      var setMsg=function(t,c){ if(msgEl){ msgEl.textContent=t; msgEl.style.color=c||'var(--gray)'; } };
+      if(!raw.trim()){ setMsg('Įklijuokite tekstą.', '#B3261E'); return; }
+      var p=credEnrichParse(raw); var src=($('credEnrichSrc')&&$('credEnrichSrc').value)||'viešas registras';
+      var today=new Date().toISOString().slice(0,10);
+      var filled=[], notedN=0;
+      function setIfEmpty(id,val,label){ var el=$(id); if(el&&val&&!el.value.trim()){ el.value=val; filled.push(label); return true; } return false; }
+      setIfEmpty('credCode', p.code, 'kodas');
+      setIfEmpty('credPhone', p.phone, 'telefonas');
+      var addrSet=setIfEmpty('credAddress', p.address, 'adresas');
+      var emailSet=setIfEmpty('credEmail', p.email, 'el. paštas');
+      var notes=$('credNotes'); var norm=function(s){ return (s||'').toLowerCase().replace(/\s+/g,' ').trim(); };
+      function addNote(line){ if(!notes) return; if(notes.value.indexOf(line)>-1) return; notes.value=(notes.value?notes.value.replace(/\s*$/,'')+'\n':'')+line; notedN++; }
+      if(p.address && !addrSet && norm(p.address)!==norm($('credAddress').value)) addNote('['+today+', '+src+'] Papildomas adresas: '+p.address);
+      if(p.email && !emailSet && norm(p.email)!==norm($('credEmail').value)) addNote('['+today+', '+src+'] Papildomas el. paštas: '+p.email);
+      if(p.vat) addNote('['+today+', '+src+'] PVM kodas: '+p.vat);
+      if(p.director) addNote('['+today+', '+src+'] Vadovas: '+p.director);
+      var parts=[]; if(filled.length) parts.push('Užpildyta: '+filled.join(', ')); if(notedN) parts.push('į pastabas pridėta: '+notedN);
+      if(!parts.length) setMsg('Naujų duomenų nerasta arba laukai jau užpildyti.', 'var(--gray)');
+      else setMsg(parts.join(' · ')+'. Nepamirškite „Išsaugoti".', '#0B6E2E');
+    };
+
+    /* ============================================================
+       r24 (B1): Kreditorių bazių sujungimas (Dok. rengimas ↔ Kreditoriai)
+       Saugi DVIPUSĖ sinchronizacija — TIK įterpia trūkstamus (dedup pagal
+       kodą/pavadinimą), nieko netrina ir neperrašo. Vartotojo iniciatyva.
+       ============================================================ */
+    function ctgSyncBtnToggle(){ var b=$('syncCredBtn'); if(b) b.classList.toggle('hidden', (typeof REC_TYPE==='undefined')||REC_TYPE!=='creditor'); }
+    async function syncCredRecipients(){
+      if(!CURRENT){ return; }
+      var msg=$('enrichMsg'); if(msg) msg.innerHTML='<div class="muted">Sinchronizuojama…</div>';
+      try{
+        var r1=await sb.from('insolvency_creditors').select('id,name,id_code,email,address,phone,kind').eq('case_id',CURRENT.id);
+        if(r1.error) throw r1.error;
+        var creds=r1.data||[]; var recs=(RECIPIENTS||[]).filter(function(x){return x.recipient_type==='creditor';});
+        var norm=function(s){ return (s||'').toLowerCase().replace(/\s+/g,'').trim(); };
+        var recKey=function(x){ var c=norm(x.personal_code); return c?('k'+c):('n'+norm(x.full_name)); };
+        var credKey=function(x){ var c=norm(x.id_code); return c?('k'+c):('n'+norm(x.name)); };
+        var recSet={}; recs.forEach(function(x){ recSet[recKey(x)]=1; });
+        var credSet={}; creds.forEach(function(x){ credSet[credKey(x)]=1; });
+        var toRec=creds.filter(function(c){ return (c.name||'').trim() && !recSet[credKey(c)]; }).map(function(c){ return { case_id:CURRENT.id, recipient_type:'creditor', full_name:c.name, personal_code:c.id_code||null, email:c.email||null, address:c.address||null, phone:c.phone||null }; });
+        var toCred=recs.filter(function(x){ return (x.full_name||'').trim() && !credSet[recKey(x)]; }).map(function(x){ return { case_id:CURRENT.id, kind:'legal', name:x.full_name, id_code:x.personal_code||null, email:x.email||null, address:x.address||null, phone:x.phone||null, origin:'accounting', created_by:(typeof CURRENT_UID!=='undefined'?CURRENT_UID:null) }; });
+        var a1=0,a2=0;
+        if(toRec.length){ var i1=await sb.from('insolvency_recipients').insert(toRec); if(i1.error) throw i1.error; a1=toRec.length; }
+        if(toCred.length){ var i2=await sb.from('insolvency_creditors').insert(toCred); if(i2.error) throw i2.error; a2=toCred.length; }
+        await loadRecipients();
+        if(msg) msg.innerHTML='<div class="success">Sinchronizuota. Į Dok. rengimą įkelta naujų: <b>'+a1+'</b> · į Kreditorių modulį įkelta naujų: <b>'+a2+'</b>.'+((a1+a2)===0?' Sąrašai jau sutampa.':'')+'</div>';
+      }catch(e){ if(msg) msg.innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
+    }
+    window.syncCredRecipients=syncCredRecipients;
+    (function(){ var b=$('syncCredBtn'); if(b) b.onclick=syncCredRecipients;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-rtype]'), function(t){ t.addEventListener('click', function(){ setTimeout(ctgSyncBtnToggle,0); }); });
+    })();
+
+    /* ============================================================
+       r24 (B2): Per-vartotojo stulpelių matomumas Dok. rengimo sąraše
+       Neinvazyvu — stulpeliai slepiami CSS nth-child būdu (renderRecipients
+       nekeičiamas). Pasirinkimas saugomas Supabase per vartotoją
+       (insolvency_user_prefs), išlieka tarp langų ir įrenginių.
+       ============================================================ */
+    var REC_COLS={code:true,extra:true,email:true,phone:true,address:true};
+    var REC_COLS_LOADED=false;
+    var REC_COL_MAP={code:3,extra:4,email:5,phone:6,address:7};
+    function applyRecColPrefs(){
+      var sel=[]; Object.keys(REC_COL_MAP).forEach(function(k){ if(REC_COLS[k]===false){ var n=REC_COL_MAP[k]; sel.push('#recipientsTable table th:nth-child('+n+')'); sel.push('#recipientsTable table td:nth-child('+n+')'); } });
+      var st=$('recColStyle'); if(!st){ st=document.createElement('style'); st.id='recColStyle'; document.head.appendChild(st); }
+      st.textContent=sel.length? (sel.join(',')+'{display:none;}') : '';
+    }
+    async function loadRecColPrefs(){
+      try{ var r=await sb.from('insolvency_user_prefs').select('pref_value').eq('pref_key','recCols').maybeSingle();
+        if(r&&r.data&&r.data.pref_value&&typeof r.data.pref_value==='object'){ ['code','extra','email','phone','address'].forEach(function(k){ REC_COLS[k]=(r.data.pref_value[k]!==false); }); }
+      }catch(_){}
+      applyRecColPrefs();
+    }
+    async function saveRecColPrefs(){
+      applyRecColPrefs();
+      try{ await sb.from('insolvency_user_prefs').upsert({ user_id:(typeof CURRENT_UID!=='undefined'?CURRENT_UID:undefined), pref_key:'recCols', pref_value:REC_COLS, updated_at:new Date().toISOString() }, { onConflict:'user_id,pref_key' }); }catch(_){}
+    }
+    function recColsPopOpen(){
+      var pop=$('recColsPop'), btn=$('recColsBtn'); if(!pop||!btn) return;
+      var labels={code:'Kodas',extra:'Suma / pareigos',email:'El. paštas',phone:'Telefonas',address:'Adresas'};
+      pop.innerHTML='<div style="font-weight:600;font-size:12px;margin-bottom:6px;">Rodomi stulpeliai</div>'+Object.keys(labels).map(function(k){ return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;padding:3px 0;cursor:pointer;"><input type="checkbox" data-col="'+k+'"'+(REC_COLS[k]!==false?' checked':'')+'> '+labels[k]+'</label>'; }).join('')+'<div class="muted" style="font-size:11px;margin-top:6px;">Išsaugoma automatiškai pagal vartotoją.</div>';
+      Array.prototype.forEach.call(pop.querySelectorAll('input[data-col]'), function(cb){ cb.onchange=function(){ REC_COLS[cb.getAttribute('data-col')]=cb.checked; saveRecColPrefs(); }; });
+      pop.style.position='fixed'; pop.style.zIndex='70'; pop.style.background='#fff'; pop.style.border='1px solid var(--bd)'; pop.style.borderRadius='8px'; pop.style.boxShadow='0 8px 24px rgba(11,30,63,.16)'; pop.style.padding='10px'; pop.style.minWidth='200px';
+      var r=btn.getBoundingClientRect(); pop.style.top=(r.bottom+4)+'px'; pop.style.left=Math.max(8,r.left)+'px';
+      pop.classList.remove('hidden');
+    }
+    (function(){
+      var btn=$('recColsBtn'); if(btn) btn.onclick=function(e){ e.stopPropagation(); var p=$('recColsPop'); if(p&&!p.classList.contains('hidden')){ p.classList.add('hidden'); return; } recColsPopOpen(); };
+      document.addEventListener('click', function(e){ var p=$('recColsPop'), b=$('recColsBtn'); if(p&&!p.classList.contains('hidden')&&!p.contains(e.target)&&!(b&&b.contains(e.target))) p.classList.add('hidden'); });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-top],[data-rtype]'), function(t){ t.addEventListener('click', function(){ setTimeout(function(){ if(!REC_COLS_LOADED){ REC_COLS_LOADED=true; loadRecColPrefs(); } else { applyRecColPrefs(); } },60); }); });
+    })();
 
     bindCredButtons();
     bindClaimExtras();
