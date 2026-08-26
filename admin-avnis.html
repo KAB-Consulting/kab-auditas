@@ -149,6 +149,15 @@
             <div class="tab" data-af="phys">👤 Fiziniai</div>
             <div class="tab" data-af="legal">🏢 Juridiniai</div>
           </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+            <span class="muted" style="font-size:12.5px;">Leistinas krūvis:</span>
+            <div class="tabs" id="adLeistTabs" style="margin:0;">
+              <div class="tab active" data-leist="all">Visi</div>
+              <div class="tab" data-leist="40">40 (A gr.)</div>
+              <div class="tab" data-leist="60">60 (B gr.)</div>
+              <div class="tab" data-leist="80">80 (C gr.)</div>
+            </div>
+          </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
             <input id="adSearch" class="input" placeholder="🔍 Ieškoti pagal vardą, pavardę, pavadinimą, numerį…" style="max-width:360px;flex:1;min-width:200px;">
             <label class="toggle" id="adDeepToggle" title="Ieško visuose laukuose: kodas, adresas, el. paštas, telefonas"><input type="checkbox" id="adDeepChk" style="margin-right:6px;"> 🔎 Gili paieška</label>
@@ -207,6 +216,20 @@
       </div>
     </div>
 
+    <!-- POPUP: stebima įmonė pasirodė -->
+    <div id="watchPopup" class="hidden" style="position:fixed;inset:0;background:rgba(11,30,63,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;">
+      <div style="background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);">
+        <div style="padding:18px 20px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:18px;font-weight:700;color:var(--navy);">👁 Stebima įmonė pasirodė sistemoje!</div>
+          <span id="watchPopupClose" style="cursor:pointer;font-size:22px;color:#888;">×</span>
+        </div>
+        <div style="padding:18px 20px;">
+          <div class="muted" style="margin-bottom:12px;">Šios jūsų stebimos įmonės pasirodė AVNIS skelbimuose. Galite atidaryti kortelę ir tęsti stebėjimą / pildyti duomenis.</div>
+          <div id="watchPopupBody"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="loginView" class="card hidden" style="max-width:420px;margin:60px auto;">
       <h2 style="color:var(--navy);font-size:20px;margin-bottom:12px;">Administratoriaus prisijungimas</h2>
       <label class="label">El. paštas</label><input id="loginEmail" class="input" type="email">
@@ -234,7 +257,24 @@
             <h2 style="color:var(--navy);font-size:18px;">Įmonės iš AVNIS skelbimų</h2>
             <div class="muted" id="syncInfo">Sinchronizacija: —</div>
           </div>
-          <button class="btn btn-ghost btn-sm" id="reloadBtn">🔄 Atnaujinti</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="watchlistBtn">👁 Stebimų sąrašas</button>
+            <button class="btn btn-ghost btn-sm" id="reloadBtn">🔄 Atnaujinti</button>
+          </div>
+        </div>
+
+        <!-- STEBIMŲ SĄRAŠO valdymas -->
+        <div id="watchPanel" class="hidden" style="border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px;background:#fbfcff;">
+          <div style="font-weight:700;color:var(--navy);margin-bottom:4px;">👁 Stebimos įmonės (dar nepasirodžiusios sistemoje)</div>
+          <div class="hint" style="margin-bottom:10px;">Įrašykite įmonę, kurios lauksite — kai ji pasirodys AVNIS skelbimuose (bus keliama nemokumo byla), sistema parodys pranešimą.</div>
+          <div class="full-only" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
+            <div><label class="label">Įmonės kodas (jei žinomas)</label><input id="watchCode" class="input" style="max-width:170px;" placeholder="pvz. 302346954"></div>
+            <div><label class="label">Arba pavadinimo dalis</label><input id="watchName" class="input" style="max-width:220px;" placeholder="pvz. Admivista"></div>
+            <div style="flex:1;min-width:180px;"><label class="label">Pastaba / kam stebim</label><input id="watchNote" class="input" placeholder="pvz. skolininkas byloje X"></div>
+            <button class="btn btn-primary btn-sm" id="watchAdd">➕ Pridėti į stebimus</button>
+          </div>
+          <div id="watchMsg"></div>
+          <div style="overflow-x:auto;"><table><thead><tr><th>Stebima</th><th>Pastaba</th><th style="width:130px;">Būsena</th><th>Pridėjo</th><th class="full-only" style="width:40px;"></th></tr></thead><tbody id="watchBody"></tbody></table></div>
         </div>
 
         <div class="hint" style="margin-bottom:4px;">Spauskite kelis filtrus — jie derinami (sankirta). Paspaudimo tvarka rodoma numeriu. „Visos" nuima visus.</div>
@@ -250,7 +290,7 @@
         </div>
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
-          <input id="searchBox" class="input" placeholder="🔍 Ieškoti…" style="max-width:420px;flex:1;min-width:220px;">
+          <input id="searchBox" class="input" placeholder="🔍 Ieškoti: pavadinimas, kodas, adresas, susiję asmenys, bylos nr…" style="max-width:460px;flex:1;min-width:240px;">
           <label class="toggle" id="deepToggle" title="Ieško raktažodžių ir kortelių viduje: pastabose, finansų/skolų/teismų pastabose, adrese, teisėjo, stadijos"><input type="checkbox" id="deepChk" style="margin-right:6px;"> 🔎 Gili paieška (visose kortelėse)</label>
         </div>
         <div class="muted" id="listCount" style="margin-bottom:8px;"></div>
@@ -258,8 +298,17 @@
         <div id="listMsg"></div>
         <div style="overflow-x:auto;overflow-y:visible;">
           <table>
-            <thead><tr>
-              <th style="width:34px;"></th><th>Įmonė</th><th>Atrankinis dydis</th><th class="center">Skelbimų</th><th>Naujausia stadija</th><th>Teismas</th><th>Paskutinis skelbimas</th><th>🗓️ Naujas įvykis</th><th>Būsena</th><th>Kortelė</th>
+            <thead id="coHead"><tr>
+              <th style="width:34px;"></th>
+              <th class="sortable" data-sort="name">Įmonė <span class="sarr"></span></th>
+              <th class="sortable" data-sort="size">Atrankinis dydis <span class="sarr"></span></th>
+              <th class="sortable center" data-sort="count">Skelbimų <span class="sarr"></span></th>
+              <th class="sortable" data-sort="stage">Naujausia stadija <span class="sarr"></span></th>
+              <th class="sortable" data-sort="court">Teismas <span class="sarr"></span></th>
+              <th class="sortable" data-sort="date_to">Paskutinis skelbimas <span class="sarr"></span></th>
+              <th class="sortable" data-sort="event">🗓️ Naujas įvykis <span class="sarr"></span></th>
+              <th class="sortable" data-sort="valid">Būsena <span class="sarr"></span></th>
+              <th class="sortable" data-sort="profile">Kortelė <span class="sarr"></span></th>
             </tr></thead>
             <tbody id="listBody"></tbody>
           </table>
@@ -478,9 +527,37 @@
     let EVENTS_BY_CODE={}; // company_code -> [{event_date, event_type, description, source_url, source_type, record_date, found_at}]
     let USERS={}; // user_id -> full_name (kas atliko veiksmus)
     function userName(uid, fallback){ return (uid && USERS[uid]) || fallback || ''; }
+    let WATCHLIST=[];
+    let CO_SORT_KEY='newest', CO_SORT_DIR=-1; // numatyta: naujausi viršuje (newestFrom mažėjimo tvarka)
+    function coSortVal(c, key){
+      switch(key){
+        case 'name': return (c.name||'').toLowerCase();
+        case 'size': return (c.companySize||'').toLowerCase();
+        case 'count': return c.count||0;
+        case 'stage': return ((c.latest&&c.latest.process_stage_title)||'').toLowerCase();
+        case 'court': return ((c.latest&&c.latest.court)||'').toLowerCase();
+        case 'date_to': return (c.latest&&c.latest.date_to)||'';
+        case 'event': return c.lastEventDate||'';
+        case 'valid': return c.hasValid?1:0;
+        case 'profile': return c.hasProfile?1:0;
+        case 'newest': default: return c.newestFrom||'';
+      }
+    }
+    function coCompare(a,b){
+      let va=coSortVal(a,CO_SORT_KEY), vb=coSortVal(b,CO_SORT_KEY), cmp;
+      if(typeof va==='string'||typeof vb==='string') cmp=String(va).localeCompare(String(vb),'lt');
+      else cmp = va<vb?-1:(va>vb?1:0);
+      if(cmp===0) cmp=String(b.newestFrom||'').localeCompare(String(a.newestFrom||'')); // antrinis: naujausi
+      return CO_SORT_DIR*cmp;
+    }
+    function updateCoArrows(){
+      document.querySelectorAll('#coHead th.sortable').forEach(th=>{ const arr=th.querySelector('.sarr');
+        if(th.dataset.sort===CO_SORT_KEY){ th.classList.add('active'); if(arr) arr.textContent = CO_SORT_DIR===1?'▲':'▼'; }
+        else { th.classList.remove('active'); if(arr) arr.textContent=''; } });
+    }
     let SUBMOD='avnis';
     const PAGE_SIZE=100;
-    window.BUILD_VERSION='avnis-2026-08-12-v10';
+    window.BUILD_VERSION='avnis-2026-08-12-v11';
 
     const JURISDICTION = {1:'Lietuvos (teritorinė)', 2:'Lietuvos (pagrindinė)', 3:'Tarptautinė'};
 
@@ -529,7 +606,7 @@
     }
 
     // ============ NEMOKUMO ADMINISTRATORIŲ SUBMODULIS ============
-    let ADMINS=[], ADMINS_LOADED=false, AD_FILTER='all', AD_SEARCH='', AD_DEEP=false, AD_PAGE=0, AD_CUR=null;
+    let ADMINS=[], ADMINS_LOADED=false, AD_FILTER='all', AD_LEIST='all', AD_SEARCH='', AD_DEEP=false, AD_PAGE=0, AD_CUR=null;
     let AD_SORT_KEY='number', AD_SORT_DIR=1; // dir: 1 = didėjimo (A→Z, maž→didž), -1 = mažėjimo
     let STATS_BY_NUM={}, STATS_DATE=null;
     let EMP_BY_PERSON={}, EMP_BY_EMPLOYER={}; // darbovietės / darbuotojai
@@ -566,6 +643,7 @@
       let rows=ADMINS.slice();
       if(AD_FILTER==='phys') rows=rows.filter(x=>!x.legal);
       else if(AD_FILTER==='legal') rows=rows.filter(x=>x.legal);
+      if(AD_LEIST!=='all'){ const lv=parseInt(AD_LEIST,10); rows=rows.filter(x=> x.stat && Math.round(x.stat.leistinas_kruvis)===lv); }
       if(AD_SEARCH){ const q=AD_SEARCH.toLowerCase();
         rows=rows.filter(x=>{
           if(AD_DEEP){ return [x.number,x.full_name,x.name,x.surname,x.person_code,x.email,x.phone,x.address].filter(Boolean).join(' ').toLowerCase().includes(q); }
@@ -703,6 +781,7 @@
     }
     $('adBack').onclick=()=>{ AD_CUR=null; show('admListWrap'); hide('admCardWrap'); };
     $('adFilterTabs').addEventListener('click',e=>{ const t=e.target.closest('.tab'); if(!t)return; document.querySelectorAll('#adFilterTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); AD_FILTER=t.dataset.af; AD_PAGE=0; renderAdmins(); });
+    $('adLeistTabs').addEventListener('click',e=>{ const t=e.target.closest('.tab'); if(!t)return; document.querySelectorAll('#adLeistTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); AD_LEIST=t.dataset.leist; AD_PAGE=0; renderAdmins(); });
     $('adSearch').addEventListener('input',e=>{ AD_SEARCH=e.target.value.trim(); AD_PAGE=0; renderAdmins(); });
     $('adDeepChk').addEventListener('change',e=>{ AD_DEEP=e.target.checked; $('adDeepToggle').classList.toggle('on',AD_DEEP); AD_PAGE=0; renderAdmins(); });
     $('adHead').addEventListener('click',e=>{ const th=e.target.closest('th.sortable'); if(!th)return;
@@ -779,7 +858,7 @@
     async function loadData(){
       views('loadingView');
       const [a,p,s,nt,ev] = await Promise.all([
-        sb.from('avnis_announcements').select('id,process_id,company_name,company_code,process_stage_title,company_address,date_from,date_to,court,case_no,judge,is_valid,invalidated_at,first_seen_at,criteria').order('date_to',{ascending:false}).limit(30000),
+        sb.from('avnis_announcements').select('id,process_id,company_name,company_code,process_stage_title,company_address,date_from,date_to,court,case_no,judge,is_valid,invalidated_at,first_seen_at,criteria,person_declarations').order('date_to',{ascending:false}).limit(30000),
         sb.from('avnis_company_profiles').select('*'),
         sb.from('avnis_sync_log').select('*').order('id',{ascending:false}).limit(1),
         sb.from('avnis_company_notes').select('company_code,note_text,created_at').order('created_at',{ascending:false}),
@@ -794,6 +873,10 @@
       const log = (s.data||[])[0];
       $('syncInfo').textContent = log ? `Paskutinė sinchronizacija: ${fmtDT(log.run_at)} · ${log.status==='success'?`✅ (naujų: ${log.new_count}, atnaujinta: ${log.updated_count}, nebegalioja: ${log.invalidated_count})`:'❌ '+(log.error_message||'')}` : 'Sinchronizacija dar nevykdyta';
       buildCompanies(); renderList(); views('listView');
+      const wl = await sb.from('avnis_watchlist').select('*').eq('active',true).order('created_at',{ascending:false});
+      WATCHLIST = (wl && !wl.error) ? (wl.data||[]) : [];
+      renderWatchlist();
+      detectWatchMatches();
     }
 
     function buildCompanies(){
@@ -825,6 +908,11 @@
         c.notes = c.code ? (NOTES_BY_CODE[c.code]||[]) : [];
         c.notesCount = c.notes.length;
         c.hasProfile = !!(c.profile && ((c.profile.financial_data||[]).length||(c.profile.employees_data||[]).length||(c.profile.state_debts||[]).length||(c.profile.court_cases||[]).length));
+        // Precomputinam pagrindinės paieškos tekstą: pavadinimas, kodas, adresas, susiję asmenys, teismas, bylos nr.
+        const sp=[c.name, c.code];
+        c.anns.forEach(a=>{ sp.push(a.company_address, a.court, a.case_no, a.judge);
+          (a.person_declarations||[]).forEach(p=>{ sp.push(p.personName||p.name, p.personCode, p.personEmail, p.personAddress, p.listNom); }); });
+        c.searchDefault = sp.filter(Boolean).join(' ').toLowerCase();
         return c;
       });
       // Numatytasis rūšiavimas: naujausi skelbimai viršuje (pagal paskelbimo datą, po to pagal pirmą pastebėjimą)
@@ -850,7 +938,7 @@
     }
     function deepText(c){
       // visas kortelės tekstas paieškai
-      const parts=[c.name,c.code];
+      const parts=[c.name,c.code,c.searchDefault];
       c.anns.forEach(a=>{ parts.push(a.court,a.case_no,a.judge,a.process_stage_title,a.company_address); });
       const p=c.profile||{};
       ['financial_data','employees_data','state_debts','court_cases'].forEach(k=>{ (p[k]||[]).forEach(r=>{ Object.values(r).forEach(v=>parts.push(v)); }); });
@@ -858,15 +946,17 @@
       return parts.filter(Boolean).join(' ').toLowerCase();
     }
     function filteredCompanies(){
-      let rows = COMPANIES;
+      let rows = COMPANIES.slice();
       for(const f of ACTIVE){ rows = applyOne(rows, f); }   // derinami paspaudimo tvarka (sankirta)
       if(SEARCH){ const q=SEARCH.toLowerCase();
         if(DEEP){ rows=rows.filter(c=> deepText(c).includes(q)); }
-        else { rows=rows.filter(c=> (c.name||'').toLowerCase().includes(q) || (c.code||'').toLowerCase().includes(q) || c.anns.some(a=> (a.court||'').toLowerCase().includes(q) || (a.case_no||'').toLowerCase().includes(q))); }
+        else { rows=rows.filter(c=> (c.searchDefault||'').includes(q)); }
       }
+      rows.sort(coCompare);
       return rows;
     }
     function renderList(){
+      updateCoArrows();
       const rows = filteredCompanies();
       $('listCount').textContent = 'Rodoma: '+fmtNum(rows.length)+' įmonių';
       const pages = Math.max(1, Math.ceil(rows.length/PAGE_SIZE));
@@ -929,10 +1019,84 @@
       PAGE=0; renderFilterTabs(); renderList();
       const anchor=$('listCount'); if(anchor) anchor.scrollIntoView({behavior:'smooth', block:'center'});
     });
+    $('coHead').addEventListener('click', e=>{ const th=e.target.closest('th.sortable'); if(!th)return;
+      const k=th.dataset.sort;
+      if(CO_SORT_KEY===k){ CO_SORT_DIR=-CO_SORT_DIR; }
+      else { CO_SORT_KEY=k; CO_SORT_DIR = (k==='date_to'||k==='event'||k==='count'||k==='newest')?-1:1; } // datos/skaičiai – iš pradžių mažėjimo
+      PAGE=0; renderList();
+    });
     $('searchBox').addEventListener('input', e=>{ SEARCH=e.target.value.trim(); PAGE=0; renderList(); });
     $('deepChk').addEventListener('change', e=>{ DEEP=e.target.checked; $('deepToggle').classList.toggle('on',DEEP); PAGE=0; renderList(); });
     $('reloadBtn').onclick = () => loadData();
     $('backToList').onclick = () => { CURRENT=null; destroyCharts(); show('listView'); hide('cardView'); renderList(); };
+
+    // ---------------- STEBIMŲ SĄRAŠAS (dar nepasirodžiusios įmonės) ----------------
+    $('watchlistBtn').onclick = ()=>{ const p=$('watchPanel'); p.classList.toggle('hidden'); if(!p.classList.contains('hidden')) renderWatchlist(); };
+    function watchStatus(w){
+      if(w.matched_code){ return {txt:'✅ Pasirodė '+(w.matched_at?fmtD(w.matched_at):''), code:w.matched_code}; }
+      return {txt:'⏳ Laukiama', code:null};
+    }
+    function renderWatchlist(){
+      const body=$('watchBody'); if(!body) return;
+      if(!WATCHLIST.length){ body.innerHTML='<tr><td colspan="5" class="muted center" style="padding:14px;">Stebimų įmonių dar nėra. Pridėkite viršuje.</td></tr>'; return; }
+      body.innerHTML = WATCHLIST.map(w=>{ const s=watchStatus(w);
+        const target = w.match_code?('kodas: '+esc(w.match_code)):('„'+esc(w.match_name||'')+'"');
+        return `<tr>
+          <td><b>${esc(w.label||w.match_name||w.match_code||'—')}</b><div class="muted" style="font-size:11px;">${target}</div></td>
+          <td>${esc(w.note||'—')}</td>
+          <td>${s.code?`<span class="badge badge-green" style="cursor:pointer" onclick="openFromWatch('${esc(s.code)}')">${s.txt} ↗</span>`:`<span class="badge badge-gold">${s.txt}</span>`}</td>
+          <td class="muted" style="font-size:12px;">${esc(w.created_by_name||'—')}</td>
+          <td class="full-only center"><span style="cursor:pointer;color:#DC2626;" title="Šalinti" onclick="deleteWatch(${w.id})">✕</span></td>
+        </tr>`; }).join('');
+    }
+    $('watchAdd').onclick = async ()=>{
+      if(PERM_LEVEL!=='full') return;
+      const code=$('watchCode').value.trim(), name=$('watchName').value.trim(), note=$('watchNote').value.trim();
+      if(!code && !name){ $('watchMsg').innerHTML='<div class="error">Įveskite įmonės kodą arba pavadinimo dalį.</div>'; return; }
+      const rec={ match_code: code||null, match_name: name||null, label: name||code, note: note||null, source_module:'avnis', created_by:CURRENT_UID, created_by_name:MY_NAME };
+      const { error } = await sb.from('avnis_watchlist').insert(rec);
+      if(error){ $('watchMsg').innerHTML='<div class="error">Nepavyko: '+esc(error.message)+'</div>'; return; }
+      $('watchCode').value=''; $('watchName').value=''; $('watchNote').value='';
+      $('watchMsg').innerHTML='<div class="success">✅ Pridėta į stebimus.</div>';
+      const wl = await sb.from('avnis_watchlist').select('*').eq('active',true).order('created_at',{ascending:false});
+      WATCHLIST = (wl && !wl.error) ? (wl.data||[]) : [];
+      renderWatchlist(); detectWatchMatches();
+    };
+    window.deleteWatch = async (id)=>{
+      if(PERM_LEVEL!=='full') return;
+      if(!confirm('Pašalinti iš stebimų?')) return;
+      const { error } = await sb.from('avnis_watchlist').update({active:false}).eq('id',id);
+      if(error){ $('watchMsg').innerHTML='<div class="error">Nepavyko: '+esc(error.message)+'</div>'; return; }
+      WATCHLIST = WATCHLIST.filter(w=>w.id!==id); renderWatchlist();
+    };
+    window.openFromWatch = (code)=>{ const c=COMPANIES.find(x=>x.code===code); if(c){ $('watchPopup').classList.add('hidden'); openCard(c.idx); } };
+    function findMatchCompany(w){
+      if(w.match_code){ return COMPANIES.find(c=> c.code===w.match_code); }
+      if(w.match_name){ const q=w.match_name.toLowerCase(); return COMPANIES.find(c=> (c.name||'').toLowerCase().includes(q)); }
+      return null;
+    }
+    async function detectWatchMatches(){
+      const fresh=[]; // naujai pastebėti
+      for(const w of WATCHLIST){
+        if(w.matched_code) continue; // jau pastebėta
+        const c=findMatchCompany(w);
+        if(c){ w.matched_code=c.code; w.matched_at=new Date().toISOString(); fresh.push({w, c});
+          try{ await sb.from('avnis_watchlist').update({ matched_code:c.code, matched_at:w.matched_at, acknowledged:false }).eq('id', w.id); }catch(_){}
+        }
+      }
+      if(fresh.length){ showWatchPopup(fresh); renderWatchlist(); }
+    }
+    function showWatchPopup(fresh){
+      $('watchPopupBody').innerHTML = fresh.map(({w,c})=>`
+        <div style="border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:10px;">
+          <div style="font-weight:700;color:var(--navy);">${esc(c.name)}</div>
+          <div class="muted" style="font-size:12.5px;margin:2px 0 8px;">Kodas: ${esc(c.code||'—')}${w.note?' · '+esc(w.note):''}${c.latest?' · '+esc(c.latest.process_stage_title||''):''}</div>
+          <button class="btn btn-primary btn-sm" onclick="openFromWatch('${esc(c.code)}')">📂 Atidaryti kortelę ir tęsti</button>
+        </div>`).join('');
+      $('watchPopup').classList.remove('hidden');
+    }
+    $('watchPopupClose').onclick = ()=> $('watchPopup').classList.add('hidden');
+    $('watchPopup').addEventListener('click', e=>{ if(e.target===$('watchPopup')) $('watchPopup').classList.add('hidden'); });
 
     // ---------------- KORTELĖ ----------------
     const EMPTY = { fin:{metai:'',pardavimo_pajamos:'',grynasis_pelnas:'',turtas:'',nuosavas_kapitalas:'',isipareigojimai:'',pastabos:''},
@@ -979,7 +1143,7 @@
     function renderEvents(c){
       const cn = c.caseNo||'';
       $('evCaseNo').innerHTML = cn ? ('Byla: <b>'+esc(cn)+'</b>') : '<i>bylos nr. nėra</i>';
-      const evs = (c.events||[]).slice().sort((a,b)=> String(b.found_at||'').localeCompare(String(a.found_at||'')));
+      const evs = (c.events||[]).filter(Boolean).slice().sort((a,b)=> String(b.found_at||'').localeCompare(String(a.found_at||'')));
       if(!evs.length){
         $('evBody').innerHTML = '<tr><td colspan="6" class="muted center" style="padding:16px;">Įvykių dar neįrašyta. Patikrinkite teismą (mygtukai viršuje) ir įrašykite radę.</td></tr>';
       } else {
@@ -1005,6 +1169,16 @@
     $('evAddBtn').onclick = ()=>{ if(PERM_LEVEL!=='full') return; $('evAddForm').classList.toggle('hidden');
       if(!$('evAddForm').classList.contains('hidden')){ $('evType').value='Teismo posėdis'; $('evDate').value=''; $('evDesc').value=''; $('evUrl').value=''; } };
     $('evCancel').onclick = ()=> $('evAddForm').classList.add('hidden');
+    async function reloadEvents(code){
+      // Patikimai persikraunam įvykius iš DB (kad lentelė visada atitiktų realią būseną)
+      const r = await sb.from('avnis_court_events').select('id,company_code,case_no,event_date,event_type,description,source_url,source_type,record_date,found_at,created_by_name').eq('company_code', code).order('found_at',{ascending:false});
+      const arr = (r && !r.error) ? (r.data||[]) : [];
+      EVENTS_BY_CODE[code] = arr;
+      if(CURRENT && CURRENT.code===code){
+        CURRENT.events = arr; CURRENT.lastEvent = arr[0]||null;
+        CURRENT.lastEventDate = CURRENT.lastEvent ? (CURRENT.lastEvent.event_date||CURRENT.lastEvent.found_at) : '';
+      }
+    }
     $('evSave').onclick = async ()=>{
       if(!CURRENT || PERM_LEVEL!=='full') return;
       if(!CURRENT.code){ $('evMsg').innerHTML='<div class="error">Įmonė be kodo — įvykio įrašyti negalima.</div>'; return; }
@@ -1019,24 +1193,21 @@
         found_at: new Date().toISOString(), updated_at: new Date().toISOString()
       };
       const btn=$('evSave'); btn.disabled=true; btn.textContent='⏳ Įrašoma…';
-      const { data, error } = await sb.from('avnis_court_events').insert(rec).select().single();
+      const code = CURRENT.code;
+      const { error } = await sb.from('avnis_court_events').insert(rec);
+      if(error){ btn.disabled=false; btn.textContent='💾 Išsaugoti įvykį'; $('evMsg').innerHTML='<div class="error">Nepavyko: '+esc(error.message)+'</div>'; return; }
+      await reloadEvents(code);
       btn.disabled=false; btn.textContent='💾 Išsaugoti įvykį';
-      if(error){ $('evMsg').innerHTML='<div class="error">Nepavyko: '+esc(error.message)+'</div>'; return; }
-      // atnaujinam atmintį
-      (EVENTS_BY_CODE[CURRENT.code]=EVENTS_BY_CODE[CURRENT.code]||[]).unshift(data);
-      CURRENT.events = EVENTS_BY_CODE[CURRENT.code];
-      CURRENT.lastEvent = CURRENT.events[0]; CURRENT.lastEventDate = data.event_date || data.found_at;
       $('evAddForm').classList.add('hidden'); $('evMsg').innerHTML='<div class="success">✅ Įvykis įrašytas.</div>';
       renderEvents(CURRENT); renderList();
     };
     window.deleteEvent = async (id)=>{
       if(PERM_LEVEL!=='full') return;
       if(!confirm('Ištrinti šį įvykį?')) return;
+      const code = CURRENT.code;
       const { error } = await sb.from('avnis_court_events').delete().eq('id', id);
       if(error){ $('evMsg').innerHTML='<div class="error">Nepavyko ištrinti: '+esc(error.message)+'</div>'; return; }
-      const arr = (EVENTS_BY_CODE[CURRENT.code]||[]).filter(e=>e.id!==id);
-      EVENTS_BY_CODE[CURRENT.code]=arr; CURRENT.events=arr;
-      CURRENT.lastEvent = arr[0]||null; CURRENT.lastEventDate = CURRENT.lastEvent ? (CURRENT.lastEvent.event_date||CURRENT.lastEvent.found_at) : '';
+      await reloadEvents(code);
       renderEvents(CURRENT); renderList();
     };
 
@@ -1047,11 +1218,18 @@
       if(!cr){ $('criteriaBody').innerHTML='<div class="muted">Šiam skelbimui kriterijų duomenų AVNIS nepateikė.</div>'; return; }
       const rizika = cr.isAdministrativeCostsRisk ? '<span class="badge badge-red">Taip</span>' : '<span class="badge badge-gray">Ne</span>';
       const jur = JURISDICTION[cr.juristictionId] || (cr.juristictionId!=null?('ID '+cr.juristictionId):'—');
+      const yesno=(v)=> v===true?'<span class="badge badge-green">Taip</span>':(v===false?'<span class="badge badge-gray">Ne</span>':'<span class="muted">Nenurodyta</span>');
       const row=(k,v)=>`<div><span class="k">${k}</span><span class="v2">${v}</span></div>`;
       $('criteriaBody').innerHTML = `
-        <div style="font-weight:700;color:var(--navy);margin:4px 0 6px;">Administratoriaus atlygis</div>
+        <div style="font-weight:700;color:var(--navy);margin:4px 0 6px;">Kriterijai</div>
         <div class="kv">
-          ${row('Administravimo rizika', rizika)}
+          ${row('Bylos iniciatorius', esc(cr.processInitiator||'—'))}
+          ${row('Depozitas įmokėtas', yesno(cr.depositPaid))}
+          ${row('Depozito pasiūlymas', cr.depositProposal!=null?fmtEur(cr.depositProposal):'<span class="muted">Nenurodyta</span>')}
+          ${row('Administravimo išlaidų rizika', rizika)}
+        </div>
+        <div style="font-weight:700;color:var(--navy);margin:14px 0 6px;">Administratoriaus atlygis</div>
+        <div class="kv">
           ${row('Bazinis atlygis', fmtEur(cr.baseSalary))}
         </div>
         <div style="font-weight:700;color:var(--navy);margin:14px 0 6px;">Juridinį asmenį apibūdinantys kriterijai</div>
