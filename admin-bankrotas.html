@@ -359,6 +359,79 @@
       .sidebar{ top:52px; height:calc(100vh - 52px); }
       body.sb-open::after{ top:52px; }
     }
+    /* ============ KAGB responsive sluoksnis v1 (2026-08-31) ============ */
+    :root{ --touch:44px; }
+
+    /* Lentelės: horizontalus slinkimas su matomu „nukirpimo" ženklu (NN/g rekomendacija) */
+    .tbl-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%;
+      background:
+        linear-gradient(90deg,#fff 30%,rgba(255,255,255,0)) left center/26px 100% no-repeat,
+        linear-gradient(90deg,rgba(255,255,255,0),#fff 70%) right center/26px 100% no-repeat,
+        radial-gradient(farthest-side at 0 50%,rgba(11,30,63,.16),rgba(11,30,63,0)) left center/9px 100% no-repeat,
+        radial-gradient(farthest-side at 100% 50%,rgba(11,30,63,.16),rgba(11,30,63,0)) right center/9px 100% no-repeat;
+      background-attachment:local,local,scroll,scroll; }
+
+    /* Įrenginio apsauga */
+    .dev-locked{ opacity:.45; cursor:not-allowed; }
+    #devFullToggle{ cursor:pointer; }
+
+    /* --- Soninio meniu uzdarymas siaurame ekrane --- */
+    #kagbBackdrop{ position:fixed; inset:0; background:rgba(23,38,54,.42); z-index:66; display:none; }
+    #kagbSbClose{ display:none; }
+    @media (max-width:1023px){
+      body.sb-open::after{ content:none!important; }
+      body.kagb-sb-open #kagbBackdrop{ display:block; }
+      body.kagb-sb-open{ overflow:hidden; }
+      .sidebar{ z-index:70; }
+      body.kagb-sb-open #kagbSbClose{ display:flex; align-items:center; justify-content:center;
+        position:fixed; top:62px; right:12px; z-index:71; width:42px; height:42px;
+        border:1px solid rgba(255,255,255,.35); border-radius:8px;
+        background:rgba(255,255,255,.92); color:#23364B; font-size:24px; line-height:1;
+        cursor:pointer; box-shadow:0 2px 10px rgba(11,30,63,.25); }
+    }
+
+    /* --- Planšetė ir siauriau: lietimo taikiniai (WCAG 2.2 / Apple HIG 44px) --- */
+    @media (max-width:1279px){
+      .btn{ min-height:var(--touch); padding-top:9px; padding-bottom:9px; }
+      .btn-sm{ min-height:36px; }
+      .input,.textarea,.select{ min-height:var(--touch); font-size:16px; }
+      .tab{ min-height:38px; display:inline-flex; align-items:center; }
+      .nav-i{ min-height:40px; }
+      td .btn-sm{ margin:2px; }
+    }
+
+    /* --- Planšetė portrait ir siauriau: šoninis meniu tampa slankiuoju --- */
+    @media (max-width:1023px){
+      .app{ display:block; }
+      .sidebar{ position:fixed; left:0; top:52px; bottom:0; z-index:70; height:calc(100vh - 52px);
+        transform:translateX(-100%); transition:transform .18s ease; }
+      body.sb-open .sidebar{ transform:none; box-shadow:2px 0 24px rgba(11,30,63,.22); }
+      body.sb-open::after{ content:''; position:fixed; inset:52px 0 0 0; background:rgba(23,38,54,.35); z-index:65; }
+      .sb-toggle{ display:inline-flex; }
+      .main{ width:100%; }
+      .container{ padding:14px 14px 40px; }
+      .row > *{ min-width:180px; }
+    }
+
+    /* --- Telefonas --- */
+    @media (max-width:767px){
+      .container{ padding:10px 10px 32px; }
+      .row{ gap:10px; }
+      .row > *{ min-width:100%; flex:1 1 100%; }
+      .modal-bg{ padding:0; align-items:stretch; }
+      .modal{ max-width:100%; width:100%; border:0; border-radius:0; min-height:100vh; padding:16px 14px 40px; }
+      .tabs{ display:flex; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100%; }
+      #topTabs,#subTabs{ display:flex; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100%; }
+      .tabs::-webkit-scrollbar,#topTabs::-webkit-scrollbar,#subTabs::-webkit-scrollbar{ display:none; }
+      #topTabs > .tab,#subTabs > .tab,.tabs > .tab{ flex:0 0 auto; white-space:nowrap; }
+      table{ font-size:12.5px; }
+      th,td{ padding:8px 9px; }
+      .topbar h1{ font-size:14px; }
+      [style*="grid-template-columns:repeat(3,1fr)"],
+      [style*="grid-template-columns:repeat(4,1fr)"],
+      [style*="grid-template-columns:repeat(5,1fr)"]{ grid-template-columns:1fr!important; }
+    }
+
   </style>
 </head>
 <body class="shell-off">
@@ -646,7 +719,7 @@
           <strong id="recListTitle">Darbuotojų sąrašas</strong>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-sm btn-ghost" id="addRecipientBtn">+ Pridėti</button>
-            <button class="btn btn-sm btn-ghost" id="importRecipientsBtn"><span class="ic ic-clipboard"></span> Importuoti</button>
+            <button class="btn btn-sm btn-ghost" id="importRecipientsBtn" data-device="desktop"><span class="ic ic-clipboard"></span> Importuoti</button>
             <button class="btn btn-sm btn-ghost hidden" id="syncCredBtn"><span class="ic ic-refresh"></span> Sinchronizuoti su Kreditorių moduliu</button>
             <button class="btn btn-sm btn-gold" id="enrichBtn"><span class="ic ic-globe"></span> Surinkti kontaktus (AI)</button>
             <button class="btn btn-sm btn-ghost" id="recColsBtn"><span class="ic ic-list"></span> Stulpeliai</button>
@@ -721,7 +794,7 @@
               <option value="UZDARYTA">Uždaryta</option>
               <option value="PARDUOTA">Parduota</option>
             </select>
-            <button class="btn btn-sm btn-ghost" id="debtImportBtn"><span class="ic ic-clipboard"></span> Masinis importas</button>
+            <button class="btn btn-sm btn-ghost" id="debtImportBtn" data-device="desktop"><span class="ic ic-clipboard"></span> Masinis importas</button>
             <button class="btn btn-sm" id="newDebtorBtn">+ Naujas debitorius</button>
           </div>
         </div>
@@ -855,7 +928,7 @@
             <div class="muted" style="font-size:12px;">Vienas įrašas kiekvienam kreditoriui. Skolos pagal apskaitą, gauti reikalavimai ir teismo nutartys susiejami su tuo pačiu kreditoriumi (JANĮ 41–44, 94–95 str.).</div></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-sm btn-ghost" id="credStdBtn"><span class="ic ic-plus"></span> Standartiniai (VMI/Sodra/GF)</button>
-            <button class="btn btn-sm btn-ghost" id="credImportBtn"><span class="ic ic-up"></span> Masinis importas</button>
+            <button class="btn btn-sm btn-ghost" id="credImportBtn" data-device="desktop"><span class="ic ic-up"></span> Masinis importas</button>
             <button class="btn btn-sm" id="credNewBtn">+ Naujas kreditorius</button>
           </div>
         </div>
@@ -1536,6 +1609,7 @@
         <div><label style="display:flex;align-items:center;gap:6px;margin-top:26px;font-size:13px;"><input type="checkbox" id="lsVat" style="width:auto;"> Plius PVM</label></div>
         <div id="lsVatRateWrap" class="hidden"><label class="label">PVM tarifas (%)</label><input id="lsVatRate" class="input" type="number" step="0.1" value="21"></div>
         <div><label class="label">Delspinigiai (%/d., nebūtina)</label><input id="lsLateRate" class="input" type="number" step="0.001" placeholder="pvz. 0.02"></div>
+        <div style="max-width:210px;"><label class="label">Mokėti iki mėn. dienos</label><input id="lsDueDay" class="input" type="number" min="1" max="28" step="1" value="10"><div class="hint">Nesumokėjus iki šios dienos skaičiuojami delspinigiai.</div></div>
       </div>
       <div class="row">
         <div><label style="display:flex;align-items:center;gap:6px;margin-top:26px;font-size:13px;"><input type="checkbox" id="lsDeposit" style="width:auto;"> Depozitas yra</label></div>
@@ -1595,19 +1669,21 @@
         <div class="sec-title">Nuomos apskaita</div>
         <div id="lsAcctSummary" style="margin-bottom:10px;"></div>
         <strong style="font-size:13px;">Priskaitymai</strong>
-        <div class="hint" style="margin:2px 0 4px;">Nuomos mokestis generuojamas automatiškai kiekvienam mėnesiui (nepilni mėnesiai — proporcingai pagal dienas, sumą galima koreguoti ✎). Kitus mokesčius (komunalinius ir pan.) įrašykite pagal faktą.</div>
+        <div class="hint" style="margin:2px 0 4px;">Nuomos mokestis priskaičiuojamas visam mėnesiui iš karto; nepilni mėnesiai (pirmas ir nutraukimo) — proporcingai, bazė 30 d. Terminas — sutartyje nurodyta mėnesio diena. Ranka pakoregavus sumą (✎) automatika tos eilutės nebeperrašo. Kitus mokesčius (komunalinius ir pan.) įrašykite pagal faktą. Depozitas įrašomas kaip mokėjimas, kurio tipas „Depozitas“ — į priskaitymų balansą jis neįskaitomas.</div>
         <div id="lsChargesTable" style="margin-bottom:8px;"></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;background:#F7F9FB;border:1px solid var(--bd);border-radius:6px;padding:8px;margin-bottom:14px;">
           <div><label class="label">Mėnuo</label><input id="lsChMonth" class="input" type="month"></div>
           <div style="min-width:200px;flex:1;"><label class="label">Mokestis</label><input id="lsChLabel" class="input" placeholder="pvz. komunaliniai mokesčiai"></div>
           <div style="max-width:130px;"><label class="label">Suma be PVM (€)</label><input id="lsChAmount" class="input" type="number" step="0.01"></div>
           <label style="display:flex;align-items:center;gap:4px;font-size:12px;margin-bottom:9px;"><input type="checkbox" id="lsChVat" style="width:auto;"> + PVM</label>
+          <div id="lsChVatRateWrap" class="hidden" style="max-width:110px;"><label class="label">PVM (%)</label><input id="lsChVatRate" class="input" type="number" step="0.1" value="21"></div>
           <button class="btn btn-sm" type="button" id="lsChAddBtn">+ Pridėti mokestį</button>
         </div>
         <strong style="font-size:13px;">Mokėjimai</strong>
         <div id="lsPaysTable" style="margin:4px 0 8px;"></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;background:#F7F9FB;border:1px solid var(--bd);border-radius:6px;padding:8px;">
           <div><label class="label">Mokėjimo data</label><input id="lsPayDate" class="input" type="date"></div>
+          <div style="max-width:175px;"><label class="label">Mokėjimo tipas</label><select id="lsPayKind" class="select"><option value="rent">Nuomos / kiti mokesčiai</option><option value="deposit">Depozitas (garantija)</option><option value="other">Kita</option></select></div>
           <div style="max-width:130px;"><label class="label">Suma (€)</label><input id="lsPayAmount" class="input" type="number" step="0.01"></div>
           <div style="min-width:170px;flex:1;"><label class="label">Pastaba</label><input id="lsPayNote" class="input" placeholder="nebūtina"></div>
           <input type="file" id="lsPayFile" class="hidden" accept="application/pdf,image/*">
@@ -2540,7 +2616,7 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-14-r25';
+    const APP_VERSION='2026-08-31-r27';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -4962,6 +5038,7 @@
       $('lsVat').checked=l?!!l.vat:false; $('lsVatRate').value=l?(l.vat_rate??21):21; $('lsVatRateWrap').classList.toggle('hidden',!$('lsVat').checked);
       $('lsDeposit').checked=l?!!l.deposit:false; $('lsDepositAmount').value=l?(l.deposit_amount??''):''; $('lsDepositWrap').classList.toggle('hidden',!$('lsDeposit').checked);
       $('lsLateRate').value=l?(l.late_interest_rate??''):'';
+      $('lsDueDay').value=l?(l.payment_due_day??10):10;
       fillLeasePayAcctSelect(l);
       $('lsSpecial').value=l?(l.special_conditions||''):'';
       LS_PHOTO_SEL=l&&Array.isArray(l.condition_photos)?l.condition_photos.slice():[];
@@ -5003,6 +5080,7 @@
         vat:$('lsVat').checked, vat_rate:Number($('lsVatRate').value)||21,
         deposit:$('lsDeposit').checked, deposit_amount:$('lsDeposit').checked&&$('lsDepositAmount').value!==''?Number($('lsDepositAmount').value):null,
         late_interest_rate:$('lsLateRate').value===''?null:Number($('lsLateRate').value),
+        payment_due_day:Math.min(28,Math.max(1,Number($('lsDueDay').value)||10)),
         payment_account_kind:$('lsPayAcctKind').value||'deposit',
         payment_account_iban:$('lsPayAcctKind').value==='custom'?($('lsPayAcctIban').value.trim()||null):null,
         payment_bank_name:$('lsPayAcctKind').value==='custom'?($('lsPayBank').value.trim()||null):null,
@@ -5100,6 +5178,8 @@
     };
     // --- nuomos apskaita (2 etapas) ---
     const chTotal=c=>Number(c.amount||0)+Number(c.vat_amount||0);
+    const lsLease=()=>LEASES.find(x=>x.id===$('lsId').value)||null;
+    const payKind=p=>(p.kind||'rent');
     async function loadLeaseAcct(leaseId){
       try{ await sb.rpc('ensure_lease_charges',{ p_lease_id:leaseId }); }catch(_){}
       try{
@@ -5113,7 +5193,7 @@
     function leaseAllocation(){
       const charges=LEASE_CHARGES.slice().sort((a,b)=>a.period<b.period?-1:a.period>b.period?1:0);
       const linked={}; let free=0;
-      for(const p of LEASE_PAYS){ if(p.charge_id)linked[p.charge_id]=(linked[p.charge_id]||0)+Number(p.amount||0); else free+=Number(p.amount||0); }
+      for(const p of LEASE_PAYS){ if(payKind(p)==='deposit')continue; if(p.charge_id)linked[p.charge_id]=(linked[p.charge_id]||0)+Number(p.amount||0); else free+=Number(p.amount||0); }
       const rows=charges.map(c=>{ const total=chTotal(c); return { c, total, paid:Math.min(linked[c.id]||0,total) }; });
       for(const r of rows){ if(free<=0)break; const need=r.total-r.paid; if(need>0){ const use=Math.min(need,free); r.paid+=use; free-=use; } }
       return { rows, freeLeft:free };
@@ -5125,7 +5205,7 @@
       for(const r of leaseAllocation().rows){
         const rem=r.total-r.paid; if(rem<=0.005)continue;
         const per=new Date(r.c.period);
-        const due=new Date(per.getFullYear(),per.getMonth()+1,0); // mokėtina iki priskaitymo mėn. pabaigos
+        const due=r.c.due_date?new Date(r.c.due_date):new Date(per.getFullYear(),per.getMonth()+1,0); // terminas iš priskaitymo (sutarties mokėjimo diena)
         const days=Math.floor((today-due)/86400000); if(days<=0)continue;
         sum+=rem*Number(l.late_interest_rate)/100*days;
       }
@@ -5133,26 +5213,30 @@
     }
     function renderLeaseAcct(){
       const curMonth=new Date().toISOString().slice(0,7);
+      const todayIso=new Date().toISOString().slice(0,10);
       const alloc=leaseAllocation();
       const totalCharged=alloc.rows.reduce((s,r)=>s+r.total,0);
-      const totalPaid=LEASE_PAYS.reduce((s,p)=>s+Number(p.amount||0),0);
+      const totalPaid=LEASE_PAYS.filter(p=>payKind(p)!=='deposit').reduce((s,p)=>s+Number(p.amount||0),0);
+      const depositPaid=LEASE_PAYS.filter(p=>payKind(p)==='deposit').reduce((s,p)=>s+Number(p.amount||0),0);
       const balance=totalCharged-totalPaid;
       const late=lateInterestSum();
       $('lsAcctSummary').innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap;">
         <div style="background:#F7F9FB;border:1px solid var(--bd);border-radius:6px;padding:8px 14px;"><div class="muted" style="font-size:11px;">Priskaičiuota (su PVM)</div><b>${fmtEur(totalCharged)}</b></div>
-        <div style="background:#EEF7F1;border:1px solid #C3E4CE;border-radius:6px;padding:8px 14px;"><div class="muted" style="font-size:11px;">Sumokėta</div><b>${fmtEur(totalPaid)}</b></div>
+        <div style="background:#EEF7F1;border:1px solid #C3E4CE;border-radius:6px;padding:8px 14px;"><div class="muted" style="font-size:11px;">Sumokėta (be depozito)</div><b>${fmtEur(totalPaid)}</b></div>
         <div style="background:${balance>0.005?'#FDF1F0':'#F7F9FB'};border:1px solid ${balance>0.005?'#F2C7C2':'var(--bd)'};border-radius:6px;padding:8px 14px;"><div class="muted" style="font-size:11px;">${balance<-0.005?'Permoka':'Likutis nesumokėtas'}</div><b style="${balance>0.005?'color:#B3261E;':''}">${fmtEur(Math.abs(balance))}</b></div>
+        ${(depositPaid>0.005||(lsLease()&&lsLease().deposit))?`<div style="background:#F3F6FB;border:1px solid #C9D6E8;border-radius:6px;padding:8px 14px;"><div class="muted" style="font-size:11px;">Depozitas (garantija)</div><b>${fmtEur(depositPaid)}</b><div class="muted" style="font-size:10.5px;">${lsLease()&&Number(lsLease().deposit_amount||0)>0?(Math.abs(depositPaid-Number(lsLease().deposit_amount))>0.005?'pagal sutartį '+fmtEur(lsLease().deposit_amount):'sumokėtas'):'į balansą neįskaitomas'}</div></div>`:''}
         ${late!=null?`<div style="background:#FFF8E6;border:1px solid #E3D3AC;border-radius:6px;padding:8px 14px;"><div class="muted" style="font-size:11px;">Delspinigiai (informaciniai)</div><b>${fmtEur(late)}</b>${late>0?' <button class="btn btn-sm btn-ghost" style="margin-left:6px;" onclick="lsAddLateCharge()" title="Įtraukti apskaičiuotus delspinigius kaip priskaitymą"><span class="ic ic-plus"></span> įtraukti</button>':''}</div>`:''}
       </div>`;
       // priskaitymai
       if(!alloc.rows.length){ $('lsChargesTable').innerHTML='<div class="muted" style="font-size:12px;padding:6px 0;">Priskaitymų dar nėra.</div>'; }
       else{
-        $('lsChargesTable').innerHTML='<table style="font-size:12px;"><thead><tr><th>Mėnuo</th><th>Mokestis</th><th>Suma</th><th>PVM</th><th>Iš viso</th><th>Sumokėta</th><th>Likutis</th><th></th></tr></thead><tbody>'+
+        $('lsChargesTable').innerHTML='<table style="font-size:12px;"><thead><tr><th>Mėnuo</th><th>Mokestis</th><th>Terminas</th><th>Suma</th><th>PVM</th><th>Iš viso</th><th>Sumokėta</th><th>Likutis</th><th></th></tr></thead><tbody>'+
           alloc.rows.map(r=>{
             const c=r.c, rem=r.total-r.paid;
-            const overdue=rem>0.005&&c.period.slice(0,7)<curMonth;
+            const overdue=rem>0.005&&(c.due_date?c.due_date<todayIso:c.period.slice(0,7)<curMonth);
             return `<tr${overdue?' style="background:#FDF1F0;"':''}><td style="white-space:nowrap;">${esc(c.period.slice(0,7))}</td>
-              <td>${esc(c.label||c.kind)}${c.notes?'<div class="muted" style="font-size:11px;">'+esc(c.notes)+'</div>':''}</td>
+              <td>${esc(c.label||c.kind)}${c.is_manual_override?' <span class="badge badge-gold" title="Suma koreguota rankiniu būdu — automatika jos nebeperrašo">rankinė</span>':''}${c.notes?'<div class="muted" style="font-size:11px;">'+esc(c.notes)+'</div>':''}</td>
+              <td style="white-space:nowrap;">${c.due_date?esc(c.due_date):'—'}</td>
               <td>${fmtEur(c.amount)}</td><td>${Number(c.vat_amount||0)?fmtEur(c.vat_amount):'—'}</td><td><b>${fmtEur(r.total)}</b></td>
               <td>${fmtEur(r.paid)}</td><td${rem>0.005?' style="color:#B3261E;font-weight:700;"':''}>${fmtEur(rem)}</td>
               <td style="text-align:right;white-space:nowrap;">
@@ -5162,8 +5246,8 @@
           }).join('')+'</tbody></table>'+(alloc.freeLeft>0.005?'<div class="hint" style="margin-top:4px;">Nepriskirta mokėjimų suma (permoka): '+fmtEur(alloc.freeLeft)+'</div>':'');
       }
       // mokėjimai
-      $('lsPaysTable').innerHTML=LEASE_PAYS.length?'<table style="font-size:12px;"><thead><tr><th>Data</th><th>Suma</th><th>Pastaba</th><th>Dokumentas</th><th></th></tr></thead><tbody>'+
-        LEASE_PAYS.map(p=>`<tr><td style="white-space:nowrap;">${esc(p.paid_date)}</td><td><b>${fmtEur(p.amount)}</b></td><td>${esc(p.notes||'')}</td>
+      $('lsPaysTable').innerHTML=LEASE_PAYS.length?'<table style="font-size:12px;"><thead><tr><th>Data</th><th>Tipas</th><th>Suma</th><th>Pastaba</th><th>Dokumentas</th><th></th></tr></thead><tbody>'+
+        LEASE_PAYS.map(p=>`<tr><td style="white-space:nowrap;">${esc(p.paid_date)}</td><td style="white-space:nowrap;">${payKind(p)==='deposit'?'<span class="badge badge-gold">Depozitas</span>':payKind(p)==='other'?'<span class="badge badge-gray">Kita</span>':'<span class="badge badge-green">Nuoma</span>'}</td><td><b>${fmtEur(p.amount)}</b></td><td>${esc(p.notes||'')}</td>
           <td>${p.storage_path?`<span style="cursor:pointer;" onclick="previewDoc('${esc(p.storage_path)}','Mokėjimo dokumentas')"><span class="ic ic-clip"></span> peržiūrėti</span>`:'—'}</td>
           <td style="text-align:right;"><button class="btn btn-sm btn-danger" onclick="lsPayDel('${p.id}')" title="Šalinti mokėjimą"><span class="ic ic-trash"></span></button></td></tr>`).join('')+'</tbody></table>':'<div class="muted" style="font-size:12px;padding:4px 0;">Mokėjimų dar nėra.</div>';
       renderDepositBlock();
@@ -5176,7 +5260,9 @@
       const amt=Number(String(nv).replace(',','.'));
       if(isNaN(amt)){ alert('Neteisinga suma.'); return; }
       const note=((c.notes||'')+' Koreguota rankiniu būdu '+new Date().toISOString().slice(0,10)+'.').trim();
-      const { error }=await sb.from('insolvency_asset_lease_charges').update({ amount:amt, vat_amount:(c.kind==='rent'&&l.vat)||Number(c.vat_amount||0)>0?Math.round(amt*(l.vat_rate||21))/100:0, notes:note }).eq('id',id);
+      const vrate=Number(c.vat_rate!=null?c.vat_rate:(l.vat_rate||21));
+      const applyVat=((c.kind==='rent'&&l.vat)||Number(c.vat_amount||0)>0);
+      const { error }=await sb.from('insolvency_asset_lease_charges').update({ amount:amt, vat_amount:applyVat?Math.round(amt*vrate)/100:0, vat_rate:applyVat?vrate:0, is_manual_override:true, notes:note }).eq('id',id);
       if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
       loadLeaseAcct($('lsId').value);
     };
@@ -5193,8 +5279,9 @@
       if(!mo||!label||amtV===''){ $('lsMsg').innerHTML='<div class="error">Užpildykite mėnesį, mokesčio pavadinimą ir sumą.</div>'; return; }
       const l=LEASES.find(x=>x.id===leaseId)||{};
       const amt=Number(amtV);
-      const vamt=$('lsChVat').checked?Math.round(amt*(l.vat_rate||21))/100:0;
-      const { error }=await sb.from('insolvency_asset_lease_charges').insert({ lease_id:leaseId, period:mo+'-01', kind:'utility', label, amount:amt, vat_amount:vamt, is_auto:false, created_by:CURRENT_UID });
+      const cvr=$('lsChVat').checked?(Number($('lsChVatRate').value)||l.vat_rate||21):0;
+      const vamt=$('lsChVat').checked?Math.round(amt*cvr)/100:0;
+      const { error }=await sb.from('insolvency_asset_lease_charges').insert({ lease_id:leaseId, period:mo+'-01', kind:'utility', label, amount:amt, vat_amount:vamt, vat_rate:cvr, due_date:mo+'-'+String(Math.min(28,Math.max(1,Number(l.payment_due_day)||10))).padStart(2,'0'), is_auto:false, created_by:CURRENT_UID });
       if(error){ $('lsMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
       $('lsChLabel').value=''; $('lsChAmount').value=''; $('lsChVat').checked=false;
       $('lsMsg').innerHTML='<div class="success">Mokestis pridėtas.</div>';
@@ -5223,9 +5310,9 @@
           const up=await sb.storage.from('insolvency-docs').upload(path,LS_PAY_FILE,{ upsert:true });
           if(up.error)throw up.error;
         }
-        const { error }=await sb.from('insolvency_asset_lease_payments').insert({ lease_id:leaseId, paid_date:d, amount:Number(amtV), storage_path:path, notes:$('lsPayNote').value.trim()||null, created_by:CURRENT_UID });
+        const { error }=await sb.from('insolvency_asset_lease_payments').insert({ lease_id:leaseId, paid_date:d, amount:Number(amtV), kind:$('lsPayKind').value||'rent', storage_path:path, notes:$('lsPayNote').value.trim()||null, created_by:CURRENT_UID });
         if(error)throw error;
-        $('lsPayDate').value=''; $('lsPayAmount').value=''; $('lsPayNote').value=''; LS_PAY_FILE=null; $('lsPayFile').value=''; $('lsPayFileName').textContent='';
+        $('lsPayDate').value=''; $('lsPayAmount').value=''; $('lsPayNote').value=''; $('lsPayKind').value='rent'; LS_PAY_FILE=null; $('lsPayFile').value=''; $('lsPayFileName').textContent='';
         $('lsMsg').innerHTML='<div class="success">Mokėjimas įrašytas.</div>';
         try{ await logEvent('lease_payment_added',{ lease_id:leaseId, amount:Number(amtV) }); }catch(_){}
         loadLeaseAcct(leaseId);
@@ -6298,7 +6385,7 @@
     $('lsContractBtn').onclick=()=>contractPdf('lease');
     $('slContractBtn').onclick=()=>contractPdf('sale');
     // ---------- NUOMOS SUTARTIES PASIRAŠYMAS IR UŽRAKINIMAS ----------
-    const LEASE_LOCK_INPUTS=['lsContractNo','lsContractDate','lsCpSelect','lsCpName','lsCpCode','lsCpRegAddr','lsCpDiff','lsCpBusAddr','lsCpRepPos','lsCpRepName','lsCpEmail','lsCpPhone','lsStart','lsEnd','lsPrice','lsVat','lsVatRate','lsDeposit','lsDepositAmount','lsLateRate','lsPayAcctKind','lsPayAcctIban','lsPayBank','lsSpecial','lsDocLabel','lsDocCustom','lsDocValid'];
+    const LEASE_LOCK_INPUTS=['lsContractNo','lsContractDate','lsCpSelect','lsCpName','lsCpCode','lsCpRegAddr','lsCpDiff','lsCpBusAddr','lsCpRepPos','lsCpRepName','lsCpEmail','lsCpPhone','lsStart','lsEnd','lsPrice','lsVat','lsVatRate','lsDeposit','lsDepositAmount','lsLateRate','lsDueDay','lsPayAcctKind','lsPayAcctIban','lsPayBank','lsSpecial','lsDocLabel','lsDocCustom','lsDocValid'];
     function applyLeaseLock(locked){
       LEASE_LOCK_INPUTS.forEach(x=>{ const e=$(x); if(e)e.disabled=locked; });
       ['lsAddItem','lsDocAddBtn'].forEach(x=>{ const e=$(x); if(e)e.classList.toggle('hidden',locked); });
@@ -11298,6 +11385,160 @@
     initRegMaintenance();
     initClaimV3();
     boot();
-</script>
+
+    /* ============ KAGB mobilus sluoksnis v1 (2026-08-31) ============
+       1) kiekviena lentelė apgaubiama slenkančiu konteineriu (.tbl-wrap)
+       2) [data-device] elementai užrakinami pagal ekrano plotį
+       3) šoniniame meniu — jungiklis „Pilna versija" (localStorage)
+       Nekeičia jokios esamos logikos; veikia per MutationObserver. */
+    (function(){
+      var LS_KEY='kagbForceFull';
+      function deviceClass(){
+        try{ if(localStorage.getItem(LS_KEY)==='1') return 'desktop'; }catch(e){}
+        var w=window.innerWidth||document.documentElement.clientWidth||1280;
+        return w>=1280?'desktop':(w>=768?'tablet':'phone');
+      }
+      window.KAGB_DEVICE=deviceClass();
+
+      function wrapTables(root){
+        var list=(root||document).querySelectorAll('table:not([data-wrapped])');
+        for(var i=0;i<list.length;i++){
+          var t=list[i]; t.setAttribute('data-wrapped','1');
+          if(!t.parentNode)continue;
+          if(t.parentNode.classList&&t.parentNode.classList.contains('tbl-wrap'))continue;
+          var w=document.createElement('div'); w.className='tbl-wrap';
+          t.parentNode.insertBefore(w,t); w.appendChild(t);
+        }
+      }
+      function guardMsg(need){
+        return need==='desktop' ? 'Ši funkcija pasiekiama tik kompiuteriu'
+                                : 'Ši funkcija pasiekiama kompiuteriu arba planšetėje';
+      }
+      function applyGuard(root){
+        var dev=window.KAGB_DEVICE;
+        var list=(root||document).querySelectorAll('[data-device]');
+        for(var i=0;i<list.length;i++){
+          var el=list[i], need=el.getAttribute('data-device');
+          var ok = (need==='desktop') ? (dev==='desktop') : (dev!=='phone');
+          var locked=el.classList.contains('dev-locked');
+          if(!ok&&!locked){
+            el.classList.add('dev-locked'); el.setAttribute('aria-disabled','true');
+            el.setAttribute('data-dev-title', el.title||'');
+            el.title=guardMsg(need);
+            if(!el.getAttribute('data-dev-bound')){
+              el.setAttribute('data-dev-bound','1');
+              el.addEventListener('click',function(ev){
+                if(!this.classList.contains('dev-locked'))return;
+                ev.preventDefault(); ev.stopImmediatePropagation();
+                alert(this.title+'.\n\nJei vis dėlto norite ją naudoti šiame įrenginyje, šoninio meniu apačioje įjunkite „Pilna versija".');
+              },true);
+            }
+          }else if(ok&&locked){
+            el.classList.remove('dev-locked'); el.removeAttribute('aria-disabled');
+            el.title=el.getAttribute('data-dev-title')||'';
+          }
+        }
+      }
+      function refresh(root){ try{ wrapTables(root); }catch(e){} try{ applyGuard(root); }catch(e){} }
+
+      /* --- soninio meniu uzdarymas: fonas, X mygtukas, punkto paspaudimas --- */
+      function narrow(){
+        try{ return window.matchMedia('(max-width:1023px)').matches; }
+        catch(e){ return (window.innerWidth||1280) < 1024; }
+      }
+      function sbEl(){ return document.querySelector('.sidebar'); }
+      function sbIsOpen(){
+        var s=sbEl();
+        return document.body.classList.contains('sb-open') || !!(s && s.classList.contains('open'));
+      }
+      function sbSync(){
+        var want = narrow() && sbIsOpen();
+        var has  = document.body.classList.contains('kagb-sb-open');
+        if(want!==has) document.body.classList.toggle('kagb-sb-open', want);
+      }
+      function sbClose(){
+        document.body.classList.remove('sb-open');
+        var s=sbEl(); if(s) s.classList.remove('open');
+        sbSync();
+      }
+      window.kagbCloseSidebar=sbClose;
+
+      function initSidebar(){
+        var s=sbEl(); if(!s) return;
+        if(!document.getElementById('kagbBackdrop')){
+          var bd=document.createElement('div'); bd.id='kagbBackdrop';
+          bd.addEventListener('click', sbClose);
+          document.body.appendChild(bd);
+          var x=document.createElement('div'); x.id='kagbSbClose';
+          x.setAttribute('aria-label','Uzdaryti meniu'); x.setAttribute('title','Uzdaryti meniu');
+          x.innerHTML='&times;';
+          x.addEventListener('click', sbClose);
+          document.body.appendChild(x);
+        }
+        if(!s.getAttribute('data-kagb-sb')){
+          s.setAttribute('data-kagb-sb','1');
+          s.addEventListener('click', function(ev){
+            if(!narrow()) return;
+            var t=ev.target;
+            while(t && t!==s){
+              if(t.id==='devFullToggle') return;
+              if(t.classList && (t.classList.contains('nav-i') || t.classList.contains('tab') ||
+                 t.classList.contains('sidebar-nav-item') || t.classList.contains('template-tab') ||
+                 t.tagName==='A')){ setTimeout(sbClose,150); return; }
+              t=t.parentNode;
+            }
+          });
+          try{
+            var mo=new MutationObserver(sbSync);
+            mo.observe(document.body,{attributes:true,attributeFilter:['class']});
+            mo.observe(s,{attributes:true,attributeFilter:['class']});
+          }catch(e){}
+        }
+        sbSync();
+      }
+      window.kagbRefreshMobile=refresh;
+
+      function initToggle(){
+        if(document.getElementById('devFullToggle'))return;
+        var lo=document.getElementById('logoutBtn'); if(!lo||!lo.parentNode)return;
+        var d=document.createElement('div'); d.className='nav-i'; d.id='devFullToggle';
+        function label(){
+          var on=false; try{ on=localStorage.getItem(LS_KEY)==='1'; }catch(e){}
+          d.innerHTML='<span class="ic ic-'+(on?'check':'grid')+'"></span><span>Pilna versija: '+(on?'įjungta':'išjungta')+'</span>';
+        }
+        d.onclick=function(){
+          try{ var on=localStorage.getItem(LS_KEY)==='1';
+               if(on)localStorage.removeItem(LS_KEY); else localStorage.setItem(LS_KEY,'1'); }catch(e){}
+          label(); window.KAGB_DEVICE=deviceClass(); applyGuard();
+        };
+        label(); lo.parentNode.insertBefore(d,lo);
+      }
+
+      function init(){
+        initToggle(); initSidebar(); refresh();
+        try{
+          var t=null;
+          var obs=new MutationObserver(function(muts){
+            for(var i=0;i<muts.length;i++){
+              if(muts[i].addedNodes&&muts[i].addedNodes.length){
+                clearTimeout(t); t=setTimeout(function(){ refresh(); },60); return;
+              }
+            }
+          });
+          obs.observe(document.body,{childList:true,subtree:true});
+        }catch(e){}
+        var rt=null;
+        window.addEventListener('resize',function(){
+          clearTimeout(rt); rt=setTimeout(function(){
+            var d=deviceClass();
+            if(d!==window.KAGB_DEVICE){ window.KAGB_DEVICE=d; applyGuard(); }
+            sbSync();
+          },200);
+        });
+      }
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+    })();
+
+  </script>
 </body>
 </html>

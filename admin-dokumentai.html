@@ -331,6 +331,79 @@
       .sidebar{ top:52px; height:calc(100vh - 52px); }
       body.sb-open::after{ top:52px; }
     }
+  
+    /* ============ KAGB responsive sluoksnis v1 (2026-08-31) ============ */
+    :root{ --touch:44px; }
+
+    .tbl-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%;
+      background:
+        linear-gradient(90deg,#fff 30%,rgba(255,255,255,0)) left center/26px 100% no-repeat,
+        linear-gradient(90deg,rgba(255,255,255,0),#fff 70%) right center/26px 100% no-repeat,
+        radial-gradient(farthest-side at 0 50%,rgba(11,30,63,.16),rgba(11,30,63,0)) left center/9px 100% no-repeat,
+        radial-gradient(farthest-side at 100% 50%,rgba(11,30,63,.16),rgba(11,30,63,0)) right center/9px 100% no-repeat;
+      background-attachment:local,local,scroll,scroll; }
+
+    .dev-locked{ opacity:.45; cursor:not-allowed; }
+    #devFullToggle{ cursor:pointer; }
+
+    /* --- Soninio meniu uzdarymas siaurame ekrane --- */
+    #kagbBackdrop{ position:fixed; inset:0; background:rgba(23,38,54,.42); z-index:66; display:none; }
+    #kagbSbClose{ display:none; }
+    @media (max-width:1023px){
+      body.sb-open::after{ content:none!important; }
+      body.kagb-sb-open #kagbBackdrop{ display:block; }
+      body.kagb-sb-open{ overflow:hidden; }
+      .sidebar{ z-index:70; }
+      body.kagb-sb-open #kagbSbClose{ display:flex; align-items:center; justify-content:center;
+        position:fixed; top:62px; right:12px; z-index:71; width:42px; height:42px;
+        border:1px solid rgba(255,255,255,.35); border-radius:8px;
+        background:rgba(255,255,255,.92); color:#23364B; font-size:24px; line-height:1;
+        cursor:pointer; box-shadow:0 2px 10px rgba(11,30,63,.25); }
+    }
+
+    @media (max-width:1279px){
+      .btn{ min-height:var(--touch); padding-top:9px; padding-bottom:9px; }
+      .btn-sm,.btn-small{ min-height:36px; padding-top:6px; padding-bottom:6px; }
+      input:not([type=checkbox]):not([type=radio]):not([type=file]),
+      select,textarea{ min-height:var(--touch); font-size:16px; }
+      .tab,.subtab,.template-tab{ min-height:38px; display:inline-flex; align-items:center; }
+      .nav-i,.sidebar-nav-item{ min-height:40px; }
+      td .btn-sm,td .btn-small{ margin:2px; }
+    }
+
+    @media (max-width:1023px){
+      .app{ display:block; }
+      .sidebar{ position:fixed; left:0; top:52px; bottom:0; z-index:70; height:calc(100vh - 52px);
+        transform:translateX(-100%); transition:transform .18s ease; }
+      body.sb-open .sidebar{ transform:none; box-shadow:2px 0 24px rgba(11,30,63,.22); }
+      body.sb-open::after{ content:''; position:fixed; inset:52px 0 0 0; background:rgba(23,38,54,.35); z-index:65; }
+      .sb-toggle{ display:inline-flex; }
+      .main{ width:100%; }
+      .container{ padding:14px 14px 40px; }
+      .row > *{ min-width:180px; }
+    }
+    @media (max-width:767px){
+      .container{ padding:10px 10px 32px; }
+      .row{ gap:10px; }
+      .row > *{ min-width:100%; flex:1 1 100%; }
+    }
+
+    @media (max-width:767px){
+      .modal-bg{ padding:0; align-items:stretch; }
+      .modal{ max-width:100%; width:100%; border:0; border-radius:0; min-height:100vh; padding:16px 14px 40px; }
+      .tabs,.subbar,#topTabs,#subTabs,.tmpl-nav{ display:flex; flex-wrap:nowrap; overflow-x:auto;
+        scrollbar-width:none; max-width:100%; }
+      .tabs::-webkit-scrollbar,.subbar::-webkit-scrollbar,#topTabs::-webkit-scrollbar,
+      #subTabs::-webkit-scrollbar,.tmpl-nav::-webkit-scrollbar{ display:none; }
+      .tabs > *,.subbar > *,#topTabs > *,#subTabs > *,.tmpl-nav > *{ flex:0 0 auto; white-space:nowrap; }
+      table{ font-size:12.5px; }
+      th,td{ padding:8px 9px; }
+      .form-row,.stat-grid,.stats-grid,.kv{ grid-template-columns:1fr!important; }
+      [style*="grid-template-columns:repeat(3,1fr)"],
+      [style*="grid-template-columns:repeat(4,1fr)"],
+      [style*="grid-template-columns:repeat(5,1fr)"]{ grid-template-columns:1fr!important; }
+    }
+
   </style>
 </head>
 <body class="shell-off">
@@ -1359,6 +1432,168 @@
 
     window.closeModal=()=>{ $('modalRoot').innerHTML=''; };
     try{ document.getElementById('sbToggle').onclick=()=>document.body.classList.toggle('sb-open'); }catch(_){}
+  
+    /* ============ KAGB mobilus sluoksnis v1 (2026-08-31) ============
+       1) kiekviena lentele apgaubiama slenkanciu konteineriu (.tbl-wrap)
+       2) [data-device] elementai uzrakinami pagal ekrano ploti
+       3) soniniame meniu — jungiklis „Pilna versija" (localStorage)
+       Nekeicia jokios esamos logikos; veikia per MutationObserver. */
+    (function(){
+      var LS_KEY='kagbForceFull';
+      function deviceClass(){
+        try{ if(localStorage.getItem(LS_KEY)==='1') return 'desktop'; }catch(e){}
+        var w=window.innerWidth||document.documentElement.clientWidth||1280;
+        return w>=1280?'desktop':(w>=768?'tablet':'phone');
+      }
+      window.KAGB_DEVICE=deviceClass();
+
+      function wrapTables(root){
+        var list=(root||document).querySelectorAll('table:not([data-wrapped])');
+        for(var i=0;i<list.length;i++){
+          var t=list[i]; t.setAttribute('data-wrapped','1');
+          if(!t.parentNode)continue;
+          if(t.parentNode.classList&&t.parentNode.classList.contains('tbl-wrap'))continue;
+          var w=document.createElement('div'); w.className='tbl-wrap';
+          t.parentNode.insertBefore(w,t); w.appendChild(t);
+        }
+      }
+      function guardMsg(need){
+        return need==='desktop' ? 'Si funkcija pasiekiama tik kompiuteriu'
+                                : 'Si funkcija pasiekiama kompiuteriu arba plansete';
+      }
+      function applyGuard(root){
+        var dev=window.KAGB_DEVICE;
+        var list=(root||document).querySelectorAll('[data-device]');
+        for(var i=0;i<list.length;i++){
+          var el=list[i], need=el.getAttribute('data-device');
+          var ok = (need==='desktop') ? (dev==='desktop') : (dev!=='phone');
+          var locked=el.classList.contains('dev-locked');
+          if(!ok&&!locked){
+            el.classList.add('dev-locked'); el.setAttribute('aria-disabled','true');
+            el.setAttribute('data-dev-title', el.title||'');
+            el.title=guardMsg(need);
+            if(!el.getAttribute('data-dev-bound')){
+              el.setAttribute('data-dev-bound','1');
+              el.addEventListener('click',function(ev){
+                if(!this.classList.contains('dev-locked'))return;
+                ev.preventDefault(); ev.stopImmediatePropagation();
+                alert(this.title+'.\n\nJei vis delto norite ja naudoti siame irenginyje, soninio meniu apacioje ijunkite „Pilna versija".');
+              },true);
+            }
+          }else if(ok&&locked){
+            el.classList.remove('dev-locked'); el.removeAttribute('aria-disabled');
+            el.title=el.getAttribute('data-dev-title')||'';
+          }
+        }
+      }
+      function refresh(root){ try{ wrapTables(root); }catch(e){} try{ applyGuard(root); }catch(e){} }
+
+      /* --- soninio meniu uzdarymas: fonas, X mygtukas, punkto paspaudimas --- */
+      function narrow(){
+        try{ return window.matchMedia('(max-width:1023px)').matches; }
+        catch(e){ return (window.innerWidth||1280) < 1024; }
+      }
+      function sbEl(){ return document.querySelector('.sidebar'); }
+      function sbIsOpen(){
+        var s=sbEl();
+        return document.body.classList.contains('sb-open') || !!(s && s.classList.contains('open'));
+      }
+      function sbSync(){
+        var want = narrow() && sbIsOpen();
+        var has  = document.body.classList.contains('kagb-sb-open');
+        if(want!==has) document.body.classList.toggle('kagb-sb-open', want);
+      }
+      function sbClose(){
+        document.body.classList.remove('sb-open');
+        var s=sbEl(); if(s) s.classList.remove('open');
+        sbSync();
+      }
+      window.kagbCloseSidebar=sbClose;
+
+      function initSidebar(){
+        var s=sbEl(); if(!s) return;
+        if(!document.getElementById('kagbBackdrop')){
+          var bd=document.createElement('div'); bd.id='kagbBackdrop';
+          bd.addEventListener('click', sbClose);
+          document.body.appendChild(bd);
+          var x=document.createElement('div'); x.id='kagbSbClose';
+          x.setAttribute('aria-label','Uzdaryti meniu'); x.setAttribute('title','Uzdaryti meniu');
+          x.innerHTML='&times;';
+          x.addEventListener('click', sbClose);
+          document.body.appendChild(x);
+        }
+        if(!s.getAttribute('data-kagb-sb')){
+          s.setAttribute('data-kagb-sb','1');
+          s.addEventListener('click', function(ev){
+            if(!narrow()) return;
+            var t=ev.target;
+            while(t && t!==s){
+              if(t.id==='devFullToggle') return;
+              if(t.classList && (t.classList.contains('nav-i') || t.classList.contains('tab') ||
+                 t.classList.contains('sidebar-nav-item') || t.classList.contains('template-tab') ||
+                 t.tagName==='A')){ setTimeout(sbClose,150); return; }
+              t=t.parentNode;
+            }
+          });
+          try{
+            var mo=new MutationObserver(sbSync);
+            mo.observe(document.body,{attributes:true,attributeFilter:['class']});
+            mo.observe(s,{attributes:true,attributeFilter:['class']});
+          }catch(e){}
+        }
+        sbSync();
+      }
+      window.kagbRefreshMobile=refresh;
+
+      function anchor(){
+        return document.getElementById('logoutBtn')
+            || document.querySelector('.sidebar-logout')
+            || null;
+      }
+      function initToggle(){
+        if(document.getElementById('devFullToggle'))return;
+        var a=anchor(); if(!a||!a.parentNode)return;
+        var d=document.createElement('div');
+        d.id='devFullToggle';
+        d.className=(a.className||'').replace(/sidebar-logout|logout/g,'').trim() || 'nav-i';
+        d.style.cssText='display:flex;align-items:center;gap:8px;';
+        function label(){
+          var on=false; try{ on=localStorage.getItem(LS_KEY)==='1'; }catch(e){}
+          d.innerHTML='<span class="ic ic-'+(on?'check':'grid')+'"></span><span>Pilna versija: '+(on?'ijungta':'isjungta')+'</span>';
+        }
+        d.onclick=function(){
+          try{ var on=localStorage.getItem(LS_KEY)==='1';
+               if(on)localStorage.removeItem(LS_KEY); else localStorage.setItem(LS_KEY,'1'); }catch(e){}
+          label(); window.KAGB_DEVICE=deviceClass(); applyGuard();
+        };
+        label(); a.parentNode.insertBefore(d,a);
+      }
+
+      function init(){
+        initToggle(); initSidebar(); refresh();
+        try{
+          var t=null;
+          var obs=new MutationObserver(function(muts){
+            for(var i=0;i<muts.length;i++){
+              if(muts[i].addedNodes&&muts[i].addedNodes.length){
+                clearTimeout(t); t=setTimeout(function(){ refresh(); },60); return;
+              }
+            }
+          });
+          obs.observe(document.body,{childList:true,subtree:true});
+        }catch(e){}
+        var rt=null;
+        window.addEventListener('resize',function(){
+          clearTimeout(rt); rt=setTimeout(function(){
+            var d=deviceClass();
+            if(d!==window.KAGB_DEVICE){ window.KAGB_DEVICE=d; applyGuard(); }
+            sbSync();
+          },200);
+        });
+      }
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+    })();
+
   </script>
 </body>
 </html>
