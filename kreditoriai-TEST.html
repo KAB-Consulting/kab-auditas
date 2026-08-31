@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAB Consulting — Dokumentai susipažinimui</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    /* KAB dizaino sistema — suvienodinta 2026-08-14 (klientams skirtas puslapis) */
+    :root {
+      --navy:#0B1E3F; --navy2:#16304F; --gold:#C9A961;
+      --gold-bg:#FBF6EA; --gold-bd:#E3D3AC; --gold-tx:#7A5F12;
+      --ink:#23364B; --txt:#425A70; --muted:#7B8C9B; --faint:#9AA8B4;
+      --bd:rgba(66,90,112,.16); --bd2:rgba(66,90,112,.09);
+      --bg:#F5F6F8; --hov:rgba(66,90,112,.06);
+      --ok:#0B6E2E; --ok-bg:#EEF7F1; --ok-bd:#C3E4CE;
+      --err:#B3261E; --err-bg:#FDF1F0; --err-bd:#F2C7C2;
+      --r:6px; --r-sm:4px;
+      --kab-navy:#0B1E3F; --kab-navy-light:#16304F; --kab-gold:#C9A961;
+      --kab-cream:#F5F6F8; --kab-gray:#7B8C9B; --kab-border:rgba(66,90,112,.16); --kab-light:#F7F9FB;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+      background:var(--bg); color:var(--txt); font-size:14px; line-height:1.5; min-height:100vh;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+    .header{ background:#fff; border-bottom:1px solid var(--bd); padding:13px 24px;
+      display:flex; align-items:center; gap:11px; position:sticky; top:0; z-index:20; }
+    .header::before{ content:'KAB'; width:32px; height:32px; flex:0 0 32px; background:var(--navy);
+      color:#fff; border-radius:var(--r); display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:12px; letter-spacing:-.3px; }
+    .header h1{ color:var(--ink); font-size:15px; font-weight:600; letter-spacing:-.2px; }
+    .header .sub{ color:var(--muted); font-size:12px; margin-top:1px; }
+
+    .container{ max-width:980px; margin:0 auto; padding:22px 20px 48px; }
+    .card{ background:#fff; border:1px solid var(--bd); border-radius:var(--r);
+      padding:18px 20px; margin-bottom:14px; box-shadow:none; }
+
+    .btn{ display:inline-flex; align-items:center; gap:6px; background:var(--navy); color:#fff;
+      border:1px solid var(--navy); padding:8px 15px; border-radius:var(--r-sm); font-size:13px;
+      font-weight:600; font-family:inherit; cursor:pointer; text-decoration:none; line-height:1.35;
+      transition:.12s; }
+    .btn:hover{ background:var(--navy2); border-color:var(--navy2); }
+    .btn:disabled{ opacity:.45; cursor:not-allowed; }
+    .btn-ghost{ background:#fff; color:var(--txt); border-color:var(--bd); }
+    .btn-ghost:hover{ background:var(--hov); color:var(--ink); }
+    .btn-sm{ padding:5px 11px; font-size:12px; }
+
+    .input{ width:100%; padding:8px 11px; border:1px solid var(--bd); border-radius:var(--r-sm);
+      font-size:14px; font-family:inherit; color:var(--ink); background:#fff;
+      transition:border-color .12s,box-shadow .12s; }
+    .input:focus{ outline:none; border-color:var(--navy); box-shadow:0 0 0 3px rgba(11,30,63,.07); }
+    .label{ display:block; font-size:11.5px; color:var(--muted); margin-bottom:5px;
+      font-weight:600; letter-spacing:.02em; }
+    .error{ background:var(--err-bg); color:var(--err); border:1px solid var(--err-bd);
+      padding:9px 12px; border-radius:var(--r-sm); font-size:12.5px; margin:10px 0; }
+    .hidden{ display:none !important; }
+    .center{ text-align:center; }
+    .muted{ color:var(--muted); font-size:12.5px; }
+
+    .batch{ border:1px solid var(--bd); border-radius:var(--r); margin-bottom:14px; overflow:hidden; }
+    .batch-head{ background:#F7F9FB; padding:12px 16px; border-bottom:1px solid var(--bd2); }
+    .batch-title{ font-weight:600; color:var(--ink); font-size:14.5px; letter-spacing:-.1px; }
+    .batch-desc{ font-size:12.5px; color:var(--muted); margin-top:3px; }
+    .batch-date{ font-size:11.5px; color:var(--faint); margin-top:3px; }
+    .doc-row{ display:flex; align-items:center; justify-content:space-between; padding:11px 16px;
+      border-bottom:1px solid var(--bd2); gap:12px; flex-wrap:wrap; }
+    .doc-row:last-child{ border-bottom:none; }
+    .doc-row:hover{ background:#F8FAFC; }
+    .doc-name{ font-size:13.5px; color:var(--ink); flex:1; min-width:180px; word-break:break-word; }
+    .doc-meta{ font-size:11px; color:var(--faint); }
+    .doc-actions{ display:flex; gap:8px; }
+
+    .otp-box{ max-width:420px; margin:9vh auto 40px; }
+    .otp-code{ font-family:ui-monospace,Menlo,Consolas,monospace; letter-spacing:6px;
+      text-align:center; font-size:21px; color:var(--ink); }
+    .footer{ text-align:center; color:var(--faint); font-size:11px; padding:20px; }
+    .spinner{ border:2.5px solid var(--bd); border-top-color:var(--navy); border-radius:50%;
+      width:28px; height:28px; animation:spin .8s linear infinite; margin:26px auto; }
+    @keyframes spin{ to{ transform:rotate(360deg); } }
+
+
+    /* ===================== IKONOS (monochrominės, paveldi teksto spalvą) ===================== */
+    .ic{ display:inline-block; width:14px; height:14px; vertical-align:-2px; background:currentColor;
+      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center;
+      -webkit-mask-size:contain; mask-size:contain; flex:0 0 14px; opacity:.9; }
+    .btn .ic{ margin-right:2px; } .sec-title .ic{ width:13px; height:13px; opacity:.7; }
+    .ic-ai{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203l1.9%204.6L18.5%209.5l-4.6%201.9L12%2016l-1.9-4.6L5.5%209.5l4.6-1.9z%27%2F%3E%3Cpath%20d%3D%27M18%2015l.7%201.8%201.8.7-1.8.7L18%2020l-.7-1.8-1.8-.7%201.8-.7z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203l1.9%204.6L18.5%209.5l-4.6%201.9L12%2016l-1.9-4.6L5.5%209.5l4.6-1.9z%27%2F%3E%3Cpath%20d%3D%27M18%2015l.7%201.8%201.8.7-1.8.7L18%2020l-.7-1.8-1.8-.7%201.8-.7z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-alarm{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cpath%20d%3D%27M5%203L2%206M19%203l3%203%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cpath%20d%3D%27M5%203L2%206M19%203l3%203%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-alert{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10.29%203.86L1.82%2018a2%202%200%200%200%201.71%203h16.94a2%202%200%200%200%201.71-3L13.71%203.86a2%202%200%200%200-3.42%200z%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%279%27%20x2%3D%2712%27%20y2%3D%2713%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2717%27%20x2%3D%2712.01%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10.29%203.86L1.82%2018a2%202%200%200%200%201.71%203h16.94a2%202%200%200%200%201.71-3L13.71%203.86a2%202%200%200%200-3.42%200z%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%279%27%20x2%3D%2712%27%20y2%3D%2713%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2717%27%20x2%3D%2712.01%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-archive{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%275%27%20rx%3D%271%27%2F%3E%3Cpath%20d%3D%27M4%209v10a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V9%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2713%27%20x2%3D%2714%27%20y2%3D%2713%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%275%27%20rx%3D%271%27%2F%3E%3Cpath%20d%3D%27M4%209v10a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V9%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2713%27%20x2%3D%2714%27%20y2%3D%2713%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-arrowl{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2719%27%20y1%3D%2712%27%20x2%3D%275%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%2019%205%2012%2012%205%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2719%27%20y1%3D%2712%27%20x2%3D%275%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%2019%205%2012%2012%205%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-arrowr{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%205%2019%2012%2012%2019%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%205%2019%2012%2012%2019%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-arrowu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%2719%27%20x2%3D%2712%27%20y2%3D%275%27%2F%3E%3Cpolyline%20points%3D%275%2012%2012%205%2019%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%2719%27%20x2%3D%2712%27%20y2%3D%275%27%2F%3E%3Cpolyline%20points%3D%275%2012%2012%205%2019%2012%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-back{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%279%2014%204%209%209%204%27%2F%3E%3Cpath%20d%3D%27M20%2020v-7a4%204%200%200%200-4-4H4%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%279%2014%204%209%209%204%27%2F%3E%3Cpath%20d%3D%27M20%2020v-7a4%204%200%200%200-4-4H4%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-ban{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%274.93%27%20y1%3D%274.93%27%20x2%3D%2719.07%27%20y2%3D%2719.07%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%274.93%27%20y1%3D%274.93%27%20x2%3D%2719.07%27%20y2%3D%2719.07%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-bank{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2721%27%20x2%3D%2721%27%20y2%3D%2721%27%2F%3E%3Cpolyline%20points%3D%273%209%2012%203%2021%209%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2721%27%20x2%3D%276%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2721%27%20x2%3D%2710%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2721%27%20x2%3D%2714%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2718%27%20y1%3D%2721%27%20x2%3D%2718%27%20y2%3D%2711%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2721%27%20x2%3D%2721%27%20y2%3D%2721%27%2F%3E%3Cpolyline%20points%3D%273%209%2012%203%2021%209%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2721%27%20x2%3D%276%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2721%27%20x2%3D%2710%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2721%27%20x2%3D%2714%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2718%27%20y1%3D%2721%27%20x2%3D%2718%27%20y2%3D%2711%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-bell{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%208A6%206%200%200%200%206%208c0%207-3%209-3%209h18s-3-2-3-9%27%2F%3E%3Cpath%20d%3D%27M13.73%2021a2%202%200%200%201-3.46%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%208A6%206%200%200%200%206%208c0%207-3%209-3%209h18s-3-2-3-9%27%2F%3E%3Cpath%20d%3D%27M13.73%2021a2%202%200%200%201-3.46%200%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-book{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20%27%2F%3E%3Cpath%20d%3D%27M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20%27%2F%3E%3Cpath%20d%3D%27M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-briefcase{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%277%27%20width%3D%2720%27%20height%3D%2714%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M16%2021V5a2%202%200%200%200-2-2h-4a2%202%200%200%200-2%202v16%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%277%27%20width%3D%2720%27%20height%3D%2714%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M16%2021V5a2%202%200%200%200-2-2h-4a2%202%200%200%200-2%202v16%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-building{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%2021h18%27%2F%3E%3Cpath%20d%3D%27M5%2021V5a2%202%200%200%201%202-2h10a2%202%200%200%201%202%202v16%27%2F%3E%3Cpath%20d%3D%27M9%207h1M9%2011h1M9%2015h1M14%207h1M14%2011h1M14%2015h1%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%2021h18%27%2F%3E%3Cpath%20d%3D%27M5%2021V5a2%202%200%200%201%202-2h10a2%202%200%200%201%202%202v16%27%2F%3E%3Cpath%20d%3D%27M9%207h1M9%2011h1M9%2015h1M14%207h1M14%2011h1M14%2015h1%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-bulb{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2018h6%27%2F%3E%3Cpath%20d%3D%27M10%2022h4%27%2F%3E%3Cpath%20d%3D%27M12%202a7%207%200%200%200-4%2012.7V17h8v-2.3A7%207%200%200%200%2012%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2018h6%27%2F%3E%3Cpath%20d%3D%27M10%2022h4%27%2F%3E%3Cpath%20d%3D%27M12%202a7%207%200%200%200-4%2012.7V17h8v-2.3A7%207%200%200%200%2012%202z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-calc{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%274%27%20y%3D%272%27%20width%3D%2716%27%20height%3D%2720%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2711%27%20x2%3D%278.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2711%27%20x2%3D%2712.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2711%27%20x2%3D%2716.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2716%27%20x2%3D%278.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2716%27%20x2%3D%2712.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2716%27%20x2%3D%2716.01%27%20y2%3D%2716%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%274%27%20y%3D%272%27%20width%3D%2716%27%20height%3D%2720%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2711%27%20x2%3D%278.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2711%27%20x2%3D%2712.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2711%27%20x2%3D%2716.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2716%27%20x2%3D%278.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2716%27%20x2%3D%2712.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2716%27%20x2%3D%2716.01%27%20y2%3D%2716%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-calendar{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%274%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%272%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%272%27%20x2%3D%278%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2710%27%20x2%3D%2721%27%20y2%3D%2710%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%274%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%272%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%272%27%20x2%3D%278%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2710%27%20x2%3D%2721%27%20y2%3D%2710%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-cam{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M23%2019a2%202%200%200%201-2%202H3a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h4l2-3h6l2%203h4a2%202%200%200%201%202%202z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M23%2019a2%202%200%200%201-2%202H3a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h4l2-3h6l2%203h4a2%202%200%200%201%202%202z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-cart{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%279%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Ccircle%20cx%3D%2720%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Cpath%20d%3D%27M1%201h4l2.68%2013.39a2%202%200%200%200%202%201.61h9.72a2%202%200%200%200%202-1.61L23%206H6%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%279%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Ccircle%20cx%3D%2720%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Cpath%20d%3D%27M1%201h4l2.68%2013.39a2%202%200%200%200%202%201.61h9.72a2%202%200%200%200%202-1.61L23%206H6%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chart{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%2720%27%20x2%3D%2718%27%20y2%3D%2710%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2720%27%20x2%3D%2712%27%20y2%3D%274%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2720%27%20x2%3D%276%27%20y2%3D%2714%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%2720%27%20x2%3D%2718%27%20y2%3D%2710%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2720%27%20x2%3D%2712%27%20y2%3D%274%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2720%27%20x2%3D%276%27%20y2%3D%2714%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chat{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2011.5a8.38%208.38%200%200%201-.9%203.8%208.5%208.5%200%200%201-7.6%204.7%208.38%208.38%200%200%201-3.8-.9L3%2021l1.9-5.7a8.38%208.38%200%200%201-.9-3.8%208.5%208.5%200%200%201%204.7-7.6%208.38%208.38%200%200%201%203.8-.9h.5a8.48%208.48%200%200%201%208%208z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2011.5a8.38%208.38%200%200%201-.9%203.8%208.5%208.5%200%200%201-7.6%204.7%208.38%208.38%200%200%201-3.8-.9L3%2021l1.9-5.7a8.38%208.38%200%200%201-.9-3.8%208.5%208.5%200%200%201%204.7-7.6%208.38%208.38%200%200%201%203.8-.9h.5a8.48%208.48%200%200%201%208%208z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-check{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2720%206%209%2017%204%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2720%206%209%2017%204%2012%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chevrond{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-chevronu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2718%2015%2012%209%206%2015%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2718%2015%2012%209%206%2015%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-circle{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-clip{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.44%2011.05l-9.19%209.19a6%206%200%200%201-8.49-8.49l9.19-9.19a4%204%200%200%201%205.66%205.66l-9.2%209.19a2%202%200%200%201-2.83-2.83l8.49-8.48%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.44%2011.05l-9.19%209.19a6%206%200%200%201-8.49-8.49l9.19-9.19a4%204%200%200%201%205.66%205.66l-9.2%209.19a2%202%200%200%201-2.83-2.83l8.49-8.48%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-clipboard{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%272%27%20width%3D%278%27%20height%3D%274%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%272%27%20width%3D%278%27%20height%3D%274%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-clock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cpolyline%20points%3D%2712%206%2012%2012%2016%2014%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cpolyline%20points%3D%2712%206%2012%2012%2016%2014%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-down{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%277%2010%2012%2015%2017%2010%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2715%27%20x2%3D%2712%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%277%2010%2012%2015%2017%2010%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2715%27%20x2%3D%2712%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-euro{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%271%27%20x2%3D%2712%27%20y2%3D%2723%27%2F%3E%3Cpath%20d%3D%27M17%205H9.5a3.5%203.5%200%200%200%200%207h5a3.5%203.5%200%200%201%200%207H6%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%271%27%20x2%3D%2712%27%20y2%3D%2723%27%2F%3E%3Cpath%20d%3D%27M17%205H9.5a3.5%203.5%200%200%200%200%207h5a3.5%203.5%200%200%201%200%207H6%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-external{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%2013v6a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h6%27%2F%3E%3Cpolyline%20points%3D%2715%203%2021%203%2021%209%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2714%27%20x2%3D%2721%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%2013v6a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h6%27%2F%3E%3Cpolyline%20points%3D%2715%203%2021%203%2021%209%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2714%27%20x2%3D%2721%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-eye{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M1%2012s4-8%2011-8%2011%208%2011%208-4%208-11%208-11-8-11-8z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M1%2012s4-8%2011-8%2011%208%2011%208-4%208-11%208-11-8-11-8z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-file{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V8z%27%2F%3E%3Cpolyline%20points%3D%2714%202%2014%208%2020%208%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V8z%27%2F%3E%3Cpolyline%20points%3D%2714%202%2014%208%2020%208%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-folder{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-gear{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M19.4%2015a1.65%201.65%200%200%200%20.33%201.82l.06.06a2%202%200%201%201-2.83%202.83l-.06-.06a1.65%201.65%200%200%200-1.82-.33%201.65%201.65%200%200%200-1%201.51V21a2%202%200%200%201-4%200v-.09A1.65%201.65%200%200%200%209%2019.4a1.65%201.65%200%200%200-1.82.33l-.06.06a2%202%200%201%201-2.83-2.83l.06-.06a1.65%201.65%200%200%200%20.33-1.82%201.65%201.65%200%200%200-1.51-1H3a2%202%200%200%201%200-4h.09A1.65%201.65%200%200%200%204.6%209a1.65%201.65%200%200%200-.33-1.82l-.06-.06a2%202%200%201%201%202.83-2.83l.06.06a1.65%201.65%200%200%200%201.82.33H9a1.65%201.65%200%200%200%201-1.51V3a2%202%200%200%201%204%200v.09a1.65%201.65%200%200%200%201%201.51%201.65%201.65%200%200%200%201.82-.33l.06-.06a2%202%200%201%201%202.83%202.83l-.06.06a1.65%201.65%200%200%200-.33%201.82V9a1.65%201.65%200%200%200%201.51%201H21a2%202%200%200%201%200%204h-.09a1.65%201.65%200%200%200-1.51%201z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M19.4%2015a1.65%201.65%200%200%200%20.33%201.82l.06.06a2%202%200%201%201-2.83%202.83l-.06-.06a1.65%201.65%200%200%200-1.82-.33%201.65%201.65%200%200%200-1%201.51V21a2%202%200%200%201-4%200v-.09A1.65%201.65%200%200%200%209%2019.4a1.65%201.65%200%200%200-1.82.33l-.06.06a2%202%200%201%201-2.83-2.83l.06-.06a1.65%201.65%200%200%200%20.33-1.82%201.65%201.65%200%200%200-1.51-1H3a2%202%200%200%201%200-4h.09A1.65%201.65%200%200%200%204.6%209a1.65%201.65%200%200%200-.33-1.82l-.06-.06a2%202%200%201%201%202.83-2.83l.06.06a1.65%201.65%200%200%200%201.82.33H9a1.65%201.65%200%200%200%201-1.51V3a2%202%200%200%201%204%200v.09a1.65%201.65%200%200%200%201%201.51%201.65%201.65%200%200%200%201.82-.33l.06-.06a2%202%200%201%201%202.83%202.83l-.06.06a1.65%201.65%200%200%200-.33%201.82V9a1.65%201.65%200%200%200%201.51%201H21a2%202%200%200%201%200%204h-.09a1.65%201.65%200%200%200-1.51%201z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-globe{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%272%27%20y1%3D%2712%27%20x2%3D%2722%27%20y2%3D%2712%27%2F%3E%3Cpath%20d%3D%27M12%202a15.3%2015.3%200%200%201%204%2010%2015.3%2015.3%200%200%201-4%2010%2015.3%2015.3%200%200%201-4-10%2015.3%2015.3%200%200%201%204-10z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%272%27%20y1%3D%2712%27%20x2%3D%2722%27%20y2%3D%2712%27%2F%3E%3Cpath%20d%3D%27M12%202a15.3%2015.3%200%200%201%204%2010%2015.3%2015.3%200%200%201-4%2010%2015.3%2015.3%200%200%201-4-10%2015.3%2015.3%200%200%201%204-10z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-grid{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%273%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%273%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-hash{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%274%27%20y1%3D%279%27%20x2%3D%2720%27%20y2%3D%279%27%2F%3E%3Cline%20x1%3D%274%27%20y1%3D%2715%27%20x2%3D%2720%27%20y2%3D%2715%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%273%27%20x2%3D%278%27%20y2%3D%2721%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%273%27%20x2%3D%2714%27%20y2%3D%2721%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%274%27%20y1%3D%279%27%20x2%3D%2720%27%20y2%3D%279%27%2F%3E%3Cline%20x1%3D%274%27%20y1%3D%2715%27%20x2%3D%2720%27%20y2%3D%2715%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%273%27%20x2%3D%278%27%20y2%3D%2721%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%273%27%20x2%3D%2714%27%20y2%3D%2721%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-home{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2z%27%2F%3E%3Cpolyline%20points%3D%279%2022%209%2012%2015%2012%2015%2022%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2z%27%2F%3E%3Cpolyline%20points%3D%279%2022%209%2012%2015%2012%2015%2022%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-image{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Ccircle%20cx%3D%278.5%27%20cy%3D%278.5%27%20r%3D%271.5%27%2F%3E%3Cpolyline%20points%3D%2721%2015%2016%2010%205%2021%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Ccircle%20cx%3D%278.5%27%20cy%3D%278.5%27%20r%3D%271.5%27%2F%3E%3Cpolyline%20points%3D%2721%2015%2016%2010%205%2021%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-key{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%202l-2%202%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61a5.5%205.5%200%201%201-7.78%207.78%205.5%205.5%200%200%201%207.78-7.78z%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61L15.5%207.5l3%203L22%207l-3-3-3.5%203.5%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%202l-2%202%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61a5.5%205.5%200%201%201-7.78%207.78%205.5%205.5%200%200%201%207.78-7.78z%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61L15.5%207.5l3%203L22%207l-3-3-3.5%203.5%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-layers{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%202%207%2012%2012%2022%207%2012%202%27%2F%3E%3Cpolyline%20points%3D%272%2017%2012%2022%2022%2017%27%2F%3E%3Cpolyline%20points%3D%272%2012%2012%2017%2022%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%202%207%2012%2012%2022%207%2012%202%27%2F%3E%3Cpolyline%20points%3D%272%2017%2012%2022%2022%2017%27%2F%3E%3Cpolyline%20points%3D%272%2012%2012%2017%2022%2012%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-link{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10%2013a5%205%200%200%200%207.54.54l3-3a5%205%200%200%200-7.07-7.07l-1.72%201.71%27%2F%3E%3Cpath%20d%3D%27M14%2011a5%205%200%200%200-7.54-.54l-3%203a5%205%200%200%200%207.07%207.07l1.71-1.71%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10%2013a5%205%200%200%200%207.54.54l3-3a5%205%200%200%200-7.07-7.07l-1.72%201.71%27%2F%3E%3Cpath%20d%3D%27M14%2011a5%205%200%200%200-7.54-.54l-3%203a5%205%200%200%200%207.07%207.07l1.71-1.71%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-list{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%273.01%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%273.01%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%273.01%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%273.01%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%273.01%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%273.01%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-lock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%2010%200v4%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%2010%200v4%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-logout{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h4%27%2F%3E%3Cpolyline%20points%3D%2716%2017%2021%2012%2016%207%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2712%27%20x2%3D%279%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h4%27%2F%3E%3Cpolyline%20points%3D%2716%2017%2021%2012%2016%207%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2712%27%20x2%3D%279%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-mail{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%2716%27%20rx%3D%272%27%2F%3E%3Cpolyline%20points%3D%2722%206%2012%2013%202%206%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%2716%27%20rx%3D%272%27%2F%3E%3Cpolyline%20points%3D%2722%206%2012%2013%202%206%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-menu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-package{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2716.5%27%20y1%3D%279.4%27%20x2%3D%277.5%27%20y2%3D%274.21%27%2F%3E%3Cpath%20d%3D%27M21%2016V8a2%202%200%200%200-1-1.73l-7-4a2%202%200%200%200-2%200l-7%204A2%202%200%200%200%203%208v8a2%202%200%200%200%201%201.73l7%204a2%202%200%200%200%202%200l7-4A2%202%200%200%200%2021%2016z%27%2F%3E%3Cpolyline%20points%3D%273.27%206.96%2012%2012.01%2020.73%206.96%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2716.5%27%20y1%3D%279.4%27%20x2%3D%277.5%27%20y2%3D%274.21%27%2F%3E%3Cpath%20d%3D%27M21%2016V8a2%202%200%200%200-1-1.73l-7-4a2%202%200%200%200-2%200l-7%204A2%202%200%200%200%203%208v8a2%202%200%200%200%201%201.73l7%204a2%202%200%200%200%202%200l7-4A2%202%200%200%200%2021%2016z%27%2F%3E%3Cpolyline%20points%3D%273.27%206.96%2012%2012.01%2020.73%206.96%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-pencil{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%203a2.828%202.828%200%201%201%204%204L7.5%2020.5%202%2022l1.5-5.5L17%203z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%203a2.828%202.828%200%201%201%204%204L7.5%2020.5%202%2022l1.5-5.5L17%203z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-pin{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2010c0%207-9%2013-9%2013s-9-6-9-13a9%209%200%200%201%2018%200z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2710%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2010c0%207-9%2013-9%2013s-9-6-9-13a9%209%200%200%201%2018%200z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2710%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-plus{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%275%27%20x2%3D%2712%27%20y2%3D%2719%27%2F%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%275%27%20x2%3D%2712%27%20y2%3D%2719%27%2F%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-puzzle{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%207h4V5a2%202%200%201%201%204%200v2h4a1%201%200%200%201%201%201v4h2a2%202%200%201%201%200%204h-2v4a1%201%200%200%201-1%201h-4v-2a2%202%200%201%200-4%200v2H4a1%201%200%200%201-1-1v-4h2a2%202%200%201%200%200-4H3V8a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%207h4V5a2%202%200%201%201%204%200v2h4a1%201%200%200%201%201%201v4h2a2%202%200%201%201%200%204h-2v4a1%201%200%200%201-1%201h-4v-2a2%202%200%201%200-4%200v2H4a1%201%200%200%201-1-1v-4h2a2%202%200%201%200%200-4H3V8a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-receipt{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M6%202h12v20l-3-2-3%202-3-2-3%202z%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%278%27%20x2%3D%2715%27%20y2%3D%278%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%2712%27%20x2%3D%2715%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M6%202h12v20l-3-2-3%202-3-2-3%202z%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%278%27%20x2%3D%2715%27%20y2%3D%278%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%2712%27%20x2%3D%2715%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-refresh{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2723%204%2023%2010%2017%2010%27%2F%3E%3Cpolyline%20points%3D%271%2020%201%2014%207%2014%27%2F%3E%3Cpath%20d%3D%27M3.51%209a9%209%200%200%201%2014.85-3.36L23%2010M1%2014l4.64%204.36A9%209%200%200%200%2020.49%2015%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2723%204%2023%2010%2017%2010%27%2F%3E%3Cpolyline%20points%3D%271%2020%201%2014%207%2014%27%2F%3E%3Cpath%20d%3D%27M3.51%209a9%209%200%200%201%2014.85-3.36L23%2010M1%2014l4.64%204.36A9%209%200%200%200%2020.49%2015%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-rocket{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4.5%2016.5c-1.5%201.26-2%205-2%205s3.74-.5%205-2c.71-.84.7-2.13-.09-2.91a2.18%202.18%200%200%200-2.91-.09z%27%2F%3E%3Cpath%20d%3D%27M12%2015l-3-3a22%2022%200%200%201%202-3.95A12.88%2012.88%200%200%201%2022%202c0%202.72-.78%207.5-6%2011a22.35%2022.35%200%200%201-4%202z%27%2F%3E%3Cpath%20d%3D%27M9%2012H4s.55-3.03%202-4c1.62-1.08%205%200%205%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4.5%2016.5c-1.5%201.26-2%205-2%205s3.74-.5%205-2c.71-.84.7-2.13-.09-2.91a2.18%202.18%200%200%200-2.91-.09z%27%2F%3E%3Cpath%20d%3D%27M12%2015l-3-3a22%2022%200%200%201%202-3.95A12.88%2012.88%200%200%201%2022%202c0%202.72-.78%207.5-6%2011a22.35%2022.35%200%200%201-4%202z%27%2F%3E%3Cpath%20d%3D%27M9%2012H4s.55-3.03%202-4c1.62-1.08%205%200%205%200%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-ruler{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.3%208.7L8.7%2021.3a1%201%200%200%201-1.4%200l-4.6-4.6a1%201%200%200%201%200-1.4L15.3%202.7a1%201%200%200%201%201.4%200l4.6%204.6a1%201%200%200%201%200%201.4z%27%2F%3E%3Cpath%20d%3D%27M7.5%2010.5l2%202M10.5%207.5l2%202M13.5%204.5l2%202M4.5%2013.5l2%202%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.3%208.7L8.7%2021.3a1%201%200%200%201-1.4%200l-4.6-4.6a1%201%200%200%201%200-1.4L15.3%202.7a1%201%200%200%201%201.4%200l4.6%204.6a1%201%200%200%201%200%201.4z%27%2F%3E%3Cpath%20d%3D%27M7.5%2010.5l2%202M10.5%207.5l2%202M13.5%204.5l2%202M4.5%2013.5l2%202%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-save{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M19%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h11l5%205v11a2%202%200%200%201-2%202z%27%2F%3E%3Cpolyline%20points%3D%2717%2021%2017%2013%207%2013%207%2021%27%2F%3E%3Cpolyline%20points%3D%277%203%207%208%2015%208%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M19%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h11l5%205v11a2%202%200%200%201-2%202z%27%2F%3E%3Cpolyline%20points%3D%2717%2021%2017%2013%207%2013%207%2021%27%2F%3E%3Cpolyline%20points%3D%277%203%207%208%2015%208%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-scale{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203v18%27%2F%3E%3Cpath%20d%3D%27M5%207h14%27%2F%3E%3Cpath%20d%3D%27M7%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M17%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203v18%27%2F%3E%3Cpath%20d%3D%27M5%207h14%27%2F%3E%3Cpath%20d%3D%27M7%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M17%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-search{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-star{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%2015.09%208.26%2022%209.27%2017%2014.14%2018.18%2021.02%2012%2017.77%205.82%2021.02%207%2014.14%202%209.27%208.91%208.26%2012%202%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%2015.09%208.26%2022%209.27%2017%2014.14%2018.18%2021.02%2012%2017.77%205.82%2021.02%207%2014.14%202%209.27%208.91%208.26%2012%202%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-swap{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2717%201%2021%205%2017%209%27%2F%3E%3Cpath%20d%3D%27M3%2011V9a4%204%200%200%201%204-4h14%27%2F%3E%3Cpolyline%20points%3D%277%2023%203%2019%207%2015%27%2F%3E%3Cpath%20d%3D%27M21%2013v2a4%204%200%200%201-4%204H3%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2717%201%2021%205%2017%209%27%2F%3E%3Cpath%20d%3D%27M3%2011V9a4%204%200%200%201%204-4h14%27%2F%3E%3Cpolyline%20points%3D%277%2023%203%2019%207%2015%27%2F%3E%3Cpath%20d%3D%27M21%2013v2a4%204%200%200%201-4%204H3%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-timer{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%272%27%20x2%3D%2715%27%20y2%3D%272%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%272%27%20x2%3D%2715%27%20y2%3D%272%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-tool{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14.7%206.3a1%201%200%200%200%200%201.4l1.6%201.6a1%201%200%200%200%201.4%200l3.77-3.77a6%206%200%200%201-7.94%207.94l-6.91%206.91a2.12%202.12%200%200%201-3-3l6.91-6.91a6%206%200%200%201%207.94-7.94l-3.76%203.76z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14.7%206.3a1%201%200%200%200%200%201.4l1.6%201.6a1%201%200%200%200%201.4%200l3.77-3.77a6%206%200%200%201-7.94%207.94l-6.91%206.91a2.12%202.12%200%200%201-3-3l6.91-6.91a6%206%200%200%201%207.94-7.94l-3.76%203.76z%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-trash{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%273%206%205%206%2021%206%27%2F%3E%3Cpath%20d%3D%27M19%206v14a2%202%200%200%201-2%202H7a2%202%200%200%201-2-2V6m3%200V4a2%202%200%200%201%202-2h4a2%202%200%200%201%202%202v2%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2711%27%20x2%3D%2710%27%20y2%3D%2717%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2711%27%20x2%3D%2714%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%273%206%205%206%2021%206%27%2F%3E%3Cpath%20d%3D%27M19%206v14a2%202%200%200%201-2%202H7a2%202%200%200%201-2-2V6m3%200V4a2%202%200%200%201%202-2h4a2%202%200%200%201%202%202v2%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2711%27%20x2%3D%2710%27%20y2%3D%2717%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2711%27%20x2%3D%2714%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-trophy{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3Cpath%20d%3D%27M12%2017v4%27%2F%3E%3Cpath%20d%3D%27M7%204h10v5a5%205%200%200%201-10%200z%27%2F%3E%3Cpath%20d%3D%27M7%206H4a2%202%200%200%200%200%204h3%27%2F%3E%3Cpath%20d%3D%27M17%206h3a2%202%200%200%201%200%204h-3%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3Cpath%20d%3D%27M12%2017v4%27%2F%3E%3Cpath%20d%3D%27M7%204h10v5a5%205%200%200%201-10%200z%27%2F%3E%3Cpath%20d%3D%27M7%206H4a2%202%200%200%200%200%204h3%27%2F%3E%3Cpath%20d%3D%27M17%206h3a2%202%200%200%201%200%204h-3%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-unlock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%209.9-1%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%209.9-1%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-up{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%2717%208%2012%203%207%208%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%273%27%20x2%3D%2712%27%20y2%3D%2715%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%2717%208%2012%203%207%208%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%273%27%20x2%3D%2712%27%20y2%3D%2715%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-user{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-users{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%2021v-2a4%204%200%200%200-4-4H5a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M23%2021v-2a4%204%200%200%200-3-3.87%27%2F%3E%3Cpath%20d%3D%27M16%203.13a4%204%200%200%201%200%207.75%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%2021v-2a4%204%200%200%200-4-4H5a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M23%2021v-2a4%204%200%200%200-3-3.87%27%2F%3E%3Cpath%20d%3D%27M16%203.13a4%204%200%200%201%200%207.75%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-worker{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M5%208a7%207%200%200%201%2014%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M5%208a7%207%200%200%201%2014%200%27%2F%3E%3C%2Fsvg%3E"); }
+    .ic-x{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%276%27%20x2%3D%276%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%276%27%20x2%3D%2718%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%276%27%20x2%3D%276%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%276%27%20x2%3D%2718%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
+    :root{ --ic-search:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); }
+  
+    /* ============ KAGB responsive sluoksnis v1 (2026-08-31) ============ */
+    :root{ --touch:44px; }
+
+    .tbl-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%;
+      background:
+        linear-gradient(90deg,#fff 30%,rgba(255,255,255,0)) left center/26px 100% no-repeat,
+        linear-gradient(90deg,rgba(255,255,255,0),#fff 70%) right center/26px 100% no-repeat,
+        radial-gradient(farthest-side at 0 50%,rgba(11,30,63,.16),rgba(11,30,63,0)) left center/9px 100% no-repeat,
+        radial-gradient(farthest-side at 100% 50%,rgba(11,30,63,.16),rgba(11,30,63,0)) right center/9px 100% no-repeat;
+      background-attachment:local,local,scroll,scroll; }
+
+    .dev-locked{ opacity:.45; cursor:not-allowed; }
+    #devFullToggle{ cursor:pointer; }
+
+    @media (max-width:1279px){
+      .btn{ min-height:var(--touch); padding-top:9px; padding-bottom:9px; }
+      .btn-sm,.btn-small{ min-height:36px; padding-top:6px; padding-bottom:6px; }
+      input:not([type=checkbox]):not([type=radio]):not([type=file]),
+      select,textarea{ min-height:var(--touch); font-size:16px; }
+      .tab,.subtab,.template-tab{ min-height:38px; display:inline-flex; align-items:center; }
+      .nav-i,.sidebar-nav-item{ min-height:40px; }
+      td .btn-sm,td .btn-small{ margin:2px; }
+    }
+
+    @media (max-width:767px){
+      .container{ padding:10px 10px 32px; }
+      .card{ padding:14px 12px; }
+    }
+
+    @media (max-width:767px){
+      .modal-bg{ padding:0; align-items:stretch; }
+      .modal{ max-width:100%; width:100%; border:0; border-radius:0; min-height:100vh; padding:16px 14px 40px; }
+      .tabs,.subbar,#topTabs,#subTabs,.tmpl-nav{ display:flex; flex-wrap:nowrap; overflow-x:auto;
+        scrollbar-width:none; max-width:100%; }
+      .tabs::-webkit-scrollbar,.subbar::-webkit-scrollbar,#topTabs::-webkit-scrollbar,
+      #subTabs::-webkit-scrollbar,.tmpl-nav::-webkit-scrollbar{ display:none; }
+      .tabs > *,.subbar > *,#topTabs > *,#subTabs > *,.tmpl-nav > *{ flex:0 0 auto; white-space:nowrap; }
+      table{ font-size:12.5px; }
+      th,td{ padding:8px 9px; }
+      .form-row,.stat-grid,.stats-grid,.kv{ grid-template-columns:1fr!important; }
+      [style*="grid-template-columns:repeat(3,1fr)"],
+      [style*="grid-template-columns:repeat(4,1fr)"],
+      [style*="grid-template-columns:repeat(5,1fr)"]{ grid-template-columns:1fr!important; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>KAB Consulting</h1>
+    <div class="sub">Dokumentai susipažinimui / Documents for review</div>
+  </div>
+
+  <div class="container">
+    <!-- Įkėlimo būsena -->
+    <div id="loadingState" class="card center"><div class="spinner"></div><div class="muted">Kraunama… / Loading…</div></div>
+
+    <!-- Klaida (pvz. bloga nuoroda) -->
+    <div id="fatalError" class="card hidden"><div class="error" id="fatalErrorMsg"></div></div>
+
+    <!-- OTP prisijungimas -->
+    <div id="gateView" class="card otp-box hidden">
+      <!-- El. pašto žingsnis -->
+      <div id="emailStep">
+        <h2 style="color:var(--kab-navy);font-size:18px;margin-bottom:6px;">Prisijungimas / Sign in</h2>
+        <p class="muted" style="margin-bottom:18px;">Įveskite el. pašto adresą, kuriuo gavote kvietimą. Atsiųsime patvirtinimo kodą.<br><span style="font-size:12px;">Enter the email where you received the invitation. We'll send a verification code.</span></p>
+        <label class="label" for="emailInput">El. paštas / Email</label>
+        <input id="emailInput" class="input" type="email" autocomplete="email" placeholder="vardas@imone.lt">
+        <div id="emailError" class="error hidden"></div>
+        <button id="emailBtn" class="btn" style="margin-top:16px;width:100%;">Siųsti patvirtinimo kodą / Send code</button>
+      </div>
+      <!-- OTP žingsnis -->
+      <div id="otpStep" class="hidden">
+        <h2 style="color:var(--kab-navy);font-size:18px;margin-bottom:6px;">Patvirtinimo kodas / Verification code</h2>
+        <p class="muted" style="margin-bottom:18px;">Kodas išsiųstas: <strong id="otpEmailDisplay"></strong><br><span style="font-size:12px;">Code sent to the email above. Valid for 15 min.</span></p>
+        <label class="label" for="otpInput">6 skaitmenų kodas / 6-digit code</label>
+        <input id="otpInput" class="input otp-code" inputmode="numeric" maxlength="6" placeholder="••••••">
+        <div id="otpError" class="error hidden"></div>
+        <button id="otpBtn" class="btn" style="margin-top:16px;width:100%;">Patvirtinti / Verify</button>
+        <div class="center" style="margin-top:14px;">
+          <a href="#" id="resendLink" class="muted" style="text-decoration:underline;">Negavote kodo? Siųsti iš naujo / Resend code</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dokumentų sąrašas -->
+    <div id="docsView" class="hidden">
+      <div class="card">
+        <h2 style="color:var(--kab-navy);font-size:18px;" id="docsCaseTitle">Pateikti dokumentai</h2>
+        <p class="muted" id="docsCaseSub"></p>
+      </div>
+      <div id="batchList"></div>
+      <div id="docsEmpty" class="card center hidden"><p class="muted">Šiuo metu dokumentų nėra. / No documents available yet.</p></div>
+    </div>
+  </div>
+
+  <div class="footer">KAB Consulting &nbsp;•&nbsp; klausk@kab.lt</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
+    const STORAGE_BUCKET = 'shared-documents';
+    // Tipai, kuriuos naršyklė gali rodyti tiesiogiai (peržiūrai). Kiti (DOCX/XLSX) — tik atsisiuntimas.
+    const INLINE_VIEWABLE = ['pdf','jpg','jpeg','png'];
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get('t');     // asmenine gavejo nuoroda
+    let caseToken = params.get('c');          // bendra bylos nuoroda (ilgas token)
+    const shortCode = params.get('k');        // trumpas bylos kodas (pvz. ABC-1234)
+    let isCaseMode = (!!caseToken || !!shortCode) && !accessToken;
+    let theToken = accessToken || caseToken;  // gali buti nustatytas po short code resolve
+    let sessionKey = null;
+    let pendingEmail = null;
+    let verifiedEmail = null;
+
+    const $ = (id) => document.getElementById(id);
+    function show(id) { $(id).classList.remove('hidden'); }
+    function hide(id) { $(id).classList.add('hidden'); }
+    function showErr(elId, msg) { const e = $(elId); e.textContent = msg; e.classList.remove('hidden'); }
+    function hideErr(elId) { $(elId).classList.add('hidden'); }
+    function fatal(msg) { hide('loadingState'); hide('gateView'); show('fatalError'); $('fatalErrorMsg').textContent = msg; }
+
+    function escapeHtml(s) { return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    // FIX: pridėta JS string escape funkcija onclick atributams
+    // (escapeHtml netinka, nes onclick='openDoc("...")' viduje reikia escape'inti apostrofus ir backslash'us)
+    function escJsStr(s) { return String(s||'').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
+    function fmtSize(b) { if (!b && b !== 0) return ''; if (b < 1024) return b+' B'; if (b < 1048576) return (b/1024).toFixed(0)+' KB'; return (b/1048576).toFixed(1)+' MB'; }
+    function fmtDate(d) { try { return new Date(d).toLocaleString('lt-LT', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); } catch(e){ return d; } }
+
+    // ===== OTP srautas =====
+    async function sendOtp(isResend) {
+      const email = ((isResend ? pendingEmail : $('emailInput').value) || '').trim().toLowerCase();
+      const errId = isResend ? 'otpError' : 'emailError';
+      hideErr(errId);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr(errId, 'Neteisingas el. pašto formatas. / Invalid email format.'); return; }
+      const btn = isResend ? null : $('emailBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Siunčiama… / Sending…'; }
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/send-recipient-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify(isCaseMode ? { case_token: caseToken, email } : { access_token: accessToken, email })
+        });
+        const r = await res.json();
+        if (btn) { btn.disabled = false; btn.textContent = 'Siųsti patvirtinimo kodą / Send code'; }
+        if (!r.success) { showErr(errId, r.message || 'Nepavyko išsiųsti kodo. / Failed to send code.'); return; }
+        pendingEmail = email;
+        $('otpEmailDisplay').textContent = email;
+        hide('emailStep'); show('otpStep');
+        setTimeout(() => $('otpInput').focus(), 50);
+      } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Siųsti patvirtinimo kodą / Send code'; }
+        showErr(errId, 'Ryšio klaida. Bandykite vėliau. / Connection error.');
+      }
+    }
+
+    async function verifyOtp() {
+      const code = ($('otpInput').value || '').trim();
+      hideErr('otpError');
+      if (!/^\d{6}$/.test(code)) { showErr('otpError', 'Kodas turi būti 6 skaitmenys. / Code must be 6 digits.'); return; }
+      if (!pendingEmail) { showErr('otpError', 'Sesija pasibaigė. Įveskite el. paštą iš naujo. / Session expired.'); hide('otpStep'); show('emailStep'); return; }
+      const btn = $('otpBtn'); btn.disabled = true; btn.textContent = 'Tikrinama… / Verifying…';
+      try {
+        const { data, error } = isCaseMode
+          ? await supabase.rpc('verify_recipient_otp_by_case', { p_case_token: caseToken, p_email: pendingEmail, p_code: code })
+          : await supabase.rpc('verify_recipient_otp', { p_access_token: accessToken, p_email: pendingEmail, p_code: code });
+        btn.disabled = false; btn.textContent = 'Patvirtinti / Verify';
+        if (error) { showErr('otpError', 'Klaida tikrinant kodą. / Verification error.'); return; }
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row || !row.ok) {
+          const map = {
+            wrong_code: 'Neteisingas kodas. / Wrong code.',
+            code_expired: 'Kodo galiojimas baigėsi. Prašykite naujo. / Code expired.',
+            too_many_attempts: 'Per daug klaidingų bandymų. Prašykite naujo kodo. / Too many attempts.',
+            no_active_code: 'Aktyvaus kodo nėra. Prašykite naujo. / No active code.',
+            email_mismatch: 'Tapatybės patvirtinti nepavyko. / Verification failed.',
+            not_a_recipient: 'Šis el. paštas nėra šios bylos gavėjų sąraše. / This email is not in the recipient list.',
+            invalid_token: 'Nuoroda neteisinga arba nebegalioja. / Invalid or expired link.'
+          };
+          showErr('otpError', map[row && row.error_code] || 'Patvirtinimas nepavyko. / Verification failed.');
+          return;
+        }
+        verifiedEmail = pendingEmail;
+        try { sessionStorage.setItem(sessionKey, JSON.stringify({ email: verifiedEmail })); } catch(e){}
+        hide('gateView');
+        loadDocuments();
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Patvirtinti / Verify';
+        showErr('otpError', 'Ryšio klaida. / Connection error.');
+      }
+    }
+
+    // ===== Dokumentų sąrašas =====
+    async function loadDocuments() {
+      show('loadingState');
+      try {
+        const { data, error } = isCaseMode
+          ? await supabase.rpc('list_case_documents', { p_case_token: caseToken, p_email: verifiedEmail })
+          : await supabase.rpc('list_recipient_documents', { p_access_token: accessToken, p_email: verifiedEmail });
+        hide('loadingState');
+        if (error) { fatal('Nepavyko užkrauti dokumentų. / Failed to load documents.'); return; }
+        renderDocuments(data || []);
+        show('docsView');
+      } catch (e) {
+        hide('loadingState');
+        // FIX: prilogginam tikrą JS klaidą, kad ateityje būtų lengviau debug'inti
+        console.error('loadDocuments failed:', e);
+        fatal('Ryšio klaida. / Connection error.');
+      }
+    }
+
+    function renderDocuments(rows) {
+      const list = $('batchList');
+      list.innerHTML = '';
+      if (!rows.length) { show('docsEmpty'); return; }
+      hide('docsEmpty');
+      // grupuojam pagal partiją
+      const batches = {};
+      const order = [];
+      rows.forEach(r => {
+        if (!batches[r.batch_id]) { batches[r.batch_id] = { title: r.batch_title, desc: r.batch_description, date: r.batch_created_at, docs: [] }; order.push(r.batch_id); }
+        batches[r.batch_id].docs.push(r);
+      });
+      order.forEach(bid => {
+        const b = batches[bid];
+        const docsHtml = b.docs.map(d => {
+          const ext = (d.original_name || '').split('.').pop().toLowerCase();
+          const viewable = INLINE_VIEWABLE.includes(ext);
+          // FIX: onclick atributui naudojam escJsStr (escape'inam apostrofus, kabutes ir backslashus)
+          // escapeHtml čia veiks daugumai atvejų, bet jei failo pavadinime būtų ', jis sulaužytų onclick
+          const safeName = escJsStr(d.original_name);
+          const viewBtn = viewable
+            ? `<button class="btn btn-ghost btn-sm" onclick="openDoc('${d.document_id}','doc_viewed','${safeName}')">Peržiūrėti</button>`
+            : '';
+          return `
+          <div class="doc-row">
+            <div class="doc-name">${escapeHtml(d.original_name)}<div class="doc-meta">${fmtSize(d.file_size)}</div></div>
+            <div class="doc-actions">
+              ${viewBtn}
+              <button class="btn btn-sm" onclick="openDoc('${d.document_id}','doc_downloaded','${safeName}')">Atsisiųsti</button>
+            </div>
+          </div>`;
+        }).join('');
+        const div = document.createElement('div');
+        div.className = 'batch';
+        div.innerHTML = `
+          <div class="batch-head">
+            <div class="batch-title">${escapeHtml(b.title)}</div>
+            ${b.desc ? `<div class="batch-desc">${escapeHtml(b.desc)}</div>` : ''}
+            <div class="batch-date">Pateikta: ${fmtDate(b.date)}</div>
+          </div>
+          ${docsHtml}`;
+        list.appendChild(div);
+      });
+    }
+
+    // ===== Peržiūra / atsisiuntimas per edge funkciją (service_role) =====
+    // Anon tiesiogiai neliečia privataus Storage — signed URL kuria serveris,
+    // kuris kartu patikrina prieigą (token+email) ir užfiksuoja įvykį.
+    async function openDoc(documentId, action, fileName) {
+      try {
+        const isDownload = action === 'doc_downloaded';
+        const body = {
+          email: verifiedEmail, document_id: documentId, action, download: isDownload
+        };
+        if (isCaseMode) body.case_token = caseToken; else body.access_token = accessToken;
+
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/get-document-url`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+          body: JSON.stringify(body)
+        });
+        const r = await res.json();
+        if (!r.success || !r.url) { alert('Nepavyko atidaryti dokumento. / Could not open document.'); return; }
+
+        if (isDownload) {
+          const a = document.createElement('a');
+          a.href = r.url;
+          a.download = r.original_name || '';
+          document.body.appendChild(a); a.click(); a.remove();
+          return;
+        }
+        // Peržiūra — tik PDF/JPG/PNG (peržiūros mygtukas kitiems nerodomas)
+        window.open(r.url, '_blank');
+      } catch (e) { alert('Ryšio klaida. / Connection error.'); }
+    }
+
+    // ===== Boot =====
+    async function boot() {
+      // Jei pateiktas trumpas kodas (?k=) — paverciam ji i pilna bylos token
+      if (shortCode && !accessToken && !caseToken) {
+        try {
+          const { data, error } = await supabase.rpc('resolve_case_short_code', { p_short_code: shortCode });
+          if (error || !data) { fatal('Kodas neteisingas arba nebegalioja. / Invalid or expired code.'); return; }
+          caseToken = data;
+          theToken = data;
+          isCaseMode = true;
+        } catch(e) { fatal('Ryšio klaida. / Connection error.'); return; }
+      }
+      if (!theToken) { fatal('Nuoroda neteisinga — trūksta prieigos kodo. / Invalid link — missing access code.'); return; }
+      sessionKey = `kab_docs_ok_${theToken}`;
+      // jei jau patvirtinta šioje sesijoje
+      try {
+        const saved = sessionStorage.getItem(sessionKey);
+        if (saved) { const o = JSON.parse(saved); if (o && o.email) { verifiedEmail = o.email; hide('loadingState'); loadDocuments(); return; } }
+      } catch(e){}
+      hide('loadingState');
+      show('gateView');
+      setTimeout(() => $('emailInput').focus(), 50);
+    }
+
+    $('emailBtn').addEventListener('click', () => sendOtp(false));
+    $('emailInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendOtp(false); });
+    $('otpBtn').addEventListener('click', verifyOtp);
+    $('otpInput').addEventListener('keydown', e => { if (e.key === 'Enter') verifyOtp(); });
+    $('resendLink').addEventListener('click', e => { e.preventDefault(); sendOtp(true); });
+
+    boot();
+  
+    /* ============ KAGB mobilus sluoksnis v1 (2026-08-31) ============
+       1) kiekviena lentele apgaubiama slenkanciu konteineriu (.tbl-wrap)
+       2) [data-device] elementai uzrakinami pagal ekrano ploti
+       3) soniniame meniu — jungiklis „Pilna versija" (localStorage)
+       Nekeicia jokios esamos logikos; veikia per MutationObserver. */
+    (function(){
+      var LS_KEY='kagbForceFull';
+      function deviceClass(){
+        try{ if(localStorage.getItem(LS_KEY)==='1') return 'desktop'; }catch(e){}
+        var w=window.innerWidth||document.documentElement.clientWidth||1280;
+        return w>=1280?'desktop':(w>=768?'tablet':'phone');
+      }
+      window.KAGB_DEVICE=deviceClass();
+
+      function wrapTables(root){
+        var list=(root||document).querySelectorAll('table:not([data-wrapped])');
+        for(var i=0;i<list.length;i++){
+          var t=list[i]; t.setAttribute('data-wrapped','1');
+          if(!t.parentNode)continue;
+          if(t.parentNode.classList&&t.parentNode.classList.contains('tbl-wrap'))continue;
+          var w=document.createElement('div'); w.className='tbl-wrap';
+          t.parentNode.insertBefore(w,t); w.appendChild(t);
+        }
+      }
+      function guardMsg(need){
+        return need==='desktop' ? 'Si funkcija pasiekiama tik kompiuteriu'
+                                : 'Si funkcija pasiekiama kompiuteriu arba plansete';
+      }
+      function applyGuard(root){
+        var dev=window.KAGB_DEVICE;
+        var list=(root||document).querySelectorAll('[data-device]');
+        for(var i=0;i<list.length;i++){
+          var el=list[i], need=el.getAttribute('data-device');
+          var ok = (need==='desktop') ? (dev==='desktop') : (dev!=='phone');
+          var locked=el.classList.contains('dev-locked');
+          if(!ok&&!locked){
+            el.classList.add('dev-locked'); el.setAttribute('aria-disabled','true');
+            el.setAttribute('data-dev-title', el.title||'');
+            el.title=guardMsg(need);
+            if(!el.getAttribute('data-dev-bound')){
+              el.setAttribute('data-dev-bound','1');
+              el.addEventListener('click',function(ev){
+                if(!this.classList.contains('dev-locked'))return;
+                ev.preventDefault(); ev.stopImmediatePropagation();
+                alert(this.title+'.\n\nJei vis delto norite ja naudoti siame irenginyje, soninio meniu apacioje ijunkite „Pilna versija".');
+              },true);
+            }
+          }else if(ok&&locked){
+            el.classList.remove('dev-locked'); el.removeAttribute('aria-disabled');
+            el.title=el.getAttribute('data-dev-title')||'';
+          }
+        }
+      }
+      function refresh(root){ try{ wrapTables(root); }catch(e){} try{ applyGuard(root); }catch(e){} }
+      window.kagbRefreshMobile=refresh;
+
+      function anchor(){
+        return document.getElementById('logoutBtn')
+            || document.querySelector('.sidebar-logout')
+            || null;
+      }
+      function initToggle(){
+        if(document.getElementById('devFullToggle'))return;
+        var a=anchor(); if(!a||!a.parentNode)return;
+        var d=document.createElement('div');
+        d.id='devFullToggle';
+        d.className=(a.className||'').replace(/sidebar-logout|logout/g,'').trim() || 'nav-i';
+        d.style.cssText='display:flex;align-items:center;gap:8px;';
+        function label(){
+          var on=false; try{ on=localStorage.getItem(LS_KEY)==='1'; }catch(e){}
+          d.innerHTML='<span class="ic ic-'+(on?'check':'grid')+'"></span><span>Pilna versija: '+(on?'ijungta':'isjungta')+'</span>';
+        }
+        d.onclick=function(){
+          try{ var on=localStorage.getItem(LS_KEY)==='1';
+               if(on)localStorage.removeItem(LS_KEY); else localStorage.setItem(LS_KEY,'1'); }catch(e){}
+          label(); window.KAGB_DEVICE=deviceClass(); applyGuard();
+        };
+        label(); a.parentNode.insertBefore(d,a);
+      }
+
+      function init(){
+        initToggle(); refresh();
+        try{
+          var t=null;
+          var obs=new MutationObserver(function(muts){
+            for(var i=0;i<muts.length;i++){
+              if(muts[i].addedNodes&&muts[i].addedNodes.length){
+                clearTimeout(t); t=setTimeout(function(){ refresh(); },60); return;
+              }
+            }
+          });
+          obs.observe(document.body,{childList:true,subtree:true});
+        }catch(e){}
+        var rt=null;
+        window.addEventListener('resize',function(){
+          clearTimeout(rt); rt=setTimeout(function(){
+            var d=deviceClass();
+            if(d!==window.KAGB_DEVICE){ window.KAGB_DEVICE=d; applyGuard(); }
+          },200);
+        });
+      }
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+    })();
+
+  </script>
+</body>
+</html>
