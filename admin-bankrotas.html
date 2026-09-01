@@ -375,6 +375,45 @@
     .dev-locked{ opacity:.45; cursor:not-allowed; }
     #devFullToggle{ cursor:pointer; }
 
+    /* ============ Nuomos kortelė — maketas A ============ */
+    #leaseModal .modal.ls-a{ display:flex; flex-direction:column; max-height:calc(100vh - 80px);
+      padding:0; overflow:hidden; }
+    .ls-head{ padding:18px 22px 12px; border-bottom:1px solid var(--bd); flex:0 0 auto; }
+    .ls-head h2{ margin-bottom:10px; }
+    .ls-headstats{ margin:0!important; }
+    .ls-tabs{ display:flex; gap:2px; padding:0 14px; background:var(--hov,#F2F5F8);
+      border-bottom:1px solid var(--bd); flex:0 0 auto;
+      overflow-x:auto; scrollbar-width:none; }
+    .ls-tabs::-webkit-scrollbar{ display:none; }
+    .ls-tab{ flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; border:0;
+      background:transparent; cursor:pointer; padding:11px 13px; font-size:12.5px; font-weight:500;
+      color:var(--muted); white-space:nowrap; border-bottom:2px solid transparent; min-height:42px; }
+    .ls-tab:hover{ color:var(--ink); }
+    .ls-tab[aria-selected="true"]{ color:var(--navy); border-color:var(--navy); background:#fff; }
+    .ls-cnt{ display:inline-block; min-width:18px; padding:0 5px; border-radius:9px;
+      background:var(--bd); color:var(--ink); font-size:10.5px; line-height:17px; text-align:center; }
+    .ls-tab[aria-selected="true"] .ls-cnt{ background:var(--navy); color:#fff; }
+    .ls-body{ flex:1 1 auto; overflow-y:auto; padding:16px 22px 22px; }
+    .ls-pane[hidden]{ display:none; }
+    .ls-pane > .sec-title:first-child{ margin-top:0; }
+    .ls-foot{ flex:0 0 auto; border-top:1px solid var(--bd); padding:12px 22px;
+      background:#fff; box-shadow:0 -2px 10px rgba(11,30,63,.05); }
+    .ls-foot > div{ margin-top:0!important; }
+    .ls-actbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+    .ls-lock{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px;
+      background:var(--gold-bg,#FFF8E6); border:1px solid var(--gold-bd,#E3D3AC);
+      color:var(--gold-tx,#8A6D1F); border-radius:6px; padding:8px 12px; margin-bottom:14px; }
+    .ls-lock.edit{ background:var(--green-bg,#EEF7F1); border-color:var(--green-bd,#C3E4CE); color:var(--ink); }
+    .ls-lock button{ margin-left:auto; }
+    .ls-ro input,.ls-ro select,.ls-ro textarea{ background:var(--hov,#F2F5F8); border-style:dashed; color:var(--ink); }
+    @media (max-width:767px){
+      #leaseModal .modal.ls-a{ max-height:100vh; height:100vh; border-radius:0; }
+      .ls-head{ padding:14px 14px 10px; }
+      .ls-body{ padding:14px; }
+      .ls-foot{ padding:10px 14px; }
+      .ls-tabs{ padding:0 8px; }
+    }
+
     /* ============ KAGB komunikacijos sluoksnis (2 etapas) ============ */
     .kagb-cbtn{ display:inline-flex; align-items:center; justify-content:center; gap:5px;
       min-width:40px; height:40px; padding:0 10px; margin-left:6px; flex:0 0 auto;
@@ -1640,6 +1679,7 @@
         <div><label class="label">Būsena</label><div id="lsStatusBadge" style="padding-top:8px;"></div></div>
       </div>
 
+      <div data-lsgrp="rekvizitai"></div>
       <div class="sec-title">Nuomininkas</div>
       <label class="label">Pasirinkti iš žinyno (arba pildykite naujo duomenis žemiau)</label>
       <select id="lsCpSelect" class="select"><option value="">— naujas nuomininkas —</option></select>
@@ -1659,6 +1699,7 @@
         <div><label class="label">Telefono numeris</label><input id="lsCpPhone" class="input"></div>
       </div>
 
+      <div data-lsgrp="salygos"></div>
       <div class="sec-title">Nuomos sąlygos</div>
       <div class="row">
         <div><label class="label">Nuomos pradžia</label><input id="lsStart" class="input" type="date"></div>
@@ -2677,7 +2718,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.sb = sb;   // KAGB: prieiga mobiliajam/komunikacijos sluoksniui
-    const APP_VERSION='2026-08-31-r28';
+    const APP_VERSION='2026-09-01-r29';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -11832,7 +11873,8 @@
         if(!box){
           box=document.createElement('div'); box.className='kagb-tlwrap'; box.style.marginTop='14px';
           box.innerHTML='<div class="sec-title">Bendravimo istorija</div><div class="kagb-tlbody"></div>';
-          var inner=m.querySelector('.modal')||m; inner.appendChild(box);
+          var inner=m.querySelector('.ls-pane[data-pane="dokai"]')||m.querySelector('.ls-body')||m.querySelector('.modal')||m;
+          inner.appendChild(box);
         }
         var eid=t.id(); var body=box.querySelector('.kagb-tlbody');
         if(!eid){ body.innerHTML='<div class="muted" style="font-size:12px;">Išsaugokite kortelę — tada matysis istorija.</div>'; return; }
@@ -11944,6 +11986,330 @@
         initContacts();
       }
       if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+    })();
+
+  
+    /* ============ KAGB nuomos kortelė — maketas A (2026-09-01) ============
+       Antraštė + pagrindiniai laukai + statistikos juosta + 5 skirtukai.
+       Esami DOM blokai PERKELIAMI į skirtukus (ne perkuriami), todėl visi
+       esami id ir įvykių tvarkyklės lieka veikti. Vienas bendras „Išsaugoti"
+       apačioje galioja visiems skirtukams (SAP footer toolbar modelis). */
+    (function(){
+      function $id(x){ return document.getElementById(x); }
+      function sbc(){ return window.sb || null; }
+      function esc3(t){ var d=document.createElement('div'); d.textContent=(t==null?'':String(t)); return d.innerHTML; }
+      function eur(n){ n=Number(n||0); return n.toLocaleString('lt-LT',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+
+      var TABS = [
+        { k:'apskaita', t:'Apskaita' },
+        { k:'saskaitos',t:'Sąskaitos' },
+        { k:'salygos',  t:'Sąlygos ir turtas' },
+        { k:'rekvizitai',t:'Rekvizitai' },
+        { k:'dokai',    t:'Dokumentai ir priminimai' }
+      ];
+
+      /* ---- 1. Vienkartinis kortelės pertvarkymas ---- */
+      function build(){
+        var modal = document.querySelector('#leaseModal .modal');
+        if(!modal || modal.getAttribute('data-lsbuilt')) return;
+        var acct = $id('lsAcctSec'); if(!acct) return;      // dar neužkrauta
+        modal.setAttribute('data-lsbuilt','1');
+
+        var kids = Array.prototype.slice.call(modal.children);
+        var groups = { header:[], apskaita:[], saskaitos:[], salygos:[], rekvizitai:[], dokai:[], footer:[] };
+        var cur = 'header';
+        kids.forEach(function(el){
+          if(el.id === 'leaseModalTitle'){ groups.header.push(el); return; }
+          if(el.id === 'lsMsg' || (el.tagName==='DIV' && el.querySelector && el.querySelector('#lsSave'))){
+            groups.footer.push(el); return;
+          }
+          if(el.hasAttribute && el.hasAttribute('data-lsgrp')){ cur = el.getAttribute('data-lsgrp'); return; }
+          if(el.id === 'lsAcctSec'){ cur = 'apskaita'; }
+          if(el.id === 'lsDocsSec' || el.id === 'lsRemSec'){ cur = 'dokai'; }
+          if(el.id === 'lsSignSec'){ cur = 'salygos'; }
+          groups[cur].push(el);
+        });
+
+        /* antraštė: pavadinimas + pagrindiniai laukai + statistika */
+        var head = document.createElement('div'); head.className='ls-head';
+        groups.header.forEach(function(el){ head.appendChild(el); });
+        var summary = $id('lsAcctSummary');
+        if(summary){ summary.classList.add('ls-headstats'); head.appendChild(summary); }
+
+        /* skirtukų juosta */
+        var bar = document.createElement('div'); bar.className='ls-tabs'; bar.id='lsTabs'; bar.setAttribute('role','tablist');
+        var body = document.createElement('div'); body.className='ls-body';
+        TABS.forEach(function(tb, i){
+          var b = document.createElement('button');
+          b.type='button'; b.className='ls-tab'; b.setAttribute('role','tab');
+          b.setAttribute('aria-selected', i===0 ? 'true':'false');
+          b.dataset.k = tb.k;
+          b.innerHTML = '<span>'+tb.t+'</span><span class="ls-cnt" data-c="'+tb.k+'" hidden></span>';
+          bar.appendChild(b);
+
+          var pane = document.createElement('div');
+          pane.className='ls-pane'; pane.dataset.pane = tb.k;
+          if(i!==0) pane.hidden = true;
+          if(tb.k === 'saskaitos'){
+            pane.innerHTML =
+              '<div class="ls-actbar">'+
+                '<button class="btn btn-sm" type="button" id="invPrepBtn">Paruošti sąskaitas</button>'+
+                '<span class="hint" style="margin:0">Sąskaita ruošiama kiekvienam priskaitymui atskirai. Numeris skiriamas tik išrašant.</span>'+
+              '</div><div id="invList"></div>';
+          }else{
+            (groups[tb.k]||[]).forEach(function(el){ pane.appendChild(el); });
+          }
+          body.appendChild(pane);
+        });
+
+        /* pėda su bendru Išsaugoti */
+        var foot = document.createElement('div'); foot.className='ls-foot';
+        groups.footer.forEach(function(el){ foot.appendChild(el); });
+
+        modal.appendChild(head); modal.appendChild(bar); modal.appendChild(body); modal.appendChild(foot);
+        modal.classList.add('ls-a');
+
+        /* rekvizitų apsauga */
+        lockReq(true);
+        bar.addEventListener('click', function(e){
+          var b = e.target.closest('.ls-tab'); if(!b) return;
+          select(b.dataset.k);
+        });
+        var lockBtn = document.createElement('button');
+        lockBtn.type='button'; lockBtn.className='btn btn-sm btn-ghost'; lockBtn.id='lsReqEdit';
+        lockBtn.textContent='Redaguoti rekvizitus';
+        var reqPane = body.querySelector('[data-pane="rekvizitai"]');
+        if(reqPane){
+          var note = document.createElement('div'); note.className='ls-lock'; note.id='lsReqLock';
+          note.innerHTML='<span class="ic ic-lock"></span> Tik peržiūra — kad rekvizitai nebūtų pakeisti netyčia.';
+          reqPane.insertBefore(note, reqPane.firstChild);
+          note.appendChild(lockBtn);
+          lockBtn.onclick = function(){ lockReq(false); };
+        }
+      }
+
+      function reqInputs(){
+        var p = document.querySelector('#leaseModal [data-pane="rekvizitai"]');
+        return p ? p.querySelectorAll('input,select,textarea') : [];
+      }
+      function lockReq(on){
+        var p = document.querySelector('#leaseModal [data-pane="rekvizitai"]');
+        if(p) p.classList.toggle('ls-ro', !!on);
+        Array.prototype.forEach.call(reqInputs(), function(el){
+          if(el.type==='hidden') return;
+          el.readOnly = !!on && el.tagName!=='SELECT';
+          if(el.tagName==='SELECT' || el.type==='checkbox') el.disabled = !!on;
+        });
+        var b = $id('lsReqEdit'); if(b) b.hidden = !on;
+        var n = $id('lsReqLock');
+        if(n) n.firstChild && (n.childNodes[1].nodeValue = on
+          ? ' Tik peržiūra — kad rekvizitai nebūtų pakeisti netyčia. '
+          : ' Redagavimo režimas. Pakeitimai išsaugomi mygtuku „Išsaugoti" apačioje. ');
+        if(n) n.classList.toggle('edit', !on);
+      }
+
+      function select(k){
+        var bar = $id('lsTabs'); if(!bar) return;
+        bar.querySelectorAll('.ls-tab').forEach(function(x){
+          x.setAttribute('aria-selected', x.dataset.k===k ? 'true':'false');
+        });
+        document.querySelectorAll('#leaseModal .ls-pane').forEach(function(p){
+          p.hidden = (p.dataset.pane !== k);
+        });
+        if(k==='saskaitos') loadInvoices();
+        var body = document.querySelector('#leaseModal .ls-body'); if(body) body.scrollTop = 0;
+      }
+      function setCount(k, n){
+        var el = document.querySelector('#leaseModal .ls-cnt[data-c="'+k+'"]');
+        if(!el) return;
+        if(n>0){ el.textContent = n; el.hidden = false; } else { el.hidden = true; }
+      }
+
+      /* ---- 2. Sąskaitos ---- */
+      var INV = [];
+      var ST = { draft:['Juodraštis','g'], issued:['Išrašyta','n'], sent:['Išsiųsta','s'],
+                 cancelled:['Anuliuota','x'], credited:['Kredituota','x'] };
+      function loadInvoices(){
+        var sb=sbc(), lid=($id('lsId')||{}).value;
+        var box=$id('invList'); if(!box) return;
+        if(!lid){ box.innerHTML='<div class="muted" style="font-size:12px;">Išsaugokite sutartį — tada bus galima ruošti sąskaitas.</div>'; return; }
+        if(!sb) return;
+        sb.from('insolvency_invoices').select('*').eq('lease_id',lid).order('period_from')
+          .then(function(r){ INV=(r&&r.data)||[]; renderInvoices(); })
+          .catch(function(){ box.innerHTML='<div class="error">Nepavyko užkrauti sąskaitų.</div>'; });
+      }
+      function renderInvoices(){
+        var box=$id('invList'); if(!box) return;
+        setCount('saskaitos', INV.filter(function(i){ return i.status==='draft'; }).length);
+        if(!INV.length){ box.innerHTML='<div class="muted" style="font-size:12px;padding:6px 0;">Sąskaitų dar nėra. Spauskite „Paruošti sąskaitas“.</div>'; return; }
+        box.innerHTML='<div class="tbl-wrap"><table style="font-size:12px;"><thead><tr>'+
+          '<th>Nr.</th><th>Laikotarpis</th><th>Terminas</th><th style="text-align:right;">Suma</th>'+
+          '<th>Būsena</th><th></th></tr></thead><tbody>'+
+          INV.map(function(i){
+            var st=ST[i.status]||[i.status,'g'];
+            var acts='';
+            if(i.status==='draft') acts+='<button class="btn btn-sm" onclick="kagbInvIssue(\''+i.id+'\')">Išrašyti</button> ';
+            if(i.status==='draft'||i.status==='issued') acts+='<button class="btn btn-sm btn-danger" onclick="kagbInvCancel(\''+i.id+'\')">Anuliuoti</button> ';
+            if(i.status==='issued'||i.status==='sent') acts+='<button class="btn btn-sm btn-ghost" onclick="kagbInvCredit(\''+i.id+'\')">Kreditinė</button> ';
+            if(i.status!=='draft') acts+='<button class="btn btn-sm btn-ghost" onclick="kagbInvPdf(\''+i.id+'\')">PDF</button>';
+            return '<tr'+(i.kind==='kreditine'?' style="background:var(--gold-bg,#FFF8E6);"':'')+'>'+
+              '<td style="white-space:nowrap;">'+esc3(i.invoice_no||'—')+(i.kind==='kreditine'?' <span class="badge badge-gold">kredit.</span>':'')+'</td>'+
+              '<td style="white-space:nowrap;">'+esc3(i.period_from)+' – '+esc3(i.period_to)+'</td>'+
+              '<td style="white-space:nowrap;">'+esc3(i.due_date||'—')+'</td>'+
+              '<td style="text-align:right;font-variant-numeric:tabular-nums;">'+eur(i.total)+'</td>'+
+              '<td><span class="badge badge-'+(st[1]==='n'?'green':st[1]==='s'?'gray':'gold')+'">'+st[0]+'</span></td>'+
+              '<td style="text-align:right;white-space:nowrap;">'+acts+'</td></tr>';
+          }).join('')+'</tbody></table></div>';
+      }
+      function invMsg(html){ var m=$id('lsMsg'); if(m) m.innerHTML=html; }
+      function rpc(name, args){
+        var sb=sbc(); if(!sb) return Promise.reject();
+        return sb.rpc(name,args).then(function(r){
+          var d=r&&r.data;
+          if(!d||!d.ok){ throw new Error((d&&d.error_code)||'klaida'); }
+          return d;
+        });
+      }
+      window.kagbInvIssue=function(id){
+        if(!confirm('Išrašyti sąskaitą? Bus priskirtas numeris, kurio vėliau pakeisti nebus galima.'))return;
+        rpc('invoice_issue',{p_invoice_id:id}).then(function(d){
+          invMsg('<div class="success">Išrašyta: '+esc3(d.invoice_no)+'</div>'); loadInvoices();
+        }).catch(function(e){ invMsg('<div class="error">Nepavyko išrašyti: '+esc3(e.message)+'</div>'); });
+      };
+      window.kagbInvCancel=function(id){
+        var r=prompt('Anuliavimo priežastis:'); if(r===null)return;
+        rpc('invoice_cancel',{p_invoice_id:id,p_reason:r}).then(function(){
+          invMsg('<div class="success">Sąskaita anuliuota.</div>'); loadInvoices();
+        }).catch(function(e){
+          invMsg('<div class="error">'+(e.message==='already_sent'
+            ? 'Sąskaita jau išsiųsta — anuliuoti nebegalima, reikia kreditinės.'
+            : 'Nepavyko anuliuoti: '+esc3(e.message))+'</div>');
+        });
+      };
+      window.kagbInvCredit=function(id){
+        var r=prompt('Kreditinės sąskaitos priežastis:'); if(!r)return;
+        rpc('invoice_credit',{p_invoice_id:id,p_reason:r}).then(function(){
+          invMsg('<div class="success">Sukurtas kreditinės sąskaitos juodraštis.</div>'); loadInvoices();
+        }).catch(function(e){ invMsg('<div class="error">Nepavyko: '+esc3(e.message)+'</div>'); });
+      };
+
+      /* ---- 3. PDF (jsPDF, be papildomų bibliotekų) ---- */
+      window.kagbInvPdf=function(id){
+        var sb=sbc(); if(!sb) return;
+        sb.rpc('invoice_get',{p_invoice_id:id}).then(function(r){
+          var d=r&&r.data; if(!d||!d.ok){ invMsg('<div class="error">Nepavyko gauti duomenų.</div>'); return; }
+          drawPdf(d.invoice, d.items||[], d.corrects);
+        });
+      };
+      function drawPdf(v, items, corrects){
+        var J = (window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+        if(!J){ invMsg('<div class="error">PDF biblioteka neužkrauta.</div>'); return; }
+        var doc = new J({unit:'mm',format:'a4'});
+        var L=18, R=192, y=20;
+        function txt(s,x,yy,o){ doc.text(String(s==null?'':s), x, yy, o||undefined); }
+        function line(yy){ doc.setDrawColor(200); doc.line(L,yy,R,yy); }
+
+        doc.setFont('helvetica','bold'); doc.setFontSize(15);
+        txt(v.kind==='kreditine' ? 'KREDITINE SASKAITA FAKTURA'
+            : (v.seller_vat_code ? 'PVM SASKAITA FAKTURA' : 'SASKAITA FAKTURA'), L, y);
+        doc.setFont('helvetica','normal'); doc.setFontSize(10);
+        y+=7; txt('Serija ir Nr.: '+(v.invoice_no||'(juodrastis)'), L, y);
+        txt('Israsymo data: '+(v.issue_date||''), 120, y);
+        y+=5; txt('Paslaugu laikotarpis: '+(v.period_from||'')+' - '+(v.period_to||''), L, y);
+        txt('Apmoketi iki: '+(v.due_date||''), 120, y);
+        if(v.contract_no){ y+=5; txt('Sutartis Nr.: '+v.contract_no, L, y); }
+        if(corrects && corrects.invoice_no){
+          y+=5; doc.setFont('helvetica','bold');
+          txt('Tikslinama saskaita: '+corrects.invoice_no+' ('+corrects.issue_date+')', L, y);
+          doc.setFont('helvetica','normal');
+        }
+        y+=6; line(y); y+=7;
+
+        doc.setFont('helvetica','bold'); txt('Pardavejas', L, y); txt('Pirkejas', 108, y);
+        doc.setFont('helvetica','normal'); y+=5;
+        var sel=[v.seller_name, v.seller_code?('Im. k. '+v.seller_code):'', v.seller_vat_code?('PVM k. '+v.seller_vat_code):'',
+                 v.seller_address, v.seller_iban?('A. s. '+v.seller_iban):'', v.seller_bank].filter(Boolean);
+        var buy=[v.buyer_name, v.buyer_code?('Im. k. '+v.buyer_code):'', v.buyer_vat_code?('PVM k. '+v.buyer_vat_code):'',
+                 v.buyer_address].filter(Boolean);
+        var n=Math.max(sel.length,buy.length);
+        for(var i=0;i<n;i++){
+          if(sel[i]) txt(doc.splitTextToSize(sel[i],80)[0], L, y+i*4.6);
+          if(buy[i]) txt(doc.splitTextToSize(buy[i],80)[0], 108, y+i*4.6);
+        }
+        y += n*4.6 + 4; line(y); y+=7;
+
+        doc.setFont('helvetica','bold'); doc.setFontSize(9);
+        txt('Pavadinimas', L, y); txt('Kiekis', 118, y, {align:'right'});
+        txt('Kaina', 140, y, {align:'right'}); txt('PVM %', 158, y, {align:'right'});
+        txt('Suma', 192, y, {align:'right'});
+        doc.setFont('helvetica','normal'); y+=2; line(y); y+=5;
+        items.forEach(function(it){
+          var nm = doc.splitTextToSize(String(it.name||''), 92);
+          txt(nm[0], L, y);
+          txt(Number(it.qty||1).toFixed(2), 118, y, {align:'right'});
+          txt(Number(it.unit_price||0).toFixed(2), 140, y, {align:'right'});
+          txt(Number(it.vat_rate||0)?Number(it.vat_rate).toFixed(0):'-', 158, y, {align:'right'});
+          txt(Number(it.net_amount||0).toFixed(2), 192, y, {align:'right'});
+          y += (nm.length>1?4.4*nm.length:5);
+        });
+        y+=1; line(y); y+=6;
+
+        doc.setFontSize(10);
+        txt('Suma be PVM:', 150, y, {align:'right'}); txt(Number(v.subtotal||0).toFixed(2)+' EUR', 192, y, {align:'right'});
+        if(Number(v.vat_total||0)){
+          y+=5; txt('PVM:', 150, y, {align:'right'}); txt(Number(v.vat_total).toFixed(2)+' EUR', 192, y, {align:'right'});
+        }
+        y+=6; doc.setFont('helvetica','bold'); doc.setFontSize(11);
+        txt('Iš viso mokėti:'.replace(/[^\x00-\x7F]/g,function(c){return {'š':'s','ė':'e'}[c]||c;}), 150, y, {align:'right'});
+        txt(Number(v.total||0).toFixed(2)+' EUR', 192, y, {align:'right'});
+        doc.setFont('helvetica','normal'); doc.setFontSize(9);
+
+        if(v.vat_note){ y+=9; doc.splitTextToSize(v.vat_note.replace(/[ąčęėįšųūž]/g,function(c){
+          return {'ą':'a','č':'c','ę':'e','ė':'e','į':'i','š':'s','ų':'u','ū':'u','ž':'z'}[c]; }), 174)
+          .forEach(function(l,k){ txt(l, L, y+k*4.2); }); y += 4; }
+        if(v.seller_admin_line){
+          y+=10; doc.setTextColor(110);
+          doc.splitTextToSize(v.seller_admin_line.replace(/[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,function(c){
+            return {'ą':'a','č':'c','ę':'e','ė':'e','į':'i','š':'s','ų':'u','ū':'u','ž':'z',
+                    'Ą':'A','Č':'C','Ę':'E','Ė':'E','Į':'I','Š':'S','Ų':'U','Ū':'U','Ž':'Z'}[c]; }), 174)
+            .forEach(function(l,k){ txt(l, L, y+k*4.2); });
+          doc.setTextColor(0);
+        }
+        y = 282; doc.setFontSize(8); doc.setTextColor(140);
+        txt('Saskaita israsyta elektroniniu budu, parasas neprivalomas (PVM istatymo 80 str.).', L, y);
+        doc.save((v.invoice_no||'saskaita')+'.pdf');
+      }
+
+      /* ---- 4. Paruošti sąskaitas ---- */
+      document.addEventListener('click', function(e){
+        var b = e.target.closest('#invPrepBtn'); if(!b) return;
+        var lid=($id('lsId')||{}).value; if(!lid) return;
+        var sb=sbc(); if(!sb) return;
+        b.disabled=true;
+        sb.rpc('invoice_prepare_pending',{p_case_id:null}).then(function(r){
+          var d=r&&r.data;
+          invMsg('<div class="success">Paruošta juodraščių: '+((d&&d.created)||0)+'</div>');
+          b.disabled=false; loadInvoices();
+        }).catch(function(){ b.disabled=false; invMsg('<div class="error">Nepavyko paruošti.</div>'); });
+      });
+
+      /* ---- 5. Stebėjimas: kortelė atsidaro / duomenys pasikeičia ---- */
+      function tick(){
+        build();
+        var acct = $id('lsAcctSec');
+        if(acct){
+          var rows = document.querySelectorAll('#lsChargesTable tbody tr').length;
+          setCount('apskaita', rows);
+          var docs = document.querySelectorAll('#lsDocsList tr, #lsRemList > div').length;
+          setCount('dokai', docs);
+        }
+      }
+      var t=null;
+      try{
+        new MutationObserver(function(){ clearTimeout(t); t=setTimeout(tick,120); })
+          .observe(document.body,{childList:true,subtree:true});
+      }catch(e){}
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',tick); else tick();
     })();
 
   </script>
