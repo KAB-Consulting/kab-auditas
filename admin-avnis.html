@@ -144,6 +144,87 @@
       [style*="grid-template-columns:repeat(5,1fr)"]{ grid-template-columns:1fr!important; }
     }
 
+      /* ============ KAGB CRM sluoksnis (Leadai / Dealai) v1 ============ */
+    .crm-toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+    .crm-toolbar .input,.crm-toolbar .select{ max-width:230px; }
+    .crm-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+    .crm-card{ position:relative; background:#fff; border:1px solid var(--bd); border-radius:10px;
+      padding:13px 15px; cursor:pointer; transition:border-color .12s, box-shadow .12s; overflow:hidden;
+      touch-action:pan-y; }
+    .crm-card:hover{ border-color:var(--navy); box-shadow:0 2px 10px rgba(11,30,63,.10); }
+    .crm-card .cc-top{ display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
+    .crm-card .cc-name{ font-weight:700; color:var(--navy); font-size:14.5px; line-height:1.35; }
+    .crm-card .cc-no{ font-size:11px; color:var(--gray); font-weight:600; white-space:nowrap; }
+    .crm-card .cc-sub{ font-size:12.5px; color:var(--gray); margin-top:3px; }
+    .crm-card .cc-row{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:9px; }
+    .crm-card .cc-val{ font-weight:700; color:var(--navy); font-size:14px; }
+    .crm-card.rot{ border-left:4px solid #E67E22; }
+    .crm-card.over{ border-left:4px solid #C0392B; }
+    .crm-swipe{ position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between;
+      padding:0 16px; font-size:12.5px; font-weight:700; color:#fff; background:linear-gradient(90deg,#1E8449,#0B1E3F);
+      opacity:0; pointer-events:none; }
+    .crm-card.sw .crm-swipe{ opacity:1; }
+    .crm-col{ background:var(--light); border:1px solid var(--bd); border-radius:10px; padding:10px; min-width:250px; }
+    .crm-col h4{ font-size:12px; text-transform:uppercase; color:var(--gray); margin-bottom:8px;
+      display:flex; justify-content:space-between; gap:6px; }
+    .crm-board{ display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; align-items:flex-start; }
+    .crm-board .crm-card{ margin-bottom:8px; }
+    .crm-empty{ padding:26px; text-align:center; color:var(--gray); font-size:13.5px; }
+
+    /* pilno ekrano kortelė */
+    .crm-sheetbg{ position:fixed; inset:0; background:rgba(11,30,63,.45); z-index:150;
+      display:flex; align-items:flex-start; justify-content:center; padding:32px 16px; overflow:auto; }
+    .crm-sheet{ background:#fff; border-radius:12px; width:100%; max-width:900px; display:flex; flex-direction:column;
+      max-height:calc(100vh - 64px); overflow:hidden; }
+    .crm-sheet .sh-head{ padding:16px 20px 10px; border-bottom:1px solid var(--bd); flex:0 0 auto; }
+    .crm-sheet .sh-head h3{ color:var(--navy); font-size:17px; }
+    .crm-sheet .sh-tabs{ display:flex; gap:2px; padding:0 12px; background:var(--light);
+      border-bottom:1px solid var(--bd); flex:0 0 auto; overflow-x:auto; scrollbar-width:none; }
+    .crm-sheet .sh-tabs::-webkit-scrollbar{ display:none; }
+    .crm-sheet .sh-tab{ border:0; background:transparent; cursor:pointer; padding:11px 14px; font-size:13px;
+      font-weight:600; color:var(--gray); white-space:nowrap; border-bottom:2px solid transparent; min-height:42px; }
+    .crm-sheet .sh-tab[aria-selected="true"]{ color:var(--navy); border-color:var(--navy); background:#fff; }
+    .crm-sheet .sh-body{ flex:1 1 auto; overflow-y:auto; padding:16px 20px 20px; }
+    .crm-sheet .sh-foot{ flex:0 0 auto; border-top:1px solid var(--bd); padding:11px 20px; background:#fff;
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .crm-pane[hidden]{ display:none; }
+    .crm-two{ display:grid; grid-template-columns:1fr 1fr; gap:10px 18px; }
+
+    /* chronologija */
+    .crm-tl{ border-left:2px solid var(--bd); margin-left:6px; padding-left:14px; }
+    .crm-tl .it{ position:relative; padding:8px 0 10px; border-bottom:1px dotted #eee; }
+    .crm-tl .it:last-child{ border-bottom:0; }
+    .crm-tl .it::before{ content:''; position:absolute; left:-21px; top:14px; width:9px; height:9px;
+      border-radius:50%; background:var(--gold); border:2px solid #fff; }
+    .crm-tl .it.sys::before{ background:#9aa5b5; }
+    .crm-tl .it .m{ font-size:11.5px; color:var(--gray); display:flex; gap:8px; flex-wrap:wrap; }
+    .crm-tl .it .s{ font-weight:600; font-size:13.5px; color:var(--navy); }
+    .crm-tl .it .b{ font-size:13px; white-space:pre-wrap; }
+    .crm-chip{ display:inline-block; border:1px solid var(--bd); background:#fff; border-radius:16px;
+      padding:5px 11px; font-size:12px; font-weight:600; color:var(--navy); cursor:pointer;
+      text-decoration:none; font-family:inherit; }
+    .crm-chip:hover{ background:var(--light); }
+    .crm-chips{ display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
+
+    /* paslaugų eilutės */
+    .crm-items{ width:100%; font-size:13px; }
+    .crm-items th{ padding:6px 6px; font-size:11px; }
+    .crm-items td{ padding:4px 5px; border-bottom:1px solid #f2f2f2; }
+    .crm-items input,.crm-items select{ padding:6px 7px; font-size:13px; border:1px solid var(--bd);
+      border-radius:5px; width:100%; font-family:inherit; }
+    .crm-sum{ display:flex; justify-content:flex-end; gap:24px; font-size:13.5px; margin-top:10px; }
+    .crm-sum b{ color:var(--navy); }
+
+    @media (max-width:767px){
+      .crm-sheetbg{ padding:0; }
+      .crm-sheet{ max-width:100%; max-height:100vh; height:100vh; border-radius:0; }
+      .crm-two{ grid-template-columns:1fr; }
+      .crm-grid{ grid-template-columns:1fr; }
+      .crm-board{ display:block; }
+      .crm-col{ margin-bottom:12px; }
+      .crm-toolbar .input,.crm-toolbar .select{ max-width:100%; }
+      .crm-sheet .sh-foot .btn{ flex:1 1 auto; }
+    }
   </style>
 </head>
 <body>
@@ -302,6 +383,61 @@
     <div id="loadingView" class="card center"><div class="spinner"></div><div class="muted">Kraunama…</div></div>
 
     <!-- SĄRAŠAS -->
+    <!-- ============ CRM: LEADAI ============ -->
+    <div id="leadsView" class="hidden">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="v" id="leadsCount">—</div><div class="l">Leadai (filtre / iš viso)</div></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+          <h2 style="color:var(--navy);font-size:18px;">Leadai</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" id="crmReload">Atnaujinti</button>
+            <button class="btn btn-gold btn-sm full-only" id="leadNewBtn">+ Naujas leadas</button>
+          </div>
+        </div>
+        <div class="tabs" id="leadOnlyTabs">
+          <div class="tab active" data-only="">Visi</div>
+          <div class="tab" data-only="open">Aktyvūs</div>
+          <div class="tab" data-only="mine">Mano</div>
+          <div class="tab" data-only="over">Pradelsti</div>
+          <div class="tab" data-only="rot">Nejuda</div>
+        </div>
+        <div class="crm-toolbar">
+          <input id="leadSearch" class="input" placeholder="Ieškoti pagal įmonę, temą, numerį…">
+          <select id="leadStageF" class="select"></select>
+          <select id="leadOwnerF" class="select"></select>
+        </div>
+        <div id="leadsBody"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- ============ CRM: DEALAI ============ -->
+    <div id="dealsView" class="hidden">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="v" id="dealsCount">—</div><div class="l">Dealai (filtre / iš viso)</div></div>
+        <div class="stat-card"><div class="v" id="dealsValue" style="font-size:20px;">—</div><div class="l">Atvirų dealų vertė</div></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+          <h2 style="color:var(--navy);font-size:18px;">Dealai</h2>
+          <button class="btn btn-ghost btn-sm" id="crmReload2">Atnaujinti</button>
+        </div>
+        <div class="tabs" id="dealOnlyTabs">
+          <div class="tab active" data-only="">Visi</div>
+          <div class="tab" data-only="open">Atviri</div>
+          <div class="tab" data-only="mine">Mano</div>
+          <div class="tab" data-only="rot">Nejuda</div>
+        </div>
+        <div class="crm-toolbar">
+          <input id="dealSearch" class="input" placeholder="Ieškoti pagal įmonę, pavadinimą, numerį…">
+          <select id="dealStageF" class="select"></select>
+          <select id="dealOwnerF" class="select"></select>
+        </div>
+        <div id="dealsBody"><div class="spinner"></div></div>
+      </div>
+    </div>
+
     <div id="listView" class="hidden">
       <div class="stat-grid" id="statCards">
         <div class="stat-card stat-click" data-setf="all" title="Rodyti visas įmones"><div class="v" id="stCompanies">—</div><div class="l">Įmonių iš viso</div></div>
@@ -421,6 +557,15 @@
           </div>
         </div>
         <div id="notesList" style="margin-top:14px;"></div>
+      </div>
+
+      <!-- PARDAVIMAI (CRM) -->
+      <div class="card" id="crmSalesCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div class="sec-title" style="margin:0;border:none;padding:0;">Pardavimai</div>
+          <button class="btn btn-gold btn-sm full-only" id="crmNewFromCompany">+ Sukurti leadą</button>
+        </div>
+        <div id="crmSalesBody" style="margin-top:12px;"><div class="muted">Kraunama…</div></div>
       </div>
 
       <!-- TEISMO ĮVYKIAI -->
@@ -618,7 +763,7 @@
     }
     let SUBMOD='avnis';
     const PAGE_SIZE=100;
-    window.BUILD_VERSION='avnis-2026-08-31-v13';
+    window.BUILD_VERSION='avnis-2026-09-01-v14-crm';
 
     const JURISDICTION = {1:'Lietuvos (teritorinė)', 2:'Lietuvos (pagrindinė)', 3:'Tarptautinė'};
 
@@ -1707,6 +1852,875 @@
         });
       }
       if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+    })();
+
+  
+    /* ================================================================
+       KAGB CRM sluoksnis v1 (4 etapas) — Leadai / Dealai / Įmonės 360
+       Adityvus: nekeičia esamų funkcijų, tik prisijungia prie applySubmod.
+       ================================================================ */
+    (function(){
+      'use strict';
+      var E = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+      var $$ = function(id){ return document.getElementById(id); };
+      var EUR = function(v){ var n=Number(v||0); return n.toLocaleString('lt-LT',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
+      var DT  = function(s){ return s? new Date(s).toLocaleString('lt-LT',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Vilnius'}) : '—'; };
+      var D   = function(s){ return s? String(s).slice(0,10) : '—'; };
+      var isPhone = function(){ return window.matchMedia('(max-width:767px)').matches; };
+
+      var META = { users:[], stages:[], services:[], reasons:[], loaded:false };
+      var LEADS = [], DEALS = [];
+      var LF = { stage:'', owner:'', q:'', only:'' };   // leadų filtrai
+      var DF = { stage:'', owner:'', q:'', only:'' };
+
+      function rpc(name, args){
+        return sb.rpc(name, args||{}).then(function(r){
+          if(r.error) throw r.error;
+          var d = r.data;
+          if(d && d.ok === false) throw new Error(d.error_code||'klaida');
+          return d;
+        });
+      }
+      function msg(el, html){ var n=$$(el); if(n) n.innerHTML = html||''; }
+      function err(e){ return '<div class="error">'+E(e && e.message ? e.message : e)+'</div>'; }
+      function canEdit(){ return PERM_LEVEL === 'full'; }
+
+      /* ---------------- META ---------------- */
+      function loadMeta(){
+        if(META.loaded) return Promise.resolve(META);
+        return Promise.all([
+          sb.from('admin_users').select('id,full_name,email').eq('is_active',true).order('full_name'),
+          sb.from('crm_stages').select('*').eq('is_active',true).order('sort_order'),
+          sb.from('crm_services').select('*').eq('is_active',true).order('sort_order'),
+          sb.from('crm_lost_reasons').select('*').eq('is_active',true).order('sort_order')
+        ]).then(function(r){
+          META.users    = (r[0].data)||[];
+          META.stages   = (r[1].data)||[];
+          META.services = (r[2].data)||[];
+          META.reasons  = (r[3].data)||[];
+          META.loaded   = true;
+          return META;
+        });
+      }
+      function stagesOf(kind){ return META.stages.filter(function(s){ return s.kind===kind; }); }
+      function userOpts(sel){
+        return META.users.map(function(u){
+          return '<option value="'+u.id+'"'+(u.id===sel?' selected':'')+'>'+E(u.full_name||u.email)+'</option>';
+        }).join('');
+      }
+      function svcName(code){
+        var s = META.services.filter(function(x){ return x.code===code; })[0];
+        return s ? s.name : code;
+      }
+
+      /* ---------------- SĄRAŠŲ KROVIMAS ---------------- */
+      function loadLeads(){
+        return sb.from('crm_v_leads').select('*').order('created_at',{ascending:false}).limit(1000)
+          .then(function(r){ if(r.error) throw r.error; LEADS = r.data||[]; });
+      }
+      function loadDeals(){
+        return sb.from('crm_v_deals').select('*').order('created_at',{ascending:false}).limit(1000)
+          .then(function(r){ if(r.error) throw r.error; DEALS = r.data||[]; });
+      }
+
+      function match(row, f){
+        if(f.stage && row.stage !== f.stage) return false;
+        if(f.owner && row.owner_id !== f.owner) return false;
+        if(f.only === 'mine'    && row.owner_id !== MY_ADMIN_ID) return false;
+        if(f.only === 'rot'     && !row.is_rotting) return false;
+        if(f.only === 'over'    && !row.is_overdue) return false;
+        if(f.only === 'open'    && row.stage_final) return false;
+        if(f.q){
+          var q = f.q.toLowerCase();
+          var hay = [row.company_name,row.title,row.lead_no,row.deal_no,row.company_code,row.contact_name]
+                     .filter(Boolean).join(' ').toLowerCase();
+          if(hay.indexOf(q) < 0) return false;
+        }
+        return true;
+      }
+
+      var MY_ADMIN_ID = null;
+
+      /* ---------------- KORTELIŲ PIEŠIMAS ---------------- */
+      function leadCard(l){
+        var cls = 'crm-card' + (l.is_overdue ? ' over' : (l.is_rotting ? ' rot' : ''));
+        var svc = (l.service_types||[]).map(function(c){ return '<span class="badge badge-gray">'+E(svcName(c))+'</span>'; }).join(' ');
+        return '<div class="'+cls+'" data-lead="'+l.id+'">'
+          + '<div class="crm-swipe"><span>&#8594; Priskirti kolegai</span><span></span></div>'
+          + '<div class="cc-top"><div class="cc-name">'+E(l.company_name)+'</div><div class="cc-no">'+E(l.lead_no||'')+'</div></div>'
+          + (l.title && l.title!==l.company_name ? '<div class="cc-sub">'+E(l.title)+'</div>' : '')
+          + '<div class="cc-row"><span class="badge badge-blue">'+E(l.stage_name||l.stage)+'</span>'
+          + (l.is_overdue ? '<span class="badge badge-red">Pradelsta</span>' : '')
+          + (l.is_rotting && !l.is_overdue ? '<span class="badge badge-gold">Nejuda '+l.days_idle+' d.</span>' : '')
+          + svc + '</div>'
+          + '<div class="cc-row" style="justify-content:space-between;">'
+          + '<span class="muted">'+E(l.owner_name||'—')+'</span>'
+          + (l.contact_by ? '<span class="muted">iki '+DT(l.contact_by)+'</span>' : (l.est_value? '<span class="cc-val">'+EUR(l.est_value)+'</span>':''))
+          + '</div></div>';
+      }
+      function dealCard(d){
+        var cls = 'crm-card' + (d.is_rotting && !d.closed_at ? ' rot' : '');
+        return '<div class="'+cls+'" data-deal="'+d.id+'">'
+          + '<div class="crm-swipe"><span>&#8594; Priskirti kolegai</span><span></span></div>'
+          + '<div class="cc-top"><div class="cc-name">'+E(d.company_name)+'</div><div class="cc-no">'+E(d.deal_no||'')+'</div></div>'
+          + '<div class="cc-sub">'+E(d.title||'')+'</div>'
+          + '<div class="cc-row"><span class="badge '+(d.is_won?'badge-green':(d.is_won===false?'badge-red':'badge-purple'))+'">'
+          + E(d.stage_name||d.stage)+'</span>'
+          + (d.is_rotting && !d.closed_at ? '<span class="badge badge-gold">Nejuda '+d.days_idle+' d.</span>' : '')
+          + (d.probability!=null && !d.closed_at ? '<span class="badge badge-gray">'+d.probability+' %</span>' : '')
+          + '</div>'
+          + '<div class="cc-row" style="justify-content:space-between;">'
+          + '<span class="muted">'+E(d.owner_name||'—')+'</span>'
+          + '<span class="cc-val">'+EUR(d.value)+'</span></div></div>';
+      }
+
+      /* ---------------- VAIZDAI ---------------- */
+      function renderLeads(){
+        var rows = LEADS.filter(function(l){ return match(l, LF); });
+        $$('leadsCount').textContent = rows.length + ' iš ' + LEADS.length;
+        var host = $$('leadsBody');
+        if(!rows.length){ host.innerHTML = '<div class="crm-empty">Leadų pagal filtrą nėra.</div>'; return; }
+        if(isPhone() || LF.stage){
+          host.innerHTML = '<div class="crm-grid">' + rows.map(leadCard).join('') + '</div>';
+        }else{
+          host.innerHTML = '<div class="crm-board">' + stagesOf('lead').map(function(s){
+            var inSt = rows.filter(function(l){ return l.stage===s.code; });
+            return '<div class="crm-col"><h4><span>'+E(s.name)+'</span><span>'+inSt.length+'</span></h4>'
+                 + (inSt.length ? inSt.map(leadCard).join('') : '<div class="muted" style="font-size:12px;padding:6px;">—</div>')
+                 + '</div>';
+          }).join('') + '</div>';
+        }
+      }
+      function renderDeals(){
+        var rows = DEALS.filter(function(d){ return match(d, DF); });
+        var open = rows.filter(function(d){ return !d.closed_at; });
+        $$('dealsCount').textContent = rows.length + ' iš ' + DEALS.length;
+        $$('dealsValue').textContent = EUR(open.reduce(function(a,d){ return a + Number(d.value||0); }, 0));
+        var host = $$('dealsBody');
+        if(!rows.length){ host.innerHTML = '<div class="crm-empty">Dealų pagal filtrą nėra.</div>'; return; }
+        if(isPhone() || DF.stage){
+          host.innerHTML = '<div class="crm-grid">' + rows.map(dealCard).join('') + '</div>';
+        }else{
+          host.innerHTML = '<div class="crm-board">' + stagesOf('deal').map(function(s){
+            var inSt = rows.filter(function(d){ return d.stage===s.code; });
+            var sum  = inSt.reduce(function(a,d){ return a + Number(d.value||0); }, 0);
+            return '<div class="crm-col"><h4><span>'+E(s.name)+'</span><span>'+inSt.length+' · '+EUR(sum)+'</span></h4>'
+                 + (inSt.length ? inSt.map(dealCard).join('') : '<div class="muted" style="font-size:12px;padding:6px;">—</div>')
+                 + '</div>';
+          }).join('') + '</div>';
+        }
+      }
+
+      function fillFilters(){
+        var st = function(kind){ return '<option value="">Visi etapai</option>' +
+          stagesOf(kind).map(function(s){ return '<option value="'+s.code+'">'+E(s.name)+'</option>'; }).join(''); };
+        var ow = '<option value="">Visi atsakingi</option>' + META.users.map(function(u){
+          return '<option value="'+u.id+'">'+E(u.full_name||u.email)+'</option>'; }).join('');
+        $$('leadStageF').innerHTML = st('lead'); $$('leadOwnerF').innerHTML = ow;
+        $$('dealStageF').innerHTML = st('deal'); $$('dealOwnerF').innerHTML = ow;
+      }
+
+      /* ---------------- SHEET (pilno ekrano kortelė) ---------------- */
+      function sheet(opts){
+        closeSheet();
+        var bg = document.createElement('div');
+        bg.className = 'crm-sheetbg'; bg.id = 'crmSheet';
+        bg.innerHTML = '<div class="crm-sheet">'
+          + '<div class="sh-head">'+opts.head+'</div>'
+          + (opts.tabs ? '<div class="sh-tabs">'+opts.tabs+'</div>' : '')
+          + '<div class="sh-body">'+opts.body+'</div>'
+          + '<div class="sh-foot">'+(opts.foot||'')+'</div></div>';
+        document.body.appendChild(bg);
+        document.body.style.overflow = 'hidden';
+        bg.addEventListener('click', function(e){ if(e.target===bg) closeSheet(); });
+        bg.addEventListener('click', function(e){
+          var t = e.target.closest('.sh-tab'); if(!t) return;
+          bg.querySelectorAll('.sh-tab').forEach(function(x){ x.setAttribute('aria-selected', String(x===t)); });
+          bg.querySelectorAll('.crm-pane').forEach(function(p){ p.hidden = (p.dataset.pane !== t.dataset.pane); });
+        });
+        return bg;
+      }
+      function closeSheet(){
+        var s = $$('crmSheet'); if(s) s.remove();
+        if(!$$('crmSheet')) document.body.style.overflow = '';
+      }
+      window.crmCloseSheet = closeSheet;
+
+      /* ---------------- CHRONOLOGIJA ---------------- */
+      function timelineHtml(items){
+        if(!items || !items.length) return '<div class="muted">Įrašų dar nėra.</div>';
+        var ICON = { call:'Skambutis', meeting:'Susitikimas', email:'El. laiškas', sms:'SMS',
+                     note:'Pastaba', task:'Užduotis', document:'Dokumentas', file:'Failas', system:'Sistema' };
+        return '<div class="crm-tl">' + items.map(function(a){
+          var when = a.occurred_at || a.due_at || a.created_at;
+          return '<div class="it'+(a.is_system?' sys':'')+'">'
+            + '<div class="m"><span>'+DT(when)+'</span><span>'+E(a.created_by_name||'')+'</span>'
+            + '<span class="badge badge-gray">'+E(ICON[a.kind]||a.kind)+'</span>'
+            + (a.outcome?'<span class="badge badge-blue">'+E(a.outcome)+'</span>':'')
+            + (a.due_at && !a.done_at ? '<span class="badge '+(new Date(a.due_at)<new Date()?'badge-red':'badge-gold')+'">terminas '+DT(a.due_at)+'</span>' : '')
+            + '</div>'
+            + (a.subject ? '<div class="s">'+E(a.subject)+'</div>' : '')
+            + (a.body ? '<div class="b">'+E(a.body)+'</div>' : '')
+            + '</div>';
+        }).join('') + '</div>';
+      }
+      function loadTimeline(type, id, host){
+        return rpc('crm_timeline', { p_entity_type:type, p_entity_id:String(id), p_limit:200 })
+          .then(function(d){
+            var items = Array.isArray(d) ? d : (d && d.items) || [];
+            $$(host).innerHTML = timelineHtml(items);
+          })
+          .catch(function(e){ $$(host).innerHTML = err(e); });
+      }
+
+      /* ---------------- GREITAS VEIKLOS FIKSAVIMAS ---------------- */
+      function quickBar(type, id){
+        return '<div class="sec-title" style="margin-top:16px;">Fiksuoti veiklą</div>'
+          + '<div class="crm-two">'
+          + '<div><label class="label" style="margin-top:0;">Tipas</label><select class="select" id="qaKind">'
+          + '<option value="call">Skambutis</option><option value="meeting">Susitikimas</option>'
+          + '<option value="email">El. laiškas</option><option value="note">Pastaba</option>'
+          + '<option value="document">Dokumentas</option></select></div>'
+          + '<div><label class="label" style="margin-top:0;">Rezultatas</label><select class="select" id="qaOut">'
+          + '<option value="">—</option><option value="atsake">Atsakė</option><option value="neatsake">Neatsakė</option>'
+          + '<option value="perskambins">Perskambins</option><option value="sutiko_susitikti">Sutiko susitikti</option>'
+          + '<option value="atsisake">Atsisakė</option></select></div></div>'
+          + '<label class="label">Ką aptarėte</label><textarea class="textarea" id="qaBody" placeholder="Trumpai…"></textarea>'
+          + '<label class="label">Kitas veiksmas — terminas</label>'
+          + '<div class="crm-chips">'
+          + '<button type="button" class="crm-chip" data-due="1">Po 1 val.</button>'
+          + '<button type="button" class="crm-chip" data-due="3">Po 3 val.</button>'
+          + '<button type="button" class="crm-chip" data-due="24">Rytoj</button>'
+          + '<button type="button" class="crm-chip" data-due="168">Kitą savaitę</button>'
+          + '<button type="button" class="crm-chip" data-due="0">Išvalyti</button></div>'
+          + '<input type="datetime-local" class="input" id="qaDue" style="max-width:250px;">'
+          + '<input type="text" class="input" id="qaNext" placeholder="Kito veiksmo aprašymas" style="margin-top:8px;">'
+          + '<div id="qaMsg"></div>'
+          + '<button class="btn btn-sm" id="qaSave" style="margin-top:10px;">Išsaugoti veiklą</button>';
+      }
+      function bindQuick(bg, type, id, after){
+        bg.addEventListener('click', function(e){
+          var c = e.target.closest('.crm-chip[data-due]'); if(!c) return;
+          var h = Number(c.dataset.due);
+          var f = $$('qaDue');
+          if(!h){ f.value=''; return; }
+          var d = new Date(Date.now() + h*3600*1000);
+          if(h >= 24){ d.setHours(9,0,0,0); }
+          d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+          f.value = d.toISOString().slice(0,16);
+        });
+        bg.addEventListener('click', function(e){
+          if(!e.target.closest('#qaSave')) return;
+          if(!canEdit()){ msg('qaMsg','<div class="error">Neturite redagavimo teisių.</div>'); return; }
+          var kind = $$('qaKind').value, body = $$('qaBody').value.trim();
+          var out  = $$('qaOut').value || null;
+          var due  = $$('qaDue').value ? new Date($$('qaDue').value).toISOString() : null;
+          var next = $$('qaNext').value.trim();
+          if(!body && !due){ msg('qaMsg','<div class="error">Įrašykite pastabą arba nustatykite terminą.</div>'); return; }
+          $$('qaSave').disabled = true;
+          var links = [{ t:type, id:String(id), primary:true }];
+          rpc('crm_log_activity', { p_kind:kind, p_links:links, p_channel:null,
+                p_subject:null, p_body:body||null, p_outcome:out, p_occurred_at:new Date().toISOString(),
+                p_due_at:null, p_assignee:null, p_meta:{} })
+            .then(function(){
+              if(!due) return null;
+              return rpc('crm_log_activity', { p_kind:'task', p_links:links, p_channel:null,
+                p_subject:next||'Kitas veiksmas', p_body:null, p_outcome:null,
+                p_occurred_at:null, p_due_at:due, p_assignee:null, p_meta:{} });
+            })
+            .then(function(){
+              $$('qaBody').value=''; $$('qaNext').value=''; $$('qaDue').value='';
+              msg('qaMsg','<div class="success">Įrašyta.</div>');
+              $$('qaSave').disabled = false;
+              if(after) after();
+            })
+            .catch(function(e2){ msg('qaMsg', err(e2)); $$('qaSave').disabled=false; });
+        });
+      }
+
+      /* ---------------- LEADO KORTELĖ ---------------- */
+      window.crmOpenLead = function(id){
+        rpc('crm_lead_get', { p_id:id }).then(function(d){
+          var l = d.lead, av = d.avnis, an = d.announcement, dl = d.deal;
+          var svc = (l.service_types||[]).map(function(c){ return svcName(c); }).join(', ');
+          var head = '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;">'
+            + '<div><h3>'+E(l.company_name)+'</h3><div class="muted">'+E(l.lead_no||'')
+            + (l.title && l.title!==l.company_name ? ' · '+E(l.title) : '')+'</div></div>'
+            + '<button class="btn btn-ghost btn-sm" onclick="crmCloseSheet()">Uždaryti</button></div>';
+          var tabs = '<button class="sh-tab" data-pane="d" aria-selected="true">Duomenys</button>'
+                   + '<button class="sh-tab" data-pane="a" aria-selected="false">Veiklos</button>'
+                   + (av||an ? '<button class="sh-tab" data-pane="v" aria-selected="false">Iš AVNIS</button>' : '');
+          var stOpts = stagesOf('lead').map(function(s){
+            return '<option value="'+s.code+'"'+(s.code===l.stage?' selected':'')+'>'+E(s.name)+'</option>'; }).join('');
+          var body = '<div class="crm-pane" data-pane="d">'
+            + '<div class="crm-two">'
+            + '<div><label class="label" style="margin-top:0;">Etapas</label><select class="select" id="ldStage" '+(canEdit()?'':'disabled')+'>'+stOpts+'</select></div>'
+            + '<div><label class="label" style="margin-top:0;">Atsakingas</label><select class="select" id="ldOwner" '+(canEdit()?'':'disabled')+'>'+userOpts(l.owner_id)+'</select></div>'
+            + '<div><label class="label">Susisiekti iki</label><input type="datetime-local" class="input" id="ldBy" value="'+(l.contact_by?new Date(l.contact_by).toISOString().slice(0,16):'')+'" '+(canEdit()?'':'disabled')+'></div>'
+            + '<div><label class="label">Numatoma vertė</label><input type="number" step="0.01" class="input" id="ldVal" value="'+(l.est_value==null?'':l.est_value)+'" '+(canEdit()?'':'disabled')+'></div>'
+            + '<div><label class="label">Kontaktinis asmuo</label><input class="input" id="ldCName" value="'+E(l.contact_name||'')+'" '+(canEdit()?'':'disabled')+'></div>'
+            + '<div><label class="label">Telefonas</label><input class="input" id="ldCPhone" value="'+E(l.contact_phone||'')+'" '+(canEdit()?'':'disabled')+'></div>'
+            + '<div><label class="label">El. paštas</label><input class="input" id="ldCEmail" value="'+E(l.contact_email||'')+'" '+(canEdit()?'':'disabled')+'></div>'
+            + '<div><label class="label">Šaltinis</label><input class="input" id="ldSrc" value="'+E(l.source_note||l.source||'')+'" '+(canEdit()?'':'disabled')+'></div>'
+            + '</div>'
+            + '<div class="muted" style="margin-top:12px;">Paslaugos: '+E(svc||'—')
+            + ' · Sukurta '+DT(l.created_at)+' ('+E(l.created_by_name||'')+')'
+            + (l.company_code ? ' · Įm. k. '+E(l.company_code) : '')+'</div>'
+            + (l.contact_phone ? '<div class="crm-chips"><a class="crm-chip" href="tel:'+E(l.contact_phone)+'">Skambinti</a>'
+                + '<a class="crm-chip" href="https://wa.me/'+E(String(l.contact_phone).replace(/[^0-9]/g,''))+'" target="_blank" rel="noopener">WhatsApp</a>'
+                + '<a class="crm-chip" href="viber://chat?number='+E(String(l.contact_phone).replace(/[^0-9+]/g,''))+'">Viber</a>'
+                + (l.contact_email?'<a class="crm-chip" href="mailto:'+E(l.contact_email)+'">El. laiškas</a>':'')+'</div>' : '')
+            + (dl ? '<div class="success" style="margin-top:12px;">Konvertuota į dealą <b>'+E(dl.deal_no)+'</b> ('+EUR(dl.value)+')'
+                  + ' <button class="btn btn-sm btn-ghost" onclick="crmOpenDeal(\''+dl.id+'\')">Atidaryti</button></div>' : '')
+            + '<div id="ldMsg"></div></div>'
+            + '<div class="crm-pane" data-pane="a" hidden>'
+            + '<div id="ldTl"><div class="spinner"></div></div>'
+            + (canEdit()? quickBar('lead', l.id) : '')
+            + '</div>'
+            + (av||an ? '<div class="crm-pane" data-pane="v" hidden>'+avnisBlock(av,an)+'</div>' : '');
+          var foot = canEdit() ? '<button class="btn btn-sm" id="ldSave">Išsaugoti</button>'
+              + '<button class="btn btn-sm btn-ghost" id="ldAssign">Priskirti kolegai</button>'
+              + (l.converted_deal_id ? '' : '<button class="btn btn-sm btn-gold" id="ldConv">Konvertuoti į dealą</button>')
+              + (l.converted_deal_id ? '' : '<button class="btn btn-sm btn-danger" id="ldLost">Atmesti</button>')
+              : '<span class="muted">Peržiūros režimas</span>';
+
+          var bg = sheet({ head:head, tabs:tabs, body:body, foot:foot });
+          loadTimeline('lead', l.id, 'ldTl');
+          bindQuick(bg, 'lead', l.id, function(){ loadTimeline('lead', l.id, 'ldTl'); refresh(); });
+
+          var save = function(){
+            var patch = {
+              stage: $$('ldStage').value,
+              owner_id: $$('ldOwner').value,
+              contact_by: $$('ldBy').value ? new Date($$('ldBy').value).toISOString() : null,
+              est_value: $$('ldVal').value === '' ? null : Number($$('ldVal').value),
+              contact_name: $$('ldCName').value.trim() || null,
+              contact_phone: $$('ldCPhone').value.trim() || null,
+              contact_email: $$('ldCEmail').value.trim() || null,
+              source_note: $$('ldSrc').value.trim() || null
+            };
+            return sb.from('crm_leads').update(patch).eq('id', l.id).then(function(r){
+              if(r.error) throw r.error;
+            });
+          };
+          if(canEdit()){
+            $$('ldSave').onclick = function(){
+              $$('ldSave').disabled = true;
+              save().then(function(){ msg('ldMsg','<div class="success">Išsaugota.</div>'); refresh(); })
+                    .catch(function(e){ msg('ldMsg', err(e)); })
+                    .then(function(){ $$('ldSave').disabled = false; });
+            };
+            $$('ldAssign').onclick = function(){ assignSheet('lead', l.id, l.company_name, l.owner_id); };
+            if($$('ldConv')) $$('ldConv').onclick = function(){ convertSheet(l); };
+            if($$('ldLost')) $$('ldLost').onclick = function(){ lostLeadSheet(l); };
+          }
+        }).catch(function(e){ alert('Nepavyko atidaryti: ' + (e.message||e)); });
+      };
+
+      function avnisBlock(av, an){
+        if(!av && !an) return '';
+        var out = '';
+        if(an){
+          out += '<div class="sec-title">AVNIS skelbimas</div><div class="kv">'
+            + kv('Procesas', an.process_stage_title) + kv('Teismas', an.court)
+            + kv('Bylos Nr.', an.case_no) + kv('Teisėjas', an.judge)
+            + kv('Skelbimas nuo', D(an.date_from)) + kv('iki', D(an.date_to)) + '</div>';
+          var c = an.criteria || {};
+          var keys = Object.keys(c);
+          if(keys.length){
+            out += '<div class="sec-title" style="margin-top:14px;">Kriterijai</div><div class="kv">'
+                 + keys.map(function(k){ return kv(k, typeof c[k]==='object' ? JSON.stringify(c[k]) : c[k]); }).join('')
+                 + '</div>';
+          }
+        }
+        if(av){
+          out += '<div class="sec-title" style="margin-top:14px;">Įmonės profilis</div><div class="kv">'
+            + kv('Stebima', av.is_monitored ? 'Taip' : 'Ne')
+            + kv('Transporto priemonių', av.vehicles_total)
+            + kv('Teismų bylų', (av.court_cases||[]).length)
+            + kv('Skolų įrašų', (av.state_debts||[]).length) + '</div>';
+          if(av.rekvizitai_url) out += '<div style="margin-top:8px;"><a href="'+E(av.rekvizitai_url)+'" target="_blank" rel="noopener">Rekvizitai.lt</a></div>';
+        }
+        return out;
+      }
+      function kv(k, v){
+        return '<div><span class="k">'+E(k)+'</span><span class="v2">'+E(v==null||v===''?'—':v)+'</span></div>';
+      }
+
+      /* ---------------- PRISKYRIMAS ---------------- */
+      function assignSheet(type, id, name, curOwner){
+        var body = '<label class="label" style="margin-top:0;">Kam priskirti</label>'
+          + '<select class="select" id="asUser">'+userOpts(curOwner)+'</select>'
+          + '<label class="label">Susisiekti iki</label><input type="datetime-local" class="input" id="asBy">'
+          + '<div class="crm-chips">'
+          + '<button type="button" class="crm-chip" data-due="3">Po 3 val.</button>'
+          + '<button type="button" class="crm-chip" data-due="24">Rytoj</button>'
+          + '<button type="button" class="crm-chip" data-due="72">Po 3 d.</button></div>'
+          + '<label class="label">Pastaba kolegai</label><textarea class="textarea" id="asNote"></textarea>'
+          + '<div id="asMsg"></div>';
+        var bg = sheet({
+          head:'<h3>Priskirti: '+E(name)+'</h3>',
+          body:body,
+          foot:'<button class="btn btn-sm" id="asOk">Priskirti</button>'
+             + '<button class="btn btn-sm btn-ghost" onclick="crmCloseSheet()">Atšaukti</button>'
+        });
+        bg.addEventListener('click', function(e){
+          var c = e.target.closest('.crm-chip[data-due]'); if(!c) return;
+          var d = new Date(Date.now() + Number(c.dataset.due)*3600*1000);
+          if(Number(c.dataset.due) >= 24) d.setHours(9,0,0,0);
+          d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+          $$('asBy').value = d.toISOString().slice(0,16);
+        });
+        $$('asOk').onclick = function(){
+          $$('asOk').disabled = true;
+          rpc('crm_assign', { p_type:type, p_id:id, p_to_user:$$('asUser').value,
+              p_contact_by: $$('asBy').value ? new Date($$('asBy').value).toISOString() : null,
+              p_note: $$('asNote').value.trim() || null })
+            .then(function(){ closeSheet(); refresh(); })
+            .catch(function(e){ msg('asMsg', err(e)); $$('asOk').disabled = false; });
+        };
+      }
+
+      /* ---------------- KONVERSIJA ---------------- */
+      var CONV_ITEMS = [];
+      function itemRows(){
+        return CONV_ITEMS.map(function(it, i){
+          return '<tr><td><select data-i="'+i+'" data-f="service_code">'
+            + '<option value="">(laisva eilutė)</option>'
+            + META.services.map(function(s){ return '<option value="'+s.code+'"'+(s.code===it.service_code?' selected':'')+'>'+E(s.name)+'</option>'; }).join('')
+            + '</select><input data-i="'+i+'" data-f="name" value="'+E(it.name||'')+'" placeholder="Pavadinimas" style="margin-top:4px;"></td>'
+            + '<td style="width:70px;"><input type="number" step="0.01" data-i="'+i+'" data-f="qty" value="'+(it.qty||1)+'"></td>'
+            + '<td style="width:95px;"><input type="number" step="0.01" data-i="'+i+'" data-f="unit_price" value="'+(it.unit_price||0)+'"></td>'
+            + '<td style="width:110px;"><select data-i="'+i+'" data-f="billing_type">'
+            + ['vienkartinis','menesinis','valandinis'].map(function(b){ return '<option value="'+b+'"'+(b===it.billing_type?' selected':'')+'>'+b+'</option>'; }).join('')
+            + '</select></td>'
+            + '<td style="width:70px;"><input type="number" data-i="'+i+'" data-f="months" value="'+(it.months||'')+'" placeholder="mėn."></td>'
+            + '<td style="width:80px;"><input type="number" step="0.01" data-i="'+i+'" data-f="discount_value" value="'+(it.discount_value||0)+'" title="nuolaida %"></td>'
+            + '<td style="width:90px;text-align:right;font-weight:600;">'+EUR(itemNet(it))+'</td>'
+            + '<td style="width:34px;"><button class="btn btn-sm btn-ghost" data-del="'+i+'">×</button></td></tr>';
+        }).join('');
+      }
+      function itemNet(it){
+        var base = Number(it.qty||1) * Number(it.unit_price||0);
+        if(it.billing_type === 'menesinis' && Number(it.months||0) > 0) base *= Number(it.months);
+        base = base * (1 - Number(it.discount_value||0)/100);
+        return Math.max(0, Math.round(base*100)/100);
+      }
+      function convTotal(){ return CONV_ITEMS.reduce(function(a,it){ return a + itemNet(it); }, 0); }
+      function redrawItems(){
+        $$('cvItems').innerHTML = itemRows() || '<tr><td colspan="8" class="muted" style="padding:8px;">Eilučių nėra.</td></tr>';
+        $$('cvTotal').innerHTML = '<b>'+EUR(convTotal())+'</b>';
+      }
+      function convertSheet(l){
+        CONV_ITEMS = (l.service_types||[]).map(function(code){
+          var s = META.services.filter(function(x){ return x.code===code; })[0] || {};
+          return { service_code:code, name:s.name||code, qty:1, unit_price:Number(s.default_price||0),
+                   billing_type:s.billing_type||'vienkartinis', months:null, discount_value:0, vat_rate:Number(s.vat_rate||21) };
+        });
+        var stOpts = stagesOf('deal').filter(function(s){ return !s.is_final; })
+          .map(function(s){ return '<option value="'+s.code+'">'+E(s.name)+'</option>'; }).join('');
+        var body = '<div class="crm-two">'
+          + '<div><label class="label" style="margin-top:0;">Dealo pavadinimas</label><input class="input" id="cvTitle" value="'+E(l.title||l.company_name)+'"></div>'
+          + '<div><label class="label" style="margin-top:0;">Pradinis etapas</label><select class="select" id="cvStage">'+stOpts+'</select></div>'
+          + '<div><label class="label">Numatoma uždarymo data</label><input type="date" class="input" id="cvClose" value="'+(l.expected_close_date||'')+'"></div>'
+          + '<div><label class="label">Tikimybė, %</label><input type="number" min="0" max="100" class="input" id="cvProb" value="50"></div>'
+          + '</div>'
+          + '<div class="sec-title" style="margin-top:16px;">Paslaugos ir kainos</div>'
+          + '<div style="overflow-x:auto;"><table class="crm-items"><thead><tr>'
+          + '<th>Paslauga</th><th>Kiekis</th><th>Kaina</th><th>Tipas</th><th>Mėn.</th><th>Nuol. %</th><th style="text-align:right;">Suma</th><th></th>'
+          + '</tr></thead><tbody id="cvItems"></tbody></table></div>'
+          + '<div style="margin-top:8px;"><button class="btn btn-sm btn-ghost" id="cvAdd">+ Pridėti eilutę</button></div>'
+          + '<div class="crm-sum">Iš viso be PVM: <span id="cvTotal"></span></div>'
+          + '<div id="cvMsg"></div>';
+        var bg = sheet({
+          head:'<h3>Konvertuoti į dealą: '+E(l.company_name)+'</h3>',
+          body:body,
+          foot:'<button class="btn btn-sm btn-gold" id="cvOk">Sukurti dealą</button>'
+             + '<button class="btn btn-sm btn-ghost" onclick="crmCloseSheet()">Atšaukti</button>'
+        });
+        redrawItems();
+        bg.addEventListener('input', function(e){
+          var t = e.target; if(t.dataset.i == null) return;
+          var it = CONV_ITEMS[Number(t.dataset.i)]; if(!it) return;
+          var f = t.dataset.f;
+          it[f] = (f==='name'||f==='service_code'||f==='billing_type') ? t.value
+                : (t.value === '' ? null : Number(t.value));
+          if(f === 'service_code'){
+            var s = META.services.filter(function(x){ return x.code===t.value; })[0];
+            if(s){ it.name = s.name; it.unit_price = Number(s.default_price||it.unit_price||0);
+                   it.billing_type = s.billing_type; it.vat_rate = Number(s.vat_rate||21); }
+          }
+          if(f !== 'name') redrawItems();
+          else $$('cvTotal').innerHTML = '<b>'+EUR(convTotal())+'</b>';
+        });
+        bg.addEventListener('click', function(e){
+          var d = e.target.closest('[data-del]');
+          if(d){ CONV_ITEMS.splice(Number(d.dataset.del),1); redrawItems(); return; }
+          if(e.target.closest('#cvAdd')){
+            CONV_ITEMS.push({ service_code:null, name:'', qty:1, unit_price:0,
+                              billing_type:'vienkartinis', months:null, discount_value:0, vat_rate:21 });
+            redrawItems();
+          }
+        });
+        $$('cvOk').onclick = function(){
+          $$('cvOk').disabled = true;
+          rpc('crm_convert_lead', {
+            p_lead_id:l.id, p_title:$$('cvTitle').value.trim(),
+            p_items:CONV_ITEMS, p_expected_close:$$('cvClose').value||null,
+            p_probability: $$('cvProb').value===''?null:Number($$('cvProb').value),
+            p_stage:$$('cvStage').value
+          }).then(function(d){
+            closeSheet(); refresh();
+            if(d && d.deal_id) window.crmOpenDeal(d.deal_id);
+          }).catch(function(e){ msg('cvMsg', err(e)); $$('cvOk').disabled = false; });
+        };
+      }
+
+      function lostLeadSheet(l){
+        var opts = META.reasons.map(function(r){ return '<option value="'+r.code+'">'+E(r.name)+'</option>'; }).join('');
+        sheet({
+          head:'<h3>Atmesti leadą: '+E(l.company_name)+'</h3>',
+          body:'<label class="label" style="margin-top:0;">Priežastis</label><select class="select" id="llR">'+opts+'</select>'
+             + '<label class="label">Komentaras</label><textarea class="textarea" id="llN"></textarea><div id="llMsg"></div>',
+          foot:'<button class="btn btn-sm btn-danger" id="llOk">Atmesti</button>'
+             + '<button class="btn btn-sm btn-ghost" onclick="crmCloseSheet()">Atšaukti</button>'
+        });
+        $$('llOk').onclick = function(){
+          $$('llOk').disabled = true;
+          sb.from('crm_leads').update({ stage:'atmestas', lost_reason:$$('llR').value,
+              lost_note:$$('llN').value.trim()||null }).eq('id', l.id)
+            .then(function(r){ if(r.error) throw r.error; closeSheet(); refresh(); })
+            .catch(function(e){ msg('llMsg', err(e)); $$('llOk').disabled = false; });
+        };
+      }
+
+      /* ---------------- DEALO KORTELĖ ---------------- */
+      window.crmOpenDeal = function(id){
+        rpc('crm_deal_get', { p_id:id }).then(function(d){
+          var v = d.deal, items = d.items||[], t = d.totals||{};
+          var stOpts = stagesOf('deal').map(function(s){
+            return '<option value="'+s.code+'"'+(s.code===v.stage?' selected':'')+'>'+E(s.name)+'</option>'; }).join('');
+          var head = '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;">'
+            + '<div><h3>'+E(v.company_name)+'</h3><div class="muted">'+E(v.deal_no||'')+' · '+E(v.title||'')
+            + (v.lead_no ? ' · iš '+E(v.lead_no) : '')+'</div></div>'
+            + '<button class="btn btn-ghost btn-sm" onclick="crmCloseSheet()">Uždaryti</button></div>';
+          var tabs = '<button class="sh-tab" data-pane="d" aria-selected="true">Duomenys</button>'
+                   + '<button class="sh-tab" data-pane="i" aria-selected="false">Paslaugos ('+items.length+')</button>'
+                   + '<button class="sh-tab" data-pane="a" aria-selected="false">Veiklos</button>';
+          var body = '<div class="crm-pane" data-pane="d">'
+            + (v.closed_at ? '<div class="'+(v.is_won?'success':'error')+'">'
+                + (v.is_won?'Laimėta ':'Prarasta ')+DT(v.closed_at)
+                + (v.lost_reason ? ' — '+E((META.reasons.filter(function(r){return r.code===v.lost_reason;})[0]||{}).name||v.lost_reason) : '')
+                + (v.won_note||v.lost_note ? '. '+E(v.won_note||v.lost_note) : '')+'</div>' : '')
+            + '<div class="crm-two">'
+            + '<div><label class="label" style="margin-top:0;">Etapas</label><select class="select" id="dlStage" '+(canEdit()&&!v.closed_at?'':'disabled')+'>'+stOpts+'</select></div>'
+            + '<div><label class="label" style="margin-top:0;">Atsakingas</label><select class="select" id="dlOwner" '+(canEdit()?'':'disabled')+'>'+userOpts(v.owner_id)+'</select></div>'
+            + '<div><label class="label">Numatoma uždarymo data</label><input type="date" class="input" id="dlClose" value="'+(v.expected_close_date||'')+'" '+(canEdit()?'':'disabled')+'></div>'
+            + '<div><label class="label">Tikimybė, %</label><input type="number" min="0" max="100" class="input" id="dlProb" value="'+(v.probability==null?'':v.probability)+'" '+(canEdit()?'':'disabled')+'></div>'
+            + '</div>'
+            + '<div class="crm-sum" style="margin-top:14px;">'
+            + '<span>Be PVM: <b>'+EUR(t.net)+'</b></span><span>PVM: <b>'+EUR(t.vat)+'</b></span><span>Su PVM: <b>'+EUR(t.gross)+'</b></span></div>'
+            + '<div class="muted" style="margin-top:10px;">Sukurta '+DT(v.created_at)+' ('+E(v.created_by_name||'')+')'
+            + (v.company_code ? ' · Įm. k. '+E(v.company_code) : '')+'</div>'
+            + '<div id="dlMsg"></div></div>'
+            + '<div class="crm-pane" data-pane="i" hidden>'
+            + '<div style="overflow-x:auto;"><table class="crm-items"><thead><tr>'
+            + '<th>Paslauga</th><th style="text-align:right;">Kiekis</th><th style="text-align:right;">Kaina</th>'
+            + '<th>Tipas</th><th style="text-align:right;">Nuol.</th><th style="text-align:right;">Be PVM</th><th style="text-align:right;">Su PVM</th></tr></thead><tbody>'
+            + (items.length ? items.map(function(i){
+                return '<tr><td>'+E(i.name_snapshot)+(i.months?' ('+i.months+' mėn.)':'')+'</td>'
+                  + '<td style="text-align:right;">'+i.qty+' '+E(i.unit)+'</td>'
+                  + '<td style="text-align:right;">'+EUR(i.unit_price)+'</td>'
+                  + '<td>'+E(i.billing_type)+'</td>'
+                  + '<td style="text-align:right;">'+(Number(i.discount_value)? i.discount_value+(i.discount_type==='percent'?' %':' €') : '—')+'</td>'
+                  + '<td style="text-align:right;font-weight:600;">'+EUR(i.net_amount)+'</td>'
+                  + '<td style="text-align:right;">'+EUR(i.gross_amount)+'</td></tr>';
+              }).join('') : '<tr><td colspan="7" class="muted" style="padding:8px;">Eilučių nėra.</td></tr>')
+            + '</tbody></table></div></div>'
+            + '<div class="crm-pane" data-pane="a" hidden><div id="dlTl"><div class="spinner"></div></div>'
+            + (canEdit()? quickBar('deal', v.id) : '') + '</div>';
+          var foot = canEdit() ? '<button class="btn btn-sm" id="dlSave">Išsaugoti</button>'
+              + '<button class="btn btn-sm btn-ghost" id="dlAssign">Priskirti kolegai</button>'
+              + (v.closed_at ? '' : '<button class="btn btn-sm btn-gold" id="dlWon">Laimėta</button>'
+                              + '<button class="btn btn-sm btn-danger" id="dlLost">Prarasta</button>')
+              : '<span class="muted">Peržiūros režimas</span>';
+
+          var bg = sheet({ head:head, tabs:tabs, body:body, foot:foot });
+          loadTimeline('deal', v.id, 'dlTl');
+          bindQuick(bg, 'deal', v.id, function(){ loadTimeline('deal', v.id, 'dlTl'); refresh(); });
+
+          if(canEdit()){
+            $$('dlSave').onclick = function(){
+              $$('dlSave').disabled = true;
+              sb.from('crm_deals').update({
+                stage: $$('dlStage').value, owner_id: $$('dlOwner').value,
+                expected_close_date: $$('dlClose').value || null,
+                probability: $$('dlProb').value === '' ? null : Number($$('dlProb').value)
+              }).eq('id', v.id).then(function(r){
+                if(r.error) throw r.error;
+                msg('dlMsg','<div class="success">Išsaugota.</div>'); refresh();
+              }).catch(function(e){ msg('dlMsg', err(e)); })
+                .then(function(){ $$('dlSave').disabled = false; });
+            };
+            $$('dlAssign').onclick = function(){ assignSheet('deal', v.id, v.company_name, v.owner_id); };
+            if($$('dlWon'))  $$('dlWon').onclick  = function(){ closeDealSheet(v, true); };
+            if($$('dlLost')) $$('dlLost').onclick = function(){ closeDealSheet(v, false); };
+          }
+        }).catch(function(e){ alert('Nepavyko atidaryti: ' + (e.message||e)); });
+      };
+
+      function closeDealSheet(v, won){
+        var opts = META.reasons.map(function(r){ return '<option value="'+r.code+'">'+E(r.name)+'</option>'; }).join('');
+        sheet({
+          head:'<h3>'+(won?'Laimėtas':'Prarastas')+' dealas: '+E(v.company_name)+'</h3>',
+          body:(won ? '' : '<label class="label" style="margin-top:0;">Praradimo priežastis</label><select class="select" id="cdR">'+opts+'</select>')
+             + '<label class="label">Komentaras'+(won?' (kodėl laimėjome)':'')+'</label><textarea class="textarea" id="cdN"></textarea>'
+             + '<div id="cdMsg"></div>',
+          foot:'<button class="btn btn-sm '+(won?'btn-gold':'btn-danger')+'" id="cdOk">Patvirtinti</button>'
+             + '<button class="btn btn-sm btn-ghost" onclick="crmCloseSheet()">Atšaukti</button>'
+        });
+        $$('cdOk').onclick = function(){
+          $$('cdOk').disabled = true;
+          rpc('crm_close_deal', { p_deal_id:v.id, p_won:won,
+              p_reason: won ? null : $$('cdR').value, p_note: $$('cdN').value.trim() || null })
+            .then(function(){ closeSheet(); closeSheet(); refresh(); })
+            .catch(function(e){ msg('cdMsg', err(e)); $$('cdOk').disabled = false; });
+        };
+      }
+
+      /* ---------------- NAUJAS LEADAS ---------------- */
+      window.crmNewLead = function(prefill){
+        prefill = prefill || {};
+        loadMeta().then(function(){
+          var svcBoxes = META.services.map(function(s){
+            return '<label style="display:inline-flex;align-items:center;gap:5px;margin:0 12px 6px 0;font-size:13px;">'
+              + '<input type="checkbox" class="nlSvc" value="'+s.code+'"> '+E(s.name)+'</label>'; }).join('');
+          var body = '<div class="crm-two">'
+            + '<div><label class="label" style="margin-top:0;">Įmonė</label><input class="input" id="nlName" value="'+E(prefill.company_name||'')+'"></div>'
+            + '<div><label class="label" style="margin-top:0;">Įmonės kodas</label><input class="input" id="nlCode" value="'+E(prefill.company_code||'')+'"></div>'
+            + '<div><label class="label">Pavadinimas / tema</label><input class="input" id="nlTitle" placeholder="pvz. Restruktūrizavimas 2026"></div>'
+            + '<div><label class="label">Atsakingas</label><select class="select" id="nlOwner">'+userOpts(MY_ADMIN_ID)+'</select></div>'
+            + '<div><label class="label">Susisiekti iki</label><input type="datetime-local" class="input" id="nlBy"></div>'
+            + '<div><label class="label">Numatoma vertė, €</label><input type="number" step="0.01" class="input" id="nlVal"></div>'
+            + '<div><label class="label">Kontaktinis asmuo</label><input class="input" id="nlCName"></div>'
+            + '<div><label class="label">Telefonas</label><input class="input" id="nlCPhone"></div>'
+            + '<div><label class="label">El. paštas</label><input class="input" id="nlCEmail"></div>'
+            + '<div><label class="label">Šaltinis</label><input class="input" id="nlSrc" value="'+E(prefill.source_note||'')+'"></div>'
+            + '</div>'
+            + '<label class="label">Paslaugos</label><div>'+svcBoxes+'</div>'
+            + '<label class="label">Pastaba</label><textarea class="textarea" id="nlNote"></textarea>'
+            + '<div id="nlMsg"></div>';
+          var bg = sheet({
+            head:'<h3>Naujas leadas</h3>',
+            body:body,
+            foot:'<button class="btn btn-sm btn-gold" id="nlOk">Sukurti</button>'
+               + '<button class="btn btn-sm btn-ghost" onclick="crmCloseSheet()">Atšaukti</button>'
+          });
+          bg.addEventListener('click', function(e){
+            var c = e.target.closest('.crm-chip[data-due]'); if(!c) return;
+            var d = new Date(Date.now() + Number(c.dataset.due)*3600*1000);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            $$('nlBy').value = d.toISOString().slice(0,16);
+          });
+          $$('nlOk').onclick = function(){
+            var svcs = Array.prototype.slice.call(document.querySelectorAll('.nlSvc:checked')).map(function(x){ return x.value; });
+            $$('nlOk').disabled = true;
+            rpc('crm_create_lead', {
+              p_company_code: $$('nlCode').value.trim() || null,
+              p_company_name: $$('nlName').value.trim() || null,
+              p_title: $$('nlTitle').value.trim() || null,
+              p_services: svcs,
+              p_owner: $$('nlOwner').value,
+              p_contact_by: $$('nlBy').value ? new Date($$('nlBy').value).toISOString() : null,
+              p_source: prefill.source || 'avnis',
+              p_source_note: $$('nlSrc').value.trim() || null,
+              p_announcement_id: prefill.announcement_id || null,
+              p_contact_name: $$('nlCName').value.trim() || null,
+              p_contact_phone: $$('nlCPhone').value.trim() || null,
+              p_contact_email: $$('nlCEmail').value.trim() || null,
+              p_est_value: $$('nlVal').value === '' ? null : Number($$('nlVal').value),
+              p_note: $$('nlNote').value.trim() || null,
+              p_priority: 'normal'
+            }).then(function(d){
+              closeSheet(); refresh();
+              if(prefill.company_code) renderCompanySales(prefill.company_code);
+              if(d && d.id) window.crmOpenLead(d.id);
+            }).catch(function(e){ msg('nlMsg', err(e)); $$('nlOk').disabled = false; });
+          };
+        });
+      };
+
+      /* ---------------- ĮMONĖS 360 (AVNIS kortelėje) ---------------- */
+      window.renderCompanySales = function(code){
+        var host = $$('crmSalesBody'); if(!host) return;
+        if(!code){ host.innerHTML = '<div class="muted">Įmonė be kodo — pardavimų istorija nesiejama.</div>'; return; }
+        host.innerHTML = '<div class="spinner"></div>';
+        loadMeta()
+          .then(function(){ return rpc('crm_company_360', { p_company_code: code }); })
+          .then(function(d){
+            var s = d.stats||{}, leads = d.leads||[], deals = d.deals||[];
+            var html = '<div class="stat-grid" style="margin-bottom:12px;">'
+              + '<div class="stat-card"><div class="v">'+(s.leads_total||0)+'</div><div class="l">Leadai</div></div>'
+              + '<div class="stat-card"><div class="v">'+(s.deals_total||0)+'</div><div class="l">Dealai</div></div>'
+              + '<div class="stat-card"><div class="v">'+(s.won||0)+'/'+(s.lost||0)+'</div><div class="l">Laimėta / prarasta</div></div>'
+              + '<div class="stat-card"><div class="v" style="font-size:19px;">'+EUR(s.won_value)+'</div><div class="l">Laimėta suma</div></div>'
+              + '</div>';
+            if(leads.length) html += '<div class="sec-title">Leadai</div><div class="crm-grid">'+leads.map(leadCard).join('')+'</div>';
+            if(deals.length) html += '<div class="sec-title" style="margin-top:14px;">Dealai</div><div class="crm-grid">'+deals.map(dealCard).join('')+'</div>';
+            if(!leads.length && !deals.length) html += '<div class="crm-empty">Pardavimų įrašų dar nėra.</div>';
+            html += '<div class="sec-title" style="margin-top:16px;">Bendravimo istorija</div>'
+                 + timelineHtml(d.timeline||[]);
+            host.innerHTML = html;
+          })
+          .catch(function(e){ host.innerHTML = err(e); });
+      };
+
+      /* ---------------- SWIPE (telefone) ---------------- */
+      var SWIPED = 0;
+      function bindSwipe(root){
+        var sx=0, sy=0, el=null, moved=false;
+        root.addEventListener('pointerdown', function(e){
+          if(!isPhone() || !canEdit()) return;
+          el = e.target.closest('.crm-card'); if(!el) return;
+          sx = e.clientX; sy = e.clientY; moved = false;
+        });
+        root.addEventListener('pointermove', function(e){
+          if(!el) return;
+          var dx = e.clientX - sx, dy = e.clientY - sy;
+          if(Math.abs(dy) > Math.abs(dx)){ el.classList.remove('sw'); el = null; return; }
+          if(dx > 40){ el.classList.add('sw'); moved = true; }
+          else el.classList.remove('sw');
+        });
+        root.addEventListener('pointerup', function(e){
+          if(!el) return;
+          var dx = e.clientX - sx;
+          var node = el; el = null; node.classList.remove('sw');
+          if(moved && dx > 90){
+            e.preventDefault();
+            SWIPED = Date.now();
+            var lid = node.dataset.lead, did = node.dataset.deal;
+            var row = lid ? LEADS.filter(function(x){ return x.id===lid; })[0]
+                          : DEALS.filter(function(x){ return x.id===did; })[0];
+            if(row) assignSheet(lid?'lead':'deal', row.id, row.company_name, row.owner_id);
+          }
+        });
+        root.addEventListener('pointercancel', function(){ if(el){ el.classList.remove('sw'); el=null; } });
+      }
+
+      /* ---------------- REFRESH ---------------- */
+      var busy = false;
+      function refresh(){
+        if(busy) return Promise.resolve();
+        busy = true;
+        return Promise.all([loadLeads(), loadDeals()])
+          .then(function(){ renderLeads(); renderDeals(); })
+          .catch(function(e){ msg('leadsBody', err(e)); })
+          .then(function(){ busy = false; });
+      }
+      window.crmRefresh = refresh;
+
+      /* ---------------- PRIJUNGIMAS ---------------- */
+      var started = false;
+      function start(){
+        if(started) return Promise.resolve();
+        started = true;
+        return sb.rpc('current_admin_user_id').then(function(r){ MY_ADMIN_ID = r.data || null; })
+          .catch(function(){})
+          .then(loadMeta)
+          .then(function(){ fillFilters(); return refresh(); });
+      }
+
+      // subtabų praplėtimas
+      function addSubtabs(){
+        var bar = $$('submodBar'); if(!bar || bar.dataset.crm) return;
+        bar.dataset.crm = '1';
+        var admTab = bar.querySelector('[data-sub="admins"]');
+        var a = document.createElement('div'); a.className='subtab'; a.dataset.sub='leads'; a.textContent='Leadai';
+        var b = document.createElement('div'); b.className='subtab'; b.dataset.sub='deals'; b.textContent='Dealai';
+        if(admTab){ bar.insertBefore(a, admTab); bar.insertBefore(b, admTab); }
+        else { bar.appendChild(a); bar.appendChild(b); }
+      }
+
+      // applySubmod praplėtimas (be esamo kodo keitimo)
+      var origApply = window.applySubmod || (typeof applySubmod === 'function' ? applySubmod : null);
+      function crmApply(){
+        var m = (typeof SUBMOD !== 'undefined') ? SUBMOD : 'avnis';
+        if(m === 'leads' || m === 'deals'){
+          ['listView','cardView','adminsView'].forEach(function(v){ var n=$$(v); if(n) n.classList.add('hidden'); });
+          $$('leadsView').classList.toggle('hidden', m !== 'leads');
+          $$('dealsView').classList.toggle('hidden', m !== 'deals');
+          start();
+        }else{
+          $$('leadsView').classList.add('hidden');
+          $$('dealsView').classList.add('hidden');
+          if(origApply) origApply();
+        }
+      }
+      try{ applySubmod = crmApply; }catch(_){ }
+      window.applySubmod = crmApply;
+
+      // filtrai ir klikai
+      function bindViews(){
+        [['leadStageF','stage',LF,renderLeads],['leadOwnerF','owner',LF,renderLeads],
+         ['dealStageF','stage',DF,renderDeals],['dealOwnerF','owner',DF,renderDeals]].forEach(function(x){
+          var n = $$(x[0]); if(n) n.addEventListener('change', function(){ x[2][x[1]] = n.value; x[3](); });
+        });
+        [['leadSearch',LF,renderLeads],['dealSearch',DF,renderDeals]].forEach(function(x){
+          var n = $$(x[0]); if(n) n.addEventListener('input', function(){ x[1].q = n.value.trim(); x[2](); });
+        });
+        document.addEventListener('click', function(e){
+          var t = e.target.closest('#leadsView .tab, #dealsView .tab');
+          if(t){
+            var wrap = t.parentNode;
+            wrap.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+            t.classList.add('active');
+            if(wrap.id === 'leadOnlyTabs'){ LF.only = t.dataset.only||''; renderLeads(); }
+            else { DF.only = t.dataset.only||''; renderDeals(); }
+            return;
+          }
+          if(Date.now() - SWIPED < 600) return;
+          var c = e.target.closest('.crm-card'); if(!c || c.classList.contains('sw')) return;
+          if(c.dataset.lead) window.crmOpenLead(c.dataset.lead);
+          else if(c.dataset.deal) window.crmOpenDeal(c.dataset.deal);
+        });
+        var nb = $$('leadNewBtn'); if(nb) nb.onclick = function(){ window.crmNewLead({}); };
+        var rb = $$('crmReload');  if(rb) rb.onclick = function(){ refresh(); };
+        var rb2= $$('crmReload2'); if(rb2) rb2.onclick = function(){ refresh(); };
+        bindSwipe(document.body);
+      }
+
+      // AVNIS įmonės kortelė: „+ Sukurti leadą" + 360 blokas
+      function bindCompanyCard(){
+        var btn = $$('crmNewFromCompany');
+        if(btn) btn.onclick = function(){
+          if(typeof CURRENT === 'undefined' || !CURRENT) return;
+          var an = CURRENT.latest || (CURRENT.anns && CURRENT.anns[0]) || null;
+          window.crmNewLead({ company_code:CURRENT.code, company_name:CURRENT.name,
+                              announcement_id: an ? an.id : null,
+                              source:'avnis', source_note:'AVNIS skelbimas' });
+        };
+        // kai atidaroma įmonės kortelė — perpiešiam pardavimų bloką
+        var cv = $$('cardView');
+        if(cv && !cv.dataset.crmObs){
+          cv.dataset.crmObs = '1';
+          new MutationObserver(function(){
+            if(cv.classList.contains('hidden')) return;
+            if(typeof CURRENT === 'undefined' || !CURRENT) return;
+            if(cv.dataset.crmCode === String(CURRENT.code||'')) return;
+            cv.dataset.crmCode = String(CURRENT.code||'');
+            loadMeta().then(function(){ window.renderCompanySales(CURRENT.code); });
+          }).observe(cv, { attributes:true, attributeFilter:['class'] });
+        }
+      }
+
+      function init(){
+        addSubtabs();
+        bindViews();
+        bindCompanyCard();
+      }
+      if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+      else init();
     })();
 
   </script>

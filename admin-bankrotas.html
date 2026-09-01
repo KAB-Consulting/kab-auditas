@@ -2718,7 +2718,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.sb = sb;   // KAGB: prieiga mobiliajam/komunikacijos sluoksniui
-    const APP_VERSION='2026-09-01-r29';
+    const APP_VERSION='2026-09-01-r30';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -12193,91 +12193,130 @@
         }).catch(function(e){ invMsg('<div class="error">Nepavyko: '+esc3(e.message)+'</div>'); });
       };
 
-      /* ---- 3. PDF (jsPDF, be papildomų bibliotekų) ---- */
+      /* ---- 3. PDF (pdf-lib + DejaVu, pilnas LT raidynas) ---- */
       window.kagbInvPdf=function(id){
         var sb=sbc(); if(!sb) return;
         sb.rpc('invoice_get',{p_invoice_id:id}).then(function(r){
           var d=r&&r.data; if(!d||!d.ok){ invMsg('<div class="error">Nepavyko gauti duomenų.</div>'); return; }
-          drawPdf(d.invoice, d.items||[], d.corrects);
+          drawPdf(d.invoice, d.items||[], d.corrects).catch(function(e){
+            invMsg('<div class="error">Nepavyko suformuoti PDF: '+esc3(e.message||e)+'</div>');
+          });
         });
       };
-      function drawPdf(v, items, corrects){
-        var J = (window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
-        if(!J){ invMsg('<div class="error">PDF biblioteka neužkrauta.</div>'); return; }
-        var doc = new J({unit:'mm',format:'a4'});
-        var L=18, R=192, y=20;
-        function txt(s,x,yy,o){ doc.text(String(s==null?'':s), x, yy, o||undefined); }
-        function line(yy){ doc.setDrawColor(200); doc.line(L,yy,R,yy); }
+      /* Tas pats mechanizmas kaip registracijos žymoje: pdf-lib + fontkit +
+         DejaVuSans (embedFont subset:true). jsPDF standartinis Helvetica
+         neturi ąčęėįšųūž glifų, todėl anksčiau raidės buvo transliteruojamos. */
+      async function drawPdf(v, items, corrects){
+        var PL = window.PDFLib;
+        if(!PL) throw new Error('PDF biblioteka neužkrauta.');
+        var doc = await PL.PDFDocument.create();
+        var f   = await getStampFonts(doc);
+        var T   = f.unicode ? function(s){ return String(s==null?'':s); } : function(s){ return deLT(s); };
+        var page = doc.addPage([595.28, 841.89]);              // A4
+        var MM = 2.834645, PH = 841.89, L = 18, R = 192;
+        var BLACK = PL.rgb(0,0,0), GREY = PL.rgb(0.43,0.43,0.43), LINE = PL.rgb(0.78,0.78,0.78);
 
-        doc.setFont('helvetica','bold'); doc.setFontSize(15);
-        txt(v.kind==='kreditine' ? 'KREDITINE SASKAITA FAKTURA'
-            : (v.seller_vat_code ? 'PVM SASKAITA FAKTURA' : 'SASKAITA FAKTURA'), L, y);
-        doc.setFont('helvetica','normal'); doc.setFontSize(10);
-        y+=7; txt('Serija ir Nr.: '+(v.invoice_no||'(juodrastis)'), L, y);
-        txt('Israsymo data: '+(v.issue_date||''), 120, y);
-        y+=5; txt('Paslaugu laikotarpis: '+(v.period_from||'')+' - '+(v.period_to||''), L, y);
-        txt('Apmoketi iki: '+(v.due_date||''), 120, y);
-        if(v.contract_no){ y+=5; txt('Sutartis Nr.: '+v.contract_no, L, y); }
+        function W(s, size, bold){ return (bold?f.bold:f.reg).widthOfTextAtSize(String(s==null?'':s), size); }
+        function tx(s, xmm, ymm, o){
+          o = o || {};
+          var size = o.size||10, font = o.bold ? f.bold : f.reg, str = T(s);
+          if(!str) return;
+          var x = xmm*MM;
+          if(o.align==='right') x -= font.widthOfTextAtSize(str, size);
+          page.drawText(str, { x:x, y:PH - ymm*MM, size:size, font:font, color:o.color||BLACK });
+        }
+        function line(ymm){
+          page.drawLine({ start:{x:L*MM, y:PH-ymm*MM}, end:{x:R*MM, y:PH-ymm*MM},
+                          thickness:0.5, color:LINE });
+        }
+        function split(s, maxmm, size, bold){
+          var str = T(s); if(!str) return [];
+          var font = bold?f.bold:f.reg, max = maxmm*MM, out = [], cur = '';
+          String(str).split(/\s+/).forEach(function(w){
+            var t = cur ? cur+' '+w : w;
+            if(cur && font.widthOfTextAtSize(t, size) > max){ out.push(cur); cur = w; }
+            else cur = t;
+          });
+          if(cur) out.push(cur);
+          return out;
+        }
+        function clip(s, maxmm, size, bold){
+          var a = split(s, maxmm, size, bold);
+          return a.length ? a[0] : '';
+        }
+
+        var y = 20;
+        tx(v.kind==='kreditine' ? 'KREDITINĖ SĄSKAITA FAKTŪRA'
+           : (v.seller_vat_code ? 'PVM SĄSKAITA FAKTŪRA' : 'SĄSKAITA FAKTŪRA'), L, y, {size:15, bold:true});
+        y+=7; tx('Serija ir Nr.: '+(v.invoice_no||'(juodraštis)'), L, y);
+        tx('Išrašymo data: '+(v.issue_date||''), 120, y);
+        y+=5; tx('Paslaugų laikotarpis: '+(v.period_from||'')+' – '+(v.period_to||''), L, y);
+        tx('Apmokėti iki: '+(v.due_date||''), 120, y);
+        if(v.contract_no){ y+=5; tx('Sutartis Nr.: '+v.contract_no, L, y); }
         if(corrects && corrects.invoice_no){
-          y+=5; doc.setFont('helvetica','bold');
-          txt('Tikslinama saskaita: '+corrects.invoice_no+' ('+corrects.issue_date+')', L, y);
-          doc.setFont('helvetica','normal');
+          y+=5; tx('Tikslinama sąskaita: '+corrects.invoice_no+' ('+corrects.issue_date+')', L, y, {bold:true});
         }
         y+=6; line(y); y+=7;
 
-        doc.setFont('helvetica','bold'); txt('Pardavejas', L, y); txt('Pirkejas', 108, y);
-        doc.setFont('helvetica','normal'); y+=5;
-        var sel=[v.seller_name, v.seller_code?('Im. k. '+v.seller_code):'', v.seller_vat_code?('PVM k. '+v.seller_vat_code):'',
+        tx('Pardavėjas', L, y, {bold:true}); tx('Pirkėjas', 108, y, {bold:true});
+        y+=5;
+        var sel=[v.seller_name, v.seller_code?('Įm. k. '+v.seller_code):'', v.seller_vat_code?('PVM k. '+v.seller_vat_code):'',
                  v.seller_address, v.seller_iban?('A. s. '+v.seller_iban):'', v.seller_bank].filter(Boolean);
-        var buy=[v.buyer_name, v.buyer_code?('Im. k. '+v.buyer_code):'', v.buyer_vat_code?('PVM k. '+v.buyer_vat_code):'',
+        var buy=[v.buyer_name, v.buyer_code?('Įm. k. '+v.buyer_code):'', v.buyer_vat_code?('PVM k. '+v.buyer_vat_code):'',
                  v.buyer_address].filter(Boolean);
         var n=Math.max(sel.length,buy.length);
         for(var i=0;i<n;i++){
-          if(sel[i]) txt(doc.splitTextToSize(sel[i],80)[0], L, y+i*4.6);
-          if(buy[i]) txt(doc.splitTextToSize(buy[i],80)[0], 108, y+i*4.6);
+          if(sel[i]) tx(clip(sel[i], 80, 10), L, y+i*4.6);
+          if(buy[i]) tx(clip(buy[i], 80, 10), 108, y+i*4.6);
         }
         y += n*4.6 + 4; line(y); y+=7;
 
-        doc.setFont('helvetica','bold'); doc.setFontSize(9);
-        txt('Pavadinimas', L, y); txt('Kiekis', 118, y, {align:'right'});
-        txt('Kaina', 140, y, {align:'right'}); txt('PVM %', 158, y, {align:'right'});
-        txt('Suma', 192, y, {align:'right'});
-        doc.setFont('helvetica','normal'); y+=2; line(y); y+=5;
+        tx('Pavadinimas', L, y, {size:9, bold:true});
+        tx('Kiekis', 118, y, {size:9, bold:true, align:'right'});
+        tx('Kaina', 140, y, {size:9, bold:true, align:'right'});
+        tx('PVM %', 158, y, {size:9, bold:true, align:'right'});
+        tx('Suma', 192, y, {size:9, bold:true, align:'right'});
+        y+=2; line(y); y+=5;
         items.forEach(function(it){
-          var nm = doc.splitTextToSize(String(it.name||''), 92);
-          txt(nm[0], L, y);
-          txt(Number(it.qty||1).toFixed(2), 118, y, {align:'right'});
-          txt(Number(it.unit_price||0).toFixed(2), 140, y, {align:'right'});
-          txt(Number(it.vat_rate||0)?Number(it.vat_rate).toFixed(0):'-', 158, y, {align:'right'});
-          txt(Number(it.net_amount||0).toFixed(2), 192, y, {align:'right'});
-          y += (nm.length>1?4.4*nm.length:5);
+          var nm = split(String(it.name||''), 78, 9);
+          nm.forEach(function(l,k){ tx(l, L, y+k*4.4, {size:9}); });
+          tx(Number(it.qty||1).toFixed(2), 118, y, {size:9, align:'right'});
+          tx(Number(it.unit_price||0).toFixed(2), 140, y, {size:9, align:'right'});
+          tx(Number(it.vat_rate||0)?Number(it.vat_rate).toFixed(0):'–', 158, y, {size:9, align:'right'});
+          tx(Number(it.net_amount||0).toFixed(2), 192, y, {size:9, align:'right'});
+          y += (nm.length>1 ? 4.4*nm.length : 5);
         });
         y+=1; line(y); y+=6;
 
-        doc.setFontSize(10);
-        txt('Suma be PVM:', 150, y, {align:'right'}); txt(Number(v.subtotal||0).toFixed(2)+' EUR', 192, y, {align:'right'});
+        tx('Suma be PVM:', 150, y, {align:'right'});
+        tx(Number(v.subtotal||0).toFixed(2)+' EUR', 192, y, {align:'right'});
         if(Number(v.vat_total||0)){
-          y+=5; txt('PVM:', 150, y, {align:'right'}); txt(Number(v.vat_total).toFixed(2)+' EUR', 192, y, {align:'right'});
+          y+=5; tx('PVM:', 150, y, {align:'right'});
+          tx(Number(v.vat_total).toFixed(2)+' EUR', 192, y, {align:'right'});
         }
-        y+=6; doc.setFont('helvetica','bold'); doc.setFontSize(11);
-        txt('Iš viso mokėti:'.replace(/[^\x00-\x7F]/g,function(c){return {'š':'s','ė':'e'}[c]||c;}), 150, y, {align:'right'});
-        txt(Number(v.total||0).toFixed(2)+' EUR', 192, y, {align:'right'});
-        doc.setFont('helvetica','normal'); doc.setFontSize(9);
+        y+=6;
+        tx('Iš viso mokėti:', 150, y, {size:11, bold:true, align:'right'});
+        tx(Number(v.total||0).toFixed(2)+' EUR', 192, y, {size:11, bold:true, align:'right'});
 
-        if(v.vat_note){ y+=9; doc.splitTextToSize(v.vat_note.replace(/[ąčęėįšųūž]/g,function(c){
-          return {'ą':'a','č':'c','ę':'e','ė':'e','į':'i','š':'s','ų':'u','ū':'u','ž':'z'}[c]; }), 174)
-          .forEach(function(l,k){ txt(l, L, y+k*4.2); }); y += 4; }
-        if(v.seller_admin_line){
-          y+=10; doc.setTextColor(110);
-          doc.splitTextToSize(v.seller_admin_line.replace(/[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g,function(c){
-            return {'ą':'a','č':'c','ę':'e','ė':'e','į':'i','š':'s','ų':'u','ū':'u','ž':'z',
-                    'Ą':'A','Č':'C','Ę':'E','Ė':'E','Į':'I','Š':'S','Ų':'U','Ū':'U','Ž':'Z'}[c]; }), 174)
-            .forEach(function(l,k){ txt(l, L, y+k*4.2); });
-          doc.setTextColor(0);
+        if(v.vat_note){
+          y+=9; split(v.vat_note, 174, 9).forEach(function(l,k){ tx(l, L, y+k*4.2, {size:9}); });
+          y += 4;
         }
-        y = 282; doc.setFontSize(8); doc.setTextColor(140);
-        txt('Saskaita israsyta elektroniniu budu, parasas neprivalomas (PVM istatymo 80 str.).', L, y);
-        doc.save((v.invoice_no||'saskaita')+'.pdf');
+        if(v.seller_admin_line){
+          y+=10; split(v.seller_admin_line, 174, 9).forEach(function(l,k){
+            tx(l, L, y+k*4.2, {size:9, color:GREY});
+          });
+        }
+        tx('Sąskaita išrašyta elektroniniu būdu, parašas neprivalomas (PVM įstatymo 80 str.).',
+           L, 282, {size:8, color:GREY});
+
+        var bytes = await doc.save();
+        var blob = new Blob([bytes], {type:'application/pdf'});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = (v.invoice_no||'saskaita')+'.pdf';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
       }
 
       /* ---- 4. Paruošti sąskaitas ---- */
