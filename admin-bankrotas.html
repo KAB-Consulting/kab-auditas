@@ -375,6 +375,66 @@
     .dev-locked{ opacity:.45; cursor:not-allowed; }
     #devFullToggle{ cursor:pointer; }
 
+    /* ============ KAGB komunikacijos sluoksnis (2 etapas) ============ */
+    .kagb-cbtn{ display:inline-flex; align-items:center; justify-content:center; gap:5px;
+      min-width:40px; height:40px; padding:0 10px; margin-left:6px; flex:0 0 auto;
+      border:1px solid var(--bd); border-radius:var(--r-sm,4px); background:#fff;
+      color:var(--navy); cursor:pointer; font-size:12.5px; font-weight:600; }
+    .kagb-cbtn:hover{ background:var(--hov,#F2F5F8); }
+    .kagb-cbtn[disabled]{ opacity:.35; cursor:not-allowed; }
+    .kagb-inrow{ display:flex; align-items:flex-end; gap:0; }
+    .kagb-inrow > .input{ flex:1 1 auto; min-width:0; }
+
+    #kagbSheetBg{ position:fixed; inset:0; background:rgba(23,38,54,.45); z-index:300;
+      display:none; align-items:flex-end; justify-content:center; }
+    #kagbSheetBg.on{ display:flex; }
+    #kagbSheet{ background:#fff; width:100%; max-width:520px; border-radius:12px 12px 0 0;
+      padding:16px 16px 22px; max-height:88vh; overflow:auto; box-shadow:0 -6px 30px rgba(11,30,63,.28); }
+    #kagbSheet h3{ font-size:15px; font-weight:600; color:var(--ink); margin:0 0 2px; }
+    #kagbSheet .sub{ font-size:12px; color:var(--muted); margin-bottom:12px; }
+    .kagb-opt{ display:flex; align-items:center; gap:10px; width:100%; min-height:52px;
+      padding:0 14px; margin-bottom:8px; border:1px solid var(--bd); border-radius:8px;
+      background:#fff; cursor:pointer; font-size:14.5px; color:var(--ink); text-align:left;
+      text-decoration:none; }
+    .kagb-opt:hover{ background:var(--hov,#F2F5F8); }
+    .kagb-opt b{ font-weight:600; }
+    .kagb-chips{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 12px; }
+    .kagb-chip{ padding:8px 12px; border:1px solid var(--bd); border-radius:20px;
+      background:#fff; cursor:pointer; font-size:13px; min-height:38px; }
+    .kagb-chip.sel{ background:var(--navy); border-color:var(--navy); color:#fff; }
+    @media (min-width:768px){
+      #kagbSheetBg{ align-items:center; }
+      #kagbSheet{ border-radius:10px; max-width:560px; }
+    }
+
+    /* chronologija */
+    .kagb-tl{ margin-top:6px; }
+    .kagb-tl-i{ display:flex; gap:9px; padding:8px 0; border-bottom:1px solid var(--bd2); }
+    .kagb-tl-i:last-child{ border-bottom:0; }
+    .kagb-tl-ic{ flex:0 0 26px; height:26px; border-radius:50%; background:#EEF2F7;
+      display:flex; align-items:center; justify-content:center; color:var(--navy); font-size:12px; }
+    .kagb-tl-b{ flex:1 1 auto; min-width:0; }
+    .kagb-tl-m{ font-size:11px; color:var(--faint); }
+    .kagb-tl-t{ font-size:13px; color:var(--ink); }
+
+    /* Siandien */
+    #kagbTodayBg{ position:fixed; inset:0; background:rgba(23,38,54,.45); z-index:290;
+      display:none; align-items:flex-start; justify-content:center; overflow:auto; padding:0; }
+    #kagbTodayBg.on{ display:flex; }
+    #kagbToday{ background:var(--bg,#F5F6F8); width:100%; max-width:760px; min-height:100vh; padding:14px 14px 40px; }
+    .kagb-tgroup{ font-size:11px; text-transform:uppercase; letter-spacing:.04em;
+      color:var(--faint); margin:14px 0 6px; }
+    .kagb-task{ background:#fff; border:1px solid var(--bd); border-radius:8px;
+      padding:10px 12px; margin-bottom:8px; }
+    .kagb-task.late{ border-color:var(--err-bd,#F2C7C2); background:#FDF1F0; }
+    .kagb-task .h{ font-size:13.5px; color:var(--ink); }
+    .kagb-task .m{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+    .kagb-task .a{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    #kagbTodayBadge{ display:inline-block; min-width:18px; padding:0 5px; margin-left:auto;
+      background:var(--err,#B3261E); color:#fff; border-radius:9px; font-size:11px;
+      line-height:18px; text-align:center; }
+    @media (min-width:768px){ #kagbToday{ min-height:auto; margin:40px 0; border-radius:10px; border:1px solid var(--bd); } }
+
     /* --- Soninio meniu uzdarymas siaurame ekrane --- */
     #kagbBackdrop{ position:fixed; inset:0; background:rgba(23,38,54,.42); z-index:66; display:none; }
     #kagbSbClose{ display:none; }
@@ -2616,7 +2676,8 @@
     const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const APP_VERSION='2026-08-31-r27';
+    window.sb = sb;   // KAGB: prieiga mobiliajam/komunikacijos sluoksniui
+    const APP_VERSION='2026-08-31-r28';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -11537,6 +11598,352 @@
         });
       }
       if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
+    })();
+
+  
+    /* ============ KAGB komunikacijos sluoksnis v1 (2 etapas, 2026-08-31) ============
+       - prie telefono / el. pašto laukų prideda veiksmų mygtukus
+       - paspaudimas iškart fiksuojamas kaip veikla (crm_log_activity)
+       - grįžus į sistemą klausiama rezultato + kito veiksmo
+       - kortelėje rodoma bendravimo chronologija
+       - „Šiandien“ langas su užduotimis iš visų šaltinių
+       Sluoksnis adityvus: esamos logikos nekeičia. */
+    (function(){
+      function sbc(){ return window.sb || null; }
+      function $id(x){ return document.getElementById(x); }
+      function esc2(t){ var d=document.createElement('div'); d.textContent=(t==null?'':String(t)); return d.innerHTML; }
+      function digits(p){ return String(p||'').replace(/[^0-9+]/g,''); }
+      function intl(p){
+        var v=digits(p); if(!v) return '';
+        if(v.charAt(0)==='+') return v;
+        if(v.indexOf('370')===0) return '+'+v;
+        if(v.charAt(0)==='8' && v.length>=9) return '+370'+v.substring(1);
+        return '+'+v;
+      }
+      function nowIso(){ return new Date().toISOString(); }
+
+      /* --- kontaktų laukai: kokia esybė ir kaip rasti jos id --- */
+      var FIELDS = [
+        { inp:'credPhore_placeholder', type:'phone' }
+      ];
+      FIELDS = [
+        { inp:'credPhone',  type:'phone', ent:'creditor', id:function(){ return ($id('credId')||{}).value||''; },  nm:function(){ return ($id('credName')||{}).value||''; } },
+        { inp:'credEmail',  type:'email', ent:'creditor', id:function(){ return ($id('credId')||{}).value||''; },  nm:function(){ return ($id('credName')||{}).value||''; } },
+        { inp:'dbPhone',    type:'phone', ent:'debtor',   id:function(){ return ((($id('debtorModal')||{}).dataset)||{}).entId||''; }, nm:function(){ return ($id('dbName')||{}).value||''; } },
+        { inp:'dbEmail',    type:'email', ent:'debtor',   id:function(){ return ((($id('debtorModal')||{}).dataset)||{}).entId||''; }, nm:function(){ return ($id('dbName')||{}).value||''; } },
+        { inp:'dbRepPhone', type:'phone', ent:'debtor',   id:function(){ return ((($id('debtorModal')||{}).dataset)||{}).entId||''; }, nm:function(){ return (($id('dbRepName')||{}).value||'')+' (atstovas)'; } },
+        { inp:'lsCpPhone',  type:'phone', ent:'lease',    id:function(){ return ($id('lsId')||{}).value||''; },    nm:function(){ return ($id('lsCpName')||{}).value||''; } },
+        { inp:'lsCpEmail',  type:'email', ent:'lease',    id:function(){ return ($id('lsId')||{}).value||''; },    nm:function(){ return ($id('lsCpName')||{}).value||''; } }
+      ];
+
+      /* --- veiklos įrašymas --- */
+      function logAct(o){
+        var sb=sbc(); if(!sb) return Promise.resolve(null);
+        var links=[]; if(o.ent && o.entId) links.push({ t:o.ent, id:o.entId, primary:true });
+        return sb.rpc('crm_log_activity', {
+          p_kind: o.kind, p_links: links, p_channel: o.channel||null,
+          p_subject: o.subject||null, p_body: o.body||null, p_outcome: o.outcome||null,
+          p_occurred_at: o.occurred_at||nowIso(), p_due_at: o.due_at||null,
+          p_assignee: null, p_meta: o.meta||{}
+        }).then(function(r){ return (r&&r.data)?r.data:null; }).catch(function(){ return null; });
+      }
+
+      /* --- apatinis lapas --- */
+      function sheet(html){
+        var bg=$id('kagbSheetBg');
+        if(!bg){
+          bg=document.createElement('div'); bg.id='kagbSheetBg';
+          bg.innerHTML='<div id="kagbSheet"></div>';
+          bg.addEventListener('click',function(e){ if(e.target===bg) closeSheet(); });
+          document.body.appendChild(bg);
+        }
+        $id('kagbSheet').innerHTML=html;
+        bg.classList.add('on');
+      }
+      function closeSheet(){ var bg=$id('kagbSheetBg'); if(bg) bg.classList.remove('on'); }
+      window.kagbCloseSheet=closeSheet;
+
+      /* --- rezultato klausimas grįžus --- */
+      var PENDING=null;
+      function askOutcome(){
+        var p=PENDING; if(!p) return; PENDING=null;
+        var opts = (p.kind==='call')
+          ? [['pavyko','Pavyko'],['neatsiliepe','Neatsiliepė'],['perskambins','Perskambins'],['atsisake','Atsisakė']]
+          : [['issiusta','Išsiunčiau'],['neissiusta','Neišsiunčiau']];
+        sheet(
+          '<h3>Kaip pavyko?</h3><div class="sub">'+esc2(p.who||'')+(p.value?' &middot; '+esc2(p.value):'')+'</div>'+
+          '<div class="kagb-chips" id="kagbOutChips">'+
+            opts.map(function(o){ return '<div class="kagb-chip" data-v="'+o[0]+'">'+o[1]+'</div>'; }).join('')+
+          '</div>'+
+          '<label class="label">Pastaba (kas sutarta)</label>'+
+          '<textarea class="textarea" id="kagbOutNote" rows="3" placeholder="pvz. sutarė apmokėti iki rugsėjo 15 d."></textarea>'+
+          '<label class="label" style="margin-top:10px;">Kitas veiksmas</label>'+
+          '<div class="kagb-chips" id="kagbNextChips">'+
+            '<div class="kagb-chip" data-d="1">Rytoj</div>'+
+            '<div class="kagb-chip" data-d="3">Po 3 d.</div>'+
+            '<div class="kagb-chip" data-d="7">Kitą savaitę</div>'+
+            '<div class="kagb-chip" data-d="30">Po mėnesio</div>'+
+          '</div>'+
+          '<input class="input" type="date" id="kagbNextDate">'+
+          '<input class="input" id="kagbNextNote" style="margin-top:6px;" placeholder="ką reikės padaryti (nebūtina)">'+
+          '<div style="display:flex;gap:8px;margin-top:14px;">'+
+            '<button class="btn" style="flex:1;" id="kagbOutSave">Išsaugoti</button>'+
+            '<button class="btn btn-ghost" id="kagbOutSkip">Praleisti</button>'+
+          '</div>'
+        );
+        var sel=null;
+        $id('kagbOutChips').addEventListener('click',function(e){
+          var c=e.target.closest('.kagb-chip'); if(!c)return;
+          Array.prototype.forEach.call(this.children,function(x){ x.classList.remove('sel'); });
+          c.classList.add('sel'); sel=c.getAttribute('data-v');
+        });
+        $id('kagbNextChips').addEventListener('click',function(e){
+          var c=e.target.closest('.kagb-chip'); if(!c)return;
+          Array.prototype.forEach.call(this.children,function(x){ x.classList.remove('sel'); });
+          c.classList.add('sel');
+          var d=new Date(); d.setDate(d.getDate()+Number(c.getAttribute('data-d')||1));
+          $id('kagbNextDate').value=d.toISOString().slice(0,10);
+        });
+        $id('kagbOutSkip').onclick=closeSheet;
+        $id('kagbOutSave').onclick=function(){
+          var note=$id('kagbOutNote').value.trim();
+          var nd=$id('kagbNextDate').value;
+          var nn=$id('kagbNextNote').value.trim();
+          var jobs=[];
+          jobs.push(logAct({ kind:(p.kind==='call'?'call':'email'), channel:p.channel, ent:p.ent, entId:p.entId,
+            subject:((p.kind==='call'?'Skambutis: ':'Laiškas: ')+(p.who||'')), body:(note||null), outcome:(sel||null),
+            meta:{ kontaktas:(p.value||''), rezultatas:true } }));
+          if(nd){
+            jobs.push(logAct({ kind:'task', ent:p.ent, entId:p.entId,
+              subject:(nn||('Susisiekti: '+(p.who||''))), due_at:new Date(nd+'T09:00:00').toISOString() }));
+          }
+          Promise.all(jobs).then(function(){ closeSheet(); refreshTimeline(); refreshBadge(); });
+        };
+      }
+      document.addEventListener('visibilitychange',function(){
+        if(document.visibilityState==='visible' && PENDING){
+          if(Date.now()-PENDING.t < 30*60*1000) setTimeout(askOutcome,350); else PENDING=null;
+        }
+      });
+
+      /* --- telefono lapas --- */
+      function phoneSheet(cfg, val){
+        var num=intl(val), wa=num.replace('+','');
+        var who=(cfg.nm?cfg.nm():'');
+        function go(channel, href){
+          PENDING={ kind:'call', channel:channel, ent:cfg.ent, entId:(cfg.id?cfg.id():''), who:who, value:num, t:Date.now() };
+          logAct({ kind:'call', channel:channel, ent:cfg.ent, entId:(cfg.id?cfg.id():''),
+                   subject:('Inicijuotas skambutis ('+channel+'): '+who), body:num,
+                   meta:{ numeris:num, kanalas:channel } });
+          closeSheet();
+          window.location.href=href;
+        }
+        sheet(
+          '<h3>'+esc2(who||'Kontaktas')+'</h3><div class="sub">'+esc2(num)+'</div>'+
+          '<button class="kagb-opt" id="ko1"><b>Skambinti</b> <span style="color:#7B8C9B;">abonentiniu ryšiu</span></button>'+
+          '<button class="kagb-opt" id="ko2"><b>WhatsApp</b></button>'+
+          '<button class="kagb-opt" id="ko3"><b>Viber</b></button>'+
+          '<button class="kagb-opt" id="ko4"><b>SMS</b></button>'+
+          '<button class="kagb-opt" id="ko5">Kopijuoti numerį</button>'+
+          '<button class="btn btn-ghost" style="width:100%;margin-top:6px;" onclick="kagbCloseSheet()">Atsisakyti</button>'+
+          '<div class="sub" style="margin:10px 0 0;">Paspaudimas fiksuojamas kaip inicijuotas skambutis; grįžus bus paklausta rezultato.</div>'
+        );
+        $id('ko1').onclick=function(){ go('telefonas','tel:'+num); };
+        $id('ko2').onclick=function(){ go('whatsapp','https://wa.me/'+wa); };
+        $id('ko3').onclick=function(){ go('viber','viber://chat?number='+encodeURIComponent(num)); };
+        $id('ko4').onclick=function(){ go('sms','sms:'+num); };
+        $id('ko5').onclick=function(){ try{ navigator.clipboard.writeText(num); }catch(e){} closeSheet(); };
+      }
+
+      /* --- el. pašto lapas --- */
+      function mailSheet(cfg, val){
+        var who=(cfg.nm?cfg.nm():'');
+        sheet(
+          '<h3>'+esc2(who||'Kontaktas')+'</h3><div class="sub">'+esc2(val)+'</div>'+
+          '<label class="label">Tema</label><input class="input" id="kagbMailSubj" placeholder="nebūtina">'+
+          '<button class="kagb-opt" style="margin-top:10px;" id="km1"><b>Rašyti laišką</b> <span style="color:#7B8C9B;">atsidarys pašto programa</span></button>'+
+          '<button class="kagb-opt" id="km2">Kopijuoti adresą</button>'+
+          '<button class="btn btn-ghost" style="width:100%;margin-top:6px;" onclick="kagbCloseSheet()">Atsisakyti</button>'
+        );
+        $id('km1').onclick=function(){
+          var subj=$id('kagbMailSubj').value.trim();
+          PENDING={ kind:'email', channel:'mailto', ent:cfg.ent, entId:(cfg.id?cfg.id():''), who:who, value:val, t:Date.now() };
+          logAct({ kind:'email', channel:'mailto', ent:cfg.ent, entId:(cfg.id?cfg.id():''),
+                   subject:('Inicijuotas laiškas: '+(subj||who)), body:val, meta:{ adresas:val, tema:subj } });
+          closeSheet();
+          window.location.href='mailto:'+encodeURIComponent(val)+(subj?('?subject='+encodeURIComponent(subj)):'');
+        };
+        $id('km2').onclick=function(){ try{ navigator.clipboard.writeText(val); }catch(e){} closeSheet(); };
+      }
+
+      /* --- mygtukų įdėjimas prie laukų --- */
+      function initContacts(){
+        FIELDS.forEach(function(cfg){
+          var inp=$id(cfg.inp); if(!inp || inp.getAttribute('data-kagb-c')) return;
+          inp.setAttribute('data-kagb-c','1');
+          var wrap=document.createElement('span'); wrap.className='kagb-inrow';
+          inp.parentNode.insertBefore(wrap, inp); wrap.appendChild(inp);
+          var b=document.createElement('button');
+          b.type='button'; b.className='kagb-cbtn';
+          b.title=(cfg.type==='phone'?'Skambinti / rašyti žinutę':'Rašyti laišką');
+          b.innerHTML=(cfg.type==='phone')
+            ? '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+            : '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/></svg>';
+          b.onclick=function(){
+            var v=(inp.value||'').trim();
+            if(!v){ alert(cfg.type==='phone'?'Telefono numeris neįvestas.':'El. pašto adresas neįvestas.'); return; }
+            if(cfg.type==='phone') phoneSheet(cfg,v); else mailSheet(cfg,v);
+          };
+          wrap.appendChild(b);
+        });
+      }
+
+      /* --- chronologija kortelėse --- */
+      var TL = [
+        { modal:'credModal',   ent:'creditor', id:function(){ return ($id('credId')||{}).value||''; } },
+        { modal:'debtorModal', ent:'debtor',   id:function(){ return ((($id('debtorModal')||{}).dataset)||{}).entId||''; } },
+        { modal:'leaseModal',  ent:'lease',    id:function(){ return ($id('lsId')||{}).value||''; } }
+      ];
+      var KIND_LBL={ call:'Skambutis', email:'Laiškas', sms:'SMS', note:'Pastaba', task:'Užduotis',
+                     meeting:'Susitikimas', document:'Dokumentas', file:'Failas', system:'Sistema' };
+      function tlHtml(rows){
+        if(!rows||!rows.length) return '<div class="muted" style="font-size:12px;padding:6px 0;">Bendravimo įrašų dar nėra.</div>';
+        return '<div class="kagb-tl">'+rows.map(function(a){
+          var d=new Date(a.occurred_at||a.due_at||Date.now());
+          var when=d.toISOString().slice(0,16).replace('T',' ');
+          return '<div class="kagb-tl-i"><div class="kagb-tl-ic">'+esc2((KIND_LBL[a.kind]||'?').charAt(0))+'</div><div class="kagb-tl-b">'+
+            '<div class="kagb-tl-m">'+esc2(when)+' &middot; '+esc2(a.created_by_name||'')+
+              (a.outcome?(' &middot; '+esc2(a.outcome)):'')+'</div>'+
+            '<div class="kagb-tl-t">'+esc2(a.subject||KIND_LBL[a.kind]||'')+'</div>'+
+            (a.body?('<div class="kagb-tl-m" style="margin-top:2px;">'+esc2(a.body)+'</div>'):'')+
+          '</div></div>';
+        }).join('')+'</div>';
+      }
+      function activeTl(){
+        for(var i=0;i<TL.length;i++){
+          var m=$id(TL[i].modal);
+          if(m && !m.classList.contains('hidden') && getComputedStyle(m).display!=='none') return TL[i];
+        }
+        return null;
+      }
+      function refreshTimeline(){
+        var t=activeTl(); if(!t) return;
+        var m=$id(t.modal); var box=m.querySelector('.kagb-tlwrap');
+        if(!box){
+          box=document.createElement('div'); box.className='kagb-tlwrap'; box.style.marginTop='14px';
+          box.innerHTML='<div class="sec-title">Bendravimo istorija</div><div class="kagb-tlbody"></div>';
+          var inner=m.querySelector('.modal')||m; inner.appendChild(box);
+        }
+        var eid=t.id(); var body=box.querySelector('.kagb-tlbody');
+        if(!eid){ body.innerHTML='<div class="muted" style="font-size:12px;">Išsaugokite kortelę — tada matysis istorija.</div>'; return; }
+        if(box.getAttribute('data-eid')===eid && box.getAttribute('data-fresh')==='1') return;
+        box.setAttribute('data-eid',eid); box.setAttribute('data-fresh','1');
+        var sb=sbc(); if(!sb) return;
+        sb.rpc('crm_timeline',{ p_entity_type:t.ent, p_entity_id:eid, p_limit:50 })
+          .then(function(r){ body.innerHTML=tlHtml(r&&r.data); })
+          .catch(function(){ body.innerHTML='<div class="muted" style="font-size:12px;">Istorijos nepavyko užkrauti.</div>'; });
+      }
+      function invalidateTimeline(){
+        document.querySelectorAll('.kagb-tlwrap').forEach(function(b){ b.setAttribute('data-fresh','0'); });
+        refreshTimeline();
+      }
+      window.kagbRefreshTimeline=invalidateTimeline;
+
+      /* --- „Šiandien“ --- */
+      function todayHtml(rows){
+        var g={ pradelsta:[], siandien:[], artimiausios:[] };
+        (rows||[]).forEach(function(r){ (g[r.bucket]||g.artimiausios).push(r); });
+        function sec(title, arr, late){
+          if(!arr.length) return '';
+          return '<div class="kagb-tgroup">'+title+' ('+arr.length+')</div>'+arr.map(function(t){
+            return '<div class="kagb-task'+(late?' late':'')+'" data-src="'+esc2(t.src)+'" data-id="'+esc2(t.id)+'">'+
+              '<div class="h">'+esc2(t.note||'(be aprašymo)')+'</div>'+
+              '<div class="m">'+esc2(t.due_on||'')+' &middot; '+esc2(t.sritis||'')+
+                (t.case_name?(' &middot; '+esc2(t.case_name)):'')+'</div>'+
+              '<div class="a">'+
+                '<button class="btn btn-sm btn-ghost" data-act="vykdoma">Vykdoma</button>'+
+                '<button class="btn btn-sm" data-act="ivykdyta">Įvykdyta</button>'+
+              '</div></div>';
+          }).join('');
+        }
+        var html=sec('Pradelsta', g.pradelsta, true)+sec('Šiandien', g.siandien)+sec('Artimiausios dienos', g.artimiausios);
+        return html || '<div class="muted" style="padding:20px 0;text-align:center;">Artimiausių užduočių nėra.</div>';
+      }
+      function openToday(){
+        var bg=$id('kagbTodayBg');
+        if(!bg){
+          bg=document.createElement('div'); bg.id='kagbTodayBg';
+          bg.innerHTML='<div id="kagbToday">'+
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">'+
+              '<div style="font-size:16px;font-weight:600;color:var(--ink);">Šiandien</div>'+
+              '<button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="kagbCloseToday()">Uždaryti</button>'+
+            '</div>'+
+            '<div class="muted" style="font-size:12px;">Pradelsti ir artimiausi priminimai iš visų bylų.</div>'+
+            '<div id="kagbTodayBody" style="margin-top:8px;">Kraunama…</div></div>';
+          bg.addEventListener('click',function(e){ if(e.target===bg) closeToday(); });
+          bg.addEventListener('click',function(e){
+            var b=e.target.closest('button[data-act]'); if(!b) return;
+            var card=b.closest('.kagb-task'); if(!card) return;
+            var sb=sbc(); if(!sb) return;
+            b.disabled=true;
+            sb.rpc('kagb_task_update',{ p_src:card.getAttribute('data-src'), p_id:card.getAttribute('data-id'),
+                                        p_state:b.getAttribute('data-act') })
+              .then(function(){ loadToday(); refreshBadge(); })
+              .catch(function(){ b.disabled=false; });
+          });
+          document.body.appendChild(bg);
+        }
+        bg.classList.add('on'); loadToday();
+      }
+      function closeToday(){ var b=$id('kagbTodayBg'); if(b) b.classList.remove('on'); }
+      window.kagbCloseToday=closeToday;
+      function loadToday(){
+        var sb=sbc(); if(!sb) return;
+        sb.rpc('kagb_today_feed',{ p_days_ahead:7 }).then(function(r){
+          var el=$id('kagbTodayBody'); if(el) el.innerHTML=todayHtml(r&&r.data);
+        }).catch(function(){ var el=$id('kagbTodayBody'); if(el) el.innerHTML='<div class="muted">Nepavyko užkrauti.</div>'; });
+      }
+      function refreshBadge(){
+        var sb=sbc(), el=$id('kagbTodayBadge'); if(!sb||!el) return;
+        sb.rpc('kagb_today_feed',{ p_days_ahead:0 }).then(function(r){
+          var n=(r&&r.data)?r.data.length:0;
+          el.textContent=(n>0?n:''); el.style.display=(n>0?'inline-block':'none');
+        }).catch(function(){});
+      }
+      function initToday(){
+        if($id('kagbTodayNav')) return;
+        var host=$id('sbGlobal'); if(!host) return;
+        var d=document.createElement('div');
+        d.className='nav-i'; d.id='kagbTodayNav'; d.style.cursor='pointer';
+        d.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>'+
+                    '<span>Šiandien</span><span id="kagbTodayBadge" style="display:none;"></span>';
+        d.onclick=openToday;
+        var first=host.querySelector('.sb-sec');
+        if(first && first.nextSibling) host.insertBefore(d, first.nextSibling); else host.appendChild(d);
+        refreshBadge();
+      }
+
+      /* --- paleidimas --- */
+      function boot(){
+        initToday();
+        try{
+          if(typeof window.openDebtorModal==='function' && !window.openDebtorModal.__kagb){
+            var orig=window.openDebtorModal;
+            var w=function(id){ var m=$id('debtorModal'); if(m) m.dataset.entId=(id||''); return orig.apply(this,arguments); };
+            w.__kagb=true; window.openDebtorModal=w;
+          }
+        }catch(e){}
+        var t=null;
+        try{
+          var mo=new MutationObserver(function(){
+            clearTimeout(t);
+            t=setTimeout(function(){ initContacts(); refreshTimeline(); initToday(); },200);
+          });
+          mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+        }catch(e){}
+        initContacts();
+      }
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
     })();
 
   </script>
