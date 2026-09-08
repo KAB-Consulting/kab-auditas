@@ -1903,6 +1903,13 @@
         <div id="slTransferWrap" style="margin-top:12px;"></div>
       </div>
 
+      <div id="slInvSec" class="hidden">
+        <div class="sec-title">Sąskaitos faktūros</div>
+        <div class="hint" style="margin-bottom:6px;">Sąskaitos numeris bendras su nuomos sąskaitomis — viena projekto serija (numeris skiriamas išrašant). Pardavėjas — bankrutuojanti įmonė, pirkėjas — iš pardavimo kortelės.</div>
+        <div id="slInvTable" style="margin-bottom:8px;"></div>
+        <button class="btn btn-sm" type="button" id="slInvIssueBtn"><span class="ic ic-file"></span> Paruošti sąskaitą faktūrą</button>
+      </div>
+
       <div id="slSignSec" class="hidden">
         <div class="sec-title"><span class="ic ic-pencil"></span> Sutarties pasirašymas</div>
         <div id="slSignStatus" style="margin-bottom:8px;"></div>
@@ -2813,7 +2820,7 @@
           body.perm-view [onclick*="remDel"], body.perm-view [onclick*="remReopen"],
           body.perm-view #lsSignInternalBtn, body.perm-view #lsSignExternalBtn, body.perm-view #lsUnlockBtn,
           body.perm-view #lsSignModalConfirm,
-          body.perm-view #newSaleBtn, body.perm-view #slSave, body.perm-view #slAddItem, body.perm-view #slPayAddBtn,
+          body.perm-view #newSaleBtn, body.perm-view #slSave, body.perm-view #slAddItem, body.perm-view #slPayAddBtn, body.perm-view #slInvIssueBtn,
           body.perm-view #slPayFileBtn, body.perm-view [onclick*="delSale"], body.perm-view [onclick*="slItemDel"],
           body.perm-view [onclick*="slPayDel"], body.perm-view [onclick*="slDoTransfer"], body.perm-view [onclick*="slUndoTransfer"],
           body.perm-view #slSignExternalBtn, body.perm-view #slUnlockBtn,
@@ -3238,6 +3245,11 @@
       document.querySelectorAll('#paneRecipients .tab[data-rtype]').forEach(t=>t.classList.toggle('active',t.dataset.rtype==='employee'));
       $('cardMsg').innerHTML=''; $('aiMsg').innerHTML=''; $('ctMsg').innerHTML='';
       REG_TYPE='received'; REGISTRATIONS=[]; CONTACTS=[]; ASSETS=[]; CREDITORS=[]; CRED_ACC=[]; CLAIMS=[]; CORDERS=[];
+      // GRIEŽTA IZOLIACIJA: išvalom visų modulių masyvus, kad neliktų ankstesnės bylos duomenų
+      LEASES=[]; LEASE_ITEMS=[]; LEASE_DOCS=[]; LS_ITEMS=[]; CASE_LEASE_CHARGES=[]; CASE_LEASE_PAYS=[];
+      SALES=[]; SALE_ITEMS=[]; SALE_PAYS=[]; SL_ITEMS=[];
+      DOCUMENTS=[]; REG_DELETED=[];
+      DEBTORS=[]; DEBT_RECV_ALL=[]; DEBT_PAY_ALL=[]; DEBT_CURRENT=null; DEBT_REMS_ALL=[];
       document.querySelectorAll('#paneRegistry .tab').forEach(t=>t.classList.toggle('active',t.dataset.regtype==='received'));
       if(id){ await loadAccessMap(id); } applyTopTabVisibility();
       let __ft='main'; const __vis=[...document.querySelectorAll('#topTabs > .tab:not(.hidden)')]; if(__vis.length&&!__vis.some(x=>x.dataset.top==='main'))__ft=__vis[0].dataset.top;
@@ -3313,7 +3325,7 @@
         });
         renderRecipients();
       }
-      if(key==='regjournal'){ loadRegistry(); loadCaseInboxTasks(); }
+      if(key==='regjournal'){ initRegMaintenance(); loadRegistry(); loadCaseInboxTasks(); }
       if(key==='regnew')$('regCodeWarn2').classList.toggle('hidden', !!(CURRENT&&CURRENT.project_code));
       if(key==='library')loadLibrary();
       if(key==='acts')loadActs();
@@ -4260,7 +4272,7 @@
     $('regCancel').onclick=()=>hide('regModal');
     async function fillPartySuggestions(){
       try{
-        const { data }=await sb.from('insolvency_doc_registrations').select('counterparty_name').not('counterparty_name','is',null).order('created_at',{ascending:false}).limit(400);
+        const { data }=await sb.from('insolvency_doc_registrations').select('counterparty_name').eq('case_id',CURRENT.id).not('counterparty_name','is',null).order('created_at',{ascending:false}).limit(400);
         const seen=new Set(), names=[];
         (data||[]).forEach(r=>{ const n=(r.counterparty_name||'').trim(); const k=n.toLowerCase(); if(n&&!seen.has(k)){ seen.add(k); names.push(n); } });
         $('regPartyList').innerHTML=names.map(n=>`<option value="${esc(n)}"></option>`).join('');
@@ -5151,7 +5163,11 @@
       LEASE_DOCS=[]; if(l)loadLeaseDocs(l.id); else $('lsDocsList').innerHTML='';
       LEASE_CHARGES=[]; LEASE_PAYS=[]; LS_PAY_FILE=null; $('lsPayFileName').textContent='';
       if(l&&leaseEffSt(l)!=='draft')loadLeaseAcct(l.id);
+      else { $('lsAcctSummary').innerHTML=''; $('lsChargesTable').innerHTML=''; renderDepositBlock(); }
       $('lsRemList').innerHTML=''; if(l)loadReminders().then(renderObjReminderLists);
+      // išvalom ankstesnės sutarties skirtukų ženklelius ir sąskaitų sąrašą (kad neliktų svetimų duomenų)
+      document.querySelectorAll('#leaseModal .ls-cnt').forEach(e=>{ e.hidden=true; e.textContent=''; });
+      { const il=$('invList'); if(il) il.innerHTML=''; }
       $('lsMsg').innerHTML=l?'':'<div class="hint">Išsaugojus sutartį bus galima pridėti dokumentus ir ją patvirtinti.</div>';
       show('leaseModal');
     };
@@ -5957,11 +5973,58 @@
       slSetStatusUI(s);
       SL_PAY_FILE=null; $('slPayFileName').textContent='';
       if(s){ renderSlPays(); renderSlTransfer(); } else { $('slPaysTable').innerHTML=''; $('slTransferWrap').innerHTML=''; }
-      $('slMsg').innerHTML=s?'':'<div class="hint">Išsaugojus pardavimą bus galima įrašyti mokėjimus ir pažymėti nuosavybės perdavimą.</div>';
+      $('slInvSec').classList.toggle('hidden', !s);
+      if(s) loadSaleInvoices(s.id); else $('slInvTable').innerHTML='';
+      $('slMsg').innerHTML=s?'':'<div class="hint">Išsaugojus pardavimą bus galima įrašyti mokėjimus, išrašyti sąskaitą faktūrą ir pažymėti nuosavybės perdavimą.</div>';
       show('saleModal');
     };
     $('slCancel').onclick=()=>{ hide('saleModal'); if(TOP==='assets')renderSales(); };
     $('newSaleBtn').onclick=()=>openSaleModal(null);
+    // --- pardavimo sąskaitos faktūros (bendra numeracija su nuomos sąskaitomis) ---
+    async function loadSaleInvoices(saleId){
+      const box=$('slInvTable'); if(!box)return;
+      const { data }=await sb.from('insolvency_invoices').select('*').eq('sale_id',saleId).order('created_at');
+      const INV=data||[];
+      const ST={ draft:['Juodraštis','gold'], issued:['Išrašyta','green'], sent:['Išsiųsta','gray'], cancelled:['Anuliuota','gold'], credited:['Kredituota','gold'] };
+      if(!INV.length){ box.innerHTML='<div class="muted" style="font-size:12px;">Sąskaitų dar nėra.</div>'; return; }
+      box.innerHTML='<table style="font-size:12px;"><thead><tr><th>Nr.</th><th>Data</th><th style="text-align:right;">Suma</th><th>Būsena</th><th></th></tr></thead><tbody>'+
+        INV.map(i=>{ const st=ST[i.status]||[i.status,'gold']; let acts='';
+          if(i.status==='draft')acts+='<button class="btn btn-sm" onclick="saleInvIssue(\''+i.id+'\',\''+saleId+'\')">Išrašyti</button> ';
+          if(i.status==='draft'||i.status==='issued')acts+='<button class="btn btn-sm btn-danger" onclick="saleInvCancel(\''+i.id+'\',\''+saleId+'\')">Anuliuoti</button> ';
+          if(i.status==='issued'||i.status==='sent')acts+='<button class="btn btn-sm btn-ghost" onclick="saleInvSetNo(\''+i.id+'\',\''+esc(i.invoice_no||'')+'\',\''+saleId+'\')">Keisti Nr.</button> ';
+          if(i.status!=='draft')acts+='<button class="btn btn-sm btn-ghost" onclick="kagbInvPdf(\''+i.id+'\')">PDF</button>';
+          return '<tr><td><b>'+esc(i.invoice_no||'—')+'</b></td><td>'+esc(i.issue_date||'')+'</td><td style="text-align:right;">'+fmtEur(i.total)+'</td><td><span class="badge badge-'+st[1]+'">'+st[0]+'</span></td><td style="text-align:right;white-space:nowrap;">'+acts+'</td></tr>';
+        }).join('')+'</tbody></table>';
+    }
+    function saleInvErr(code,fallback){ return ({ no_series:'Bylos kortelėje nenustatyta sąskaitų serija — įveskite ją ir išsaugokite.', not_authorized:'Veiksmą gali atlikti tik pilnų teisių administratorius.', sale_not_found:'Pardavimas nerastas.', number_taken:'Toks numeris serijoje jau užimtas.', not_issued:'Keisti galima tik išrašytos sąskaitos numerį.', bad_number:'Numeris turi būti teigiamas skaičius.', no_series_issue:'Nenustatyta serija.' })[code]||(fallback||('Klaida: '+(code||''))); }
+    $('slInvIssueBtn').onclick=async()=>{
+      const saleId=$('slId').value; if(!saleId)return;
+      if(!confirm('Paruošti šio pardavimo sąskaitos faktūros juodraštį?'))return;
+      const r=await sb.rpc('invoice_draft_for_sale',{p_sale_id:saleId});
+      if(r.error||!r.data||!r.data.ok){ $('slMsg').innerHTML='<div class="error">Nepavyko: '+esc(saleInvErr(r.data&&r.data.error_code,(r.error&&r.error.message)))+'</div>'; return; }
+      $('slMsg').innerHTML='<div class="success">Sąskaitos juodraštis paruoštas — spauskite „Išrašyti", kad būtų priskirtas numeris.</div>';
+      loadSaleInvoices(saleId);
+    };
+    window.saleInvIssue=async(id,saleId)=>{
+      if(!confirm('Išrašyti sąskaitą? Bus priskirtas kitas laisvas projekto serijos numeris.'))return;
+      const r=await sb.rpc('invoice_issue',{p_invoice_id:id});
+      if(r.error||!r.data||!r.data.ok){ $('slMsg').innerHTML='<div class="error">Nepavyko išrašyti: '+esc(saleInvErr(r.data&&r.data.error_code,(r.error&&r.error.message)))+'</div>'; return; }
+      $('slMsg').innerHTML='<div class="success">Išrašyta: '+esc(r.data.invoice_no)+'</div>'; loadSaleInvoices(saleId);
+    };
+    window.saleInvCancel=async(id,saleId)=>{
+      const rs=prompt('Anuliavimo priežastis:'); if(rs===null)return;
+      const r=await sb.rpc('invoice_cancel',{p_invoice_id:id,p_reason:rs});
+      if(r.error||!r.data||!r.data.ok){ $('slMsg').innerHTML='<div class="error">Nepavyko: '+esc(saleInvErr(r.data&&r.data.error_code,(r.error&&r.error.message)))+'</div>'; return; }
+      loadSaleInvoices(saleId);
+    };
+    window.saleInvSetNo=async(id,curNo,saleId)=>{
+      const series=String(curNo||'').replace(/-?\d+$/,''); const cur=(String(curNo||'').match(/(\d+)$/)||[])[1]||'';
+      const v=prompt('Naujas sąskaitos eilės numeris (tik skaičiai). Serija: '+series,cur); if(v===null)return;
+      if(!/^\d+$/.test(String(v).trim())){ $('slMsg').innerHTML='<div class="error">Numeris turi būti tik skaičiai.</div>'; return; }
+      const r=await sb.rpc('invoice_set_number',{p_invoice_id:id,p_number:parseInt(v,10)});
+      if(r.error||!r.data||!r.data.ok){ $('slMsg').innerHTML='<div class="error">'+esc(saleInvErr(r.data&&r.data.error_code,(r.error&&r.error.message)))+'</div>'; return; }
+      $('slMsg').innerHTML='<div class="success">Numeris pakeistas: '+esc(r.data.invoice_no)+'</div>'; loadSaleInvoices(saleId);
+    };
     $('slSave').onclick=async()=>{
       const no=$('slContractNo').value.trim();
       if(!no){ $('slMsg').innerHTML='<div class="error">Įveskite sutarties numerį.</div>'; return; }
@@ -8992,7 +9055,7 @@
           <td>${r.category?('<span style="background:#EFF4FB;border:1px solid var(--bd);border-radius:6px;padding:1px 8px;font-size:11px;">'+esc(DOC_CATS_MAP[r.category]||r.category)+'</span>'):'<span class="muted">—</span>'}</td>
           <td>${esc(r.counterparty_name||'—')}</td>
           <td>${esc(r.document_title)}${r.notes?'<div class="muted" style="font-size:12px;">'+esc(r.notes)+'</div>':''}${r.voided_at?'<div style="font-size:12px;color:#B3261E;">Anuliavimo priežastis: '+esc(r.void_reason||'')+'</div>':''}</td>
-          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')"><span class="ic ic-eye"></span></button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')"><span class="ic ic-down"></span></button>${r.doc_type==='sent'&&!r.voided_at?(r.signed_file_path?` <button class="btn btn-sm btn-ghost" title="Peržiūrėti įkeltą pasirašytą dokumentą" onclick="regSignedView('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-eye"></span></button>`:` <button class="btn btn-sm btn-ghost" title="Įkelti pasirašytą (galutinę siųstą) dokumento versiją" onclick="regSignedUpload('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-up"></span></button>`):''}${(PERM_LEVEL==='full'||IS_SUPERADMIN)?` <button class="btn btn-sm btn-ghost" title="Koreguoti" onclick="openRegEdit('${r.id}')"><span class="ic ic-pencil"></span></button>`:''}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')"><span class="ic ic-eye"></span></button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')"><span class="ic ic-down"></span></button>${r.doc_type==='sent'&&!r.voided_at?(r.signed_file_path?` <button class="btn btn-sm btn-ghost" title="Peržiūrėti įkeltą pasirašytą dokumentą" onclick="regSignedView('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-eye"></span></button>`:` <button class="btn btn-sm btn-ghost" title="Įkelti pasirašytą (galutinę siųstą) dokumento versiją" onclick="regSignedUpload('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-up"></span></button>`):''}</td>
         </tr>`).join('')+'</tbody></table>';
     }
 
@@ -9005,8 +9068,9 @@
       if(w)w.style.display=on?'':'none';
     }
 
+    function canRegMaint(){ return IS_SUPERADMIN || PERM_LEVEL==='full'; }
     async function loadRegDeleted(){
-      if(!CURRENT||CURRENT.__new||!IS_SUPERADMIN){ REG_DELETED=[]; return; }
+      if(!CURRENT||CURRENT.__new||!canRegMaint()){ REG_DELETED=[]; return; }
       const { data }=await sb.from('insolvency_doc_registrations_deleted')
         .select('*').eq('case_id',CURRENT.id).is('restored_at',null)
         .order('deleted_at',{ascending:false});
@@ -9014,7 +9078,7 @@
     }
 
     function renderRegMaint(){
-      $('regListTitle').textContent='Registracijų priežiūra (superadministratorius)';
+      $('regListTitle').textContent='Registracijų priežiūra (koregavimas / trynimas)';
       const q=($('rmSearch')&&$('rmSearch').value||'').toLowerCase();
       const rows=REGISTRATIONS.filter(r=>!q||[r.registration_number,r.document_title,r.counterparty_name].some(v=>(v||'').toLowerCase().includes(q)));
       let h='<div style="background:#FFF8E6;border:1px solid #E3D3AC;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#8A6D00;">'+
@@ -9030,7 +9094,7 @@
             <td>${r.doc_type==='received'?'<span class="ic ic-down"></span> Gautas':'<span class="ic ic-up"></span> Siunčiamas'}</td>
             <td>${esc(r.document_title||'')}<div class="muted" style="font-size:12px;">${esc(r.counterparty_name||'')}</div></td>
             <td>${r.voided_at?'<span class="badge" style="background:#FDF1F0;color:#B3261E;border:1px solid #F2C7C2;">ANULIUOTA</span>':'<span class="badge badge-green">Galioja</span>'}</td>
-            <td style="text-align:right;white-space:nowrap;">${r.voided_at
+            <td style="text-align:right;white-space:nowrap;">${!r.voided_at?`<button class="btn btn-sm btn-ghost" title="Koreguoti registracijos datą / numerį" onclick="openRegEdit('${r.id}')"><span class="ic ic-pencil"></span> Koreguoti</button> `:''}${r.voided_at
                 ? `<button class="btn btn-sm btn-ghost" onclick="rmUnvoid('${r.id}')"><span class="ic ic-back"></span> Atšaukti anuliavimą</button>`
                 : `<button class="btn btn-sm btn-ghost" onclick="rmOpenVoid('${r.id}')"><span class="ic ic-ban"></span> Anuliuoti</button>`} <button class="btn btn-sm btn-danger" onclick="rmOpenDelete('${r.id}')"><span class="ic ic-trash"></span> Ištrinti</button></td>
           </tr>`).join('')+'</tbody></table>'
@@ -9086,7 +9150,8 @@
     };
 
     function rmErr(code){
-      return ({ not_superadmin:'Veiksmą gali atlikti tik superadministratorius.',
+      return ({ not_superadmin:'Veiksmą gali atlikti tik pilnų teisių administratorius arba superadministratorius.',
+        forbidden:'Veiksmą gali atlikti tik pilnų teisių administratorius arba superadministratorius.',
         reason_too_short:'Nurodykite priežastį (bent 10 simbolių).',
         confirm_mismatch:'Įvestas registracijos numeris nesutampa.',
         number_taken:'Numeris jau panaudotas kitam dokumentui — atkurti negalima.',
@@ -9097,7 +9162,7 @@
     }
 
     function initRegMaintenance(){
-      if(!IS_SUPERADMIN)return;
+      if(!canRegMaint())return;
       // 1) papildomas tabas
       const tabs=document.querySelector('#paneRegistry .tabs');
       if(tabs&&!document.querySelector('#paneRegistry .tab[data-regtype="maint"]')){
@@ -11484,7 +11549,7 @@
     bindCredButtons();
     bindClaimExtras();
     initReconV2();
-    initRegMaintenance();
+    // initRegMaintenance() perkelta į registro atidarymą (key==='regjournal'), kad teisės jau būtų įkeltos
     initClaimV3();
     boot();
 
@@ -12151,6 +12216,7 @@
             if(i.status==='draft') acts+='<button class="btn btn-sm" onclick="kagbInvIssue(\''+i.id+'\')">Išrašyti</button> ';
             if(i.status==='draft'||i.status==='issued') acts+='<button class="btn btn-sm btn-danger" onclick="kagbInvCancel(\''+i.id+'\')">Anuliuoti</button> ';
             if(i.status==='issued'||i.status==='sent') acts+='<button class="btn btn-sm btn-ghost" onclick="kagbInvCredit(\''+i.id+'\')">Kreditinė</button> ';
+            if(i.status==='issued'||i.status==='sent') acts+='<button class="btn btn-sm btn-ghost" onclick="kagbInvSetNo(\''+i.id+'\',\''+esc3(i.invoice_no||'')+'\')">Keisti Nr.</button> ';
             if(i.status!=='draft') acts+='<button class="btn btn-sm btn-ghost" onclick="kagbInvPdf(\''+i.id+'\')">PDF</button>';
             return '<tr'+(i.kind==='kreditine'?' style="background:var(--gold-bg,#FFF8E6);"':'')+'>'+
               '<td style="white-space:nowrap;">'+esc3(i.invoice_no||'—')+(i.kind==='kreditine'?' <span class="badge badge-gold">kredit.</span>':'')+'</td>'+
@@ -12191,6 +12257,19 @@
         rpc('invoice_credit',{p_invoice_id:id,p_reason:r}).then(function(){
           invMsg('<div class="success">Sukurtas kreditinės sąskaitos juodraštis.</div>'); loadInvoices();
         }).catch(function(e){ invMsg('<div class="error">Nepavyko: '+esc3(e.message)+'</div>'); });
+      };
+      window.kagbInvSetNo=function(id, curNo){
+        var series=String(curNo||'').replace(/-?\d+$/,'');
+        var cur=(String(curNo||'').match(/(\d+)$/)||[])[1]||'';
+        var v=prompt('Naujas sąskaitos eilės numeris (tik skaičiai). Serija: '+series+'\n\nNaudokite, jei numeracija „pabėgo" (pvz. po anuliuotos sąskaitos).', cur);
+        if(v===null)return;
+        if(!/^\d+$/.test(String(v).trim())){ invMsg('<div class="error">Numeris turi būti tik skaičiai.</div>'); return; }
+        rpc('invoice_set_number',{p_invoice_id:id,p_number:parseInt(v,10)}).then(function(d){
+          invMsg('<div class="success">Numeris pakeistas: '+esc3(d.invoice_no)+'</div>'); loadInvoices();
+        }).catch(function(e){
+          var m={number_taken:'Toks numeris serijoje jau užimtas.',not_issued:'Keisti galima tik išrašytos sąskaitos numerį.',no_series:'Nenustatyta sąskaitų serija.',bad_number:'Numeris turi būti teigiamas skaičius.',not_authorized:'Nepakanka teisių.'}[e.message]||('Nepavyko: '+e.message);
+          invMsg('<div class="error">'+esc3(m)+'</div>');
+        });
       };
 
       /* ---- 3. PDF (pdf-lib + DejaVu, pilnas LT raidynas) ---- */
@@ -12325,7 +12404,7 @@
         var lid=($id('lsId')||{}).value; if(!lid) return;
         var sb=sbc(); if(!sb) return;
         b.disabled=true;
-        sb.rpc('invoice_prepare_pending',{p_case_id:null}).then(function(r){
+        sb.rpc('invoice_prepare_pending',{p_case_id:(typeof CURRENT!=='undefined'&&CURRENT&&CURRENT.id)||null}).then(function(r){
           var d=r&&r.data;
           invMsg('<div class="success">Paruošta juodraščių: '+((d&&d.created)||0)+'</div>');
           b.disabled=false; loadInvoices();
