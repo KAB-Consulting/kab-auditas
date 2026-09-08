@@ -3653,10 +3653,29 @@
       $('tplStatus').innerHTML = t&&t.storage_path ? '<span style="color:#0B6E2E;"><span class="ic ic-check"></span> Šablono DOCX įkeltas</span>' : '<span style="color:#B3261E;"><span class="ic ic-alert"></span> Šablono DOCX neįkeltas</span>';
     }
     document.addEventListener('change',e=>{ if(e.target&&e.target.id==='docTemplate')updateTplStatus(); });
+    // Patikrina įkeliamą DOCX: grąžina {{žymes}}, media (paveikslėlių) skaičių, dydį.
+    async function docxInspect(file){
+      await ensureJSZip();
+      const buf=await file.arrayBuffer();
+      let zip; try{ zip=await JSZip.loadAsync(buf); }catch(_){ throw new Error('Failas nėra tinkamas DOCX (nepavyko atverti).'); }
+      const f=zip.file('word/document.xml'); if(!f) throw new Error('Tai ne Word DOCX (nėra word/document.xml).');
+      const text=(await f.async('string')).replace(/<[^>]+>/g,'');
+      const ph=[...new Set((text.match(/\{\{\s*[^{}]+?\s*\}\}/g)||[]).map(s=>s.replace(/\s+/g,'')))];
+      const media=Object.keys(zip.files).filter(n=>/^word\/media\//.test(n)).length;
+      return { ph, media, bytes:buf.byteLength };
+    }
     $('tplUploadBtn').onclick=()=>$('tplFile').click();
     $('tplFile').onchange=async(e)=>{
       const file=e.target.files[0]; if(!file)return;
       const code=$('docTemplate').value;
+      $('docsMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Tikrinamas failas…</div>';
+      // APSAUGA: turinio šablonas privalo turėti bent vieną {{žymę}} (pvz. {{debtor.name}}).
+      try{
+        const info=await docxInspect(file);
+        if(!info.ph.length){
+          if(!confirm('DĖMESIO: šiame DOCX NERASTA jokių {{žymų}} (pvz. {{debtor.name}}, {{case.court}}).\n\nTai atrodo kaip UŽBAIGTAS dokumentas, o ne šablonas. Įkėlus tokį failą, VISI pagal šį šabloną generuojami dokumentai turės tą patį turinį (kaip nutiko su „imone_pirminis").\n\nAr tikrai įkelti kaip šabloną?')){ $('docsMsg').innerHTML=''; e.target.value=''; return; }
+        }
+      }catch(err){ $('docsMsg').innerHTML='<div class="error">Nepavyko patikrinti failo: '+esc(err.message||String(err))+'</div>'; e.target.value=''; return; }
       $('docsMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliama…</div>';
       try{
         const path=`templates/${code}.docx`;
@@ -3815,6 +3834,14 @@
     $('admBlankBtn').onclick=()=>$('admBlankFile').click();
     $('admBlankFile').onchange=async(e)=>{
       const file=e.target.files[0]; if(!file)return;
+      $('admMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Tikrinamas failas…</div>';
+      // APSAUGA: blankas privalo turėti {{turinys}} žymę (į ją įdedamas dokumento turinys).
+      try{
+        const info=await docxInspect(file);
+        if(!info.ph.some(p=>/\{\{turinys\}\}/i.test(p))){
+          if(!confirm('DĖMESIO: šiame blanke NERASTA žymės {{turinys}}.\n\nBe jos generuojamo dokumento tekstas neturės kur įsidėti. Blanke turi būti antraštė (logo), poraštė (rekvizitai) ir korpuse žymė {{turinys}}.\n\nAr tikrai įkelti kaip blanką?')){ $('admMsg').innerHTML=''; e.target.value=''; return; }
+        }
+      }catch(err){ $('admMsg').innerHTML='<div class="error">Nepavyko patikrinti failo: '+esc(err.message||String(err))+'</div>'; e.target.value=''; return; }
       $('admMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliama…</div>';
       try{
         const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
