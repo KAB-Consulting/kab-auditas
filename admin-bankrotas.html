@@ -1882,6 +1882,7 @@
       <div id="lsMsg" style="margin-top:10px;"></div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap;">
         <button class="btn btn-ghost" id="lsCancel">Uždaryti</button>
+        <button class="btn btn-gold hidden" id="lsGoSignBtn"><span class="ic ic-pencil"></span> Pasirašyti…</button>
         <button class="btn btn-ghost hidden" id="lsSignedCopyBtn"><span class="ic ic-file"></span> Pasirašyta kopija</button>
         <button class="btn btn-ghost hidden" id="lsUnlockBtn"><span class="ic ic-unlock"></span> Atrakinti</button>
         <button class="btn btn-ghost hidden" id="lsContractBtn"><span class="ic ic-pencil"></span> Sutartis (PDF)</button>
@@ -2215,6 +2216,7 @@
       <div id="slMsg" style="margin-top:10px;"></div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;flex-wrap:wrap;">
         <button class="btn btn-ghost" id="slCancel">Uždaryti</button>
+        <button class="btn btn-gold hidden" id="slGoSignBtn"><span class="ic ic-pencil"></span> Pasirašyti…</button>
         <button class="btn btn-ghost hidden" id="slSignedCopyBtn"><span class="ic ic-file"></span> Pasirašyta kopija</button>
         <button class="btn btn-ghost hidden" id="slUnlockBtn"><span class="ic ic-unlock"></span> Atrakinti</button>
         <button class="btn btn-ghost hidden" id="slContractBtn"><span class="ic ic-pencil"></span> Sutartis (PDF)</button>
@@ -5455,6 +5457,7 @@
       $('lsAcctSec').classList.toggle('hidden',!(l&&st!=='draft'));
       $('lsPdfBtn').classList.toggle('hidden',!l);
       $('lsContractBtn').classList.toggle('hidden',!l);
+      $('lsGoSignBtn').classList.toggle('hidden',!(l&&!l.signed));
       LS_LOCKED=!!(l&&l.signed);
       applyLeaseLock(LS_LOCKED);
       renderLeaseSignSection(l);
@@ -6625,6 +6628,7 @@
       $('slPdfBtn').classList.toggle('hidden',!s);
       $('slXlsxBtn').classList.toggle('hidden',!s);
       $('slContractBtn').classList.toggle('hidden',!s);
+      $('slGoSignBtn').classList.toggle('hidden',!(s&&!s.signed));
       $('slSave').classList.toggle('hidden',!!(s&&s.ownership_transferred));
       SL_LOCKED=!!(s&&s.signed);
       applySaleLock(SL_LOCKED);
@@ -7635,6 +7639,14 @@
     if($('lsDokobitStatusBtn'))$('lsDokobitStatusBtn').onclick=()=>dokobitStatus('lease');
     if($('slDokobitBtn'))$('slDokobitBtn').onclick=()=>dokobitCreate('sale');
     if($('slDokobitStatusBtn'))$('slDokobitStatusBtn').onclick=()=>dokobitStatus('sale');
+    // „Pasirašyti…" mygtukai apačioje — nuveda tiesiai į pasirašymo bloką
+    if($('lsGoSignBtn'))$('lsGoSignBtn').onclick=()=>{
+      const tab=document.querySelector('#leaseModal .ls-tab[data-k="salygos"]'); if(tab)tab.click();
+      setTimeout(()=>{ const el=$('lsSignSec'); if(el)el.scrollIntoView({behavior:'smooth',block:'start'}); },100);
+    };
+    if($('slGoSignBtn'))$('slGoSignBtn').onclick=()=>{
+      const el=$('slSignSec'); if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+    };
 
     /* ===== STAGE 5: susiję dokumentai (perdavimo/grąžinimo aktas, nutraukimo susitarimas) ===== */
     async function lsBuildDocPdf(innerHtml){
