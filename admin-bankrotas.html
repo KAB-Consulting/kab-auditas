@@ -1571,6 +1571,13 @@
         <div style="margin-top:8px;"><input type="file" id="pdfAttUpload" accept=".pdf" class="hidden">
           <button class="btn btn-sm btn-ghost" id="pdfAttUploadBtn" type="button"><span class="ic ic-up"></span> Įkelti naują priedą</button></div>
       </div>
+      <div style="border:1px solid var(--bd);border-radius:6px;padding:12px;margin-top:10px;">
+        <div style="font-weight:600;font-size:13px;"><span class="ic ic-clip"></span> Pildymo formos (originalus formatas)</div>
+        <div class="hint" style="margin:4px 0 8px;">Bendros visoms byloms formos (Excel/DOCX), siunčiamos įmonei pildymui. Jos <b>nesujungiamos</b> į PDF — atsisiunčiamos ir siunčiamos atskirais failais originaliu formatu.</div>
+        <div id="pdfFormList" style="max-height:170px;overflow:auto;"></div>
+        <div style="margin-top:8px;"><input type="file" id="pdfFormUpload" accept=".xlsx,.xls,.docx,.doc,.pdf,.csv" class="hidden">
+          <button class="btn btn-sm btn-ghost" id="pdfFormUploadBtn" type="button"><span class="ic ic-up"></span> Įkelti bendrą pildymo formą</button></div>
+      </div>
       <div id="pdfMsg"></div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
         <button class="btn btn-ghost" id="pdfCancel">Atšaukti</button>
@@ -2661,9 +2668,16 @@
   <div id="credImportModal" class="modal-bg hidden">
     <div class="modal" style="max-width:820px;">
       <h2>Masinis kreditorių importas</h2>
-      <div class="hint" style="margin-bottom:8px;">Įklijuokite iš Excel (stulpelių tvarka): <b>Pavadinimas · Kodas · Adresas · El. paštas · Pagrindinė · Delspinigiai · Baudos · Pagrindas</b>. Kiekviena eilutė — vienas kreditorius su apskaitos įrašu. Esami (pagal kodą) papildomi nauju apskaitos įrašu.</div>
-      <textarea id="credImpText" class="textarea" style="min-height:160px;font-family:monospace;font-size:12px;" placeholder="UAB Pavyzdys	300123456	Vilniaus g. 1	info@pvz.lt	1200.50	80	100	Paslaugos"></textarea>
-      <div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-sm btn-ghost" id="credImpPreviewBtn"><span class="ic ic-eye"></span> Peržiūrėti</button></div>
+      <div style="background:#EFF4FB;border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px;"><span class="ic ic-up"></span> Įkelti užpildytą kreditorių formą (Excel)</div>
+        <div class="hint" style="margin-bottom:6px;">Priedas Nr. 2 „Kreditorių sąrašas", užpildytas įmonės. Sistema pati atpažins lapą „Kreditoriai", antraštes ir sumas (Pagrindinė / Palūkanos / Delspinigiai / Baudos). Palūkanos ir delspinigiai sumuojami į II etapo netesybas.</div>
+        <input type="file" id="credImpFile" accept=".xlsx,.xls" class="hidden">
+        <button class="btn btn-sm btn-gold" type="button" id="credImpFileBtn"><span class="ic ic-up"></span> Pasirinkti Excel formą</button>
+        <span id="credImpFileName" class="muted" style="font-size:12px;margin-left:6px;"></span>
+      </div>
+      <div class="hint" style="margin-bottom:8px;">Arba įklijuokite iš Excel (stulpelių tvarka): <b>Pavadinimas · Kodas · Adresas · El. paštas · Pagrindinė · Delspinigiai · Baudos · Pagrindas</b>. Kiekviena eilutė — vienas kreditorius su apskaitos įrašu. Esami (pagal kodą) papildomi nauju apskaitos įrašu.</div>
+      <textarea id="credImpText" class="textarea" style="min-height:120px;font-family:monospace;font-size:12px;" placeholder="UAB Pavyzdys	300123456	Vilniaus g. 1	info@pvz.lt	1200.50	80	100	Paslaugos"></textarea>
+      <div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-sm btn-ghost" id="credImpPreviewBtn"><span class="ic ic-eye"></span> Peržiūrėti įklijuotus</button></div>
       <div id="credImpMsg"></div>
       <div id="credImpPreview" style="max-height:260px;overflow:auto;"></div>
       <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;"><button class="btn btn-ghost" id="credImpCancel">Atšaukti</button><button class="btn" id="credImpDoBtn"><span class="ic ic-check"></span> Importuoti</button></div>
@@ -2997,8 +3011,15 @@
       <div class="hint" style="margin-bottom:10px;">Įklijuokite lentelę iš Excel (stulpeliai tabuliacija atskirti) tvarka:
         <b>Pavadinimas · Kodas · Adresas · El. paštas · Pagrindinė skola · Netesybos · Pagrindas · Dokumento Nr.</b>.
         Kiekviena eilutė — vienas debitorius su viena skola. Esami (pagal kodą) papildomi nauja skola, nedubliuojami.</div>
-      <textarea id="debtImpText" class="textarea" style="min-height:160px;font-family:monospace;font-size:12px;" placeholder="UAB Pavyzdys	300123456	Vilniaus g. 1	info@pvz.lt	1200.50	80	Paslaugos	S-2025/114"></textarea>
-      <div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-sm btn-ghost" id="debtImpPreviewBtn"><span class="ic ic-eye"></span> Peržiūrėti</button></div>
+      <div style="background:#EFF4FB;border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px;"><span class="ic ic-up"></span> Įkelti užpildytą debitorių formą (Excel)</div>
+        <div class="hint" style="margin-bottom:6px;">Priedas Nr. 3 „Debitorių sąrašas", užpildytas įmonės. Sistema atpažins lapą „Debitoriai", antraštes ir sumas; palūkanos + delspinigiai + baudos sumuojami į netesybas.</div>
+        <input type="file" id="debtImpFile" accept=".xlsx,.xls" class="hidden">
+        <button class="btn btn-sm btn-gold" type="button" id="debtImpFileBtn"><span class="ic ic-up"></span> Pasirinkti Excel formą</button>
+        <span id="debtImpFileName" class="muted" style="font-size:12px;margin-left:6px;"></span>
+      </div>
+      <textarea id="debtImpText" class="textarea" style="min-height:120px;font-family:monospace;font-size:12px;" placeholder="UAB Pavyzdys	300123456	Vilniaus g. 1	info@pvz.lt	1200.50	80	Paslaugos	S-2025/114"></textarea>
+      <div style="display:flex;gap:8px;margin:8px 0;"><button class="btn btn-sm btn-ghost" id="debtImpPreviewBtn"><span class="ic ic-eye"></span> Peržiūrėti įklijuotus</button></div>
       <div id="debtImpMsg"></div>
       <div id="debtImpPreview" style="max-height:260px;overflow:auto;"></div>
       <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
@@ -7911,6 +7932,7 @@
       document.querySelector('input[name="pdfAtt"][value="no"]').checked=true;
       $('pdfAttBlock').classList.add('hidden'); $('pdfMsg').innerHTML='';
       await renderPdfAttList();
+      renderPdfFormList();
       show('pdfModal');
     };
     $('pdfCancel').onclick=()=>hide('pdfModal');
@@ -7920,8 +7942,42 @@
     async function loadAttachments(){
       // bibliotekos priedai: bendri (case_id null) + šios bylos + šio administratoriaus
       const { data }=await sb.from('insolvency_attachments').select('*').order('created_at',{ascending:false});
-      return (data||[]).filter(a=> !a.case_id || a.case_id===CURRENT.id ).filter(a=> !a.administrator_id || a.administrator_id===CURRENT_ADM.id );
+      return (data||[]).filter(a=> !a.is_form ).filter(a=> !a.case_id || a.case_id===CURRENT.id ).filter(a=> !a.administrator_id || a.administrator_id===CURRENT_ADM.id );
     }
+    // Bendros pildymo formos (originalus formatas, siunčiamos atskirai)
+    async function loadForms(){
+      const { data }=await sb.from('insolvency_attachments').select('*').eq('is_form',true).order('title');
+      return data||[];
+    }
+    async function renderPdfFormList(){
+      const forms=await loadForms();
+      $('pdfFormList').innerHTML = forms.length
+        ? forms.map(f=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;"><span class="ic ic-clip"></span> <span style="flex:1;">${esc(f.title)}</span>
+            <button class="btn btn-sm btn-ghost" type="button" onclick="downloadDocDl('${esc(f.storage_path)}')" title="Atsisiųsti originalų failą"><span class="ic ic-down"></span></button>
+            ${(PERM_LEVEL==='full'||IS_SUPERADMIN)?`<button class="btn btn-sm btn-ghost" type="button" onclick="delForm('${f.id}','${esc(f.storage_path)}')" title="Šalinti iš formų bibliotekos"><span class="ic ic-trash"></span></button>`:''}</div>`).join('')
+        : '<div class="muted" style="font-size:12px;">Bendrų pildymo formų dar nėra. Įkelkite (Excel/DOCX) — bus prieinamos visose bylose.</div>';
+    }
+    window.delForm=async(id,path)=>{
+      if(!confirm('Šalinti šią pildymo formą iš bibliotekos (visose bylose)?'))return;
+      try{ await sb.from('insolvency_attachments').delete().eq('id',id); }catch(_){}
+      try{ await sb.storage.from('insolvency-docs').remove([path]); }catch(_){}
+      renderPdfFormList();
+    };
+    $('pdfFormUploadBtn').onclick=()=>$('pdfFormUpload').click();
+    $('pdfFormUpload').onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file)return;
+      $('pdfMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliama forma…</div>';
+      try{
+        const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
+        const path=`forms/${Date.now()}_${safe}`;
+        const up=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+        if(up.error)throw up.error;
+        const ins=await sb.from('insolvency_attachments').insert({ title:file.name, storage_path:path, mime:file.type||null, file_size:file.size||null, case_id:null, administrator_id:null, is_form:true });
+        if(ins.error)throw ins.error;
+        await renderPdfFormList(); $('pdfMsg').innerHTML='<div class="success">Forma įkelta į bendrą biblioteką (prieinama visose bylose).</div>';
+      }catch(err){ $('pdfMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
+    };
     async function renderPdfAttList(){
       const atts=await loadAttachments();
       const up=PDF_UPLOADED_ATT.map((p,i)=>`<label style="display:flex;align-items:center;gap:6px;padding:3px 0;"><input type="checkbox" class="pdf-att-cb" value="${esc(p.path)}" checked> <span class="ic ic-clip"></span> ${esc(p.name)} <span class="muted">(ką tik įkeltas)</span></label>`).join('');
@@ -9065,7 +9121,47 @@
     }
 
     // Masinis importas
-    function openCredImport(){ if(!credCanEdit())return; $('credImpText').value=''; $('credImpMsg').innerHTML=''; $('credImpPreview').innerHTML=''; show('credImportModal'); }
+    // ---- Užpildytos formos (Priedas 2/3) skaitymas iš Excel ----
+    let CRED_FORM_ROWS=null, DEBT_FORM_ROWS=null;
+    function ffMoney(x){ const n=parseFloat(String(x==null?'':x).replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; }
+    function parseFillForm(buf, kind){
+      const wb=XLSX.read(buf,{type:'array'});
+      const dataSheet=wb.SheetNames.find(n=>/kreditor|debitor/i.test(n))||wb.SheetNames.find(n=>!/instrukc|detaliz/i.test(n))||wb.SheetNames[0];
+      const m=XLSX.utils.sheet_to_json(wb.Sheets[dataSheet],{header:1,defval:''});
+      let hr=m.findIndex(row=>row.some(c=>/kreditor|debitor|pavadinim/i.test(String(c)))&&row.some(c=>/kodas/i.test(String(c))));
+      if(hr<0)hr=0;
+      const H=m[hr].map(x=>String(x||'').replace(/\s+/g,' ').toLowerCase().trim());
+      const col=re=>H.findIndex(h=>re.test(h));
+      const ci={name:col(/kreditor|debitor|pavadinim|vardas/),code:col(/kodas/),addr:col(/adres/),email:col(/pašt|past/),
+        principal:col(/pagrindin/),interest:col(/palūkan|paluk/),late:col(/delspinig/),fines:col(/baud/),
+        basis:col(/pagrindas/),note:col(/pastab/),secured:col(/užtikr|uztikr/)};
+      if(ci.name<0||ci.principal<0) throw new Error('neatpažinta forma (nerasti stulpeliai „Kreditorius/Debitorius" ir „Pagrindinė skola").');
+      const rows=[];
+      for(let i=hr+1;i<m.length;i++){ const r=m[i]; const name=String(r[ci.name]||'').trim(); if(!name)continue;
+        if(/^iš\s*viso/i.test(name))continue;
+        if(/^UAB\s+[„"]?(Tiekėjas|Pirkėjas)/i.test(name)&&/^30[0-9]{7}$/.test(String(r[ci.code]||'').trim()))continue;
+        const principal=ffMoney(r[ci.principal]),interest=ci.interest>=0?ffMoney(r[ci.interest]):0,late=ci.late>=0?ffMoney(r[ci.late]):0,fines=ci.fines>=0?ffMoney(r[ci.fines]):0;
+        rows.push({ name, id_code:String(r[ci.code]||'').trim(), address:String(r[ci.addr]||'').trim(), email:String(r[ci.email]||'').trim(),
+          basisTxt:String(r[ci.basis]||'').trim(), noteTxt:String(r[ci.note]||'').trim(), secured:/taip/i.test(String(r[ci.secured]||'')),
+          principal, interest, late, fines });
+      }
+      return rows;
+    }
+    (function(){ const b=document.getElementById('credImpFileBtn'), f=document.getElementById('credImpFile'); if(!b||!f)return;
+      b.onclick=()=>f.click();
+      f.onchange=async(e)=>{ const file=e.target.files[0]; if(!file)return; $('credImpFileName').textContent=file.name;
+        try{ const parsed=parseFillForm(new Uint8Array(await file.arrayBuffer()),'creditor');
+          CRED_FORM_ROWS=parsed.map(r=>({ name:r.name, id_code:r.id_code, address:r.address, email:r.email,
+            basis_key:mapBasis(r.basisTxt), principal:r.principal, late_fees:Math.round((r.interest+r.late)*100)/100, fines:r.fines,
+            note:[r.noteTxt, r.interest>0?('Palūkanos: '+eur(r.interest)):'', r.secured?'Užtikrinta įkeitimu/hipoteka':''].filter(Boolean).join('; ')||null }));
+          if(!CRED_FORM_ROWS.length){ $('credImpMsg').innerHTML='<div class="error">Formoje nerasta užpildytų eilučių.</div>'; return; }
+          $('credImpMsg').innerHTML='<div class="success">Iš formos atpažinta: '+CRED_FORM_ROWS.length+' kreditorių. Spauskite „Importuoti".</div>';
+          $('credImpPreview').innerHTML='<table><thead><tr><th>Pavadinimas</th><th>Kodas</th><th style="text-align:right;">Pagrind.</th><th style="text-align:right;">Netesybos (pal.+delsp.)</th><th style="text-align:right;">Baudos</th><th>Pagrindas</th></tr></thead><tbody>'+CRED_FORM_ROWS.slice(0,50).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.id_code)}</td><td style="text-align:right;">${eur(r.principal)}</td><td style="text-align:right;">${eur(r.late_fees)}</td><td style="text-align:right;">${eur(r.fines)}</td><td>${esc(basisLabel(r.basis_key))}</td></tr>`).join('')+'</tbody></table>'+(CRED_FORM_ROWS.length>50?'<div class="muted">…ir dar '+(CRED_FORM_ROWS.length-50)+'</div>':'');
+        }catch(err){ CRED_FORM_ROWS=null; $('credImpMsg').innerHTML='<div class="error">Nepavyko nuskaityti Excel: '+esc(err.message||String(err))+'</div>'; }
+        finally{ e.target.value=''; }
+      };
+    })();
+    function openCredImport(){ if(!credCanEdit())return; CRED_FORM_ROWS=null; $('credImpFileName').textContent=''; $('credImpText').value=''; $('credImpMsg').innerHTML=''; $('credImpPreview').innerHTML=''; show('credImportModal'); }
     function parseCredImport(){
       const raw=$('credImpText').value.trim(); if(!raw){ $('credImpMsg').innerHTML='<div class="error">Įklijuokite duomenis.</div>'; return null; }
       const lines=raw.split(/\r?\n/).filter(l=>l.trim());
@@ -9089,7 +9185,7 @@
         '</tbody></table>'+(rows.length>30?'<div class="muted">…ir dar '+(rows.length-30)+'</div>':'');
     }
     async function doCredImport(){
-      const rows=parseCredImport(); if(!rows||!rows.length){ $('credImpMsg').innerHTML='<div class="error">Nėra ką importuoti.</div>'; return; }
+      const rows=(CRED_FORM_ROWS&&CRED_FORM_ROWS.length)?CRED_FORM_ROWS:parseCredImport(); if(!rows||!rows.length){ $('credImpMsg').innerHTML='<div class="error">Nėra ką importuoti (įkelkite formą arba įklijuokite duomenis).</div>'; return; }
       $('credImpMsg').innerHTML='<div class="muted">Importuojama…</div>';
       const { data, error }=await sb.rpc('import_creditors_bulk',{ p_case_id:CURRENT.id, p_rows:rows });
       if(error){ $('credImpMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
@@ -11524,8 +11620,24 @@
 
     // ---------- Masinis importas ----------
     let DEBT_IMP_ROWS=[];
-    $('debtImportBtn').onclick=async()=>{ if(!CURRENT||CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; } await debtLoadRefs(); $('debtImpText').value=''; $('debtImpPreview').innerHTML=''; $('debtImpMsg').innerHTML=''; DEBT_IMP_ROWS=[]; show('debtImportModal'); };
+    $('debtImportBtn').onclick=async()=>{ if(!CURRENT||CURRENT.__new){ alert('Pirma išsaugokite bylos kortelę.'); return; } await debtLoadRefs(); $('debtImpText').value=''; $('debtImpPreview').innerHTML=''; $('debtImpMsg').innerHTML=''; if($('debtImpFileName'))$('debtImpFileName').textContent=''; DEBT_IMP_ROWS=[]; show('debtImportModal'); };
     $('debtImpCancel').onclick=()=>hide('debtImportModal');
+    (function(){ const b=document.getElementById('debtImpFileBtn'), f=document.getElementById('debtImpFile'); if(!b||!f)return;
+      b.onclick=()=>f.click();
+      f.onchange=async(e)=>{ const file=e.target.files[0]; if(!file)return; $('debtImpFileName').textContent=file.name;
+        try{ if(!DEBT_CBASES.length){ try{ await debtLoadRefs(); }catch(_){} }
+          const parsed=parseFillForm(new Uint8Array(await file.arrayBuffer()),'debtor');
+          DEBT_IMP_ROWS=parsed.map(r=>{ const bMatch=DEBT_CBASES.find(x=>(x.label||'').toLowerCase()===r.basisTxt.toLowerCase()||x.key===r.basisTxt);
+            return { name:r.name, id_code:r.id_code, address:r.address, email:r.email,
+              principal:r.principal, penalties:Math.round((r.interest+r.late+r.fines)*100)/100,
+              basis_key:bMatch?bMatch.key:(r.basisTxt||null), doc_ref:r.noteTxt||'' }; });
+          if(!DEBT_IMP_ROWS.length){ $('debtImpMsg').innerHTML='<div class="error">Formoje nerasta užpildytų eilučių.</div>'; return; }
+          $('debtImpMsg').innerHTML='<div class="success">Iš formos atpažinta: '+DEBT_IMP_ROWS.length+' debitorių. Spauskite „Importuoti".</div>';
+          $('debtImpPreview').innerHTML='<table><thead><tr><th>Pavadinimas</th><th>Kodas</th><th style="text-align:right;">Pagrindinė</th><th style="text-align:right;">Netesybos</th><th>Pagrindas</th><th>Dok. Nr.</th></tr></thead><tbody>'+DEBT_IMP_ROWS.slice(0,50).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.id_code)}</td><td style="text-align:right;">${fmtEur(r.principal)}</td><td style="text-align:right;">${fmtEur(r.penalties)}</td><td>${esc(r.basis_key||'')}</td><td>${esc(r.doc_ref)}</td></tr>`).join('')+'</tbody></table>'+(DEBT_IMP_ROWS.length>50?'<div class="muted">…ir dar '+(DEBT_IMP_ROWS.length-50)+'</div>':'');
+        }catch(err){ DEBT_IMP_ROWS=[]; $('debtImpMsg').innerHTML='<div class="error">Nepavyko nuskaityti Excel: '+esc(err.message||String(err))+'</div>'; }
+        finally{ e.target.value=''; }
+      };
+    })();
     $('debtImpPreviewBtn').onclick=()=>{
       const lines=$('debtImpText').value.split('\n').map(l=>l.trim()).filter(Boolean);
       DEBT_IMP_ROWS=lines.map(l=>{ const c=l.split('\t').map(x=>x.trim());
