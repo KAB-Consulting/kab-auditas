@@ -2359,6 +2359,34 @@
     </div>
   </div>
 
+  <!-- DOKUMENTO SIUNTIMAS EL. PAŠTU -->
+  <div id="sendEmailModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:640px;">
+      <h2><span class="ic ic-mail"></span> Siųsti dokumentą el. paštu</h2>
+      <div class="muted" style="font-size:12px;margin-bottom:10px;" id="seInfo"></div>
+      <input type="hidden" id="seDocId">
+      <div id="seRegWarn" class="hidden" style="background:#FFF8E6;border:1px solid #E3D3AC;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#8A6D00;">
+        <span class="ic ic-alert"></span> Dokumentas dar neužregistruotas siunčiamų žurnale. Pirma paspauskite „Registruoti", tada galėsite siųsti (kad išsiuntimas būtų užfiksuotas su registracijos numeriu).
+      </div>
+      <label class="label">Kam (el. paštai, atskirti kableliu) *</label>
+      <input id="seTo" class="input" list="seContactList" placeholder="vardas@imone.lt, kitas@imone.lt">
+      <datalist id="seContactList"></datalist>
+      <label class="label">Kopija (CC, nebūtina)</label>
+      <input id="seCc" class="input" placeholder="cc@imone.lt">
+      <label class="label">Tema *</label>
+      <input id="seSubject" class="input">
+      <label class="label">Laiško tekstas</label>
+      <textarea id="seBody" class="input" rows="5" style="resize:vertical;"></textarea>
+      <label class="label">Prisegami dokumentai</label>
+      <div id="seAttList" style="border:1px solid #E4E8EC;border-radius:8px;padding:8px 10px;background:#FAFBFC;font-size:13px;"></div>
+      <div id="seMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="seCancel">Atšaukti</button>
+        <button class="btn" id="seSend"><span class="ic ic-mail"></span> Siųsti</button>
+      </div>
+    </div>
+  </div>
+
   <!-- REGISTRACIJOS KOREKCIJOS MODALĖ (data + eilės numeris) -->
   <div id="regEditModal" class="modal-bg hidden">
     <div class="modal" style="max-width:460px;">
@@ -8290,7 +8318,14 @@
         setTimeout(()=>URL.revokeObjectURL(url),6000);
       }catch(err){ alert('Nepavyko suformuoti ZIP: '+(err.message||String(err))); }
     };
-    async function loadLibrary(){ await loadDocuments(); renderFinalDocs(); }
+    let SENT_DOC_IDS=new Set();
+    async function loadSentDocs(){
+      SENT_DOC_IDS=new Set();
+      if(CURRENT.__new)return;
+      const { data }=await sb.from('insolvency_doc_sends').select('document_id').eq('case_id',CURRENT.id).eq('status','sent');
+      (data||[]).forEach(r=>{ if(r.document_id)SENT_DOC_IDS.add(r.document_id); });
+    }
+    async function loadLibrary(){ await loadDocuments(); await loadSentDocs(); renderFinalDocs(); }
     function renderFinalDocs(){
       const pdfs=DOCUMENTS.filter(d=>d.kind==='final_pdf');
       if(!pdfs.length){ $('finalDocsTable').innerHTML='<div class="muted center" style="padding:16px;">Galutinių PDF dar nėra. Generuokite PDF iš DOCX (Dokumentai) arba įkelkite rankiniu būdu.</div>'; return; }
@@ -8306,7 +8341,8 @@
             <td class="muted">${d.valid_until?esc(d.valid_until):'—'}</td>
             <td>${regHtml}</td>
             <td style="text-align:right;white-space:nowrap;">
-              ${(d.form_attachments||[]).length?`<button class="btn btn-sm btn-gold" onclick="downloadDocPackage('${d.id}')" title="Atsisiųsti viską (PDF + priedai) ZIP failu — patogu persiųsti el. paštu"><span class="ic ic-down"></span> Viską (ZIP)</button> <button class="btn btn-sm btn-ghost" disabled title="El. laiškų siuntimas iš sistemos — būsimas etapas. Kol kas atsisiųskite ZIP ir išsiųskite iš savo el. pašto."><span class="ic ic-mail"></span> Siųsti el. paštu (netrukus)</button> `:''}
+              ${(d.form_attachments||[]).length?`<button class="btn btn-sm btn-gold" onclick="downloadDocPackage('${d.id}')" title="Atsisiųsti viską (PDF + priedai) ZIP failu"><span class="ic ic-down"></span> Viską (ZIP)</button> `:''}
+              ${SENT_DOC_IDS.has(d.id)?'<span class="badge badge-green" title="Išsiųsta el. paštu"><span class="ic ic-mail"></span> Išsiųsta</span> ':''}<button class="btn btn-sm btn-ghost" onclick="openSendEmailModal('${d.id}')" title="Siųsti el. paštu adresatui su priedais"><span class="ic ic-mail"></span> Siųsti el. paštu</button>
               <button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(d.pdf_path)}')" title="Peržiūrėti"><span class="ic ic-eye"></span></button>
               <button class="btn btn-sm btn-ghost" onclick="downloadDocDl('${esc(d.pdf_path)}')" title="Atsisiųsti tik PDF"><span class="ic ic-down"></span></button>
               <button class="btn btn-sm btn-ghost" onclick="editLibraryDoc('${d.id}')" title="Koreguoti požymius"><span class="ic ic-pencil"></span></button>
@@ -8315,6 +8351,68 @@
             </td></tr>`;
         }).join('')+'</tbody></table>';
     }
+
+    // ---------- SIŲSTI DOKUMENTĄ EL. PAŠTU ----------
+    function parseEmailList(s){
+      return String(s||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean).map(tok=>{
+        const m=tok.match(/^(.*?)<([^>]+)>$/);
+        if(m)return { name:m[1].trim(), email:m[2].trim().toLowerCase() };
+        return { name:'', email:tok.toLowerCase() };
+      }).filter(r=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email));
+    }
+    window.openSendEmailModal=async(docId)=>{
+      const d=DOCUMENTS.find(x=>x.id===docId); if(!d||!d.pdf_path){ alert('Dokumentas nerastas.'); return; }
+      $('seDocId').value=docId;
+      $('seInfo').textContent='Dokumentas: '+(d.file_name||'—')+(d.reg_number?(' · Reg. Nr. '+d.reg_number):' · (neregistruotas)');
+      const noReg=!d.reg_number;
+      $('seRegWarn').classList.toggle('hidden',!noReg);
+      $('seSend').disabled=noReg;
+      // gavėjai iš bylos kontaktų
+      const { data:contacts }=await sb.from('insolvency_case_contacts').select('*').eq('case_id',CURRENT.id).order('sort_order');
+      const cs=(contacts||[]).filter(c=>c.email);
+      $('seContactList').innerHTML=cs.map(c=>`<option value="${esc(c.email)}">${esc(c.full_name||'')}${c.role?(' ('+esc(c.role)+')'):''}</option>`).join('');
+      const director=cs.find(c=>/vadov|direkt/i.test(c.role||''))||cs[0];
+      $('seTo').value=director?director.email:'';
+      $('seCc').value='';
+      $('seSubject').value=(d.reg_number?d.reg_number+' — ':'')+(d.file_name||'Dokumentas');
+      const admNm=(typeof CURRENT_ADM!=='undefined'&&CURRENT_ADM&&CURRENT_ADM.name)?CURRENT_ADM.name:'';
+      $('seBody').value='Laba diena,\n\nSiunčiame dokumentą'+(CURRENT.debtor_name?(' dėl '+CURRENT.debtor_name):'')+'. Dokumentas ir priedai pridedami prie šio laiško.\n\nPagarbiai,\n'+admNm;
+      const forms=d.form_attachments||[];
+      $('seAttList').innerHTML=
+        `<label style="display:flex;align-items:center;gap:8px;padding:3px 0;opacity:.75;"><input type="checkbox" checked disabled> <span class="ic ic-file"></span> ${esc(d.file_name||'Dokumentas.pdf')} <span class="muted">(pagrindinis PDF)</span></label>`+
+        (forms.length?forms.map(f=>`<label style="display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer;"><input type="checkbox" class="se-att-cb" value="${esc(f.path)}" checked> <span class="ic ic-clip"></span> ${esc(f.name)}</label>`).join(''):'<div class="muted" style="font-size:12px;">Papildomų priedų (formų) nėra.</div>');
+      $('seMsg').innerHTML='';
+      show('sendEmailModal');
+    };
+    $('seCancel').onclick=()=>hide('sendEmailModal');
+    $('seSend').onclick=async()=>{
+      const docId=$('seDocId').value;
+      const to=parseEmailList($('seTo').value);
+      const cc=parseEmailList($('seCc').value).map(r=>r.email);
+      const subject=$('seSubject').value.trim();
+      if(!to.length){ $('seMsg').innerHTML='<div class="error">Įveskite bent vieną galiojantį gavėjo el. paštą.</div>'; return; }
+      if(!subject){ $('seMsg').innerHTML='<div class="error">Įveskite laiško temą.</div>'; return; }
+      const paths=Array.prototype.map.call(document.querySelectorAll('#seAttList .se-att-cb:checked'),cb=>cb.value);
+      $('seSend').disabled=true;
+      $('seMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Siunčiama…</div>';
+      try{
+        const { data:{ session } } = await sb.auth.getSession();
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/insolvency-send-doc`,{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+          body:JSON.stringify({ document_id:docId, to, cc, subject, body_text:$('seBody').value, attachment_paths:paths })});
+        const r=await res.json();
+        if(!r.ok){
+          const map={ not_registered:'dokumentas neužregistruotas žurnale', attachments_too_large:'priedai per dideli (>18 MB) — siųskite mažiau priedų', attachment_missing:'nerastas priedo failas', email_send_failed:'el. pašto tiekėjas atmetė siuntimą', forbidden:'nepakanka teisių' };
+          $('seMsg').innerHTML='<div class="error">Nepavyko išsiųsti: '+esc(map[r.error_code]||r.error_code||'')+(r.detail?(' — '+esc(r.detail)):'')+'</div>';
+          $('seSend').disabled=false; return;
+        }
+        hide('sendEmailModal');
+        $('finalMsg') && ($('finalMsg').innerHTML='');
+        alert('Išsiųsta: '+(r.sent_to||[]).join(', ')+' (priedų: '+(r.attachments||0)+'). Įrašas užfiksuotas siunčiamų dokumentų žurnale.');
+        await loadLibrary();
+        try{ await loadRegistry(); }catch(_){}
+      }catch(err){ $('seMsg').innerHTML='<div class="error">Klaida: '+esc(err.message||String(err))+'</div>'; $('seSend').disabled=false; }
+    };
 
     // --- rankinis įkėlimas / požymių korekcija ---
     let LIB_FILE=null;
@@ -10619,7 +10717,7 @@
       if(!rows.length){ $('registryTable').innerHTML='<div class="muted center" style="padding:24px;">'+(rcv?'Gaunamų':oth?'Kitų':'Siunčiamų')+' dokumentų'+(cat?' kategorijoje „'+esc(DOC_CATS_MAP[cat]||cat)+'"':'')+' nerasta.</div>'; return; }
       $('registryTable').innerHTML='<table><thead><tr><th>Reg. Nr.</th><th>'+(rcv?'Gavimo data':oth?'Registravimo data':'Išsiuntimo data')+'</th><th>Kategorija</th><th>'+(rcv?'Siuntėjas':oth?'Šalis':'Gavėjas')+'</th><th>Aprašymas</th><th></th></tr></thead><tbody>'+
         rows.map(r=>`<tr${r.voided_at?' style="opacity:.62;"':''}>
-          <td><a href="javascript:void(0)" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')" style="color:var(--navy);font-weight:700;${r.voided_at?'text-decoration:line-through;':'text-decoration:underline;'}">${esc(r.registration_number)}</a>${regVoidBadge(r)}${regSignedBadge(r)}</td>
+          <td><a href="javascript:void(0)" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')" style="color:var(--navy);font-weight:700;${r.voided_at?'text-decoration:line-through;':'text-decoration:underline;'}">${esc(r.registration_number)}</a>${regVoidBadge(r)}${regSignedBadge(r)}${r.sent_at?' <span class="badge badge-green" title="Išsiųsta el. paštu '+esc(fmtDate(r.sent_at))+((r.sent_to&&r.sent_to.length)?' → '+esc(r.sent_to.map(function(x){return x.email||x;}).join(', ')):'')+'"><span class="ic ic-mail"></span> Išsiųsta</span>':''}</td>
           <td>${esc(r.registration_date||'')}</td>
           <td>${r.category?('<span style="background:#EFF4FB;border:1px solid var(--bd);border-radius:6px;padding:1px 8px;font-size:11px;">'+esc(DOC_CATS_MAP[r.category]||r.category)+'</span>'):'<span class="muted">—</span>'}</td>
           <td>${esc(r.counterparty_name||'—')}</td>
