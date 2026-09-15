@@ -683,6 +683,7 @@
         <div class="tab" data-set="templates"><span class="ic ic-file"></span> Šablonai</div>
         <div class="tab" data-set="forms"><span class="ic ic-clip"></span> Priedų biblioteka</div>
         <div class="tab hidden" data-set="users" id="setUsersTab"><span class="ic ic-user"></span> Vartotojai ir teisės</div>
+        <div class="tab hidden" data-set="integrations" id="setIntegrTab"><span class="ic ic-key"></span> Integracijos</div>
       </div>
       <div class="card" id="setAdmins"><div id="setAdminsList"></div></div>
       <div class="card hidden" id="setCases">
@@ -721,6 +722,35 @@
         <div class="hint" style="margin-bottom:10px;">Excel/DOCX formos, siunčiamos įmonei pildymui (kreditorių, debitorių, darbuotojų, turto sąrašai ir kt.). Siunčiamos <b>originaliu formatu</b> — nesujungiamos į PDF. <b>Neaktyvios</b> formos nerodomos generuojant dokumentus, kad nebūtų klaidingai prisegtos. Galioja visose bylose ir pas visus administratorius.</div>
         <div id="setFormsList"></div>
         <div id="setFormsMsg" style="margin-top:8px;"></div>
+      </div>
+      <div class="card hidden" id="setIntegrations">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+          <strong>Kvalifikuotas el. parašas — Dokobit</strong>
+          <span id="dkStatusBadge"></span>
+        </div>
+        <div class="hint" style="margin-bottom:14px;">Kvalifikuotas (QES) parašas per Dokobit Gateway (Smart-ID / Mobiliuoju parašu). Įveskite prieigos raktą ir aktyvuokite — tuomet sugeneruotus dokumentus bus galima siųsti pasirašyti kvalifikuotu parašu. Raktas saugomas serveryje ir <b>nerodomas</b> po išsaugojimo (matomi tik paskutiniai 4 simboliai). Keisti gali tik vyr. administratorius.</div>
+        <div class="row">
+          <div>
+            <label class="label">Aplinka</label>
+            <select id="dkEnv" class="select">
+              <option value="https://gateway-sandbox.dokobit.com">Bandomoji (sandbox)</option>
+              <option value="https://gateway.dokobit.com">Produkcija (gyva)</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Prieigos raktas (access token)</label>
+            <input id="dkToken" class="input" type="password" autocomplete="off" placeholder="•••• palikite tuščią, jei nekeičiate">
+          </div>
+        </div>
+        <label class="label">Postback URL (nebūtina)</label>
+        <input id="dkPostback" class="input" placeholder="https://…/functions/v1/… (jei naudojamas)">
+        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:14px;">
+          <input type="checkbox" id="dkEnabled"> Aktyvuoti Dokobit pasirašymą
+        </label>
+        <div id="dkMsg" style="margin-top:8px;"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn" id="dkSaveBtn"><span class="ic ic-check"></span> Išsaugoti</button>
+        </div>
       </div>
       <div class="card hidden" id="setUsers">
         <div style="display:flex;gap:18px;flex-wrap:wrap;">
@@ -2383,6 +2413,84 @@
       <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
         <button class="btn btn-ghost" id="seCancel">Atšaukti</button>
         <button class="btn" id="seSend"><span class="ic ic-mail"></span> Siųsti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOKUMENTO PASIRAŠYMAS (šiame įrenginyje / ekrane) -->
+  <div id="docSignModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:560px;">
+      <h2><span class="ic ic-pencil"></span> Dokumento pasirašymas</h2>
+      <div class="muted" style="font-size:12px;margin-bottom:10px;" id="dsInfo"></div>
+      <input type="hidden" id="dsDocId">
+      <div class="row">
+        <div><label class="label">Pasirašantis asmuo *</label><input id="dsSigner" class="input"></div>
+        <div><label class="label">Pareigos</label><input id="dsPosition" class="input" placeholder="pvz. nemokumo administratorius"></div>
+      </div>
+      <label class="label">Parašas (pieškite pele arba pirštu ekrane) *</label>
+      <canvas id="dsSigCanvas" width="480" height="150" style="border:1px solid var(--bd);border-radius:6px;touch-action:none;width:100%;max-width:480px;background:#fff;"></canvas>
+      <div style="margin-top:6px;"><button class="btn btn-sm btn-ghost" type="button" onclick="clearSig('dsSigCanvas')">Išvalyti</button></div>
+      <div id="dsMsg"></div>
+      <div class="muted" style="font-size:11px;margin-top:16px;margin-bottom:4px;">Arba pasirašykite nuotoliniu būdu (kai įgaliotas asmuo nedalyvauja):</div>
+      <div style="display:flex;gap:8px;margin-top:2px;justify-content:space-between;flex-wrap:wrap;align-items:center;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" id="dsRemote" title="Nuoroda el. paštu + QR kodas ekrane, patvirtinama OTP kodu"><span class="ic ic-mail"></span> Siųsti el. paštu (OTP + QR)</button>
+          <button class="btn btn-ghost btn-sm hidden" id="dsDokobit" title="Kvalifikuotas el. parašas per Dokobit (Smart-ID / Mobilusis parašas)"><span class="ic ic-lock"></span> Kvalifikuotas (Dokobit)</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" id="dsCancel">Atšaukti</button>
+          <button class="btn" id="dsSign"><span class="ic ic-check"></span> Pasirašyti čia</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUOTOLINIS PASIRAŠYMAS (el. paštu + QR) -->
+  <div id="remoteSignModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:520px;">
+      <h2><span class="ic ic-mail"></span> Siųsti pasirašyti nuotoliniu būdu</h2>
+      <div class="muted" style="font-size:12px;margin-bottom:10px;" id="rsInfo"></div>
+      <input type="hidden" id="rsDocId">
+      <div id="rsForm">
+        <div style="border:1px solid #E4E8EC;border-radius:8px;padding:10px 12px;margin-bottom:12px;background:#FAFBFC;">
+          <label class="label" style="margin-top:0;">Parašo tipas</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-top:4px;">
+            <input type="radio" name="rsSignType" value="simple" checked> Paprastas — nuoroda el. paštu + patvirtinimo kodas (OTP)
+          </label>
+          <label id="rsDkOptLabel" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-top:4px;">
+            <input type="radio" name="rsSignType" value="dokobit"> Kvalifikuotas — Dokobit (Smart-ID / Mobilusis parašas) <span id="rsDkHint" class="muted" style="font-size:11px;"></span>
+          </label>
+        </div>
+        <div class="row">
+          <div><label class="label">Pasirašantis asmuo *</label><input id="rsSigner" class="input"></div>
+          <div><label class="label">El. paštas *</label><input id="rsEmail" class="input" type="email"></div>
+        </div>
+        <div class="hint" style="margin-top:8px;">Paprastas parašas: saugi nuoroda + 6 skaitmenų kodas (OTP), galioja 14 d. Kvalifikuotas: Dokobit atsiunčia kvietimą ir grąžina teisiškai pilnavertį (QES) PDF. Pasirašius, dokumentas automatiškai pažymimas „Pasirašyta".</div>
+        <div id="rsMsg"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+          <button class="btn btn-ghost" id="rsCancel">Atšaukti</button>
+          <button class="btn" id="rsSend"><span class="ic ic-mail"></span> Siųsti kvietimą</button>
+        </div>
+      </div>
+      <div id="rsResult" class="hidden" style="text-align:center;">
+        <div class="success" style="margin-bottom:12px;">Kvietimas išsiųstas: <b id="rsSentTo"></b></div>
+        <div id="rsSimpleBox">
+          <div class="muted" style="font-size:12px;margin-bottom:8px;">Jei pasirašantysis yra šalia — duokite nuskaityti QR kodą telefonu:</div>
+          <div id="rsQr" style="display:flex;justify-content:center;margin:0 auto 10px;min-height:180px;align-items:center;"></div>
+          <div style="font-size:11px;word-break:break-all;color:#5A5A5A;" id="rsLink"></div>
+          <div style="display:flex;gap:8px;margin-top:14px;justify-content:center;">
+            <button class="btn btn-ghost" id="rsCopy">Kopijuoti nuorodą</button>
+            <button class="btn" id="rsClose">Uždaryti</button>
+          </div>
+        </div>
+        <div id="rsDokobitBox" class="hidden">
+          <div class="muted" style="font-size:12px;margin-bottom:12px;">Dokumentas išsiųstas pasirašyti per <b>Dokobit</b>. Pasirašantysis gaus Dokobit kvietimą el. paštu ir pasirašys Smart-ID arba mobiliuoju parašu. Pasirašius, spauskite „Tikrinti būseną" — pasirašytas (QES) dokumentas bus įkeltas automatiškai.</div>
+          <div id="rsDkMsg" style="margin-bottom:8px;"></div>
+          <div style="display:flex;gap:8px;justify-content:center;">
+            <button class="btn btn-ghost" id="rsDkStatus"><span class="ic ic-clock"></span> Tikrinti būseną</button>
+            <button class="btn" id="rsDkClose">Uždaryti</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -4436,7 +4544,8 @@
       views('settingsView'); $('settingsMsg').innerHTML='';
       document.querySelectorAll('#settingsView .tab').forEach(t=>t.classList.toggle('active',t.dataset.set==='admins'));
       $('setUsersTab').classList.toggle('hidden',!IS_SUPERADMIN);
-      ['setAdmins'].forEach(show); ['setCases','setTemplates','setForms','setUsers'].forEach(hide);
+      $('setIntegrTab').classList.toggle('hidden',!IS_SUPERADMIN);
+      ['setAdmins'].forEach(show); ['setCases','setTemplates','setForms','setUsers','setIntegrations'].forEach(hide);
       await renderSetAdmins();
     }
     document.querySelectorAll('#settingsView .tab').forEach(t=>{
@@ -4448,13 +4557,44 @@
         $('setTemplates').classList.toggle('hidden',s!=='templates');
         $('setForms').classList.toggle('hidden',s!=='forms');
         $('setUsers').classList.toggle('hidden',s!=='users');
+        $('setIntegrations').classList.toggle('hidden',s!=='integrations');
         if(s==='admins')await renderSetAdmins();
         if(s==='cases')await renderSetCases();
         if(s==='templates')await renderSetTemplates();
         if(s==='forms')await renderSetForms();
         if(s==='users')await openAccessUsers();
+        if(s==='integrations')await renderIntegrations();
       };
     });
+    // --- Integracijos: Dokobit kvalifikuotas parašas ---
+    let DOKOBIT_ACTIVE=false;
+    async function refreshDokobitActive(){
+      try{ const r=await sb.rpc('get_dokobit_status'); DOKOBIT_ACTIVE=!!(r.data&&r.data.ok&&r.data.active); }catch(_){ DOKOBIT_ACTIVE=false; }
+      return DOKOBIT_ACTIVE;
+    }
+    async function renderIntegrations(){
+      $('dkMsg').innerHTML=''; $('dkToken').value='';
+      const r=await sb.rpc('get_dokobit_status');
+      const st=(r.data&&r.data.ok)?r.data:{configured:false,enabled:false,active:false};
+      DOKOBIT_ACTIVE=!!st.active;
+      if(st.base_url)$('dkEnv').value=st.base_url;
+      $('dkEnabled').checked=!!st.enabled;
+      const badge=$('dkStatusBadge');
+      if(st.active) badge.innerHTML='<span class="badge badge-green"><span class="ic ic-check"></span> Aktyvus ('+esc(st.environment||'')+')</span>';
+      else if(st.configured) badge.innerHTML='<span class="badge" style="background:#FFF8E6;color:#8A6D00;border:1px solid #E3D3AC;">Sukonfigūruota, bet išjungta</span>';
+      else badge.innerHTML='<span class="badge badge-gray">Nesukonfigūruota</span>';
+      $('dkToken').placeholder = st.configured ? ('•••• '+(st.token_last4||'nustatyta')+' — palikite tuščią, jei nekeičiate') : 'Įklijuokite Dokobit prieigos raktą';
+    }
+    if($('dkSaveBtn'))$('dkSaveBtn').onclick=async()=>{
+      $('dkSaveBtn').disabled=true; $('dkMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Išsaugoma…</div>';
+      try{
+        const r=await sb.rpc('set_dokobit_config',{ p_access_token:$('dkToken').value.trim(), p_base_url:$('dkEnv').value, p_postback:$('dkPostback').value.trim(), p_enabled:$('dkEnabled').checked });
+        if(r.error||!(r.data&&r.data.ok))throw new Error((r.error&&r.error.message)||(r.data&&r.data.error_code)||'Nepavyko išsaugoti.');
+        $('dkMsg').innerHTML='<div class="success">Išsaugota.</div>';
+        await renderIntegrations();
+      }catch(err){ $('dkMsg').innerHTML='<div class="error">Klaida: '+esc(err.message||String(err))+'</div>'; }
+      finally{ $('dkSaveBtn').disabled=false; }
+    };
     // --- Priedų (pildymo formų) biblioteka ---
     function formFmt(f){ const m=(f.title||'').toLowerCase(); if(/\.xlsx?|\.csv/.test(m))return 'Excel'; if(/\.docx?/.test(m))return 'Word'; if(/\.pdf/.test(m))return 'PDF'; return (f.mime||'failas'); }
     async function renderSetForms(){
@@ -8342,7 +8482,7 @@
             <td>${regHtml}</td>
             <td style="text-align:right;white-space:nowrap;">
               ${(d.form_attachments||[]).length?`<button class="btn btn-sm btn-gold" onclick="downloadDocPackage('${d.id}')" title="Atsisiųsti viską (PDF + priedai) ZIP failu"><span class="ic ic-down"></span> Viską (ZIP)</button> `:''}
-              ${SENT_DOC_IDS.has(d.id)?'<span class="badge badge-green" title="Išsiųsta el. paštu"><span class="ic ic-mail"></span> Išsiųsta</span> ':''}<button class="btn btn-sm btn-ghost" onclick="openSendEmailModal('${d.id}')" title="Siųsti el. paštu adresatui su priedais"><span class="ic ic-mail"></span> Siųsti el. paštu</button>
+              ${d.signed_pdf_path?`<span class="badge badge-green" title="Pasirašyta${d.signer_name?(' — '+esc(d.signer_name)):''}${d.signed_at?(', '+esc(fmtDate(d.signed_at))):''}"><span class="ic ic-check"></span> Pasirašyta</span> <button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(d.signed_pdf_path)}','Pasirašytas dokumentas')" title="Peržiūrėti pasirašytą PDF"><span class="ic ic-eye"></span> Pasirašytas</button> `:`${d.sign_status==='awaiting'?'<span class="badge" title="Išsiųsta pasirašyti — laukiama parašo" style="background:#FFF8E6;color:#8A6D00;border:1px solid #E3D3AC;"><span class="ic ic-clock"></span> Laukia parašo</span> ':''}<button class="btn btn-sm btn-ghost" onclick="openDocSignModal('${d.id}')" title="Pasirašyti šiame įrenginyje arba siųsti pasirašyti"><span class="ic ic-pencil"></span> Pasirašyti</button> `}${SENT_DOC_IDS.has(d.id)?'<span class="badge badge-green" title="Išsiųsta el. paštu"><span class="ic ic-mail"></span> Išsiųsta</span> ':''}<button class="btn btn-sm btn-ghost" onclick="openSendEmailModal('${d.id}')" title="Siųsti el. paštu adresatui su priedais"><span class="ic ic-mail"></span> Siųsti el. paštu</button>
               <button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(d.pdf_path)}')" title="Peržiūrėti"><span class="ic ic-eye"></span></button>
               <button class="btn btn-sm btn-ghost" onclick="downloadDocDl('${esc(d.pdf_path)}')" title="Atsisiųsti tik PDF"><span class="ic ic-down"></span></button>
               <button class="btn btn-sm btn-ghost" onclick="editLibraryDoc('${d.id}')" title="Koreguoti požymius"><span class="ic ic-pencil"></span></button>
@@ -8412,6 +8552,157 @@
         await loadLibrary();
         try{ await loadRegistry(); }catch(_){}
       }catch(err){ $('seMsg').innerHTML='<div class="error">Klaida: '+esc(err.message||String(err))+'</div>'; $('seSend').disabled=false; }
+    };
+
+    // ---------- DOKUMENTO PASIRAŠYMAS ŠIAME ĮRENGINYJE (ekrane) ----------
+    window.openDocSignModal=async(docId)=>{
+      const d=DOCUMENTS.find(x=>x.id===docId); if(!d||!d.pdf_path){ alert('Dokumentas nerastas.'); return; }
+      $('dsDocId').value=docId;
+      $('dsInfo').textContent='Dokumentas: '+(d.file_name||'—')+(d.reg_number?(' · '+d.reg_number):'');
+      const adm=(typeof CURRENT_ADM!=='undefined'&&CURRENT_ADM)?CURRENT_ADM:{};
+      $('dsSigner').value=adm.authorized_person||adm.name||'';
+      $('dsPosition').value='nemokumo administratorius';
+      $('dsMsg').innerHTML=''; $('dsSign').disabled=false;
+      $('dsDokobit').classList.add('hidden'); // kol nepatikrinta — paslėpta (tuščia)
+      show('docSignModal');
+      setupSig('dsSigCanvas'); clearSig('dsSigCanvas');
+      // Dokobit mygtukas rodomas TIK jei aktyvuota (kitaip lieka tuščia)
+      refreshDokobitActive().then(active=>{ $('dsDokobit').classList.toggle('hidden',!active); });
+    };
+    $('dsCancel').onclick=()=>hide('docSignModal');
+    $('dsSign').onclick=async()=>{
+      const docId=$('dsDocId').value; const d=DOCUMENTS.find(x=>x.id===docId); if(!d){ hide('docSignModal'); return; }
+      const signer=$('dsSigner').value.trim(), pos=$('dsPosition').value.trim();
+      const sig=sigData('dsSigCanvas');
+      if(!signer){ $('dsMsg').innerHTML='<div class="error">Įveskite pasirašančio asmens vardą.</div>'; return; }
+      if(!sig){ $('dsMsg').innerHTML='<div class="error">Pasirašykite lange (pieškite pele arba pirštu).</div>'; return; }
+      $('dsSign').disabled=true; $('dsMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Pasirašoma…</div>';
+      try{
+        const { data:{ session } } = await sb.auth.getSession();
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+          body:JSON.stringify({ path:d.pdf_path })});
+        const r=await res.json();
+        if(!r.success||!r.url)throw new Error(r.error||'Nepavyko gauti PDF.');
+        const bytes=new Uint8Array(await (await fetch(r.url)).arrayBuffer());
+        const { PDFDocument, rgb }=PDFLib;
+        const out=await PDFDocument.load(bytes);
+        const fonts=await getStampFonts(out); const T=s=>fonts.unicode?String(s||''):deLT(s);
+        const sigB64=String(sig).split(',')[1]||'';
+        const sigBytes=Uint8Array.from(atob(sigB64),ch=>ch.charCodeAt(0));
+        const png=await out.embedPng(sigBytes);
+        const pages=out.getPages(); const page=pages[pages.length-1];
+        const pw=page.getWidth();
+        const sigW=140, sigH=Math.min(60, sigW*(png.height/png.width));
+        const x=pw-40-sigW, yBase=64;
+        page.drawText(T('Parašas:'),{ x:x, y:yBase+sigH+16, size:8, font:fonts.reg, color:rgb(0.35,0.35,0.35) });
+        page.drawImage(png,{ x:x, y:yBase+4, width:sigW, height:sigH });
+        page.drawLine({ start:{x:x,y:yBase}, end:{x:x+sigW,y:yBase}, thickness:0.7, color:rgb(0.3,0.3,0.3) });
+        const dt=new Date().toISOString().slice(0,10);
+        page.drawText(T(signer+(pos?(', '+pos):'')),{ x:x, y:yBase-12, size:8, font:fonts.bold, color:rgb(0.05,0.05,0.05) });
+        page.drawText(T('Pasirašyta '+dt+' el. sistemoje (ranka)'),{ x:x, y:yBase-23, size:7, font:fonts.reg, color:rgb(0.4,0.4,0.4) });
+        const outBytes=await out.save();
+        const base=(d.reg_number||d.id).replace(/[^A-Za-z0-9._-]+/g,'_');
+        const signedPath=`${CURRENT.case_short_code}/signed/${Date.now()}_${base}_signed.pdf`;
+        const up=await sb.storage.from('insolvency-docs').upload(signedPath,new Blob([outBytes],{type:'application/pdf'}),{ upsert:true, contentType:'application/pdf' });
+        if(up.error)throw new Error(up.error.message);
+        await sb.from('insolvency_documents').update({ signed_pdf_path:signedPath, signed_at:new Date().toISOString(), signer_name:signer, sign_method:'onscreen' }).eq('id',d.id);
+        // jei registruota — susieti pasirašytą versiją su žurnalo įrašu (kaip įkeltą pasirašytą kopiją)
+        if(d.reg_id){ try{ await sb.rpc('attach_signed_registration',{ p_id:d.reg_id, p_path:signedPath, p_name:(d.file_name||base)+' (pasirašytas)' }); }catch(_){}}
+        try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:'document_signed', p_details:{ document_id:d.id, signer:signer, method:'onscreen' } }); }catch(_){}
+        hide('docSignModal');
+        await loadLibrary();
+        try{ await loadRegistry(); }catch(_){}
+      }catch(err){ $('dsMsg').innerHTML='<div class="error">Klaida: '+esc(err.message||String(err))+'</div>'; $('dsSign').disabled=false; }
+    };
+
+    // ---------- NUOTOLINIS PASIRAŠYMAS (el. paštu + QR) ----------
+    async function ensureQR(){
+      if(window.QRCode&&window.QRCode.toCanvas)return;
+      await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js'; s.onload=res; s.onerror=()=>rej(new Error('Nepavyko įkelti QR bibliotekos.')); document.head.appendChild(s); });
+    }
+    let RS_DK_DOCID=null;
+    window.openRemoteSign=async(docId,preType)=>{
+      const d=DOCUMENTS.find(x=>x.id===docId); if(!d||!d.pdf_path){ alert('Dokumentas nerastas.'); return; }
+      if(!d.reg_number && !confirm('Dokumentas dar neregistruotas siunčiamų žurnale. Vis tiek siųsti pasirašyti?\n\nRekomenduojama pirma užregistruoti, kad pasirašyta versija būtų susieta su žurnalo numeriu.'))return;
+      $('rsDocId').value=docId; RS_DK_DOCID=null;
+      $('rsInfo').textContent='Dokumentas: '+(d.file_name||'—')+(d.reg_number?(' · '+d.reg_number):'');
+      const adm=(typeof CURRENT_ADM!=='undefined'&&CURRENT_ADM)?CURRENT_ADM:{};
+      $('rsSigner').value=adm.authorized_person||adm.name||'';
+      $('rsEmail').value=adm.email||'';
+      $('rsMsg').innerHTML='';
+      $('rsForm').classList.remove('hidden'); $('rsResult').classList.add('hidden'); $('rsQr').innerHTML='';
+      $('rsSend').disabled=false;
+      // Dokobit prieinamumas
+      const active=await refreshDokobitActive();
+      const dkRadio=document.querySelector('input[name="rsSignType"][value="dokobit"]');
+      if(dkRadio){ dkRadio.disabled=!active; }
+      $('rsDkHint').textContent=active?'':'(neaktyvu — įjunkite Nustatymai → Integracijos)';
+      $('rsDkOptLabel').style.opacity=active?'1':'.55';
+      // preselektas pagal spaustą mygtuką (Dokobit tik jei aktyvus)
+      const wantDk=(preType==='dokobit'&&active);
+      const sel=document.querySelector('input[name="rsSignType"][value="'+(wantDk?'dokobit':'simple')+'"]');
+      if(sel)sel.checked=true;
+      show('remoteSignModal');
+    };
+    $('dsRemote').onclick=()=>{ const id=$('dsDocId').value; hide('docSignModal'); openRemoteSign(id,'simple'); };
+    $('dsDokobit').onclick=()=>{ const id=$('dsDocId').value; hide('docSignModal'); openRemoteSign(id,'dokobit'); };
+    $('rsCancel').onclick=()=>hide('remoteSignModal');
+    $('rsClose').onclick=()=>hide('remoteSignModal');
+    $('rsSend').onclick=async()=>{
+      const docId=$('rsDocId').value;
+      const signer=$('rsSigner').value.trim(), email=$('rsEmail').value.trim().toLowerCase();
+      const stype=(document.querySelector('input[name="rsSignType"]:checked')||{}).value||'simple';
+      if(!signer){ $('rsMsg').innerHTML='<div class="error">Įveskite pasirašančio asmens vardą.</div>'; return; }
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ $('rsMsg').innerHTML='<div class="error">Įveskite galiojantį el. paštą.</div>'; return; }
+      $('rsSend').disabled=true; $('rsMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Ruošiama…</div>';
+      try{
+        const cr=await sb.rpc('create_document_sign_for_library',{ p_document_id:docId, p_signer_name:signer, p_signer_email:email });
+        if(cr.error||!(cr.data&&cr.data.ok))throw new Error((cr.error&&cr.error.message)||(cr.data&&cr.data.error_code)||'Nepavyko paruošti dokumento.');
+        const { data:{ session } } = await sb.auth.getSession();
+        if(stype==='dokobit'){
+          const res=await fetch(`${SUPABASE_URL}/functions/v1/dokobit-sign`,{
+            method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+            body:JSON.stringify({ action:'create', document_id:cr.data.document_id })});
+          const r=await res.json();
+          if(!r.ok){ const m={ not_configured:'Dokobit neaktyvus (Nustatymai → Integracijos)', dokobit_upload_failed:'Dokobit atmetė failą', dokobit_create_failed:'Dokobit nesukūrė pasirašymo' }; throw new Error((m[r.error_code]||r.error_code||'Dokobit klaida')+(r.detail?(' — '+esc(JSON.stringify(r.detail)).slice(0,200)):'')); }
+          RS_DK_DOCID=cr.data.document_id;
+          $('rsForm').classList.add('hidden'); $('rsResult').classList.remove('hidden');
+          $('rsSentTo').textContent=email; $('rsSimpleBox').classList.add('hidden'); $('rsDokobitBox').classList.remove('hidden'); $('rsDkMsg').innerHTML='';
+          try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:'document_sign_requested', p_details:{ document_id:docId, signer:signer, email:email, method:'dokobit' } }); }catch(_){}
+          await loadLibrary();
+          return;
+        }
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/document-sign`,{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+          body:JSON.stringify({ action:'request', document_id:cr.data.document_id, party_id:cr.data.party_id, signer_name:signer, signer_email:email })});
+        const r=await res.json();
+        if(!r.ok)throw new Error(r.error_code||'Nepavyko išsiųsti kvietimo.');
+        $('rsForm').classList.add('hidden'); $('rsResult').classList.remove('hidden');
+        $('rsSentTo').textContent=email; $('rsDokobitBox').classList.add('hidden'); $('rsSimpleBox').classList.remove('hidden');
+        $('rsLink').textContent=r.link||''; $('rsQr').innerHTML='';
+        if(r.link){ try{ await ensureQR(); const cv=document.createElement('canvas'); await window.QRCode.toCanvas(cv,r.link,{ width:180, margin:1 }); $('rsQr').appendChild(cv); }catch(_){ $('rsQr').innerHTML='<span class="muted" style="font-size:12px;">QR kodo parodyti nepavyko — naudokite nuorodą žemiau.</span>'; } }
+        $('rsCopy').onclick=()=>{ try{ navigator.clipboard.writeText(r.link||''); $('rsCopy').textContent='Nukopijuota ✓'; setTimeout(()=>{$('rsCopy').textContent='Kopijuoti nuorodą';},1500); }catch(_){} };
+        try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:'document_sign_requested', p_details:{ document_id:docId, signer:signer, email:email, method:'email_otp' } }); }catch(_){}
+        await loadLibrary();
+      }catch(err){ $('rsMsg').innerHTML='<div class="error">Klaida: '+esc(err.message||String(err))+'</div>'; $('rsSend').disabled=false; }
+    };
+    if($('rsDkClose'))$('rsDkClose').onclick=()=>hide('remoteSignModal');
+    if($('rsDkStatus'))$('rsDkStatus').onclick=async()=>{
+      if(!RS_DK_DOCID)return;
+      $('rsDkStatus').disabled=true; $('rsDkMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Tikrinama…</div>';
+      try{
+        const { data:{ session } } = await sb.auth.getSession();
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/dokobit-sign`,{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+          body:JSON.stringify({ action:'status', document_id:RS_DK_DOCID })});
+        const r=await res.json();
+        if(!r.ok){ $('rsDkMsg').innerHTML='<div class="error">'+esc(r.error_code||'Klaida')+'</div>'; $('rsDkStatus').disabled=false; return; }
+        if(r.completed&&r.stored){ hide('remoteSignModal'); await loadLibrary(); try{ await loadRegistry(); }catch(_){} alert('Dokumentas pasirašytas kvalifikuotu parašu ir įkeltas.'); return; }
+        if(r.completed&&!r.stored){ $('rsDkMsg').innerHTML='<div class="muted">Pasirašyta, bet nepavyko parsisiųsti failo — pabandykite dar kartą.</div>'; }
+        else{ $('rsDkMsg').innerHTML='<div class="muted">Būsena: '+esc(r.status||'laukiama')+'. Dar nepasirašyta — pabandykite vėliau.</div>'; }
+        $('rsDkStatus').disabled=false;
+      }catch(err){ $('rsDkMsg').innerHTML='<div class="error">Klaida: '+esc(err.message||String(err))+'</div>'; $('rsDkStatus').disabled=false; }
     };
 
     // --- rankinis įkėlimas / požymių korekcija ---
