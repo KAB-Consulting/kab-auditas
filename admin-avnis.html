@@ -531,9 +531,12 @@
             <button class="btn btn-sm full-only" id="okredoFetchBtn" style="background:#0369A1;">⬇️ Surinkti iš Okredo</button>
             <a id="okredoLink" class="btn btn-ghost btn-sm" target="_blank" rel="noopener" style="text-decoration:none;">🔗 Atidaryti Okredo</a>
             <button class="btn btn-ghost btn-sm" id="rekvizitaiBtn" title="Atidaro įmonę Rekvizitai.lt (bylos, transportas, straipsniai) naujame skirtuke">🔎 Paieška Rekvizitai.lt</button>
+            <span id="ccExtraSrc" style="display:contents;"></span>
+            <button class="btn btn-sm" id="aiCoBtn" style="background:#6D28D9;" title="AI ieško viešų šios įmonės duomenų">🤖 AI paieška</button>
             <button class="btn btn-gold btn-sm full-only" id="saveCardBtn">💾 Išsaugoti duomenis</button>
           </div>
         </div>
+        <div id="aiCoWrap" class="hidden" style="margin-top:10px;"></div>
         <div id="cardMsg"></div>
       </div>
 
@@ -576,6 +579,8 @@
             <span class="muted" id="evCaseNo" style="font-size:12.5px;"></span>
             <button class="btn btn-ghost btn-sm" id="evLiteko" title="Kopijuoja bylos nr. ir atidaro LITEKO viešą paiešką">🔎 LITEKO</button>
             <button class="btn btn-ghost btn-sm" id="evPranesimai" title="Kopijuoja bylos nr. ir atidaro Teismų pranešimus">🔎 Teismų pranešimai</button>
+            <span id="evExtraSrc" style="display:contents;"></span>
+            <button class="btn btn-sm" id="aiEvBtn" style="background:#6D28D9;" title="AI ieško viešų bylos / teismo duomenų">🤖 AI paieška</button>
             <button class="btn btn-gold btn-sm full-only" id="evAddBtn">➕ Pridėti įvykį</button>
           </div>
         </div>
@@ -600,6 +605,7 @@
             <button class="btn btn-ghost btn-sm" id="evCancel">Atšaukti</button>
           </div>
         </div>
+        <div id="aiEvWrap" class="hidden" style="margin:10px 0;"></div>
         <div id="evMsg"></div>
         <div style="overflow-x:auto;">
           <table>
@@ -703,6 +709,48 @@
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const NOTES_BUCKET = 'avnis-notes';
 
+    // ===== Viešų paieškų nuorodos (konfigūruojama Nustatymuose) =====
+    // Atsarginės reikšmės, jei DB neatsako. Realios reikšmės kraunamos iš avnis_settings.
+    const SEARCH_DEFAULTS = {
+      court_hearings:      { id:'court_hearings',      label:'Teismų tvarkaraščiai (LITEKO)', section:'court_events', url_template:'https://liteko.teismai.lt/viesinimas/pub/hearing/search',      query_key:'caseNo',       method:'GET',  icon:'🔎', enabled:true, builtin:true },
+      court_announcements: { id:'court_announcements', label:'Teismų pranešimai (LITEKO)',     section:'court_events', url_template:'https://liteko.teismai.lt/viesinimas/pub/caseCourtMsg/search', query_key:'caseNo',       method:'GET',  icon:'🔎', enabled:true, builtin:true },
+      okredo:              { id:'okredo',              label:'Okredo (įmonių paieška)',        section:'company',      url_template:'https://okredo.com/lt-lt/ieskoti?q={q}',                        query_key:'code_or_name', method:'GET',  icon:'🔗', enabled:true, builtin:true },
+      rekvizitai:          { id:'rekvizitai',          label:'Rekvizitai.lt (bylos, transportas)', section:'company',  url_template:'https://rekvizitai.vz.lt/imoniu-paieska/1/?scrollTo=searchForm', query_key:'code_or_name', method:'POST', icon:'🔎', enabled:true, builtin:true }
+    };
+    let SEARCH_SRC = {}; // id -> row iš avnis_settings
+    function getSrc(id){ return SEARCH_SRC[id] || SEARCH_DEFAULTS[id] || null; }
+    function srcVal(c, key){
+      if(!c) return '';
+      if(key==='caseNo') return c.caseNo || '';
+      if(key==='name')   return c.name || '';
+      if(key==='code')   return c.code || '';
+      return c.code || c.name || ''; // code_or_name
+    }
+    function buildSearchUrl(id, c){
+      const s = getSrc(id); if(!s) return '#';
+      let u = String(s.url_template||'');
+      const v = srcVal(c, s.query_key);
+      u = u.replace(/\{q\}/g, encodeURIComponent(v))
+           .replace(/\{code\}/g, encodeURIComponent((c&&c.code)||''))
+           .replace(/\{name\}/g, encodeURIComponent((c&&c.name)||''))
+           .replace(/\{caseNo\}/g, encodeURIComponent((c&&c.caseNo)||''));
+      return u;
+    }
+    async function loadSearchSources(){
+      try{
+        const { data, error } = await sb.from('avnis_settings').select('*').order('sort_order');
+        if(!error && data){ SEARCH_SRC={}; data.forEach(r=>{ SEARCH_SRC[r.id]=r; }); }
+      }catch(_){}
+    }
+    // Vartotojo pridėtos (ne įmontuotos) paieškos atvaizduojamos kaip papildomi mygtukai atitinkamoje sekcijoje
+    function renderExtraSources(section, containerId, c){
+      const el = $(containerId); if(!el) return;
+      const rows = Object.keys(SEARCH_SRC).map(k=>SEARCH_SRC[k])
+        .filter(s=> s && !s.builtin && s.enabled!==false && s.section===section)
+        .sort((a,b)=>(a.sort_order||100)-(b.sort_order||100));
+      el.innerHTML = rows.map(s=>`<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" style="text-decoration:none;" href="${esc(buildSearchUrl(s.id,c))}" title="Vartotojo pridėta paieška (Nustatymai)">${esc(s.icon||'🔎')} ${esc(s.label)}</a>`).join('');
+    }
+
     const $ = id => document.getElementById(id);
     const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const show = id => $(id).classList.remove('hidden');
@@ -763,7 +811,7 @@
     }
     let SUBMOD='avnis';
     const PAGE_SIZE=100;
-    window.BUILD_VERSION='avnis-2026-09-01-v14-crm';
+    window.BUILD_VERSION='avnis-2026-09-16-v15-settings';
 
     const JURISDICTION = {1:'Lietuvos (teritorinė)', 2:'Lietuvos (pagrindinė)', 3:'Tarptautinė'};
 
@@ -781,6 +829,7 @@
         if(await checkModuleAccess()==='none') return;
         CURRENT_UID = session.user.id; $('userEmail').textContent = session.user.email;
         try{ const acc = await sb.rpc('get_my_access'); MY_NAME = (acc.data && (acc.data.full_name||acc.data.name)) || session.user.email; }catch(_){ MY_NAME = session.user.email; }
+        await loadSearchSources();
         show('submodBar');
         await loadData();
       }catch(err){ views('loginView'); $('loginError').textContent='Sesijos klaida: '+(err.message||String(err)); show('loginError'); }
@@ -796,7 +845,7 @@
       if(!CURRENT) return;
       const code = CURRENT.code;
       const f = document.createElement('form');
-      f.method='POST'; f.action='https://rekvizitai.vz.lt/imoniu-paieska/1/?scrollTo=searchForm'; f.target='_blank'; f.style.display='none';
+      f.method='POST'; f.action=(getSrc('rekvizitai')||{}).url_template || 'https://rekvizitai.vz.lt/imoniu-paieska/1/?scrollTo=searchForm'; f.target='_blank'; f.style.display='none';
       const add=(n,v)=>{ const i=document.createElement('input'); i.type='hidden'; i.name=n; i.value=v; f.appendChild(i); };
       if(code){ add('company_code', code); } else { add('name', CURRENT.name||''); }
       add('resetFilter','0'); add('ok','');
@@ -1318,7 +1367,9 @@
       const l=c.latest;
       $('ccMeta').innerHTML = `Įmonės kodas: <b>${esc(c.code||'—')}</b> · ${esc(l.company_address||'')}`;
       $('ccRepeat').innerHTML = c.isRepeat ? `<span class="badge badge-purple">🔁 Skelbimas kartojasi — AVNIS sistemoje ši įmonė skelbta ${c.count} kartus</span>` : `<span class="badge badge-gray">Vienintelis skelbimas</span>`;
-      $('okredoLink').href = 'https://okredo.com/lt-lt/ieskoti?q='+encodeURIComponent(c.code||c.name);
+      $('okredoLink').href = buildSearchUrl('okredo', c);
+      renderExtraSources('company','ccExtraSrc', c);
+      renderExtraSources('court_events','evExtraSrc', c);
       setMonitorUI(c.monitored, c.monitoredBy);
       $('ccMonInfo').innerHTML = c.monitored
         ? `<span class="badge badge-gold">⭐ Stebima</span> <span class="muted" style="font-size:12.5px;">pažymėjo <b>${esc(c.monitoredBy||'—')}</b>${c.monitoredAt?' · '+fmtDT(c.monitoredAt):''}</span>`
@@ -1366,7 +1417,9 @@
     function openCourtPortal(kind){
       const cn = (CURRENT && CURRENT.caseNo) || '';
       if(cn){ try{ navigator.clipboard.writeText(cn); }catch(_){} }
-      const url = kind==='liteko' ? 'https://liteko.teismai.lt/tvarkarasciai/paieska.aspx' : 'https://pranesimai.teismai.lt/teismu_pranesimai/';
+      const srcId = kind==='liteko' ? 'court_hearings' : 'court_announcements';
+      const s = getSrc(srcId);
+      const url = (s && s.url_template) || (kind==='liteko' ? 'https://liteko.teismai.lt/viesinimas/pub/hearing/search' : 'https://liteko.teismai.lt/viesinimas/pub/caseCourtMsg/search');
       $('evMsg').innerHTML = cn ? `<div class="muted" style="font-size:12.5px;">Bylos nr. <b>${esc(cn)}</b> nukopijuotas — įklijuokite (Ctrl/Cmd+V) į portalo paiešką.</div>` : '';
       window.open(url, '_blank', 'noopener');
     }
@@ -2721,6 +2774,324 @@
       }
       if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
       else init();
+    })();
+
+
+    /* ================= NUSTATYMŲ MODULIS (viešų paieškų nuorodos + API raktai) ================= */
+    (function(){
+      'use strict';
+      var $$ = function(id){ return document.getElementById(id); };
+      function E(s){ return (typeof esc==='function') ? esc(s) : String(s==null?'':s); }
+      function canEdit(){ return (typeof PERM_LEVEL!=='undefined') && PERM_LEVEL==='full'; }
+      var SECTIONS = [
+        {v:'company',      t:'Įmonės kortelė'},
+        {v:'court_events', t:'Teismo įvykiai'},
+        {v:'admins',       t:'Administratoriai'},
+        {v:'general',      t:'Bendra'}
+      ];
+      var QKEYS = [
+        {v:'code_or_name', t:'Įmonės kodas arba pavadinimas'},
+        {v:'caseNo',       t:'Bylos numeris'},
+        {v:'name',         t:'Pavadinimas'},
+        {v:'code',         t:'Kodas'},
+        {v:'none',         t:'Be reikšmės (tik atidaryti)'}
+      ];
+      function secLabel(v){ for(var i=0;i<SECTIONS.length;i++) if(SECTIONS[i].v===v) return SECTIONS[i].t; return v||'—'; }
+      function msg(id,text,isErr){ var n=$$(id); if(n) n.innerHTML = text ? ('<div class="'+(isErr?'error':'muted')+'" style="margin-top:8px;">'+E(text)+'</div>') : ''; }
+
+      function ensureView(){
+        if($$('settingsView')) return;
+        var host = document.querySelector('.container'); if(!host) return;
+        var v = document.createElement('div');
+        v.id='settingsView'; v.className='hidden';
+        v.innerHTML = ''
+          + '<div class="card">'
+          +   '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">'
+          +     '<h2 style="color:var(--navy);font-size:18px;margin:0;">⚙️ Nustatymai — viešų paieškų nuorodos</h2>'
+          +     '<button class="btn btn-ghost btn-sm" id="stReload">↻ Atnaujinti</button>'
+          +   '</div>'
+          +   '<p class="muted" style="font-size:13px;margin:8px 0 0;">Čia keičiamos nuorodos į viešas paieškas (teismai, Okredo, Rekvizitai ir kt.). Pakeitimai iškart taikomi visoje sistemoje — kodo keisti nereikia.</p>'
+          +   '<div id="stSrcMsg"></div>'
+          +   '<div style="overflow-x:auto;margin-top:12px;"><table class="etable" id="stSrcTable"><thead><tr>'
+          +     '<th style="min-width:140px;">Pavadinimas</th><th style="min-width:150px;">Sekcija</th><th>Nuoroda (URL šablonas)</th><th style="min-width:150px;">Reikšmė</th><th style="width:70px;" class="center">Aktyvi</th><th style="width:90px;"></th>'
+          +   '</tr></thead><tbody id="stSrcBody"></tbody></table></div>'
+          +   '<div id="stAddWrap" style="margin-top:14px;"></div>'
+          + '</div>'
+          + '<div class="card">'
+          +   '<h2 style="color:var(--navy);font-size:18px;margin:0 0 4px;">🔑 API raktai</h2>'
+          +   '<p class="muted" style="font-size:13px;margin:0 0 10px;">Generuokite raktą, kad kitas įrankis galėtų skaityti jūsų sistemos duomenis, arba įveskite išorinio įrankio raktą, kad prisijungtumėte prie jo. Raktus mato tik „pilna prieiga“ turintys naudotojai.</p>'
+          +   '<div id="stKeyMsg"></div>'
+          +   '<div style="overflow-x:auto;"><table class="etable" id="stKeyTable"><thead><tr>'
+          +     '<th style="min-width:130px;">Pavadinimas</th><th style="min-width:150px;">Tipas</th><th>Raktas</th><th style="width:100px;">Sukurta</th><th style="width:90px;">Būsena</th><th style="width:120px;"></th>'
+          +   '</tr></thead><tbody id="stKeyBody"></tbody></table></div>'
+          +   '<div id="stKeyAddWrap" style="margin-top:14px;"></div>'
+          + '</div>'
+          + '<div class="card">'
+          +   '<h2 style="color:var(--navy);font-size:18px;margin:0 0 4px;">🤖 AI paieška moduliuose</h2>'
+          +   '<p class="muted" style="font-size:13px;margin:0;">Įmonės ir teismo įvykių kortelėse yra <b>„🤖 AI paieška“</b> mygtukas. Paspaudus atsidaro laukas, kuriame nurodote, ko ieškoti. Agentas ieško <b>tik tos sekcijos tipo</b> duomenų (pvz. įmonės adreso, registro ar bylų duomenų) — nesusijęs prašymas (pvz. „rask blynų receptą“) automatiškai atmetamas.</p>'
+          +   '<div id="stAiNote" class="muted" style="font-size:12.5px;margin-top:8px;"></div>'
+          + '</div>';
+        host.appendChild(v);
+      }
+
+      function renderSources(rows){
+        var tb=$$('stSrcBody'); if(!tb) return;
+        var ed=canEdit();
+        if(!rows.length){ tb.innerHTML='<tr><td colspan="6" class="muted">Nėra įrašų.</td></tr>'; return; }
+        tb.innerHTML = rows.map(function(s){
+          var secSel = ed
+            ? '<select class="select st-sec" data-id="'+E(s.id)+'">'+SECTIONS.map(function(x){return '<option value="'+x.v+'"'+(x.v===s.section?' selected':'')+'>'+E(x.t)+'</option>';}).join('')+'</select>'
+            : E(secLabel(s.section));
+          var qSel = ed
+            ? '<select class="select st-qk" data-id="'+E(s.id)+'">'+QKEYS.map(function(x){return '<option value="'+x.v+'"'+(x.v===s.query_key?' selected':'')+'>'+E(x.t)+'</option>';}).join('')+'</select>'
+            : E(s.query_key);
+          var lbl = ed ? '<input class="input st-lbl" data-id="'+E(s.id)+'" value="'+E(s.label)+'">' : '<b>'+E(s.label)+'</b>';
+          var url = ed ? '<input class="input st-url" data-id="'+E(s.id)+'" value="'+E(s.url_template)+'">' : E(s.url_template);
+          var chk = '<input type="checkbox" class="st-en" data-id="'+E(s.id)+'"'+(s.enabled?' checked':'')+(ed?'':' disabled')+' style="width:auto;">';
+          var actions='';
+          if(ed){
+            actions += '<button class="btn btn-sm btn-gold st-save" data-id="'+E(s.id)+'" title="Išsaugoti">💾</button>';
+            if(!s.builtin) actions += ' <button class="btn btn-sm btn-danger st-del" data-id="'+E(s.id)+'" title="Trinti">✕</button>';
+            else actions += ' <span title="Įmontuota — negalima trinti">🔒</span>';
+          }
+          return '<tr>'
+            + '<td>'+lbl+'</td><td>'+secSel+'</td><td>'+url+'</td><td>'+qSel+'</td>'
+            + '<td class="center">'+chk+'</td><td class="center" style="white-space:nowrap;">'+actions+'</td></tr>';
+        }).join('');
+        bindSrc();
+      }
+
+      function renderAddForm(){
+        var w=$$('stAddWrap'); if(!w) return;
+        if(!canEdit()){ w.innerHTML='<p class="muted" style="font-size:12px;">Redaguoti gali tik „pilna prieiga“ turintys naudotojai.</p>'; return; }
+        w.innerHTML = ''
+          + '<div style="border-top:1px dashed var(--bd);padding-top:12px;">'
+          +   '<div style="font-weight:700;color:var(--navy);margin-bottom:8px;">➕ Pridėti naują paieškos šaltinį</div>'
+          +   '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+          +     '<div style="flex:1 1 160px;"><label class="muted" style="font-size:12px;">Pavadinimas</label><input class="input" id="stNewLabel" placeholder="pvz. Registrų centras"></div>'
+          +     '<div style="flex:1 1 160px;"><label class="muted" style="font-size:12px;">Sekcija (kur naudojama)</label><select class="select" id="stNewSec">'+SECTIONS.map(function(x){return '<option value="'+x.v+'">'+E(x.t)+'</option>';}).join('')+'</select></div>'
+          +     '<div style="flex:1 1 160px;"><label class="muted" style="font-size:12px;">Reikšmė</label><select class="select" id="stNewQk">'+QKEYS.map(function(x){return '<option value="'+x.v+'">'+E(x.t)+'</option>';}).join('')+'</select></div>'
+          +     '<div style="flex:2 1 260px;"><label class="muted" style="font-size:12px;">Nuoroda ({q} = įterpiama reikšmė)</label><input class="input" id="stNewUrl" placeholder="https://pavyzdys.lt/paieska?q={q}"></div>'
+          +     '<button class="btn btn-gold" id="stAddBtn">Pridėti</button>'
+          +   '</div>'
+          +   '<p class="muted" style="font-size:12px;margin:8px 0 0;">Naujas šaltinis atsiras kaip mygtukas pasirinktos sekcijos kortelėje. Ieškomos reikšmės vietoje nuorodoje naudokite <b>{q}</b>.</p>'
+          + '</div>';
+        $$('stAddBtn').onclick = addSource;
+      }
+
+      function bindSrc(){
+        var body=$$('stSrcBody'); if(!body) return;
+        body.querySelectorAll('.st-save').forEach(function(b){ b.onclick=function(){ saveSource(b.getAttribute('data-id')); }; });
+        body.querySelectorAll('.st-del').forEach(function(b){ b.onclick=function(){ delSource(b.getAttribute('data-id')); }; });
+      }
+      function gEl(cls,id){ var body=$$('stSrcBody'); if(!body) return null; var list=body.querySelectorAll('.'+cls); for(var i=0;i<list.length;i++){ if(list[i].getAttribute('data-id')===id) return list[i]; } return null; }
+
+      function saveSource(id){
+        var lbl=gEl('st-lbl',id), url=gEl('st-url',id), sec=gEl('st-sec',id), qk=gEl('st-qk',id), en=gEl('st-en',id);
+        var upd={
+          label:(lbl?lbl.value.trim():''),
+          url_template:(url?url.value.trim():''),
+          section:(sec?sec.value:'general'),
+          query_key:(qk?qk.value:'code_or_name'),
+          enabled:(en?en.checked:true),
+          updated_at:new Date().toISOString(),
+          updated_by_name:(typeof MY_NAME!=='undefined'?MY_NAME:null)
+        };
+        if(!upd.label || !upd.url_template){ msg('stSrcMsg','Pavadinimas ir nuoroda privalomi.', true); return; }
+        sb.from('avnis_settings').update(upd).eq('id',id).then(function(r){
+          if(r.error){ msg('stSrcMsg','Klaida: '+r.error.message, true); return; }
+          msg('stSrcMsg','✅ Išsaugota.'); loadAll();
+        });
+      }
+      function addSource(){
+        var label=($$('stNewLabel').value||'').trim();
+        var url=($$('stNewUrl').value||'').trim();
+        var sec=$$('stNewSec').value, qk=$$('stNewQk').value;
+        if(!label||!url){ msg('stSrcMsg','Įveskite pavadinimą ir nuorodą.', true); return; }
+        var id='src_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+        sb.from('avnis_settings').insert({ id:id, label:label, url_template:url, section:sec, query_key:qk, method:'GET', builtin:false, enabled:true, sort_order:200, updated_by_name:(typeof MY_NAME!=='undefined'?MY_NAME:null) }).then(function(r){
+          if(r.error){ msg('stSrcMsg','Klaida: '+r.error.message, true); return; }
+          $$('stNewLabel').value=''; $$('stNewUrl').value='';
+          msg('stSrcMsg','✅ Pridėta.'); loadAll();
+        });
+      }
+      function delSource(id){
+        if(!window.confirm('Ištrinti šį paieškos šaltinį?')) return;
+        sb.from('avnis_settings').delete().eq('id',id).then(function(r){
+          if(r.error){ msg('stSrcMsg','Klaida: '+r.error.message, true); return; }
+          msg('stSrcMsg','🗑 Ištrinta.'); loadAll();
+        });
+      }
+
+      /* ---- API raktai ---- */
+      function renderKeys(rows){
+        var tb=$$('stKeyBody'); if(!tb) return;
+        if(!canEdit()){ tb.innerHTML='<tr><td colspan="6" class="muted">Raktus mato tik „pilna prieiga“ turintys naudotojai.</td></tr>'; return; }
+        if(!rows.length){ tb.innerHTML='<tr><td colspan="6" class="muted">Raktų dar nėra.</td></tr>'; return; }
+        tb.innerHTML = rows.map(function(k){
+          var dir = k.direction==='inbound' ? '⬆️ Bendrinti duomenis' : '⬇️ Išorinis įrankis';
+          var shown = k.direction==='inbound' ? E(k.token) : ('••••'+E((k.token||'').slice(-4)));
+          var tok = '<code style="font-size:12px;word-break:break-all;">'+shown+'</code> <button class="btn btn-sm btn-ghost st-copy" data-tok="'+E(k.token)+'" title="Kopijuoti">📋</button>';
+          var st = k.active ? '<span class="badge badge-gold">Aktyvus</span>' : '<span class="badge badge-gray">Atšauktas</span>';
+          var act = (k.active ? '<button class="btn btn-sm btn-ghost st-krev" data-id="'+E(k.id)+'">Atšaukti</button> ' : '')
+                  + '<button class="btn btn-sm btn-danger st-kdel" data-id="'+E(k.id)+'">✕</button>';
+          return '<tr><td>'+E(k.name)+'</td><td>'+dir+'</td><td>'+tok+'</td><td>'+E((k.created_at||'').slice(0,10))+'</td><td>'+st+'</td><td style="white-space:nowrap;">'+act+'</td></tr>';
+        }).join('');
+        bindKeys();
+      }
+      function renderKeyAdd(){
+        var w=$$('stKeyAddWrap'); if(!w) return;
+        if(!canEdit()){ w.innerHTML=''; return; }
+        w.innerHTML = ''
+          + '<div style="border-top:1px dashed var(--bd);padding-top:12px;">'
+          +   '<div style="font-weight:700;color:var(--navy);margin-bottom:8px;">➕ Naujas API raktas</div>'
+          +   '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+          +     '<div style="flex:1 1 180px;"><label class="muted" style="font-size:12px;">Pavadinimas</label><input class="input" id="stKeyName" placeholder="pvz. Ataskaitų įrankis"></div>'
+          +     '<div style="flex:1 1 260px;"><label class="muted" style="font-size:12px;">Tipas</label><select class="select" id="stKeyDir">'
+          +       '<option value="inbound">⬆️ Generuoti raktą (bendrinti mūsų duomenis)</option>'
+          +       '<option value="outbound">⬇️ Įvesti išorinio įrankio raktą</option>'
+          +     '</select></div>'
+          +     '<div id="stKeyTokWrap" style="flex:2 1 260px;display:none;"><label class="muted" style="font-size:12px;">Išorinio įrankio raktas</label><input class="input" id="stKeyTok" placeholder="įklijuokite raktą"></div>'
+          +     '<button class="btn btn-gold" id="stKeyAddBtn">Sukurti</button>'
+          +   '</div>'
+          + '</div>';
+        $$('stKeyDir').onchange = function(){ $$('stKeyTokWrap').style.display = (this.value==='outbound')?'':'none'; };
+        $$('stKeyAddBtn').onclick = addKey;
+      }
+      function genToken(){
+        var a=new Uint8Array(24); (window.crypto||window.msCrypto).getRandomValues(a);
+        var hex=''; for(var i=0;i<a.length;i++){ hex += ('0'+a[i].toString(16)).slice(-2); }
+        return 'kab_'+hex;
+      }
+      function addKey(){
+        var name=($$('stKeyName').value||'').trim();
+        var dir=$$('stKeyDir').value;
+        if(!name){ msg('stKeyMsg','Įveskite pavadinimą.', true); return; }
+        var token;
+        if(dir==='outbound'){ token=($$('stKeyTok')?$$('stKeyTok').value.trim():''); if(!token){ msg('stKeyMsg','Įveskite išorinį raktą.', true); return; } }
+        else { token=genToken(); }
+        sb.from('avnis_api_keys').insert({ name:name, direction:dir, token:token, prefix:token.slice(0,8), created_by_name:(typeof MY_NAME!=='undefined'?MY_NAME:null) }).then(function(r){
+          if(r.error){ msg('stKeyMsg','Klaida: '+r.error.message, true); return; }
+          $$('stKeyName').value=''; if($$('stKeyTok')) $$('stKeyTok').value='';
+          msg('stKeyMsg', dir==='inbound' ? ('✅ Raktas sukurtas. Nukopijuokite ir saugokite: '+token) : '✅ Raktas įrašytas.');
+          loadAll();
+        });
+      }
+      function bindKeys(){
+        var body=$$('stKeyBody'); if(!body) return;
+        body.querySelectorAll('.st-copy').forEach(function(b){ b.onclick=function(){ try{ navigator.clipboard.writeText(b.getAttribute('data-tok')); }catch(_){ } msg('stKeyMsg','📋 Nukopijuota.'); }; });
+        body.querySelectorAll('.st-krev').forEach(function(b){ b.onclick=function(){ sb.from('avnis_api_keys').update({active:false}).eq('id',b.getAttribute('data-id')).then(function(r){ if(r.error){ msg('stKeyMsg',r.error.message,true); return; } loadAll(); }); }; });
+        body.querySelectorAll('.st-kdel').forEach(function(b){ b.onclick=function(){ if(!window.confirm('Ištrinti raktą visam laikui?')) return; sb.from('avnis_api_keys').delete().eq('id',b.getAttribute('data-id')).then(function(r){ if(r.error){ msg('stKeyMsg',r.error.message,true); return; } loadAll(); }); }; });
+      }
+
+      function loadAll(){
+        ensureView();
+        sb.from('avnis_settings').select('*').order('sort_order').then(function(r){
+          if(r.error){ msg('stSrcMsg','Klaida: '+r.error.message, true); return; }
+          try{ SEARCH_SRC={}; (r.data||[]).forEach(function(x){ SEARCH_SRC[x.id]=x; }); }catch(_){ }
+          renderSources(r.data||[]); renderAddForm();
+        });
+        if(canEdit()){
+          sb.from('avnis_api_keys').select('*').order('created_at',{ascending:false}).then(function(r){
+            if(r.error){ msg('stKeyMsg','Klaida: '+r.error.message, true); return; }
+            renderKeys(r.data||[]); renderKeyAdd();
+          });
+        } else { renderKeys([]); renderKeyAdd(); }
+      }
+
+      function addSubtab(){
+        var bar=$$('submodBar'); if(!bar || bar.dataset.settings) return; bar.dataset.settings='1';
+        var t=document.createElement('div'); t.className='subtab'; t.dataset.sub='settings'; t.textContent='⚙️ Nustatymai';
+        bar.appendChild(t);
+      }
+      var origApply = window.applySubmod || (typeof applySubmod==='function'?applySubmod:null);
+      function stApply(){
+        var m=(typeof SUBMOD!=='undefined')?SUBMOD:'avnis';
+        ensureView();
+        if(m==='settings'){
+          ['listView','cardView','adminsView','leadsView','dealsView'].forEach(function(v){ var n=$$(v); if(n) n.classList.add('hidden'); });
+          var sv=$$('settingsView'); if(sv) sv.classList.remove('hidden');
+          loadAll();
+        } else {
+          var sv=$$('settingsView'); if(sv) sv.classList.add('hidden');
+          if(origApply) origApply();
+        }
+      }
+      try{ applySubmod = stApply; }catch(_){ }
+      window.applySubmod = stApply;
+
+      function init(){
+        ensureView(); addSubtab();
+        document.addEventListener('click', function(e){
+          if(e.target && e.target.closest && e.target.closest('#stReload')) loadAll();
+        });
+      }
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
+    })();
+
+
+    /* ================= AI PAIEŠKA MODULIUOSE (griežtai pagal sekciją) ================= */
+    (function(){
+      'use strict';
+      var $$=function(id){ return document.getElementById(id); };
+      function E(s){ return (typeof esc==='function')?esc(s):String(s==null?'':s); }
+      var AI_URL = SUPABASE_URL + '/functions/v1/ai-section-search';
+
+      function panel(wrapId, section, getRecord){
+        var w=$$(wrapId); if(!w) return;
+        if(!w.classList.contains('hidden')){ w.classList.add('hidden'); w.innerHTML=''; return; }
+        w.classList.remove('hidden');
+        w.innerHTML = ''
+          + '<div style="border:1px solid #DDD6FE;border-radius:8px;padding:12px;background:#FAF9FE;">'
+          +   '<div style="font-weight:700;color:#6D28D9;margin-bottom:6px;">🤖 AI paieška — tik šios sekcijos tipo duomenys</div>'
+          +   '<textarea class="textarea" id="'+wrapId+'_h" rows="2" placeholder="Ko ieškoti? (nebūtina) pvz. dabartinis vadovas, registruota buveinė, paskutinė teismo nutartis"></textarea>'
+          +   '<div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;">'
+          +     '<button class="btn btn-sm" id="'+wrapId+'_go" style="background:#6D28D9;">🔍 Ieškoti</button>'
+          +     '<button class="btn btn-ghost btn-sm" id="'+wrapId+'_x">Uždaryti</button>'
+          +     '<span class="muted" id="'+wrapId+'_s" style="font-size:12px;"></span>'
+          +   '</div>'
+          +   '<div id="'+wrapId+'_out" style="margin-top:10px;"></div>'
+          + '</div>';
+        $$(wrapId+'_x').onclick=function(){ w.classList.add('hidden'); w.innerHTML=''; };
+        $$(wrapId+'_go').onclick=function(){ run(wrapId, section, getRecord()); };
+        var h=$$(wrapId+'_h'); if(h) h.focus();
+      }
+
+      function run(wrapId, section, record){
+        var out=$$(wrapId+'_out'), st=$$(wrapId+'_s'), go=$$(wrapId+'_go');
+        var hEl=$$(wrapId+'_h'); var hint=(hEl&&hEl.value||'').trim();
+        if(go){ go.disabled=true; } if(st){ st.textContent='Ieškoma viešuose šaltiniuose…'; } if(out){ out.innerHTML=''; }
+        sb.auth.getSession().then(function(r){
+          var token = (r&&r.data&&r.data.session)? r.data.session.access_token : SUPABASE_ANON_KEY;
+          return fetch(AI_URL, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':SUPABASE_ANON_KEY}, body:JSON.stringify({ section:section, hint:hint, record:record }) });
+        }).then(function(res){ return res.json(); }).then(function(d){
+          if(go){ go.disabled=false; } if(st){ st.textContent=''; }
+          if(!d || d.ok===false){
+            var m=(d&&(d.message||d.error))||'Klaida.';
+            if(d&&d.needsConfig) m='AI paieška dar nesukonfigūruota (reikia ANTHROPIC_API_KEY Supabase paslaptyse).';
+            out.innerHTML='<div class="error">'+E(m)+'</div>'; return;
+          }
+          if(d.refused){ out.innerHTML='<div class="badge badge-red" style="white-space:normal;display:block;padding:8px 12px;">⛔ '+E(d.answer)+'</div>'; return; }
+          var cits='';
+          if(d.citations && d.citations.length){
+            cits='<div style="margin-top:8px;font-size:12px;"><b>Šaltiniai:</b><ul style="margin:4px 0 0 18px;">'+d.citations.map(function(c){ return '<li><a href="'+E(c.url)+'" target="_blank" rel="noopener">'+E(c.title||c.url)+'</a></li>'; }).join('')+'</ul></div>';
+          }
+          out.innerHTML='<div style="white-space:pre-wrap;font-size:13.5px;line-height:1.5;">'+E(d.answer)+'</div>'+cits
+            +'<div class="muted" style="font-size:11px;margin-top:6px;">⚠️ AI surinkta vieša informacija — patikrinkite pirminiuose šaltiniuose prieš naudojant.</div>';
+        }).catch(function(e){
+          if(go){ go.disabled=false; } if(st){ st.textContent=''; }
+          if(out) out.innerHTML='<div class="error">Klaida: '+E(e&&e.message||e)+'</div>';
+        });
+      }
+
+      function coRecord(){ var c=(typeof CURRENT!=='undefined')?CURRENT:null; var l=(c&&c.latest)||{}; return c?{ code:c.code, name:c.name, address:l.company_address||'' }:{}; }
+      function evRecord(){ var c=(typeof CURRENT!=='undefined')?CURRENT:null; var l=(c&&c.latest)||{}; return c?{ caseNo:c.caseNo||l.case_no||'', name:c.name, court:l.court||'' }:{}; }
+
+      function bind(){
+        var a=$$('aiCoBtn'); if(a) a.onclick=function(){ panel('aiCoWrap','company',coRecord); };
+        var b=$$('aiEvBtn'); if(b) b.onclick=function(){ panel('aiEvWrap','court_events',evRecord); };
+      }
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind); else bind();
     })();
 
   </script>
