@@ -177,7 +177,7 @@
     <div id="actCard" class="card hidden">
       <h1 id="actTitle"></h1>
       <p class="center muted" id="actSub"></p>
-      <dl>
+      <dl id="actDl">
         <dt>Įmonė (perdavėjas):</dt><dd id="dDebtor"></dd>
         <dt>Įmonės kodas:</dt><dd id="dDebtorCode"></dd>
         <dt>Adresas:</dt><dd id="dDebtorAddress"></dd>
@@ -185,7 +185,7 @@
         <dt>Nemokumo administratoriaus įgaliotas asmuo (perimantis):</dt><dd id="dReceiver"></dd>
       </dl>
       <div id="actBody"></div>
-      <div style="margin-top:26px;">
+      <div id="actSigs" style="margin-top:26px;">
         <div class="sigbox"><div class="muted">Perdavė:</div><div id="sigH"></div></div>
         <div class="sigbox" style="margin-left:4%;"><div class="muted">Priėmė:</div><div id="sigR"></div></div>
       </div>
@@ -222,8 +222,21 @@
   </div>
 
   <script>
-  const FN_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co/functions/v1/act-sign';
+  // KIND: 'act' (numatyta, perdavimo aktai) arba 'doc' (nuomos/pardavimo ir kt. dokumentai)
+  const KIND = (new URLSearchParams(location.search).get('kind') || 'act').toLowerCase();
+  const FN_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co/functions/v1/' + (KIND === 'doc' ? 'document-sign' : 'act-sign');
   const TOKEN = new URLSearchParams(location.search).get('t') || '';
+  let SIGNER_NAME = '';
+
+  const DOC_TITLES = {
+    lease_contract:'TURTO NUOMOS SUTARTIS',
+    sale_contract:'TURTO PIRKIMO–PARDAVIMO SUTARTIS',
+    transfer_act:'TURTO PERDAVIMO–PRIĖMIMO AKTAS',
+    return_act:'TURTO GRĄŽINIMO AKTAS',
+    termination_agreement:'SUSITARIMAS DĖL SUTARTIES NUTRAUKIMO',
+    contract_annex:'SUTARTIES PRIEDAS',
+    other:'DOKUMENTAS'
+  };
 
   const ACT_TITLES = {
     documents:'DOKUMENTŲ PERDAVIMO AKTAS',
@@ -324,6 +337,24 @@
     $('actCard').classList.remove('hidden');
   }
 
+  // Dokumento (nuomos/pardavimo ir kt.) peržiūra — kitaip nei aktų lentelė
+  function renderDoc(d){
+    const doc = d.document || {};
+    $('actTitle').textContent = doc.title || DOC_TITLES[doc.document_type] || 'DOKUMENTAS';
+    $('actSub').textContent = [doc.debtor_name, doc.debtor_code ? 'į. k. ' + doc.debtor_code : ''].filter(Boolean).join('  ·  ');
+    // aktų specifinės dalys nerodomos
+    const dl = $('actDl'); if (dl) dl.classList.add('hidden');
+    const sg = $('actSigs'); if (sg) sg.classList.add('hidden');
+    let b = '<p style="font-size:14px;line-height:1.6;">Jums pateiktas pasirašyti dokumentas. Prašome peržiūrėti jį žemiau ir pasirašyti patvirtinant tapatybę el. paštu.</p>';
+    if (d.pdf_url) {
+      b += '<iframe src="' + esc(d.pdf_url) + '" title="Dokumentas" style="width:100%;height:520px;border:1px solid #ddd;border-radius:6px;margin-top:12px;"></iframe>';
+    } else {
+      b += '<div class="muted" style="margin-top:8px;font-size:13px;">Dokumento peržiūra bus pateikta pasirašymo metu.</div>';
+    }
+    $('actBody').innerHTML = b;
+    $('actCard').classList.remove('hidden');
+  }
+
   async function init(){
     if (!TOKEN) { $('loading').classList.add('hidden'); $('errCard').classList.remove('hidden'); return; }
     const d = await api({ action:'get', token: TOKEN });
@@ -334,14 +365,15 @@
       $('errCard').classList.remove('hidden');
       return;
     }
-    MY_PARTY = d.party;
-    renderAct(d);
+    SIGNER_NAME = d.signer_name || '';
+    if (KIND === 'doc') { renderDoc(d); }
+    else { MY_PARTY = d.party; renderAct(d); }
     if (d.status === 'signed') {
       $('doneText').textContent = 'Jūs jau pasirašėte šį dokumentą ' + fmtTime(d.signed_at) + '.';
       $('doneCard').classList.remove('hidden');
       return;
     }
-    $('myParty').textContent = d.party === 'handover' ? 'PERDUODANTI ŠALIS' : 'PERIMANTI ŠALIS';
+    $('myParty').textContent = KIND === 'doc' ? 'PASIRAŠANTYSIS' : (d.party === 'handover' ? 'PERDUODANTI ŠALIS' : 'PERIMANTI ŠALIS');
     $('myName').textContent = d.signer_name || '';
     $('signCard').classList.remove('hidden');
   }
@@ -384,10 +416,15 @@
       return;
     }
     // Sėkmė
-    const e = r.esign;
-    (MY_PARTY === 'handover' ? $('sigH') : $('sigR')).innerHTML = esignBlock(e);
     $('signCard').classList.add('hidden');
-    $('doneText').textContent = 'Pasirašymo žyma: ' + e.name + ', ' + e.email + ', ' + fmtTime(e.signed_at) + '.';
+    if (KIND === 'doc') {
+      $('doneText').textContent = 'Dokumentas pasirašytas. Ačiū!' +
+        (r.all_signed ? ' Visos šalys pasirašė.' : (r.total ? ' Pasirašė ' + r.signed + ' iš ' + r.total + ' šalių.' : ''));
+    } else {
+      const e = r.esign;
+      (MY_PARTY === 'handover' ? $('sigH') : $('sigR')).innerHTML = esignBlock(e);
+      $('doneText').textContent = 'Pasirašymo žyma: ' + e.name + ', ' + e.email + ', ' + fmtTime(e.signed_at) + '.';
+    }
     $('doneCard').classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

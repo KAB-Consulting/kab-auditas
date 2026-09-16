@@ -2495,6 +2495,36 @@
     </div>
   </div>
 
+  <!-- SIUNTIMO ISTORIJA / PAŽYMĖTI IŠSIUNTIMĄ -->
+  <div id="dispatchModal" class="modal-bg hidden">
+    <div class="modal" style="max-width:560px;">
+      <h2><span class="ic ic-mail"></span> Siuntimo istorija</h2>
+      <div class="muted" style="font-size:12px;margin-bottom:8px;" id="dpInfo"></div>
+      <input type="hidden" id="dpRegId"><input type="hidden" id="dpDocId">
+      <div id="dpList" style="max-height:38vh;overflow:auto;border:1px solid #E4E8EC;border-radius:8px;padding:8px 10px;background:#FAFBFC;font-size:13px;"></div>
+      <div style="border-top:1px solid #E4E8EC;margin-top:14px;padding-top:12px;">
+        <div class="sec-title" style="margin:0 0 8px;"><span class="ic ic-pin"></span> Pažymėti naują išsiuntimą (ne per platformą)</div>
+        <div class="row">
+          <div><label class="label">Būdas</label>
+            <select id="dpChannel" class="select">
+              <option value="post">Paštu (registruotu laišku)</option>
+              <option value="courier">Kurjeriu</option>
+              <option value="external_email">El. paštu iš kitos sistemos (pvz. Outlook)</option>
+              <option value="other">Kita</option>
+            </select></div>
+          <div><label class="label">Gavėjas / adresas</label><input id="dpRecipient" class="input" placeholder="pvz. UAB „X" arba el. paštas"></div>
+        </div>
+        <label class="label">Pastaba (nebūtina)</label>
+        <input id="dpNote" class="input" placeholder="pvz. siuntos Nr., data">
+        <div id="dpMsg"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+          <button class="btn btn-ghost" id="dpClose">Uždaryti</button>
+          <button class="btn" id="dpAdd"><span class="ic ic-plus"></span> Pažymėti išsiųsta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- REGISTRACIJOS KOREKCIJOS MODALĖ (data + eilės numeris) -->
   <div id="regEditModal" class="modal-bg hidden">
     <div class="modal" style="max-width:460px;">
@@ -8482,7 +8512,7 @@
             <td>${regHtml}</td>
             <td style="text-align:right;white-space:nowrap;">
               ${(d.form_attachments||[]).length?`<button class="btn btn-sm btn-gold" onclick="downloadDocPackage('${d.id}')" title="Atsisiųsti viską (PDF + priedai) ZIP failu"><span class="ic ic-down"></span> Viską (ZIP)</button> `:''}
-              ${d.signed_pdf_path?`<span class="badge badge-green" title="Pasirašyta${d.signer_name?(' — '+esc(d.signer_name)):''}${d.signed_at?(', '+esc(fmtDate(d.signed_at))):''}"><span class="ic ic-check"></span> Pasirašyta</span> <button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(d.signed_pdf_path)}','Pasirašytas dokumentas')" title="Peržiūrėti pasirašytą PDF"><span class="ic ic-eye"></span> Pasirašytas</button> `:`${d.sign_status==='awaiting'?'<span class="badge" title="Išsiųsta pasirašyti — laukiama parašo" style="background:#FFF8E6;color:#8A6D00;border:1px solid #E3D3AC;"><span class="ic ic-clock"></span> Laukia parašo</span> ':''}<button class="btn btn-sm btn-ghost" onclick="openDocSignModal('${d.id}')" title="Pasirašyti šiame įrenginyje arba siųsti pasirašyti"><span class="ic ic-pencil"></span> Pasirašyti</button> `}${SENT_DOC_IDS.has(d.id)?'<span class="badge badge-green" title="Išsiųsta el. paštu"><span class="ic ic-mail"></span> Išsiųsta</span> ':''}<button class="btn btn-sm btn-ghost" onclick="openSendEmailModal('${d.id}')" title="Siųsti el. paštu adresatui su priedais"><span class="ic ic-mail"></span> Siųsti el. paštu</button>
+              ${d.signed_pdf_path?`<span class="badge badge-green" title="Pasirašyta${d.signer_name?(' — '+esc(d.signer_name)):''}${d.signed_at?(', '+esc(fmtDate(d.signed_at))):''}"><span class="ic ic-check"></span> Pasirašyta</span> <button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(d.signed_pdf_path)}','Pasirašytas dokumentas')" title="Peržiūrėti pasirašytą PDF"><span class="ic ic-eye"></span> Pasirašytas</button> `:`${d.sign_status==='awaiting'?'<span class="badge" title="Išsiųsta pasirašyti — laukiama parašo" style="background:#FFF8E6;color:#8A6D00;border:1px solid #E3D3AC;"><span class="ic ic-clock"></span> Laukia parašo</span> ':''}<button class="btn btn-sm btn-ghost" onclick="openDocSignModal('${d.id}')" title="Pasirašyti šiame įrenginyje arba siųsti pasirašyti"><span class="ic ic-pencil"></span> Pasirašyti</button> <button class="btn btn-sm btn-ghost" onclick="uploadSignedLibDoc('${d.id}')" title="Įkelti pasirašytą PDF (pasirašyta ne sistemoje)"><span class="ic ic-up"></span> Įkelti pasirašytą</button> `}${SENT_DOC_IDS.has(d.id)?`<span class="badge badge-green" style="cursor:pointer;" title="Išsiųsta — spauskite istorijai" onclick="openDispatchHistory(null,'${d.id}')"><span class="ic ic-mail"></span> Išsiųsta</span> `:''}<button class="btn btn-sm btn-ghost" onclick="openSendEmailModal('${d.id}')" title="Siųsti el. paštu adresatui su priedais"><span class="ic ic-mail"></span> Siųsti el. paštu</button> <button class="btn btn-sm btn-ghost" onclick="openDispatchMark(null,'${d.id}')" title="Pažymėti išsiuntimą (paštu / kitu būdu)"><span class="ic ic-pin"></span> Pažymėti išsiuntimą</button>
               <button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(d.pdf_path)}')" title="Peržiūrėti"><span class="ic ic-eye"></span></button>
               <button class="btn btn-sm btn-ghost" onclick="downloadDocDl('${esc(d.pdf_path)}')" title="Atsisiųsti tik PDF"><span class="ic ic-down"></span></button>
               <button class="btn btn-sm btn-ghost" onclick="editLibraryDoc('${d.id}')" title="Koreguoti požymius"><span class="ic ic-pencil"></span></button>
@@ -8614,6 +8644,74 @@
         await loadLibrary();
         try{ await loadRegistry(); }catch(_){}
       }catch(err){ $('dsMsg').innerHTML='<div class="error">Klaida: '+esc(err.message||String(err))+'</div>'; $('dsSign').disabled=false; }
+    };
+
+    // ---------- ĮKELTI PASIRAŠYTĄ (pasirašyta ne sistemoje) ----------
+    let LIB_SIGN_DOCID=null;
+    window.uploadSignedLibDoc=(docId)=>{
+      const d=DOCUMENTS.find(x=>x.id===docId); if(!d){ alert('Dokumentas nerastas.'); return; }
+      LIB_SIGN_DOCID=docId;
+      let inp=document.getElementById('libSignedFile');
+      if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.id='libSignedFile'; inp.accept='.pdf'; inp.className='hidden'; document.body.appendChild(inp); inp.addEventListener('change',libSignedFileChosen); }
+      inp.value=''; inp.click();
+    };
+    async function libSignedFileChosen(){
+      const inp=document.getElementById('libSignedFile'); const f=inp.files&&inp.files[0]; const d=DOCUMENTS.find(x=>x.id===LIB_SIGN_DOCID);
+      if(!f||!d)return;
+      if(!/\.pdf$/i.test(f.name)){ alert('Įkelkite PDF failą.'); return; }
+      if(d.signed_pdf_path&&!confirm('Prie šio dokumento jau yra pasirašyta versija. Pakeisti nauja?'))return;
+      $('finalDocsTable')&&($('finalMsg')&&($('finalMsg').innerHTML=''));
+      try{
+        const base=(d.reg_number||d.id).replace(/[^A-Za-z0-9._-]+/g,'_');
+        const path=`${CURRENT.case_short_code}/signed/${Date.now()}_${base}_uploaded.pdf`;
+        const up=await sb.storage.from('insolvency-docs').upload(path,f,{ upsert:true, contentType:'application/pdf' });
+        if(up.error)throw new Error(up.error.message);
+        await sb.from('insolvency_documents').update({ signed_pdf_path:path, signed_at:new Date().toISOString(), sign_method:'uploaded', sign_status:'signed' }).eq('id',d.id);
+        if(d.reg_id){ try{ await sb.rpc('attach_signed_registration',{ p_id:d.reg_id, p_path:path, p_name:(d.file_name||base)+' (pasirašytas)' }); }catch(_){}}
+        try{ await sb.rpc('log_insolvency_event',{ p_case_id:CURRENT.id, p_action:'document_signed', p_details:{ document_id:d.id, method:'uploaded' } }); }catch(_){}
+        await loadLibrary(); try{ await loadRegistry(); }catch(_){}
+      }catch(err){ alert('Nepavyko įkelti pasirašyto dokumento: '+(err.message||err)); }
+    }
+
+    // ---------- SIUNTIMO ISTORIJA / DISPEČERIS ----------
+    const DP_CH={ email:'El. paštu (platforma)', post:'Paštu', courier:'Kurjeriu', external_email:'El. paštu (išorinė sistema)', other:'Kita' };
+    window.openDispatchHistory=(regId,docId)=>openDispatchModal(regId,docId);
+    window.openDispatchMark=(regId,docId)=>openDispatchModal(regId,docId);
+    async function openDispatchModal(regId,docId){
+      $('dpRegId').value=regId||''; $('dpDocId').value=docId||'';
+      $('dpMsg').innerHTML=''; $('dpRecipient').value=''; $('dpNote').value=''; $('dpChannel').value='post';
+      $('dpInfo').textContent=''; $('dpList').innerHTML='<div class="muted">Kraunama…</div>';
+      show('dispatchModal');
+      await renderDispatchList();
+    }
+    async function renderDispatchList(){
+      const regId=$('dpRegId').value||null, docId=$('dpDocId').value||null;
+      let q=sb.from('insolvency_doc_sends').select('*').eq('case_id',CURRENT.id).order('created_at',{ascending:false});
+      if(regId)q=q.eq('reg_id',regId); else if(docId)q=q.eq('document_id',docId);
+      const { data }=await q;
+      const rows=data||[];
+      if(!rows.length){ $('dpList').innerHTML='<div class="muted" style="padding:6px;">Išsiuntimų dar nepažymėta.</div>'; return; }
+      $('dpList').innerHTML=rows.map(s=>{
+        const who=(s.recipients||[]).map(x=>x.email||x.label||'').filter(Boolean).join(', ')||(s.cc&&s.cc.length?s.cc.join(', '):'—');
+        const ch=DP_CH[s.channel]||s.channel||'—';
+        const st=s.status==='failed'?' <span style="color:#B3261E;">(nepavyko)</span>':'';
+        return `<div style="padding:6px 0;border-bottom:1px solid #EDF0F3;">
+          <div><b>${esc(ch)}</b>${st} <span class="muted">${esc(fmtDate(s.created_at))}</span></div>
+          <div class="muted" style="font-size:12px;">Gavėjas: ${esc(who)}${s.subject?(' · Tema: '+esc(s.subject)):''}${s.note?(' · '+esc(s.note)):''}</div>
+        </div>`;
+      }).join('');
+    }
+    $('dpClose').onclick=()=>hide('dispatchModal');
+    $('dpAdd').onclick=async()=>{
+      const regId=$('dpRegId').value||null, docId=$('dpDocId').value||null;
+      $('dpAdd').disabled=true; $('dpMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Žymima…</div>';
+      try{
+        const r=await sb.rpc('record_doc_dispatch',{ p_case_id:CURRENT.id, p_document_id:docId, p_reg_id:regId, p_channel:$('dpChannel').value, p_recipient:$('dpRecipient').value.trim(), p_note:$('dpNote').value.trim() });
+        if(r.error||!(r.data&&r.data.ok))throw new Error((r.error&&r.error.message)||(r.data&&r.data.error_code)||'Klaida.');
+        $('dpMsg').innerHTML='<div class="success">Pažymėta.</div>'; $('dpRecipient').value=''; $('dpNote').value='';
+        await renderDispatchList(); try{ await loadRegistry(); }catch(_){} try{ await loadLibrary(); }catch(_){}
+      }catch(err){ $('dpMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      finally{ $('dpAdd').disabled=false; }
     };
 
     // ---------- NUOTOLINIS PASIRAŠYMAS (el. paštu + QR) ----------
@@ -11008,12 +11106,12 @@
       if(!rows.length){ $('registryTable').innerHTML='<div class="muted center" style="padding:24px;">'+(rcv?'Gaunamų':oth?'Kitų':'Siunčiamų')+' dokumentų'+(cat?' kategorijoje „'+esc(DOC_CATS_MAP[cat]||cat)+'"':'')+' nerasta.</div>'; return; }
       $('registryTable').innerHTML='<table><thead><tr><th>Reg. Nr.</th><th>'+(rcv?'Gavimo data':oth?'Registravimo data':'Išsiuntimo data')+'</th><th>Kategorija</th><th>'+(rcv?'Siuntėjas':oth?'Šalis':'Gavėjas')+'</th><th>Aprašymas</th><th></th></tr></thead><tbody>'+
         rows.map(r=>`<tr${r.voided_at?' style="opacity:.62;"':''}>
-          <td><a href="javascript:void(0)" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')" style="color:var(--navy);font-weight:700;${r.voided_at?'text-decoration:line-through;':'text-decoration:underline;'}">${esc(r.registration_number)}</a>${regVoidBadge(r)}${regSignedBadge(r)}${r.sent_at?' <span class="badge badge-green" title="Išsiųsta el. paštu '+esc(fmtDate(r.sent_at))+((r.sent_to&&r.sent_to.length)?' → '+esc(r.sent_to.map(function(x){return x.email||x;}).join(', ')):'')+'"><span class="ic ic-mail"></span> Išsiųsta</span>':''}</td>
+          <td><a href="javascript:void(0)" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')" style="color:var(--navy);font-weight:700;${r.voided_at?'text-decoration:line-through;':'text-decoration:underline;'}">${esc(r.registration_number)}</a>${regVoidBadge(r)}${regSignedBadge(r)}${r.sent_at?' <span class="badge badge-green" onclick="openDispatchHistory(\''+r.id+'\',null)" style="cursor:pointer;" title="Peržiūrėti siuntimo istoriją"><span class="ic ic-mail"></span> Išsiųsta</span>':''}</td>
           <td>${esc(r.registration_date||'')}</td>
           <td>${r.category?('<span style="background:#EFF4FB;border:1px solid var(--bd);border-radius:6px;padding:1px 8px;font-size:11px;">'+esc(DOC_CATS_MAP[r.category]||r.category)+'</span>'):'<span class="muted">—</span>'}</td>
           <td>${esc(r.counterparty_name||'—')}</td>
           <td>${esc(r.document_title)}${r.notes?'<div class="muted" style="font-size:12px;">'+esc(r.notes)+'</div>':''}${r.voided_at?'<div style="font-size:12px;color:#B3261E;">Anuliavimo priežastis: '+esc(r.void_reason||'')+'</div>':''}${(r.original_files_metadata||[]).filter(x=>x&&x.path).length?'<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;">'+(r.original_files_metadata||[]).filter(x=>x&&x.path).map(x=>'<a href="javascript:void(0)" onclick="downloadDocDl(\''+esc(x.path)+'\')" class="badge badge-gray" title="Atsisiųsti originalų priedą" style="text-decoration:none;"><span class="ic ic-down"></span> '+esc(x.name)+'</a>').join('')+'</div>':''}</td>
-          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')"><span class="ic ic-eye"></span></button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')"><span class="ic ic-down"></span></button>${r.doc_type==='sent'&&!r.voided_at?(r.signed_file_path?` <button class="btn btn-sm btn-ghost" title="Peržiūrėti įkeltą pasirašytą dokumentą" onclick="regSignedView('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-eye"></span></button>`:` <button class="btn btn-sm btn-ghost" title="Įkelti pasirašytą (galutinę siųstą) dokumento versiją" onclick="regSignedUpload('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-up"></span></button>`):''}</td>
+          <td style="text-align:right;white-space:nowrap;"><button class="btn btn-sm btn-ghost" onclick="previewDoc('${esc(r.storage_path)}','${esc(r.registration_number)}')"><span class="ic ic-eye"></span></button> <button class="btn btn-sm" onclick="downloadDocDl('${esc(r.storage_path)}')"><span class="ic ic-down"></span></button>${r.doc_type==='sent'&&!r.voided_at?(r.signed_file_path?` <button class="btn btn-sm btn-ghost" title="Peržiūrėti įkeltą pasirašytą dokumentą" onclick="regSignedView('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-eye"></span></button>`:` <button class="btn btn-sm btn-ghost" title="Įkelti pasirašytą (galutinę siųstą) dokumento versiją" onclick="regSignedUpload('${r.id}')"><span class="ic ic-pencil"></span><span class="ic ic-up"></span></button>`):''}${r.doc_type==='sent'&&!r.voided_at?` <button class="btn btn-sm btn-ghost" title="Pažymėti / peržiūrėti išsiuntimą (paštu, kt.)" onclick="openDispatchMark('${r.id}',null)"><span class="ic ic-pin"></span></button>`:''}</td>
         </tr>`).join('')+'</tbody></table>';
     }
 
@@ -11915,7 +12013,7 @@
     // --- pasirašyto (galutinio siųsto) dokumento įkėlimas prie žurnalo įrašo ---
     function regSignedBadge(r){
       return (r&&r.signed_file_path)
-        ? ' <span class="badge" title="Pasirašytas dokumentas įkeltas '+esc((r.signed_uploaded_at||'').slice(0,10))+'" style="background:#EEF7F1;color:#0B6E2E;border:1px solid #C3E4CE;"><span class="ic ic-pencil"></span></span>'
+        ? ' <span class="badge" onclick="regSignedView(\''+r.id+'\')" title="Peržiūrėti pasirašytą dokumentą (įkelta '+esc((r.signed_uploaded_at||'').slice(0,10))+')" style="cursor:pointer;background:#EEF7F1;color:#0B6E2E;border:1px solid #C3E4CE;"><span class="ic ic-pencil"></span> Pasirašytas</span>'
         : '';
     }
     let REG_SIGN_TARGET=null;
