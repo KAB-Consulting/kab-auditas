@@ -202,10 +202,19 @@
       <div id="step2" class="hidden">
         <p class="muted">Įveskite kodą, gautą el. paštu:</p>
         <input class="otp-input" id="otpInput" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="______">
+        <div id="sigPadWrap" style="margin-top:16px;text-align:left;">
+          <p class="muted" style="margin-bottom:6px;">Nupieškite savo parašą žemiau esančiame laukelyje (pirštu, pieštuku ar pele):</p>
+          <canvas id="sigPad" width="640" height="200" style="width:100%;max-width:640px;height:auto;border:2px dashed #C9A961;border-radius:8px;background:#fff;touch-action:none;display:block;"></canvas>
+          <div style="margin-top:6px;"><button type="button" id="sigClearBtn" style="background:#EEE;color:#333;border:1px solid #CCC;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;">Išvalyti parašą</button></div>
+        </div>
         <div style="margin-top:16px;">
           <button class="btn" id="signBtn"><span class="ic ic-pencil"></span> Pasirašyti</button>
         </div>
         <p class="muted" style="margin-top:12px;"><a href="#" id="resendLink" style="color:var(--navy);">Siųsti kodą dar kartą</a></p>
+      </div>
+      <div id="qrSwitch" class="hidden" style="margin-top:18px;padding-top:14px;border-top:1px solid #E5E5E5;">
+        <p class="muted" style="font-size:12px;margin-bottom:6px;"><b>Patogiau pasirašyti telefone ar planšetėje?</b><br>Nuskenuokite šį kodą įrenginio kamera — pasirašymo langas atsidarys ten.</p>
+        <img id="qrSwitchImg" alt="QR kodas" width="130" height="130" style="border:1px solid #E5E5E5;border-radius:6px;">
       </div>
     </div>
 
@@ -250,7 +259,7 @@
     vehicle:'AUTOMOBILIO PERDAVIMO AKTAS'
   };
   const ACT_COLS = {
-    documents:[['name','Dokumentų pavadinimas'],['qty','Kiekis (vnt.)'],['pages','Lapų sk.'],['notes1','Pastabos']],
+    documents:[['name','Dokumento / bylos pavadinimas'],['kind','Rūšis'],['chrono','Laikotarpis (nuo–iki)'],['media','Laikmena'],['pages','Lapų sk.'],['folders','Bylų/segtuvų sk.'],['transfer_form','Perdavimo forma'],['notes','Pastabos']],
     documents_v2:[['name','Bylos antraštė (dokumento pavadinimas)'],['chrono','Bylos chronologinės ribos ar data (dokumento data, numeris)'],['pages','Bylos ar dokumento apimtis (kiekis, matavimo vienetas)'],['file_no','Bylos Nr.'],['box_no','Dėžės Nr.']],
     asset_realestate:[['name','Pavadinimas'],['address','Adresas'],['unique_no','Unikalus Nr.'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
     asset_movable:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
@@ -277,10 +286,14 @@
   }
 
   function renderSig(el, esign, sigImg, personName, isMine){
-    let inner;
-    if (esign) { inner = esignBlock(esign); }
-    else if (sigImg) { inner = `<img src="${sigImg}" alt="parašas" style="height:56px;display:block;"><div class="line">${esc(personName||'')}</div>`; }
-    else { inner = `<div class="line">${esc(personName||'')}</div>` + (isMine ? '<div style="color:#8A6D00;font-size:11px;margin-top:4px;"><span class="ic ic-up"></span> Čia atsiras Jūsų parašo žyma</div>' : ''); }
+    let inner = '';
+    if (sigImg) inner += `<img src="${sigImg}" alt="parašas" style="height:56px;display:block;">`;
+    if (esign) inner += esignBlock(esign);
+    if (!sigImg && !esign) {
+      inner = `<div class="line">${esc(personName||'')}</div>` + (isMine ? '<div style="color:#8A6D00;font-size:11px;margin-top:4px;"><span class="ic ic-up"></span> Čia atsiras Jūsų parašas</div>' : '');
+    } else {
+      inner += `<div class="line">${esc(personName||'')}</div>`;
+    }
     el.innerHTML = inner;
   }
 
@@ -327,8 +340,11 @@
     } else {
       const cols = ACT_COLS[a.act_type] || [];
       const rows = Array.isArray(a.rows) ? a.rows : [];
-      body = '<table><thead><tr><th style="width:36px;">Nr.</th>' + cols.map(c=>`<th>${esc(c[1])}</th>`).join('') + '</tr></thead><tbody>' +
-        (rows.length?rows:[{}]).map((r,i)=>`<tr><td>${i+1}</td>` + cols.map(c=>`<td>${esc(r[c[0]]||'')}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
+      const legacy = { notes:'notes1', notes1:'notes', pages:'qty' }; // senesnių įrašų raktų suderinamumas
+      const cell = (r,k) => { let v=r[k]; if(v==null||v==='') v=r[legacy[k]]; return esc(v==null?'':v); };
+      const fs = cols.length>=6 ? 'font-size:11.5px;' : '';
+      body = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;"><table style="min-width:'+(cols.length>=6?720:0)+'px;'+fs+'"><thead><tr><th style="width:36px;">Nr.</th>' + cols.map(c=>`<th>${esc(c[1])}</th>`).join('') + '</tr></thead><tbody>' +
+        (rows.length?rows:[{}]).map((r,i)=>`<tr><td>${i+1}</td>` + cols.map(c=>`<td>${cell(r,c[0])}</td>`).join('') + '</tr>').join('') + '</tbody></table></div>';
     }
     $('actBody').innerHTML = body;
 
@@ -376,6 +392,13 @@
     $('myParty').textContent = KIND === 'doc' ? 'PASIRAŠANTYSIS' : (d.party === 'handover' ? 'PERDUODANTI ŠALIS' : 'PERIMANTI ŠALIS');
     $('myName').textContent = d.signer_name || '';
     $('signCard').classList.remove('hidden');
+    // QR perėjimui į telefoną/planšetę — rodomas tik plačiame ekrane
+    try{
+      if (window.innerWidth >= 700 && !('ontouchstart' in window)) {
+        $('qrSwitchImg').src = FN_URL + '?action=qr&t=' + encodeURIComponent(TOKEN);
+        $('qrSwitch').classList.remove('hidden');
+      }
+    }catch(_){}
   }
 
   async function sendOtp(){
@@ -397,12 +420,31 @@
   $('getCodeBtn').onclick = sendOtp;
   $('resendLink').onclick = e => { e.preventDefault(); sendOtp(); };
 
+  // ---- Parašo piešimo laukelis (aktams) ----
+  let PAD_DRAWN = false;
+  (function(){
+    const c = $('sigPad'); if (!c) return;
+    if (KIND === 'doc') { $('sigPadWrap').classList.add('hidden'); return; } // dokumentų PDF kelias — be piešimo
+    const ctx = c.getContext('2d'); ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.strokeStyle = '#0B1E3F';
+    let drawing = false;
+    const pos = e => { const r = c.getBoundingClientRect(); const t = e.touches ? e.touches[0] : e;
+      return { x:(t.clientX-r.left)*(c.width/r.width), y:(t.clientY-r.top)*(c.height/r.height) }; };
+    const start = e => { drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); e.preventDefault(); };
+    const move = e => { if (!drawing) return; const p = pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); PAD_DRAWN = true; e.preventDefault(); };
+    const end = () => { drawing = false; };
+    c.addEventListener('mousedown', start); c.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+    c.addEventListener('touchstart', start, {passive:false}); c.addEventListener('touchmove', move, {passive:false}); c.addEventListener('touchend', end);
+    $('sigClearBtn').onclick = () => { ctx.clearRect(0,0,c.width,c.height); PAD_DRAWN = false; };
+  })();
+
   $('signBtn').onclick = async () => {
     const code = $('otpInput').value.trim();
     if (!/^\d{6}$/.test(code)) { $('signMsg').innerHTML = '<div class="error">Įveskite 6 skaitmenų kodą.</div>'; return; }
+    if (KIND !== 'doc' && !PAD_DRAWN) { $('signMsg').innerHTML = '<div class="error">Nupieškite savo parašą laukelyje aukščiau.</div>'; return; }
+    const signature = (KIND !== 'doc' && PAD_DRAWN) ? $('sigPad').toDataURL('image/png') : undefined;
     $('signBtn').disabled = true;
     $('signMsg').innerHTML = '<div class="muted"><span class="ic ic-clock"></span> Pasirašoma…</div>';
-    const r = await api({ action:'sign', token: TOKEN, code });
+    const r = await api({ action:'sign', token: TOKEN, code, signature });
     $('signBtn').disabled = false;
     if (!r.ok) {
       const msgs = {
@@ -422,7 +464,8 @@
         (r.all_signed ? ' Visos šalys pasirašė.' : (r.total ? ' Pasirašė ' + r.signed + ' iš ' + r.total + ' šalių.' : ''));
     } else {
       const e = r.esign;
-      (MY_PARTY === 'handover' ? $('sigH') : $('sigR')).innerHTML = esignBlock(e);
+      const sigImg = (r.signature_saved && PAD_DRAWN) ? $('sigPad').toDataURL('image/png') : null;
+      renderSig(MY_PARTY === 'handover' ? $('sigH') : $('sigR'), e, sigImg, SIGNER_NAME, false);
       $('doneText').textContent = 'Pasirašymo žyma: ' + e.name + ', ' + e.email + ', ' + fmtTime(e.signed_at) + '.';
     }
     $('doneCard').classList.remove('hidden');
