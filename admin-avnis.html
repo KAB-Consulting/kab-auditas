@@ -532,7 +532,7 @@
             <a id="okredoLink" class="btn btn-ghost btn-sm" target="_blank" rel="noopener" style="text-decoration:none;">🔗 Atidaryti Okredo</a>
             <button class="btn btn-ghost btn-sm" id="rekvizitaiBtn" title="Atidaro įmonę Rekvizitai.lt (bylos, transportas, straipsniai) naujame skirtuke">🔎 Paieška Rekvizitai.lt</button>
             <span id="ccExtraSrc" style="display:contents;"></span>
-            <button class="btn btn-sm" id="aiCoBtn" style="background:#6D28D9;" title="AI ieško viešų šios įmonės duomenų">🤖 AI paieška</button>
+            <button class="btn btn-sm" id="aiCoBtn" style="background:#6D28D9;" title="AI ieško viešų šios įmonės duomenų"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:5px;"><path d="M12 2.5l1.7 4.6 4.6 1.7-4.6 1.7L12 15.1l-1.7-4.6L5.7 8.8l4.6-1.7L12 2.5z"/><path d="M18.5 13l.95 2.55L22 16.5l-2.55.95L18.5 20l-.95-2.55L15 16.5l2.55-.95L18.5 13z"/></svg>AI paieška</button>
             <button class="btn btn-gold btn-sm full-only" id="saveCardBtn">💾 Išsaugoti duomenis</button>
           </div>
         </div>
@@ -580,7 +580,7 @@
             <button class="btn btn-ghost btn-sm" id="evLiteko" title="Kopijuoja bylos nr. ir atidaro LITEKO viešą paiešką">🔎 LITEKO</button>
             <button class="btn btn-ghost btn-sm" id="evPranesimai" title="Kopijuoja bylos nr. ir atidaro Teismų pranešimus">🔎 Teismų pranešimai</button>
             <span id="evExtraSrc" style="display:contents;"></span>
-            <button class="btn btn-sm" id="aiEvBtn" style="background:#6D28D9;" title="AI ieško viešų bylos / teismo duomenų">🤖 AI paieška</button>
+            <button class="btn btn-sm" id="aiEvBtn" style="background:#6D28D9;" title="AI ieško viešų bylos / teismo duomenų"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:5px;"><path d="M12 2.5l1.7 4.6 4.6 1.7-4.6 1.7L12 15.1l-1.7-4.6L5.7 8.8l4.6-1.7L12 2.5z"/><path d="M18.5 13l.95 2.55L22 16.5l-2.55.95L18.5 20l-.95-2.55L15 16.5l2.55-.95L18.5 13z"/></svg>AI paieška</button>
             <button class="btn btn-gold btn-sm full-only" id="evAddBtn">➕ Pridėti įvykį</button>
           </div>
         </div>
@@ -811,7 +811,7 @@
     }
     let SUBMOD='avnis';
     const PAGE_SIZE=100;
-    window.BUILD_VERSION='avnis-2026-09-16-v15-settings';
+    window.BUILD_VERSION='avnis-2026-09-17-v18-ai-autofill';
 
     const JURISDICTION = {1:'Lietuvos (teritorinė)', 2:'Lietuvos (pagrindinė)', 3:'Tarptautinė'};
 
@@ -1117,7 +1117,7 @@
         sb.from('avnis_company_profiles').select('*'),
         sb.from('avnis_sync_log').select('*').order('id',{ascending:false}).limit(1),
         sb.from('avnis_company_notes').select('company_code,note_text,created_at').order('created_at',{ascending:false}),
-        sb.from('avnis_court_events').select('company_code,case_no,event_date,event_type,description,source_url,source_type,record_date,found_at').order('found_at',{ascending:false})
+        sb.from('avnis_court_events').select('id,company_code,case_no,event_date,event_type,description,source_url,source_type,record_date,found_at,created_by_name').order('found_at',{ascending:false})
       ]);
       if(a.error){ $('listMsg').innerHTML='<div class="error">Klaida: '+esc(a.error.message)+'</div>'; views('listView'); return; }
       ANN = a.data||[];
@@ -1410,7 +1410,7 @@
           <td>${esc(e.description||'—')}${e.created_by_name?`<div class="muted" style="font-size:11px;">įrašė: ${esc(e.created_by_name)}</div>`:''}</td>
           <td>${e.event_date?`<span class="badge badge-red">${fmtD(e.event_date)}</span>`:'—'}</td>
           <td>${e.source_url?`<a href="${esc(e.source_url)}" target="_blank" rel="noopener">${esc(srcLabel(e.source_type))} ↗</a>`:esc(srcLabel(e.source_type))}</td>
-          <td class="full-only center"><span class="del" title="Trinti" style="cursor:pointer;color:#DC2626;" onclick="deleteEvent(${e.id})">✕</span></td>
+          <td class="full-only center">${e.id!=null?`<span class="del" title="Trinti" style="cursor:pointer;color:#DC2626;" onclick="deleteEvent(${e.id})">✕</span>`:''}</td>
         </tr>`).join('');
       }
     }
@@ -2827,8 +2827,8 @@
           +   '<div id="stKeyAddWrap" style="margin-top:14px;"></div>'
           + '</div>'
           + '<div class="card">'
-          +   '<h2 style="color:var(--navy);font-size:18px;margin:0 0 4px;">🤖 AI paieška moduliuose</h2>'
-          +   '<p class="muted" style="font-size:13px;margin:0;">Įmonės ir teismo įvykių kortelėse yra <b>„🤖 AI paieška“</b> mygtukas. Paspaudus atsidaro laukas, kuriame nurodote, ko ieškoti. Agentas ieško <b>tik tos sekcijos tipo</b> duomenų (pvz. įmonės adreso, registro ar bylų duomenų) — nesusijęs prašymas (pvz. „rask blynų receptą“) automatiškai atmetamas.</p>'
+          +   '<h2 style="color:var(--navy);font-size:18px;margin:0 0 4px;"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true" style="vertical-align:-3px;margin-right:6px;"><path d="M12 2.5l1.7 4.6 4.6 1.7-4.6 1.7L12 15.1l-1.7-4.6L5.7 8.8l4.6-1.7L12 2.5z"/><path d="M18.5 13l.95 2.55L22 16.5l-2.55.95L18.5 20l-.95-2.55L15 16.5l2.55-.95L18.5 13z"/></svg>AI paieška moduliuose</h2>'
+          +   '<p class="muted" style="font-size:13px;margin:0;">Įmonės ir teismo įvykių kortelėse yra <b>„<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:3px;"><path d="M12 2.5l1.7 4.6 4.6 1.7-4.6 1.7L12 15.1l-1.7-4.6L5.7 8.8l4.6-1.7L12 2.5z"/><path d="M18.5 13l.95 2.55L22 16.5l-2.55.95L18.5 20l-.95-2.55L15 16.5l2.55-.95L18.5 13z"/></svg>AI paieška“</b> mygtukas. Paspaudus atsidaro laukas, kuriame nurodote, ko ieškoti. Agentas ieško <b>tik tos sekcijos tipo</b> duomenų (pvz. įmonės adreso, registro ar bylų duomenų) — nesusijęs prašymas (pvz. „rask blynų receptą“) automatiškai atmetamas.</p>'
           +   '<div id="stAiNote" class="muted" style="font-size:12.5px;margin-top:8px;"></div>'
           + '</div>';
         host.appendChild(v);
@@ -3043,7 +3043,7 @@
         w.classList.remove('hidden');
         w.innerHTML = ''
           + '<div style="border:1px solid #DDD6FE;border-radius:8px;padding:12px;background:#FAF9FE;">'
-          +   '<div style="font-weight:700;color:#6D28D9;margin-bottom:6px;">🤖 AI paieška — tik šios sekcijos tipo duomenys</div>'
+          +   '<div style="font-weight:700;color:#6D28D9;margin-bottom:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:5px;"><path d="M12 2.5l1.7 4.6 4.6 1.7-4.6 1.7L12 15.1l-1.7-4.6L5.7 8.8l4.6-1.7L12 2.5z"/><path d="M18.5 13l.95 2.55L22 16.5l-2.55.95L18.5 20l-.95-2.55L15 16.5l2.55-.95L18.5 13z"/></svg>AI paieška — tik šios sekcijos tipo duomenys</div>'
           +   '<textarea class="textarea" id="'+wrapId+'_h" rows="2" placeholder="Ko ieškoti? (nebūtina) pvz. dabartinis vadovas, registruota buveinė, paskutinė teismo nutartis"></textarea>'
           +   '<div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;">'
           +     '<button class="btn btn-sm" id="'+wrapId+'_go" style="background:#6D28D9;">🔍 Ieškoti</button>'
@@ -3076,12 +3076,67 @@
           if(d.citations && d.citations.length){
             cits='<div style="margin-top:8px;font-size:12px;"><b>Šaltiniai:</b><ul style="margin:4px 0 0 18px;">'+d.citations.map(function(c){ return '<li><a href="'+E(c.url)+'" target="_blank" rel="noopener">'+E(c.title||c.url)+'</a></li>'; }).join('')+'</ul></div>';
           }
-          out.innerHTML='<div style="white-space:pre-wrap;font-size:13.5px;line-height:1.5;">'+E(d.answer)+'</div>'+cits
+          var fillMsg = fillFromData(section, d.data);
+          out.innerHTML=(fillMsg||'')
+            +'<div style="white-space:pre-wrap;font-size:13.5px;line-height:1.5;">'+E(d.answer)+'</div>'+cits
             +'<div class="muted" style="font-size:11px;margin-top:6px;">⚠️ AI surinkta vieša informacija — patikrinkite pirminiuose šaltiniuose prieš naudojant.</div>';
         }).catch(function(e){
           if(go){ go.disabled=false; } if(st){ st.textContent=''; }
           if(out) out.innerHTML='<div class="error">Klaida: '+E(e&&e.message||e)+'</div>';
         });
+      }
+
+      // Užpildo sistemos laukus iš AI grąžintų struktūrizuotų duomenų (peržiūrai, be automatinio išsaugojimo)
+      function nn(v){ return (v==null?'':String(v)); }
+      function fillFromData(section, data){
+        if(!data) return '';
+        var canFill = (typeof PERM_LEVEL!=='undefined') && PERM_LEVEL==='full';
+        var haveMerge = (typeof mergeRows==='function') && (typeof EDIT!=='undefined');
+        if(section==='company'){
+          if(!canFill || !haveMerge) return '';
+          var nFin=0,nDebt=0,nCourt=0;
+          if(Array.isArray(data.financial_data) && data.financial_data.length){
+            mergeRows('fin', data.financial_data.filter(function(r){return nn(r.metai).trim();}).map(function(r){return {metai:nn(r.metai),pardavimo_pajamos:nn(r.pardavimo_pajamos),grynasis_pelnas:nn(r.grynasis_pelnas),turtas:nn(r.turtas),nuosavas_kapitalas:nn(r.nuosavas_kapitalas),isipareigojimai:nn(r.isipareigojimai),pastabos:nn(r.pastabos)||'AI'};}));
+            nFin=data.financial_data.length;
+          }
+          if(Array.isArray(data.state_debts) && data.state_debts.length){
+            mergeRows('debt', data.state_debts.filter(function(r){return nn(r.data).trim();}).map(function(r){return {data:nn(r.data),sodra:nn(r.sodra),vmi:nn(r.vmi),kita:nn(r.kita),pastabos:nn(r.pastabos)||'AI'};}));
+            nDebt=data.state_debts.length;
+          }
+          if(Array.isArray(data.court_cases) && data.court_cases.length){
+            mergeRows('court', data.court_cases.filter(function(r){return nn(r.teismas||r.bylos_nr||r.aprasymas).trim();}).map(function(r){return {data:nn(r.data),teismas:nn(r.teismas),bylos_nr:nn(r.bylos_nr),aprasymas:nn(r.aprasymas),busena:nn(r.busena)};}));
+            nCourt=data.court_cases.length;
+          }
+          try{ ['fin','emp','debt','court'].forEach(renderEdit); renderAllViews(); }catch(_){}
+          if(nFin+nDebt+nCourt>0){
+            return '<div class="success" style="margin-bottom:8px;">✅ Užpildyta laukuose: '
+              +[nFin?('finansai '+nFin):'',nDebt?('skolos '+nDebt):'',nCourt?('bylos '+nCourt):''].filter(Boolean).join(', ')
+              +'. Peržiūrėkite ir paspauskite <b>„💾 Išsaugoti duomenis"</b>.</div>';
+          }
+          return '';
+        }
+        if(section==='court_events'){
+          var msg='';
+          if(canFill && haveMerge && Array.isArray(data.court_cases) && data.court_cases.length){
+            mergeRows('court', data.court_cases.filter(function(r){return nn(r.teismas||r.bylos_nr||r.aprasymas).trim();}).map(function(r){return {data:nn(r.data),teismas:nn(r.teismas),bylos_nr:nn(r.bylos_nr),aprasymas:nn(r.aprasymas),busena:nn(r.busena)};}));
+            try{ renderEdit('court'); renderAllViews(); }catch(_){}
+          }
+          var hs = Array.isArray(data.hearings)? data.hearings.filter(function(h){return nn(h.event_date).trim();}) : [];
+          if(canFill && hs.length){
+            var h0=hs[0];
+            var eType=$$('evType'), eDate=$$('evDate'), eDesc=$$('evDesc'), form=$$('evAddForm');
+            if(eType&&eDate&&eDesc&&form){
+              eType.value = nn(h0.event_type)||'Teismo posėdis';
+              eDate.value = nn(h0.event_date);
+              eDesc.value = (nn(h0.description)||'')+(h0.court?(' ('+nn(h0.court)+')'):'');
+              form.classList.remove('hidden');
+              msg='<div class="success" style="margin-bottom:8px;">✅ Rastas įvykis įrašytas į formą (data '+E(nn(h0.event_date))+'). Peržiūrėkite ir paspauskite <b>„💾 Išsaugoti įvykį"</b>.'
+                +(hs.length>1?(' Rasta ir daugiau ('+hs.length+') — likusius įrašykite rankiniu būdu.'):'')+'</div>';
+            }
+          }
+          return msg;
+        }
+        return '';
       }
 
       function coRecord(){ var c=(typeof CURRENT!=='undefined')?CURRENT:null; var l=(c&&c.latest)||{}; return c?{ code:c.code, name:c.name, address:l.company_address||'' }:{}; }
