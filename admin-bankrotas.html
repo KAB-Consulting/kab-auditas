@@ -1387,9 +1387,9 @@
 
           <!-- copy/paste blokas -->
           <div id="pasteBlock" class="hidden" style="margin-top:10px;background:#EFF4FB;border:1px solid #CCD9EE;border-radius:6px;padding:12px;">
-            <div class="hint" style="margin-bottom:6px;">Nukopijuokite lentelę iš Excel/Word ir įklijuokite žemiau (Ctrl+V). Pirma eilutė — antraštė.</div>
+            <div class="hint" style="margin-bottom:6px;">Nukopijuokite lentelę iš Excel/Word ir įklijuokite žemiau (Ctrl+V; pirma eilutė — antraštė) ARBA įkelkite užpildytą Excel formą mygtuku žemiau — sistema pati ras antraštes ir praleis instrukcijų lapus.</div>
             <textarea id="pasteData" class="textarea" style="min-height:90px;font-family:monospace;" placeholder="Įklijuokite čia…"></textarea>
-            <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-sm" id="pasteParseBtn">Atpažinti stulpelius</button><button class="btn btn-sm btn-ghost" id="pasteCancelBtn">Atšaukti</button></div>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;"><button class="btn btn-sm" id="pasteParseBtn">Atpažinti stulpelius</button><input type="file" id="pasteXlsxFile" accept=".xlsx,.xls" class="hidden"><button class="btn btn-sm btn-gold" id="pasteXlsxBtn" type="button"><span class="ic ic-up"></span> Įkelti Excel failą</button><span id="pasteXlsxName" class="muted" style="font-size:12px;"></span><button class="btn btn-sm btn-ghost" id="pasteCancelBtn">Atšaukti</button></div>
             <div id="pasteMapBlock" class="hidden" style="margin-top:10px;">
               <div class="hint" style="margin-bottom:6px;">Patikrinkite stulpelių priskyrimą (galite pakeisti):</div>
               <div id="pasteMapping"></div>
@@ -1421,7 +1421,7 @@
 
           <!-- parašai -->
           <div class="sec-title" style="margin-top:18px;">Parašai</div>
-          <div class="hint" style="margin-bottom:8px;">Pasirašyti galima ekrane (touch pad / pelė) arba išsiųsti šaliai nuorodą el. paštu — gavėjas patvirtina tapatybę 6 skaitmenų kodu ir pasirašo nuotoliniu būdu.</div>
+          <div class="hint" style="margin-bottom:8px;">Pasirašoma tik atskirame lange — spauskite „Pasirašyti“ (arba spustelėkite parašo laukelį), arba išsiųskite šaliai nuorodą el. paštu (gavėjas patvirtina tapatybę 6 skaitmenų kodu). Išsaugojus aktą parašas užfiksuojamas ir apsaugomas nuo pakeitimų.</div>
           <div class="row">
             <div>
               <label class="label">Perduodančio asmens parašas</label>
@@ -3292,7 +3292,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.sb = sb;   // KAGB: prieiga mobiliajam/komunikacijos sluoksniui
-    const APP_VERSION='2026-09-01-r30';
+    const APP_VERSION='2026-09-17-r31';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -4047,6 +4047,7 @@
         const r=matrix[i]; if(!r||!r.length)continue;
         const get=k=> map[k]!==undefined && r[map[k]]!=null ? String(r[map[k]]).trim() : '';
         const name=get('full_name'); if(!name)continue;
+        if(/^pvz\.?\s/i.test(name))continue; // formos pavyzdinė eilutė
         out.push({ recipient_type:type, full_name:name, personal_code:get('personal_code')||null,
           claim_amount: get('claim_amount') ? parseFloat(String(get('claim_amount')).replace(',','.').replace(/[^0-9.]/g,''))||null : null,
           email:get('email')||null, phone:get('phone')||null, address:get('address')||null, position:get('position')||null });
@@ -4061,7 +4062,8 @@
       try{
         const buf=await file.arrayBuffer();
         const wb=XLSX.read(buf,{type:'array'});
-        const ws=wb.Sheets[wb.SheetNames[0]];
+        const dsn=wb.SheetNames.find(n=>!/instrukc|kaip pildyti|detaliz/i.test(n))||wb.SheetNames[0];
+        const ws=wb.Sheets[dsn];
         const matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
         openImpMapping(matrix);
       }catch(err){ $('impSheetMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
@@ -4122,6 +4124,7 @@
         const r=IMP_MATRIX[i]; const row={ recipient_type:type };
         for(const ci in map){ const v=(r[+ci]||'').trim(); row[map[ci]]=v||null; }
         if(!row.full_name)continue;
+        if(/^pvz\.?\s/i.test(row.full_name))continue; // formos pavyzdinė eilutė
         if(row.claim_amount!=null)row.claim_amount=parseFloat(String(row.claim_amount).replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||null;
         out.push(row);
       }
@@ -9127,7 +9130,7 @@
     // ---------- PERDAVIMO AKTAI ----------
     // lentelių stulpeliai pagal akto tipą
     const ACT_COLS={
-      documents:[['name','Dokumento/segtuvo pavadinimas'],['pages','Lapų sk.'],['notes','Pastabos']],
+      documents:[['name','Dokumento / bylos pavadinimas'],['kind','Rūšis'],['chrono','Laikotarpis (nuo–iki)'],['media','Laikmena'],['pages','Lapų sk.'],['folders','Bylų/segtuvų sk.'],['transfer_form','Perdavimo forma'],['notes','Pastabos']],
       documents_v2:[['name','Bylos antraštė (dokumento pavadinimas)'],['chrono','Bylos chronologinės ribos ar data (dokumento data, numeris)'],['pages','Bylos ar dokumento apimtis (kiekis, matavimo vienetas)'],['file_no','Bylos Nr.'],['box_no','Dėžės Nr.']],
       asset_realestate:[['name','Pavadinimas'],['address','Adresas'],['unique_no','Unikalus nr.'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
       asset_movable:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
@@ -9336,8 +9339,11 @@
       onActTypeChange();
       // parašai
       setupSig('sigHandover'); setupSig('sigReceiver');
-      if(a.sig_handover)drawSigFromData('sigHandover',a.sig_handover); else clearSig('sigHandover');
-      if(a.sig_receiver)drawSigFromData('sigReceiver',a.sig_receiver); else clearSig('sigReceiver');
+      SIG_SAVED.sigHandover=a.sig_handover||null; SIG_LOCKED.sigHandover=!!a.sig_handover;
+      SIG_SAVED.sigReceiver=a.sig_receiver||null; SIG_LOCKED.sigReceiver=!!a.sig_receiver;
+      if(a.sig_handover)drawSigFromData('sigHandover',a.sig_handover); else wipeSig('sigHandover');
+      if(a.sig_receiver)drawSigFromData('sigReceiver',a.sig_receiver); else wipeSig('sigReceiver');
+      renderSigLocks();
       // el. parašai (pasirašymas el. paštu)
       ACT_ESIGN={ handover:a.esign_handover||null, receiver:a.esign_receiver||null };
       ESIGN_REQS=[];
@@ -9403,6 +9409,7 @@
     // ----- PARAŠO POPUP (2x dydžio) -----
     let SIG_TARGET=null;
     window.openSigModal=id=>{
+      if(SIG_LOCKED[id]&&!confirm('DĖMESIO: šis parašas jau IŠSAUGOTAS akte.\n\nPasirašius iš naujo dabartinis parašas bus PAKEISTAS. Tęsti?'))return;
       SIG_TARGET=id;
       $('sigModalTitle').textContent = id==='sigHandover' ? 'Perduodančio asmens parašas' : 'Perimančio asmens parašas';
       $('sigModal').style.display='flex';
@@ -9415,6 +9422,7 @@
       if(!sigState['sigModalCanvas']){ alert('Pirmiausia pasirašykite lange.'); return; }
       const src=$('sigModalCanvas'), dst=$(SIG_TARGET);
       if(dst){ const ctx=dst.getContext('2d'); ctx.clearRect(0,0,dst.width,dst.height); ctx.drawImage(src,0,0,dst.width,dst.height); sigState[SIG_TARGET]=true; }
+      if(SIG_TARGET in SIG_SAVED) SIG_SAVED[SIG_TARGET]=null;
       closeSigModal();
     };
     function renderActRows(){
@@ -9432,8 +9440,28 @@
 
     // ----- PARAŠAI (canvas, touch+pelė) -----
     const sigState={};
+    // Aktų parašų apsauga: užfiksuoti parašai ir jų originalūs duomenys (byte-tikslus išsaugojimas)
+    const SIG_LOCKED={ sigHandover:false, sigReceiver:false };
+    const SIG_SAVED={ sigHandover:null, sigReceiver:null };
+    function renderSigLocks(){
+      [['sigHandover','H'],['sigReceiver','R']].forEach(pair=>{
+        const id=pair[0], k=pair[1];
+        const locked=!!SIG_LOCKED[id];
+        const c=$(id); if(!c)return;
+        c.style.cursor='pointer';
+        let b=document.getElementById('sigLock'+k);
+        if(!b){ c.insertAdjacentHTML('afterend','<div id="sigLock'+k+'" style="display:none;font-size:12px;color:#0B6E2E;margin-top:2px;">Parašas išsaugotas ir apsaugotas — ištrinti ar pakeisti galima tik patvirtinus.</div>'); b=document.getElementById('sigLock'+k); }
+        b.style.display=locked?'':'none';
+      });
+    }
     function setupSig(id){
       const c=$(id); if(c._wired)return; c._wired=true;
+      if(id==='sigHandover'||id==='sigReceiver'){
+        // Tiesioginis piešimas ekrane IŠJUNGTAS — pasirašoma tik per popup langą.
+        c.style.cursor='pointer';
+        c.addEventListener('click',()=>openSigModal(id));
+        return;
+      }
       const ctx=c.getContext('2d'); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#0B1E3F';
       let drawing=false;
       const pos=e=>{ const r=c.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return { x:(t.clientX-r.left)*(c.width/r.width), y:(t.clientY-r.top)*(c.height/r.height) }; };
@@ -9443,9 +9471,17 @@
       c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
       c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',end);
     }
-    window.clearSig=id=>{ const c=$(id); c.getContext('2d').clearRect(0,0,c.width,c.height); sigState[id]=false; };
+    function wipeSig(id){ const c=$(id); c.getContext('2d').clearRect(0,0,c.width,c.height); sigState[id]=false; }
+    window.clearSig=id=>{
+      if(SIG_LOCKED[id]){
+        if(!confirm('DĖMESIO: šis parašas jau IŠSAUGOTAS akte.\n\nAr tikrai norite jį IŠTRINTI?\n\nIštrynimas įsigalios paspaudus „Išsaugoti (tarpinis)".'))return;
+        SIG_LOCKED[id]=false; renderSigLocks();
+      }
+      if(id in SIG_SAVED) SIG_SAVED[id]=null;
+      wipeSig(id);
+    };
     function drawSigFromData(id,data){ const c=$(id); const ctx=c.getContext('2d'); const img=new Image(); img.onload=()=>{ ctx.clearRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height); }; img.src=data; sigState[id]=true; }
-    function sigData(id){ return sigState[id] ? $(id).toDataURL('image/png') : null; }
+    function sigData(id){ if(SIG_SAVED[id]) return SIG_SAVED[id]; return sigState[id] ? $(id).toDataURL('image/png') : null; }
 
     // ----- PASIRAŠYMAS EL. PAŠTU (su OTP) -----
     let ACT_ESIGN={ handover:null, receiver:null }, ESIGN_REQS=[];
@@ -9523,6 +9559,9 @@
         $('actMsg').innerHTML='<div class="error">'+esc(msg)+'</div>'; return null;
       }
       if(!id)$('actId').value=res.data.id;
+      if(p.sig_handover){ SIG_LOCKED.sigHandover=true; SIG_SAVED.sigHandover=p.sig_handover; }
+      if(p.sig_receiver){ SIG_LOCKED.sigReceiver=true; SIG_SAVED.sigReceiver=p.sig_receiver; }
+      renderSigLocks();
       return res.data.id;
     }
     $('actSaveDraft').onclick=async()=>{ const id=await saveAct('draft'); if(id)$('actMsg').innerHTML='<div class="success">Tarpinė informacija išsaugota.</div>'; };
@@ -9629,34 +9668,69 @@
     let PASTE_MATRIX=[], PASTE_HEADERS=[];
     $('pasteRowsBtn').onclick=()=>{ $('pasteBlock').classList.toggle('hidden'); $('pasteData').value=''; $('pasteMapBlock').classList.add('hidden'); $('pasteMsg').innerHTML=''; setTimeout(()=>$('pasteData').focus(),50); };
     $('pasteCancelBtn').onclick=()=>$('pasteBlock').classList.add('hidden');
+    // auto-mapping pagal raktažodžius (bendra tekstiniam įklijavimui ir Excel failui)
+    function pasteGuessKey(h){ const n=String(h||'').toLowerCase();
+      if(/chronolog|ribos|laikotarp|period/.test(n))return 'chrono';
+      if(/d[ėe][žz]/.test(n))return 'box_no';
+      if(/byl\w*[\s.]*(nr|numer)/.test(n))return 'file_no';
+      if(/apimt|lap[uų]|lapai|pages|psl/.test(n))return 'pages';
+      if(/antra[šs]t|pavad|name|daikt|preki|dokument/.test(n))return 'name';
+      if(/adres|address/.test(n))return 'address';
+      if(/unikal|unique/.test(n))return 'unique_no';
+      if(/vieta|location|saugoj/.test(n))return 'location';
+      if(/kiek|qty|quantity|vnt/.test(n))return 'qty';
+      if(/pastab.*2|notes.*2/.test(n))return 'notes2';
+      if(/pastab|notes|komentar/.test(n))return 'notes1';
+      if(/r[ūu][šs]is/.test(n))return 'kind';
+      if(/laikmen/.test(n))return 'media';
+      if(/segtuv/.test(n))return 'folders';
+      if(/perdavimo\s*form/.test(n))return 'transfer_form';
+      return '';
+    }
+    function openPasteMapping(matrix){
+      PASTE_MATRIX=matrix;
+      PASTE_HEADERS=PASTE_MATRIX[0];
+      const cols=ACT_COLS[$('actType').value]||[];
+      // jei atspėtas raktas šiam akto tipui neegzistuoja — bandome artimą atitikmenį
+      const fixKey=g=>{ if(!g||cols.some(c=>c[0]===g))return g;
+        if(g==='notes1'&&cols.some(c=>c[0]==='notes'))return 'notes';
+        if(g==='notes'&&cols.some(c=>c[0]==='notes1'))return 'notes1';
+        return g; };
+      const opts=k=>['<option value="">— nepriskirta —</option>'].concat(cols.map(c=>`<option value="${c[0]}" ${k===c[0]?'selected':''}>${esc(c[1])}</option>`)).join('');
+      $('pasteMapping').innerHTML=PASTE_HEADERS.map((h,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="min-width:140px;font-size:13px;"><b>${esc(h||('Stulpelis '+(i+1)))}</b></span> → <select class="select pmap" data-ci="${i}" style="max-width:220px;">${opts(fixKey(pasteGuessKey(h)))}</select></div>`).join('');
+      $('pasteMapBlock').classList.remove('hidden');
+      $('pasteMsg').innerHTML='<div class="hint">Rasta stulpelių: '+PASTE_HEADERS.length+', eilučių: '+(PASTE_MATRIX.length-1)+'. Patikrinkite priskyrimą.</div>';
+    }
     $('pasteParseBtn').onclick=()=>{
       const raw=$('pasteData').value.trim();
       if(!raw){ $('pasteMsg').innerHTML='<div class="error">Įklijuokite duomenis.</div>'; return; }
       // Excel/Word kopijavimas → eilutės skiriamos \n, stulpeliai \t (Excel) arba keli tarpai
       const lines=raw.split('\n').map(l=>l.replace(/\r$/,'')).filter(l=>l.trim());
       const sep = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : '\t');
-      PASTE_MATRIX=lines.map(l=>l.split(sep).map(c=>c.trim()));
-      PASTE_HEADERS=PASTE_MATRIX[0];
-      // auto-mapping pagal raktažodžius
-      const cols=ACT_COLS[$('actType').value]||[];
-      const guess=h=>{ const n=h.toLowerCase();
-        if(/chronolog|ribos|laikotarp|period/.test(n))return 'chrono';
-        if(/d[ėe][žz]/.test(n))return 'box_no';
-        if(/byl\w*[\s.]*(nr|numer)/.test(n))return 'file_no';
-        if(/apimt|lap|pages|psl/.test(n))return 'pages';
-        if(/antra[šs]t|pavad|name|daikt|preki|dokument/.test(n))return 'name';
-        if(/adres|address/.test(n))return 'address';
-        if(/unikal|unique/.test(n))return 'unique_no';
-        if(/vieta|location|saugoj/.test(n))return 'location';
-        if(/kiek|qty|quantity|vnt/.test(n))return 'qty';
-        if(/pastab.*2|notes.*2/.test(n))return 'notes2';
-        if(/pastab|notes|komentar/.test(n))return 'notes1';
-        return '';
-      };
-      const opts=k=>['<option value="">— nepriskirta —</option>'].concat(cols.map(c=>`<option value="${c[0]}" ${k===c[0]?'selected':''}>${esc(c[1])}</option>`)).join('');
-      $('pasteMapping').innerHTML=PASTE_HEADERS.map((h,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="min-width:140px;font-size:13px;"><b>${esc(h||('Stulpelis '+(i+1)))}</b></span> → <select class="select pmap" data-ci="${i}" style="max-width:220px;">${opts(guess(h))}</select></div>`).join('');
-      $('pasteMapBlock').classList.remove('hidden');
-      $('pasteMsg').innerHTML='<div class="hint">Rasta stulpelių: '+PASTE_HEADERS.length+', eilučių: '+(PASTE_MATRIX.length-1)+'. Patikrinkite priskyrimą.</div>';
+      openPasteMapping(lines.map(l=>l.split(sep).map(c=>c.trim())));
+    };
+    // Užpildytos Excel formos įkėlimas (pvz. „Perduodamų dokumentų aktas", „Priedas 4 Turto sąrašas")
+    $('pasteXlsxBtn').onclick=()=>$('pasteXlsxFile').click();
+    $('pasteXlsxFile').onchange=async e=>{
+      const file=e.target.files[0]; if(!file)return;
+      $('pasteXlsxName').textContent=file.name;
+      try{
+        const wb=XLSX.read(new Uint8Array(await file.arrayBuffer()),{type:'array'});
+        const t=$('actType').value;
+        const pref={ documents:/dokument/i, documents_v2:/dokument|byl/i, asset_realestate:/^nekilnojam/i, asset_movable:/^kilnojam/i, asset_inventory:/prek|atsarg/i, asset_intangible:/nemater/i, asset_other:/kit/i }[t];
+        const dataSheets=wb.SheetNames.filter(n=>!/instrukc|kaip pildyti|detaliz/i.test(n));
+        const sn=(pref&&dataSheets.find(n=>pref.test(n.trim().toLowerCase())))||dataSheets[0]||wb.SheetNames[0];
+        const m=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''}).map(r=>(r||[]).map(c=>String(c==null?'':c).replace(/\s*\r?\n\s*/g,', ').trim()));
+        // antraščių eilutė — pirma, kurioje atpažįstami bent 2 stulpeliai
+        let hr=m.findIndex(r=>r.filter(c=>c&&pasteGuessKey(c)).length>=2);
+        if(hr<0){ $('pasteMsg').innerHTML='<div class="error">Lape „'+esc(sn)+'" antraščių atpažinti nepavyko. Nukopijuokite lentelę ir įklijuokite ranka.</div>'; return; }
+        const body=m.slice(hr+1).filter(r=>r.some(c=>c)&&!r.some(c=>/^pvz\.?\s/i.test(c)));
+        if(!body.length){ $('pasteMsg').innerHTML='<div class="error">Lape „'+esc(sn)+'" užpildytų eilučių nerasta.</div>'; return; }
+        $('pasteBlock').classList.remove('hidden');
+        openPasteMapping([m[hr]].concat(body));
+        $('pasteMsg').innerHTML='<div class="hint">Failas „'+esc(file.name)+'", lapas „'+esc(sn)+'": stulpelių '+m[hr].filter(c=>c).length+', eilučių '+body.length+'. Patikrinkite priskyrimą ir spauskite „Įkelti eilutes".</div>';
+      }catch(err){ $('pasteMsg').innerHTML='<div class="error">Nepavyko nuskaityti Excel: '+esc(err.message||String(err))+'</div>'; }
+      finally{ e.target.value=''; }
     };
     $('pasteApplyBtn').onclick=()=>{
       const map={}; document.querySelectorAll('.pmap').forEach(s=>{ if(s.value)map[+s.dataset.ci]=s.value; });
@@ -9667,7 +9741,7 @@
       for(let i=start;i<PASTE_MATRIX.length;i++){
         const r=PASTE_MATRIX[i]; const row={};
         for(const ci in map){ row[map[ci]]=r[ci]||''; }
-        if(row.name){ ACT_ROWS.push(row); added++; }
+        if(row.name&&!/^pvz\.?\s/i.test(row.name)){ ACT_ROWS.push(row); added++; }
       }
       $('pasteBlock').classList.add('hidden'); renderActRows();
       $('actMsg').innerHTML='<div class="success">Įkelta eilučių: '+added+'. Patikrinkite ir papildykite.</div>';
@@ -10005,6 +10079,7 @@
     // ---- Užpildytos formos (Priedas 2/3) skaitymas iš Excel ----
     let CRED_FORM_ROWS=null, DEBT_FORM_ROWS=null;
     function ffMoney(x){ const n=parseFloat(String(x==null?'':x).replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; }
+    function ffPhone(t){ const m=String(t||'').match(/\+?\d[\d\s\-()]{6,}\d/); return m?m[0].replace(/\s+/g,' ').trim():''; }
     function parseFillForm(buf, kind){
       const wb=XLSX.read(buf,{type:'array'});
       const dataSheet=wb.SheetNames.find(n=>/kreditor|debitor/i.test(n))||wb.SheetNames.find(n=>!/instrukc|detaliz/i.test(n))||wb.SheetNames[0];
@@ -10015,15 +10090,19 @@
       const col=re=>H.findIndex(h=>re.test(h));
       const ci={name:col(/kreditor|debitor|pavadinim|vardas/),code:col(/kodas/),addr:col(/adres/),email:col(/pašt|past/),
         principal:col(/pagrindin/),interest:col(/palūkan|paluk/),late:col(/delspinig/),fines:col(/baud/),
-        basis:col(/pagrindas/),note:col(/pastab/),secured:col(/užtikr|uztikr/)};
+        basis:col(/pagrindas/),note:col(/pastab/),secured:col(/užtikr|uztikr/),
+        contact:col(/kontakt/),kindc:col(/tipas/),related:col(/susij/),dk:col(/(^|\s)dk(\s|$)/)};
       if(ci.name<0||ci.principal<0) throw new Error('neatpažinta forma (nerasti stulpeliai „Kreditorius/Debitorius" ir „Pagrindinė skola").');
       const rows=[];
       for(let i=hr+1;i<m.length;i++){ const r=m[i]; const name=String(r[ci.name]||'').trim(); if(!name)continue;
         if(/^iš\s*viso/i.test(name))continue;
+        if(/^pvz\.?\s/i.test(name))continue;
         if(/^UAB\s+[„"]?(Tiekėjas|Pirkėjas)/i.test(name)&&/^30[0-9]{7}$/.test(String(r[ci.code]||'').trim()))continue;
         const principal=ffMoney(r[ci.principal]),interest=ci.interest>=0?ffMoney(r[ci.interest]):0,late=ci.late>=0?ffMoney(r[ci.late]):0,fines=ci.fines>=0?ffMoney(r[ci.fines]):0;
         rows.push({ name, id_code:String(r[ci.code]||'').trim(), address:String(r[ci.addr]||'').trim(), email:String(r[ci.email]||'').trim(),
           basisTxt:String(r[ci.basis]||'').trim(), noteTxt:String(r[ci.note]||'').trim(), secured:/taip/i.test(String(r[ci.secured]||'')),
+          contactTxt:ci.contact>=0?String(r[ci.contact]||'').trim():'', kindTxt:ci.kindc>=0?String(r[ci.kindc]||'').trim():'',
+          relatedYes:ci.related>=0?/taip/i.test(String(r[ci.related]||'')):false, dkTxt:ci.dk>=0?String(r[ci.dk]||'').trim():'',
           principal, interest, late, fines });
       }
       return rows;
@@ -10033,8 +10112,10 @@
       f.onchange=async(e)=>{ const file=e.target.files[0]; if(!file)return; $('credImpFileName').textContent=file.name;
         try{ const parsed=parseFillForm(new Uint8Array(await file.arrayBuffer()),'creditor');
           CRED_FORM_ROWS=parsed.map(r=>({ name:r.name, id_code:r.id_code, address:r.address, email:r.email,
+            kind:(r.kindTxt&&/fizin/i.test(r.kindTxt))?'person':'legal', phone:ffPhone(r.contactTxt)||null,
             basis_key:mapBasis(r.basisTxt), principal:r.principal, late_fees:Math.round((r.interest+r.late)*100)/100, fines:r.fines,
-            note:[r.noteTxt, r.interest>0?('Palūkanos: '+eur(r.interest)):'', r.secured?'Užtikrinta įkeitimu/hipoteka':''].filter(Boolean).join('; ')||null }));
+            note:[r.noteTxt, r.interest>0?('Palūkanos: '+eur(r.interest)):'', r.secured?'Užtikrinta įkeitimu/hipoteka':'',
+              r.contactTxt?('Kontaktinis asmuo: '+r.contactTxt):'', r.relatedYes?'Susijęs asmuo':'', r.dkTxt?('DK sąsk.: '+r.dkTxt):''].filter(Boolean).join('; ')||null }));
           if(!CRED_FORM_ROWS.length){ $('credImpMsg').innerHTML='<div class="error">Formoje nerasta užpildytų eilučių.</div>'; return; }
           $('credImpMsg').innerHTML='<div class="success">Iš formos atpažinta: '+CRED_FORM_ROWS.length+' kreditorių. Spauskite „Importuoti".</div>';
           $('credImpPreview').innerHTML='<table><thead><tr><th>Pavadinimas</th><th>Kodas</th><th style="text-align:right;">Pagrind.</th><th style="text-align:right;">Netesybos (pal.+delsp.)</th><th style="text-align:right;">Baudos</th><th>Pagrindas</th></tr></thead><tbody>'+CRED_FORM_ROWS.slice(0,50).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.id_code)}</td><td style="text-align:right;">${eur(r.principal)}</td><td style="text-align:right;">${eur(r.late_fees)}</td><td style="text-align:right;">${eur(r.fines)}</td><td>${esc(basisLabel(r.basis_key))}</td></tr>`).join('')+'</tbody></table>'+(CRED_FORM_ROWS.length>50?'<div class="muted">…ir dar '+(CRED_FORM_ROWS.length-50)+'</div>':'');
@@ -12510,8 +12591,11 @@
           const parsed=parseFillForm(new Uint8Array(await file.arrayBuffer()),'debtor');
           DEBT_IMP_ROWS=parsed.map(r=>{ const bMatch=DEBT_CBASES.find(x=>(x.label||'').toLowerCase()===r.basisTxt.toLowerCase()||x.key===r.basisTxt);
             return { name:r.name, id_code:r.id_code, address:r.address, email:r.email,
+              kind:(r.kindTxt&&/fizin/i.test(r.kindTxt))?'person':'legal', phone:ffPhone(r.contactTxt)||null,
               principal:r.principal, penalties:Math.round((r.interest+r.late+r.fines)*100)/100,
-              basis_key:bMatch?bMatch.key:(r.basisTxt||null), doc_ref:r.noteTxt||'' }; });
+              basis_key:bMatch?bMatch.key:(r.basisTxt||null), doc_ref:r.noteTxt||'',
+              note:[r.secured?'Užtikrinta (įkeitimu/laidavimu)':'', r.contactTxt?('Kontaktinis asmuo: '+r.contactTxt):'',
+                r.relatedYes?'Susijęs asmuo':'', r.dkTxt?('DK sąsk.: '+r.dkTxt):''].filter(Boolean).join('; ')||'' }; });
           if(!DEBT_IMP_ROWS.length){ $('debtImpMsg').innerHTML='<div class="error">Formoje nerasta užpildytų eilučių.</div>'; return; }
           $('debtImpMsg').innerHTML='<div class="success">Iš formos atpažinta: '+DEBT_IMP_ROWS.length+' debitorių. Spauskite „Importuoti".</div>';
           $('debtImpPreview').innerHTML='<table><thead><tr><th>Pavadinimas</th><th>Kodas</th><th style="text-align:right;">Pagrindinė</th><th style="text-align:right;">Netesybos</th><th>Pagrindas</th><th>Dok. Nr.</th></tr></thead><tbody>'+DEBT_IMP_ROWS.slice(0,50).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.id_code)}</td><td style="text-align:right;">${fmtEur(r.principal)}</td><td style="text-align:right;">${fmtEur(r.penalties)}</td><td>${esc(r.basis_key||'')}</td><td>${esc(r.doc_ref)}</td></tr>`).join('')+'</tbody></table>'+(DEBT_IMP_ROWS.length>50?'<div class="muted">…ir dar '+(DEBT_IMP_ROWS.length-50)+'</div>':'');
