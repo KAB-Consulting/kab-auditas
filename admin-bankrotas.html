@@ -1039,8 +1039,11 @@
       <div id="paneAssetDocs" class="card hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
           <div><strong><span class="ic ic-book"></span> Turto dokumentų biblioteka</strong>
-            <div class="muted" style="font-size:12px;">Visi su nuoma ir pardavimu susiję dokumentai vienoje vietoje: pasirašytos sutartys, priedai, aktai, nutraukimo susitarimai. Filtruokite pagal tipą, turtą ir galiojimą; iš eilutės atidarysite susijusią kortelę.</div></div>
-          <button class="btn btn-sm btn-ghost" id="adocRefreshBtn"><span class="ic ic-refresh"></span> Atnaujinti</button>
+            <div class="muted" style="font-size:12px;">Visi su turtu susiję dokumentai vienoje vietoje: pasirašytos sutartys, priedai, aktai bei eigoje gaunami dokumentai (vertinimai, išrašai, nuotraukos ir kt.). Filtruokite pagal tipą, turtą ir galiojimą; iš eilutės atidarysite susijusią kortelę.</div></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-sm btn-gold" id="adocUploadBtn"><span class="ic ic-clip"></span> Įkelti dokumentą</button>
+            <button class="btn btn-sm btn-ghost" id="adocRefreshBtn"><span class="ic ic-refresh"></span> Atnaujinti</button>
+          </div>
         </div>
         <div class="row" style="margin-bottom:8px;gap:8px;flex-wrap:wrap;">
           <div style="flex:1;min-width:200px;"><input id="adocSearch" class="input" placeholder="Paieška: dokumentas / sutartis / šalis / turtas…"></div>
@@ -1049,6 +1052,7 @@
             <option value="lease_contract">Nuomos sutartys (pasirašytos)</option>
             <option value="lease_attachment">Nuomos priedai / aktai</option>
             <option value="sale_contract">Pardavimo sutartys (pasirašytos)</option>
+            <option value="uploaded">Įkelti dokumentai</option>
           </select></div>
           <div style="max-width:230px;"><select id="adocAssetFilter" class="select"><option value="">Visas turtas</option></select></div>
           <div style="max-width:200px;"><select id="adocValidFilter" class="select">
@@ -1068,6 +1072,51 @@
         <div id="adocMsg"></div>
         <div id="adocSummary" class="muted" style="font-size:12px;margin-bottom:6px;"></div>
         <div id="assetDocsTable"></div>
+      </div>
+
+      <!-- Įkeliamo turto dokumento modalas -->
+      <div id="adocUpModal" class="modal-bg hidden">
+        <div class="modal" style="max-width:660px;">
+          <h3 style="margin-bottom:8px;"><span class="ic ic-clip"></span> Įkelti turto dokumentą</h3>
+          <div class="hint" style="margin-bottom:10px;">Failų formatai neribojami (PDF, DOCX, XLSX, nuotraukos, ADOC ir kt.). Galima pasirinkti kelis failus vienu metu.</div>
+          <label class="label">Failai *</label>
+          <input type="file" id="adocUpFiles" class="input" multiple>
+          <div class="row">
+            <div><label class="label">Pavadinimas (jei tuščia — failo vardas)</label><input id="adocUpLabel" class="input" placeholder="pvz., Vertinimo ataskaita"></div>
+            <div><label class="label">Tipas</label><select id="adocUpType" class="select">
+              <option>Kitas dokumentas</option>
+              <option>Vertinimo ataskaita</option>
+              <option>Registro išrašas</option>
+              <option>Draudimo dokumentas</option>
+              <option>Techninė dokumentacija</option>
+              <option>Nuotrauka</option>
+              <option>Susirašinėjimas</option>
+              <option value="custom">Kita (įrašyti)…</option>
+            </select></div>
+          </div>
+          <div id="adocUpCustomWrap" class="hidden"><label class="label">Tipo pavadinimas</label><input id="adocUpCustom" class="input" placeholder="Įrašykite tipą"></div>
+          <div class="row">
+            <div><label class="label">Galioja iki (nebūtina)</label><input id="adocUpValid" class="input" type="date"></div>
+            <div><label class="label">Pastaba</label><input id="adocUpNotes" class="input" placeholder="nebūtina"></div>
+          </div>
+          <label class="label" style="margin-top:10px;">Susiejimas su turtu</label>
+          <div class="hint">Pažymėkite vieną ar kelis turto vienetus; greitas žymėjimas — pagal grupę ar kategoriją. Nieko nepažymėjus dokumentas bus bendras (visos bylos).</div>
+          <div class="row" style="margin:6px 0;">
+            <div><select id="adocUpGroupSel" class="select"><option value="">— žymėti pagal grupę —</option></select></div>
+            <div><select id="adocUpCatSel" class="select"><option value="">— žymėti pagal kategoriją —</option></select></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+            <input id="adocUpAssetSearch" class="input" placeholder="Turto paieška…" style="flex:1;">
+            <span id="adocUpSelCount" class="muted" style="font-size:12px;white-space:nowrap;"></span>
+            <button class="btn btn-sm btn-ghost" id="adocUpClearSel" type="button">Išvalyti</button>
+          </div>
+          <div id="adocUpAssetList" style="max-height:180px;overflow:auto;border:1px solid var(--bd);border-radius:6px;padding:8px;"></div>
+          <div id="adocUpMsg" style="margin-top:8px;"></div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+            <button class="btn btn-ghost" onclick="hide('adocUpModal')">Atšaukti</button>
+            <button class="btn btn-gold" id="adocUpSaveBtn"><span class="ic ic-clip"></span> Įkelti</button>
+          </div>
+        </div>
       </div>
 
       <!-- DOKUMENTŲ REGISTRAS (gaunami / siunčiami) -->
@@ -6293,12 +6342,16 @@
         const leases=lq.data||[], sales=sq.data||[], assets=aq.data||[];
         const assetName={}; assets.forEach(a=>{ assetName[a.id]=a.name; });
         const leaseIds=leases.map(l=>l.id), saleIds=sales.map(s=>s.id);
-        const [dq,liq,siq]=await Promise.all([
+        const [dq,liq,siq,uq]=await Promise.all([
           leaseIds.length?sb.from('insolvency_asset_lease_docs').select('*').in('lease_id',leaseIds):Promise.resolve({data:[]}),
           leaseIds.length?sb.from('insolvency_asset_lease_items').select('lease_id,asset_id').in('lease_id',leaseIds):Promise.resolve({data:[]}),
-          saleIds.length?sb.from('insolvency_asset_sale_items').select('sale_id,asset_id').in('sale_id',saleIds):Promise.resolve({data:[]})
+          saleIds.length?sb.from('insolvency_asset_sale_items').select('sale_id,asset_id').in('sale_id',saleIds):Promise.resolve({data:[]}),
+          sb.from('insolvency_asset_docs').select('*').eq('case_id',CURRENT.id)
         ]);
-        const leaseDocs=dq.data||[], leaseItems=liq.data||[], saleItems=siq.data||[];
+        const leaseDocs=dq.data||[], leaseItems=liq.data||[], saleItems=siq.data||[], upDocs=uq.data||[];
+        let upItems=[];
+        if(upDocs.length){ const r=await sb.from('insolvency_asset_doc_items').select('doc_id,asset_id').in('doc_id',upDocs.map(d=>d.id)); upItems=r.data||[]; }
+        const upAssets={}; upItems.forEach(it=>{ (upAssets[it.doc_id]=upAssets[it.doc_id]||[]).push(it.asset_id); });
         const leaseAssets={}; leaseItems.forEach(it=>{ (leaseAssets[it.lease_id]=leaseAssets[it.lease_id]||[]).push(it.asset_id); });
         const saleAssets={}; saleItems.forEach(it=>{ (saleAssets[it.sale_id]=saleAssets[it.sale_id]||[]).push(it.asset_id); });
         const namesOf=ids=>(ids||[]).map(id=>assetName[id]).filter(Boolean);
@@ -6333,6 +6386,13 @@
               assetIds:saleAssets[s.id]||[], assetNames:namesOf(saleAssets[s.id]), version:null, superseded:false, fileName:null });
           }
         });
+        // D) įkelti dokumentai (gaunami eigoje — bet koks formatas)
+        upDocs.forEach(d=>{
+          rows.push({ kind:'uploaded', label:d.doc_label||d.file_name||'Dokumentas',
+            typeLabel:d.doc_type||'Įkeltas dokumentas', party:d.notes||'', date:d.created_at||null, valid_until:d.valid_until||null,
+            path:d.storage_path||null, active_document_id:null, leaseId:null, saleId:null, upId:d.id,
+            assetIds:upAssets[d.id]||[], assetNames:namesOf(upAssets[d.id]), version:null, superseded:false, fileName:d.file_name });
+        });
         ASSET_DOCS=rows;
         // turto filtro parinktys (išsaugom pasirinkimą)
         const sel=$('adocAssetFilter'); if(sel){ const cur=sel.value;
@@ -6364,20 +6424,21 @@
       const sum=$('adocSummary'); if(sum)sum.textContent='Rodoma '+rows.length+' iš '+ASSET_DOCS.length+' dokumentų.';
       const box=$('assetDocsTable'); if(!box)return;
       if(!rows.length){ box.innerHTML='<div class="muted center" style="padding:24px;">'+(ASSET_DOCS.length?'Dokumentų pagal pasirinktus filtrus nerasta.':'Šioje byloje su turtu susijusių dokumentų dar nėra.')+'</div>'; return; }
-      const kindIc={ lease_contract:'ic-key', lease_attachment:'ic-clip', sale_contract:'ic-cart' };
+      const kindIc={ lease_contract:'ic-key', lease_attachment:'ic-clip', sale_contract:'ic-cart', uploaded:'ic-file' };
       box.innerHTML='<table><thead><tr><th>Dokumentas</th><th>Tipas</th><th>Susijęs turtas</th><th>Data</th><th>Galiojimas</th><th></th></tr></thead><tbody>'+
         rows.map(r=>{
           const openCard = r.leaseId ? `openAssetDocCard('lease','${r.leaseId}')` : r.saleId ? `openAssetDocCard('sale','${r.saleId}')` : '';
           const prev = r.path ? `<button class="btn btn-sm btn-ghost" title="Peržiūrėti" onclick="previewDoc('${esc(r.path)}','${esc(r.label)}')"><span class="ic ic-eye"></span></button> <button class="btn btn-sm" title="Atsisiųsti" onclick="downloadDocDl('${esc(r.path)}')"><span class="ic ic-down"></span></button>`
             : r.active_document_id ? `<button class="btn btn-sm btn-ghost" title="Peržiūrėti pasirašytą" onclick="adocOpenSigned('${r.active_document_id}')"><span class="ic ic-eye"></span></button>` : '<span class="muted">—</span>';
-          const assetsCell=(r.assetNames&&r.assetNames.length)?esc(r.assetNames.join(', ')):'<span class="muted">—</span>';
+          const assetsCell=(r.assetNames&&r.assetNames.length)?esc(r.assetNames.join(', ')):(r.kind==='uploaded'?'<span class="muted">Bendras (visa byla)</span>':'<span class="muted">—</span>');
+          const del=r.kind==='uploaded'?` <button class="btn btn-sm btn-danger" title="Šalinti dokumentą" onclick="adocDeleteUp('${r.upId}','${esc(r.path||'')}')">✕</button>`:'';
           return `<tr${r.superseded?' style="opacity:.6;"':''}>
             <td><span class="ic ${kindIc[r.kind]||'ic-file'}"></span> <b>${esc(r.label)}</b>${(r.version&&r.version>1)?' <span style="font-size:10px;color:#555;">v'+r.version+'</span>':''}${r.superseded?' <span style="font-size:10px;color:#999;">(pakeista)</span>':''}${r.party?'<div class="muted" style="font-size:12px;">'+esc(r.party)+'</div>':''}</td>
             <td>${esc(r.typeLabel)}</td>
             <td style="font-size:12px;">${assetsCell}</td>
             <td style="white-space:nowrap;">${r.date?esc(fmtDate(r.date)):'<span class="muted">—</span>'}</td>
             <td style="white-space:nowrap;">${r.valid_until?esc(r.valid_until)+docValidBadge(r.valid_until):'<span class="muted">—</span>'}</td>
-            <td style="text-align:right;white-space:nowrap;">${prev}${openCard?` <button class="btn btn-sm btn-ghost" title="Atidaryti kortelę" onclick="${openCard}"><span class="ic ic-arrowr"></span></button>`:''}</td>
+            <td style="text-align:right;white-space:nowrap;">${prev}${openCard?` <button class="btn btn-sm btn-ghost" title="Atidaryti kortelę" onclick="${openCard}"><span class="ic ic-arrowr"></span></button>`:''}${del}</td>
           </tr>`;
         }).join('')+'</tbody></table>';
     }
@@ -6433,6 +6494,81 @@
     };
     ['adocSearch','adocTypeFilter','adocAssetFilter','adocValidFilter','adocSort'].forEach(idn=>{ const el=$(idn); if(el){ el.oninput=renderAssetDocs; el.onchange=renderAssetDocs; } });
     if($('adocRefreshBtn'))$('adocRefreshBtn').onclick=loadAssetDocs;
+    /* ===== Įkeliami turto dokumentai (gaunami eigoje; formatas neribojamas) ===== */
+    let ADOC_UP_ASSETS=[], ADOC_UP_GROUPS=[], ADOC_UP_GITEMS=[], ADOC_UP_SEL=new Set();
+    function adocUpSelCount(){ const el=$('adocUpSelCount'); if(el)el.textContent=ADOC_UP_SEL.size?(ADOC_UP_SEL.size+' pažymėta'):'nepažymėta — bendras bylos dokumentas'; }
+    function adocUpRenderList(){
+      const q=($('adocUpAssetSearch')&&$('adocUpAssetSearch').value||'').toLowerCase().trim();
+      const list=ADOC_UP_ASSETS.filter(a=>!q||(a.name||'').toLowerCase().includes(q)||(a.category||'').toLowerCase().includes(q));
+      const box=$('adocUpAssetList'); if(!box)return;
+      box.innerHTML=list.length?list.map(a=>`<label style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:13px;cursor:pointer;">
+        <input type="checkbox" value="${a.id}"${ADOC_UP_SEL.has(a.id)?' checked':''}> <span>${esc(a.name||'—')}</span>
+        <span class="muted" style="font-size:11px;">${esc(a.category||'')}</span></label>`).join('')
+        :'<div class="muted" style="font-size:12px;">Turto nerasta.</div>';
+      adocUpSelCount();
+    }
+    window.adocOpenUpload=async()=>{
+      if(!CURRENT||CURRENT.__new){ alert('Pirmiausia atidarykite bylą.'); return; }
+      ['adocUpFiles','adocUpLabel','adocUpCustom','adocUpValid','adocUpNotes','adocUpAssetSearch'].forEach(idn=>{ const el=$(idn); if(el)el.value=''; });
+      $('adocUpType').value='Kitas dokumentas'; $('adocUpCustomWrap').classList.add('hidden');
+      $('adocUpMsg').innerHTML=''; ADOC_UP_SEL=new Set();
+      try{
+        const [aq,gq]=await Promise.all([
+          sb.from('insolvency_assets').select('id,name,category').eq('case_id',CURRENT.id).order('name'),
+          sb.from('insolvency_asset_groups').select('id,name').eq('case_id',CURRENT.id).order('name')
+        ]);
+        ADOC_UP_ASSETS=aq.data||[]; ADOC_UP_GROUPS=gq.data||[]; ADOC_UP_GITEMS=[];
+        if(ADOC_UP_GROUPS.length){ const r=await sb.from('insolvency_asset_group_items').select('group_id,asset_id').in('group_id',ADOC_UP_GROUPS.map(g=>g.id)); ADOC_UP_GITEMS=r.data||[]; }
+      }catch(e){ alert(e.message||String(e)); return; }
+      $('adocUpGroupSel').innerHTML='<option value="">— žymėti pagal grupę —</option>'+ADOC_UP_GROUPS.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');
+      const cats=[...new Set(ADOC_UP_ASSETS.map(a=>a.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'lt'));
+      $('adocUpCatSel').innerHTML='<option value="">— žymėti pagal kategoriją —</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+      adocUpRenderList();
+      show('adocUpModal');
+    };
+    window.adocDeleteUp=async(id,path)=>{
+      if(!confirm('Pašalinti šį dokumentą iš bibliotekos? Failas bus ištrintas.'))return;
+      try{
+        const del=await sb.from('insolvency_asset_docs').delete().eq('id',id);
+        if(del.error)throw del.error;
+        if(path){ try{ await sb.storage.from('insolvency-docs').remove([path]); }catch(_){} }
+        loadAssetDocs();
+      }catch(e){ alert(e.message||String(e)); }
+    };
+    if($('adocUploadBtn'))$('adocUploadBtn').onclick=()=>adocOpenUpload();
+    if($('adocUpType'))$('adocUpType').onchange=()=>{ $('adocUpCustomWrap').classList.toggle('hidden',$('adocUpType').value!=='custom'); };
+    if($('adocUpAssetSearch'))$('adocUpAssetSearch').oninput=()=>adocUpRenderList();
+    if($('adocUpClearSel'))$('adocUpClearSel').onclick=()=>{ ADOC_UP_SEL.clear(); adocUpRenderList(); };
+    if($('adocUpAssetList'))$('adocUpAssetList').onchange=e=>{ const t=e.target; if(t&&t.type==='checkbox'){ if(t.checked)ADOC_UP_SEL.add(t.value); else ADOC_UP_SEL.delete(t.value); adocUpSelCount(); } };
+    if($('adocUpGroupSel'))$('adocUpGroupSel').onchange=()=>{ const gid=$('adocUpGroupSel').value; if(gid){ ADOC_UP_GITEMS.filter(it=>it.group_id===gid).forEach(it=>ADOC_UP_SEL.add(it.asset_id)); $('adocUpGroupSel').value=''; adocUpRenderList(); } };
+    if($('adocUpCatSel'))$('adocUpCatSel').onchange=()=>{ const c=$('adocUpCatSel').value; if(c){ ADOC_UP_ASSETS.filter(a=>a.category===c).forEach(a=>ADOC_UP_SEL.add(a.id)); $('adocUpCatSel').value=''; adocUpRenderList(); } };
+    if($('adocUpSaveBtn'))$('adocUpSaveBtn').onclick=async()=>{
+      const files=$('adocUpFiles').files;
+      if(!files||!files.length){ $('adocUpMsg').innerHTML='<div class="error">Pasirinkite bent vieną failą.</div>'; return; }
+      let dtype=$('adocUpType').value; if(dtype==='custom')dtype=$('adocUpCustom').value.trim()||'Kitas dokumentas';
+      const label=$('adocUpLabel').value.trim();
+      const vu=$('adocUpValid').value||null, notes=$('adocUpNotes').value.trim()||null;
+      const ids=[...ADOC_UP_SEL].filter(id=>ADOC_UP_ASSETS.some(a=>a.id===id));
+      const btn=$('adocUpSaveBtn'); btn.disabled=true;
+      $('adocUpMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliama…</div>';
+      try{
+        for(let i=0;i<files.length;i++){
+          const f=files[i];
+          const safe=f.name.replace(/[^A-Za-z0-9._-]+/g,'_');
+          const path=`${CURRENT.case_short_code||CURRENT.id}/asset-docs/${Date.now()}_${i}_${safe}`;
+          const up=await sb.storage.from('insolvency-docs').upload(path,f,{ upsert:false });
+          if(up.error)throw up.error;
+          const lbl=label?(files.length>1?(label+' — '+f.name):label):f.name;
+          const ins=await sb.from('insolvency_asset_docs').insert({ case_id:CURRENT.id, doc_label:lbl, doc_type:dtype,
+            storage_path:path, file_name:f.name, mime_type:f.type||null, file_size:f.size||null,
+            valid_until:vu, notes:notes, created_by:CURRENT_UID }).select('id').single();
+          if(ins.error)throw ins.error;
+          if(ids.length){ const li=await sb.from('insolvency_asset_doc_items').insert(ids.map(aid=>({doc_id:ins.data.id,asset_id:aid}))); if(li.error)throw li.error; }
+        }
+        hide('adocUpModal'); loadAssetDocs();
+      }catch(e){ $('adocUpMsg').innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
+      finally{ btn.disabled=false; }
+    };
     $('lsDocAddBtn').onclick=()=>{
       const label=$('lsDocLabel').value==='custom'?$('lsDocCustom').value.trim():$('lsDocLabel').value;
       if(!label){ $('lsMsg').innerHTML='<div class="error">Įrašykite dokumento pavadinimą.</div>'; return; }
