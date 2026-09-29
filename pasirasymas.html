@@ -259,7 +259,7 @@
     vehicle:'AUTOMOBILIO PERDAVIMO AKTAS'
   };
   const ACT_COLS = {
-    documents:[['name','Dokumento / bylos pavadinimas'],['kind','Rūšis'],['chrono','Laikotarpis (nuo–iki)'],['media','Laikmena'],['pages','Lapų sk.'],['folders','Bylų/segtuvų sk.'],['transfer_form','Perdavimo forma'],['notes','Pastabos']],
+    documents:[['name','Dokumento / bylos pavadinimas'],['kind','Rūšis'],['chrono','Laikotarpis (nuo–iki)'],['pages','Lapų sk.'],['folders','Bylų/segtuvų sk.'],['transfer_form','Perdavimo forma'],['notes','Pastabos']],
     documents_v2:[['name','Bylos antraštė (dokumento pavadinimas)'],['chrono','Bylos chronologinės ribos ar data (dokumento data, numeris)'],['pages','Bylos ar dokumento apimtis (kiekis, matavimo vienetas)'],['file_no','Bylos Nr.'],['box_no','Dėžės Nr.']],
     asset_realestate:[['name','Pavadinimas'],['address','Adresas'],['unique_no','Unikalus Nr.'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
     asset_movable:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
@@ -343,7 +343,8 @@
       const legacy = { notes:'notes1', notes1:'notes', pages:'qty' }; // senesnių įrašų raktų suderinamumas
       const cell = (r,k) => { let v=r[k]; if(v==null||v==='') v=r[legacy[k]]; return esc(v==null?'':v); };
       const fs = cols.length>=6 ? 'font-size:11.5px;' : '';
-      body = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;"><table style="min-width:'+(cols.length>=6?720:0)+'px;'+fs+'"><thead><tr><th style="width:36px;">Nr.</th>' + cols.map(c=>`<th>${esc(c[1])}</th>`).join('') + '</tr></thead><tbody>' +
+      const W = { name:'30%', notes:'20%', chrono:'12%', kind:'9%', pages:'6%', folders:'7%', transfer_form:'10%', qty:'7%', location:'16%', address:'18%', unique_no:'12%', notes1:'16%', notes2:'16%', file_no:'8%', box_no:'8%' };
+      body = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;"><table style="min-width:'+(cols.length>=6?720:0)+'px;'+fs+'"><thead><tr><th style="width:36px;">Nr.</th>' + cols.map(c=>`<th${W[c[0]]?` style="width:${W[c[0]]};"`:''}>${esc(c[1])}</th>`).join('') + '</tr></thead><tbody>' +
         (rows.length?rows:[{}]).map((r,i)=>`<tr><td>${i+1}</td>` + cols.map(c=>`<td>${cell(r,c[0])}</td>`).join('') + '</tr>').join('') + '</tbody></table></div>';
     }
     $('actBody').innerHTML = body;

@@ -3372,7 +3372,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.sb = sb;   // KAGB: prieiga mobiliajam/komunikacijos sluoksniui
-    const APP_VERSION='2026-09-23-r33';
+    const APP_VERSION='2026-09-29-r34';
     async function checkAppVersion(){
       try{ const { data }=await sb.from('app_config').select('value').eq('key','bankrotas_version').maybeSingle();
         const latest=data&&data.value;
@@ -9402,7 +9402,7 @@
     // ---------- PERDAVIMO AKTAI ----------
     // lentelių stulpeliai pagal akto tipą
     const ACT_COLS={
-      documents:[['name','Dokumento / bylos pavadinimas'],['kind','Rūšis'],['chrono','Laikotarpis (nuo–iki)'],['media','Laikmena'],['pages','Lapų sk.'],['folders','Bylų/segtuvų sk.'],['transfer_form','Perdavimo forma'],['notes','Pastabos']],
+      documents:[['name','Dokumento / bylos pavadinimas'],['kind','Rūšis'],['chrono','Laikotarpis (nuo–iki)'],['pages','Lapų sk.'],['folders','Bylų/segtuvų sk.'],['transfer_form','Perdavimo forma'],['notes','Pastabos']],
       documents_v2:[['name','Bylos antraštė (dokumento pavadinimas)'],['chrono','Bylos chronologinės ribos ar data (dokumento data, numeris)'],['pages','Bylos ar dokumento apimtis (kiekis, matavimo vienetas)'],['file_no','Bylos Nr.'],['box_no','Dėžės Nr.']],
       asset_realestate:[['name','Pavadinimas'],['address','Adresas'],['unique_no','Unikalus nr.'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
       asset_movable:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
@@ -9410,6 +9410,13 @@
       asset_other:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
       asset_intangible:[['name','Pavadinimas'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
     };
+    // Stulpelių pločiai: siauri kiekiniams/pasirinkimams, platūs pavadinimui ir pastaboms
+    const ACT_COL_W={ name:'30%', notes:'20%', chrono:'12%', kind:'9%', pages:'6%', folders:'7%', transfer_form:'10%',
+      qty:'7%', location:'16%', address:'18%', unique_no:'12%', notes1:'16%', notes2:'16%', file_no:'8%', box_no:'8%' };
+    const ACT_INP_W={ name:'min-width:240px;', notes:'min-width:180px;', chrono:'min-width:130px;width:130px;', kind:'width:100px;min-width:100px;',
+      pages:'width:64px;min-width:64px;', folders:'width:76px;min-width:76px;', transfer_form:'width:110px;min-width:110px;',
+      qty:'width:76px;min-width:76px;', file_no:'width:90px;min-width:90px;', box_no:'width:90px;min-width:90px;',
+      unique_no:'min-width:120px;width:120px;', address:'min-width:160px;', location:'min-width:140px;', notes1:'min-width:140px;', notes2:'min-width:140px;' };
     const ACT_TITLES={ documents:'DOKUMENTŲ PERDAVIMO AKTAS', documents_v2:'BYLŲ (DOKUMENTŲ) PERDAVIMO AKTAS', grouped:'PRIĖMIMO-PERDAVIMO AKTAS', asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)', asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)', asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)', asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)', asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)', vehicle:'AUTOMOBILIO PERDAVIMO AKTAS' };
     const ACT_LABELS={ documents:'Dokumentų perdavimo aktas', documents_v2:'Bylų (dokumentų) perdavimo aktas — nauja forma', asset_realestate:'Turto perdavimas — Nekilnojamas', asset_movable:'Turto perdavimas — Kilnojamas', asset_inventory:'Turto perdavimas — Prekės / Atsargos', asset_other:'Turto perdavimas — Kitas', asset_intangible:'Turto perdavimas — Nematerialus', vehicle:'Automobilio perdavimo aktas', grouped:'Priėmimo-perdavimo aktas (grupėmis / dvikalbis)' };
     const ASSET_ACT_TYPES=['asset_realestate','asset_movable','asset_inventory','asset_other','asset_intangible','vehicle'];
@@ -9699,14 +9706,16 @@
     };
     function renderActRows(){
       const t=$('actType').value; const cols=ACT_COLS[t]||[];
-      let h='<table><thead><tr><th style="width:36px;">Nr.</th>'+cols.map(c=>`<th>${esc(c[1])}</th>`).join('')+'<th></th></tr></thead><tbody>';
+      let h='<table><thead><tr><th style="width:36px;">Nr.</th>'+cols.map(c=>`<th${ACT_COL_W[c[0]]?` style="width:${ACT_COL_W[c[0]]};"`:''}>${esc(c[1])}</th>`).join('')+'<th style="width:118px;"></th></tr></thead><tbody>';
       ACT_ROWS.forEach((row,i)=>{
-        h+=`<tr><td>${i+1}</td>`+cols.map(c=>`<td><input class="input" style="min-width:90px;" data-ri="${i}" data-ck="${c[0]}" value="${esc(row[c[0]]||'')}"></td>`).join('')+`<td><button class="btn btn-sm btn-danger" onclick="delActRow(${i})"><span class="ic ic-x"></span></button></td></tr>`;
+        h+=`<tr><td>${i+1}</td>`+cols.map(c=>`<td><input class="input" style="${ACT_INP_W[c[0]]||'min-width:90px;'}" data-ri="${i}" data-ck="${c[0]}" value="${esc(row[c[0]]||'')}"></td>`).join('')
+          +`<td style="white-space:nowrap;"><button class="btn btn-sm btn-ghost" title="Aukštyn" onclick="moveActRow(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="btn btn-sm btn-ghost" title="Žemyn" onclick="moveActRow(${i},1)" ${i===ACT_ROWS.length-1?'disabled':''}>↓</button> <button class="btn btn-sm btn-danger" title="Šalinti" onclick="delActRow(${i})"><span class="ic ic-x"></span></button></td></tr>`;
       });
       h+='</tbody></table>';
       $('actRows').innerHTML=h;
       $('actRows').querySelectorAll('input[data-ri]').forEach(inp=>inp.oninput=()=>{ ACT_ROWS[+inp.dataset.ri][inp.dataset.ck]=inp.value; });
     }
+    window.moveActRow=(i,d)=>{ const j=i+d; if(j<0||j>=ACT_ROWS.length)return; [ACT_ROWS[i],ACT_ROWS[j]]=[ACT_ROWS[j],ACT_ROWS[i]]; renderActRows(); };
     window.delActRow=i=>{ ACT_ROWS.splice(i,1); renderActRows(); };
     $('addRowBtn').onclick=()=>{ ACT_ROWS.push({}); renderActRows(); };
 
@@ -10079,7 +10088,7 @@
           <tr><td style="padding:6px;border:1px solid #999;"><b>Būklės aprašymas</b></td><td style="padding:6px;border:1px solid #999;">${esc(m.cond||'')}</td></tr>
           <tr><td style="padding:6px;border:1px solid #999;"><b>Pastabos</b></td><td style="padding:6px;border:1px solid #999;">${esc(m.notes||'')}</td></tr></table>`;
       } else {
-        body='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="padding:5px;border:1px solid #999;">Nr.</th>'+cols.map(c=>`<th style="padding:5px;border:1px solid #999;">${esc(c[1])}</th>`).join('')+'</tr></thead><tbody>'+
+        body='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="padding:5px;border:1px solid #999;width:4%;">Nr.</th>'+cols.map(c=>`<th style="padding:5px;border:1px solid #999;${ACT_COL_W[c[0]]?`width:${ACT_COL_W[c[0]]};`:''}">${esc(c[1])}</th>`).join('')+'</tr></thead><tbody>'+
           (p.rows.length?p.rows:[{}]).map((r,i)=>`<tr><td style="padding:5px;border:1px solid #999;text-align:center;">${i+1}</td>`+cols.map(c=>`<td style="padding:5px;border:1px solid #999;">${esc(r[c[0]]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
       }
       const sig=(lbl,who,data,es)=>`<div style="display:inline-block;width:45%;vertical-align:top;margin-top:10px;"><div style="font-size:12px;color:#555;">${lbl}</div>${
