@@ -1,775 +1,465 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="lt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KAB Consulting — Klausimynų sistema</title>
-  <meta name="description" content="KAB Consulting klausimynų sistema — nemokumo, restruktūrizavimo ir kitų teisinių procesų valdymas">
-  <meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://pezhnbcsifxnrswsdhui.supabase.co; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<title>Komercinis pasiūlymas | KAB Consulting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;600;800&display=swap">
+<style>
+/* Layout: KAB brandbook – Swiss grid on paper grey, ink rules, one blue statement band; scroll-driven like svetainė v3. Single light brand look by choice. */
+:root{
+  --paper:#F3F2F2; --paper-2:#E8E7E6; --ink:#201E1D; --muted:#55534F; --grey:#A6A8AB;
+  --blue:#002E6E; --blue-soft:#C9D3E6; --blue-line:#4F6C9A; --word-off:#9A9997;
+  --font:'Archivo', Arial, Helvetica, sans-serif;
+  --max:1180px; --gut:clamp(16px,4vw,40px);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--max);margin-inline:auto;padding-inline:var(--gut)}
+h1,h2,h3{font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0;text-wrap:balance}
+p,ul{margin:0}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.label{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);border-bottom:2px solid var(--ink)}
+.bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:14px}
+.logo{display:flex;flex-direction:column;text-decoration:none;line-height:1}
+.logo b{font-weight:800;font-size:22px;letter-spacing:-.03em;color:var(--grey)}
+.logo span{font-weight:300;font-size:15px;letter-spacing:.06em;color:#2F4F80}
+.nav{display:flex;gap:22px;align-items:center;font-size:14px}
+.nav a{text-decoration:none}
+.nav a:hover{color:var(--blue)}
+.nav .cta{background:var(--blue);color:var(--paper);font-weight:800;padding:10px 16px}
+.nav .cta:hover{color:var(--paper);background:#01224F}
+.progress{position:absolute;left:0;bottom:-2px;height:2px;width:0;background:var(--blue)}
+@media (max-width:860px){.nav a:not(.cta){display:none}}
+
+section{scroll-margin-top:72px}
+.sec{padding-block:clamp(56px,9vw,112px);border-bottom:1px solid var(--grey)}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:44px;align-items:end}
+.sec-head h2{font-size:clamp(34px,4.6vw,56px);margin-top:10px}
+.sec-head p{color:var(--muted);max-width:52ch}
+@media (max-width:760px){.sec-head{grid-template-columns:1fr}}
+
+/* hero */
+.hero{padding-block:clamp(48px,8vw,96px) clamp(40px,6vw,72px);border-bottom:2px solid var(--ink)}
+.hero h1{font-size:clamp(46px,9vw,118px);letter-spacing:-.035em;margin:18px 0 28px}
+.hero h1 .w{color:var(--word-off);transition:color .25s}
+.hero h1 .w.on{color:var(--ink)}
+.hero-row{display:grid;grid-template-columns:1.1fr 1fr;gap:32px;border-top:1px solid var(--grey);padding-top:24px}
+.hero-row p{max-width:48ch}
+.client{font-size:clamp(22px,2.6vw,30px);font-weight:800;letter-spacing:-.01em}
+.meta{color:var(--muted);font-size:15px;margin-top:6px}
+.scroll-hint{margin-top:28px;font-size:14px;font-weight:600;display:flex;gap:8px;align-items:center}
+.scroll-hint i{font-style:normal;color:var(--blue);display:inline-block;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(4px)}}
+@media (max-width:760px){.hero-row{grid-template-columns:1fr}}
+
+/* grids with ink frame */
+.frame{display:grid;border:2px solid var(--ink)}
+.frame>*{padding:26px;min-width:0}
+.frame>*+*{border-left:1px solid var(--grey)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+@media (max-width:900px){.g4{grid-template-columns:1fr 1fr}.g4>*:nth-child(3){border-left:none}.g4>*:nth-child(n+3){border-top:1px solid var(--grey)}}
+@media (max-width:640px){.g4,.g3,.g2{grid-template-columns:1fr}.frame>*+*{border-left:none;border-top:1px solid var(--grey)}}
+.cell h3{font-size:21px;margin:10px 0 8px}
+.cell p{color:var(--muted);font-size:15.5px}
+
+/* paths */
+.path{position:relative;transition:background .25s,color .25s}
+.path.rec{background:var(--blue);color:var(--paper)}
+.path.rec .label{color:var(--paper)}
+.path.rec p{color:var(--blue-soft)}
+.path .label.no{color:var(--muted)}
+.note{margin-top:20px;color:var(--muted);font-size:15.5px;max-width:78ch}
+
+/* timeline */
+.benefits{margin-bottom:56px}
+.tl{position:relative}
+.tl-track{position:relative;height:4px;background:var(--paper-2);margin-bottom:22px}
+.tl-fill{position:absolute;inset:0 auto 0 0;width:100%;background:var(--blue)}
+.tl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.phase{opacity:1;transition:opacity .35s}
+.tl.js .phase:not(.on){opacity:.38}
+.phase .t{font-size:clamp(26px,3vw,36px);font-weight:800;letter-spacing:-.02em}
+.phase .d{color:var(--muted);font-size:15.5px;margin-top:6px}
+.phase.ext .t{color:var(--muted)}
+@media (max-width:760px){.tl-grid{grid-template-columns:1fr 1fr;row-gap:32px}}
+
+/* role – blue band, sticky reveal on desktop */
+.role{background:var(--blue);color:var(--paper);border-bottom:none}
+.role .label{color:var(--blue-soft)}
+.role-inner{padding-block:clamp(56px,9vw,112px)}
+.role h2{font-size:clamp(38px,6vw,84px);letter-spacing:-.035em;margin:12px 0 24px;max-width:15ch}
+.role .lead{color:var(--blue-soft);font-size:clamp(17px,1.6vw,20px);max-width:62ch;margin-bottom:48px}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--paper)}
+.act{padding:24px 24px 0 0;transition:opacity .35s}
+.act+.act{border-left:1px solid var(--blue-line);padding-left:24px}
+.act .n{font-size:13px;font-weight:600;letter-spacing:.14em;color:var(--blue-soft)}
+.act h3{font-size:22px;margin:10px 0 8px}
+.act p{color:var(--blue-soft);font-size:15.5px}
+.acts.play .act:not(.on){opacity:.3}
+@media (min-width:901px) and (prefers-reduced-motion:no-preference){
+  .role-pin{height:240vh}
+  .role-sticky{position:sticky;top:70px;min-height:calc(100vh - 70px);display:flex;align-items:center}
+}
+@media (max-width:900px){.acts{grid-template-columns:1fr 1fr}.act:nth-child(3){border-left:none;padding-left:0}.act:nth-child(n+3){margin-top:24px}}
+@media (max-width:560px){.acts{grid-template-columns:1fr}.act+.act{border-left:none;padding-left:0;margin-top:24px}}
+
+/* pricing */
+.mod .label{margin-bottom:8px;display:block}
+.mod h3{font-size:22px;min-height:2.2em}
+.price{font-size:clamp(28px,3vw,36px);font-weight:800;letter-spacing:-.02em;color:var(--blue);margin-top:18px;white-space:nowrap}
+.unit{color:var(--muted);font-size:15px;min-height:3.1em}
+.mod ul{border-top:1px solid var(--grey);margin-top:16px;padding:16px 0 0 18px;font-size:15.5px;display:grid;gap:6px}
+.extra{margin-top:24px;background:var(--ink);color:var(--paper);display:grid;grid-template-columns:auto 1fr auto;gap:32px;align-items:center;padding:24px 28px}
+.extra .label{color:var(--grey)}
+.extra h3{font-size:22px;margin-top:4px}
+.extra p{color:#D4D3D1;font-size:15.5px}
+.extra .price{color:var(--paper);margin:0;text-align:right}
+.extra .unit{color:#D4D3D1;min-height:0;text-align:right}
+@media (max-width:760px){.extra{grid-template-columns:1fr;gap:12px}.extra .price,.extra .unit{text-align:left}}
+
+.calc{margin-top:48px;border:2px solid var(--ink);display:grid;grid-template-columns:1fr 1fr}
+.calc>div{padding:28px;min-width:0}
+.calc>div+div{border-left:1px solid var(--grey);background:var(--paper-2)}
+.calc h3{font-size:22px;margin:8px 0 6px}
+.calc .hint{color:var(--muted);font-size:14.5px;margin-bottom:22px}
+.field{display:grid;gap:8px;margin-bottom:22px}
+.field label{font-weight:600;font-size:15px;display:flex;justify-content:space-between;gap:12px}
+.field output{color:var(--blue);font-weight:800}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.rows{display:grid;gap:10px;font-size:15.5px}
+.rows div{display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid var(--grey);padding-bottom:10px}
+.rows span:last-child{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.total{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-top:18px;flex-wrap:wrap}
+.total b{font-size:clamp(26px,2.8vw,34px);letter-spacing:-.03em;color:var(--blue);font-variant-numeric:tabular-nums}
+.vat{color:var(--muted);font-size:14.5px;margin-top:4px;text-align:right}
+@media (max-width:760px){.calc{grid-template-columns:1fr}.calc>div+div{border-left:none;border-top:1px solid var(--grey)}}
+
+/* experience */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);margin-bottom:32px}
+.stat{padding:26px 24px 26px 0}
+.stat+.stat{border-left:1px solid var(--grey);padding-left:24px}
+.stat b{display:block;font-size:clamp(44px,5.6vw,76px);letter-spacing:-.04em;color:var(--blue);line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.stat p{margin-top:10px;font-size:15.5px;max-width:30ch}
+.list{padding-left:18px;display:grid;gap:10px;font-size:15.5px}
+@media (max-width:700px){.stats{grid-template-columns:1fr}.stat+.stat{border-left:none;padding-left:0;border-top:1px solid var(--grey)}}
+
+/* steps + contact */
+.step b{font-size:44px;color:var(--blue);line-height:1;display:block}
+.contact{margin-top:32px;background:var(--blue);color:var(--paper);display:grid;grid-template-columns:1.1fr 1fr;gap:32px;padding:clamp(28px,4vw,48px);align-items:end}
+.contact h2{font-size:clamp(34px,4.4vw,56px);letter-spacing:-.03em}
+.contact .who{font-weight:800;font-size:19px}
+.contact p{color:var(--blue-soft);font-size:15.5px}
+.contact .line{color:var(--paper);display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.copy{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--blue-soft);background:transparent;color:var(--paper);padding:4px 10px;cursor:pointer}
+.copy:hover{background:var(--paper);color:var(--blue)}
+@media (max-width:760px){.contact{grid-template-columns:1fr}}
+footer{padding-block:28px;font-size:13.5px;color:var(--muted)}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+body.loading main, body.loading footer, body.failed main, body.failed footer{display:none}
+.gate{display:none;max-width:640px;margin:0 auto;padding:clamp(48px,10vw,120px) var(--gut)}
+body.loading .gate.load, body.failed .gate.fail{display:block}
+.gate h1{font-size:clamp(30px,4vw,44px);margin:14px 0 14px}
+.gate p{color:var(--muted)}
+.valid{color:var(--blue);font-weight:600}
+</style>
 
-  <style>
-    :root {
-      --kab-navy: #0B1E3F;
-      --kab-navy-light: #1A3660;
-      --kab-gold: #C9A961;
-      --kab-gold-light: #E5C87A;
-      --kab-cream: #F7F4EC;
-      --kab-gray: #5A5A5A;
-      --kab-gray-light: #999;
-      --kab-light: #F9F9F9;
-      --kab-border: #E5E5E5;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-      background: var(--kab-cream);
-      color: #333;
-      line-height: 1.6;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ============ HEADER ============ */
-    header {
-      background: var(--kab-navy);
-      color: white;
-      padding: 20px 0;
-      border-bottom: 4px solid var(--kab-gold);
-    }
-
-    header .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .logo-group {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .header-logo {
-      height: 44px;
-      width: auto;
-      display: block;
-    }
-
-    .header-subtitle {
-      font-size: 11px;
-      color: var(--kab-gold);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-top: 6px;
-      padding-left: 2px;
-    }
-
-    /* ============ HERO ============ */
-    .hero {
-      background: linear-gradient(135deg, var(--kab-navy) 0%, var(--kab-navy-light) 100%);
-      color: white;
-      padding: 80px 20px 100px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 6px;
-      background: linear-gradient(90deg, transparent, var(--kab-gold), transparent);
-    }
-
-    .hero-content {
-      max-width: 800px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero-logo {
-      height: 70px;
-      width: auto;
-      margin: 0 auto 30px;
-      display: block;
-      opacity: 0.95;
-    }
-
-    .hero h2 {
-      font-size: 42px;
-      font-weight: 700;
-      margin-bottom: 18px;
-      letter-spacing: -0.5px;
-    }
-
-    .hero h2 .gold {
-      color: var(--kab-gold);
-    }
-
-    .hero p.lead {
-      font-size: 18px;
-      opacity: 0.92;
-      margin-bottom: 40px;
-      max-width: 640px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    /* ============ CTA BUTTONS ============ */
-    .cta-buttons {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      padding: 18px 36px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s;
-      border: none;
-      min-width: 240px;
-      justify-content: center;
-      font-family: inherit;
-    }
-
-    .cta-client {
-      background: white;
-      color: var(--kab-navy);
-      border: 2px solid white;
-    }
-
-    .cta-client:hover {
-      background: var(--kab-cream);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    }
-
-    .cta-admin {
-      background: var(--kab-gold);
-      color: var(--kab-navy);
-      border: 2px solid var(--kab-gold);
-    }
-
-    .cta-admin:hover {
-      background: var(--kab-gold-light);
-      border-color: var(--kab-gold-light);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    }
-
-    .cta-icon {
-      font-size: 20px;
-    }
-
-    /* ============ MAIN CONTENT ============ */
-    main {
-      flex: 1;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 60px 20px;
-      width: 100%;
-    }
-
-    .section {
-      margin-bottom: 60px;
-    }
-
-    .section-title {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--kab-navy);
-      margin-bottom: 8px;
-      display: inline-block;
-      padding-bottom: 8px;
-      border-bottom: 3px solid var(--kab-gold);
-    }
-
-    .section-subtitle {
-      color: var(--kab-gray);
-      font-size: 14px;
-      margin-bottom: 30px;
-    }
-
-    /* ============ ABOUT GRID ============ */
-    .about-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
-      margin-top: 20px;
-    }
-
-    .about-card {
-      background: white;
-      border-radius: 8px;
-      padding: 28px;
-      border: 1px solid var(--kab-border);
-      transition: all 0.2s;
-    }
-
-    .about-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-      border-color: var(--kab-gold);
-    }
-
-    .about-card-icon {
-      font-size: 32px;
-      margin-bottom: 14px;
-    }
-
-    .about-card h3 {
-      color: var(--kab-navy);
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-
-    .about-card p {
-      color: var(--kab-gray);
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    /* ============ NEWS ============ */
-    .news-list {
-      display: grid;
-      gap: 20px;
-    }
-
-    .news-item {
-      background: white;
-      border-radius: 8px;
-      padding: 24px 28px;
-      border-left: 4px solid var(--kab-gold);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-
-    .news-date {
-      color: var(--kab-gray-light);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-    }
-
-    .news-item h3 {
-      color: var(--kab-navy);
-      font-size: 17px;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-
-    .news-item p {
-      color: var(--kab-gray);
-      font-size: 14px;
-    }
-
-    .news-placeholder {
-      text-align: center;
-      padding: 40px;
-      color: var(--kab-gray-light);
-      font-style: italic;
-      background: white;
-      border-radius: 8px;
-      border: 2px dashed var(--kab-border);
-    }
-
-    /* ============ FOOTER ============ */
-    footer {
-      background: var(--kab-navy);
-      color: white;
-      padding: 40px 20px 30px;
-      margin-top: 60px;
-    }
-
-    .footer-content {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 30px;
-    }
-
-    .footer-section h4 {
-      color: var(--kab-gold);
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 14px;
-      font-weight: 600;
-    }
-
-    .footer-section p, .footer-section a {
-      color: rgba(255,255,255,0.8);
-      font-size: 14px;
-      text-decoration: none;
-      display: block;
-      margin-bottom: 6px;
-      transition: color 0.2s;
-    }
-
-    .footer-section a:hover {
-      color: var(--kab-gold);
-    }
-
-    .footer-bottom {
-      max-width: 1100px;
-      margin: 30px auto 0;
-      padding-top: 24px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      text-align: center;
-      font-size: 12px;
-      color: rgba(255,255,255,0.6);
-    }
-
-    /* ============ DIALOG MODAL ============ */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(11, 30, 63, 0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 20px;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal {
-      background: white;
-      border-radius: 12px;
-      max-width: 500px;
-      width: 100%;
-      padding: 35px;
-      position: relative;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      animation: slideIn 0.3s ease-out;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 14px; right: 14px;
-      background: none;
-      border: none;
-      font-size: 22px;
-      color: var(--kab-gray);
-      cursor: pointer;
-      width: 32px; height: 32px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-close:hover {
-      background: var(--kab-cream);
-    }
-
-    .modal h2 {
-      color: var(--kab-navy);
-      font-size: 22px;
-      margin-bottom: 8px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid var(--kab-gold);
-      display: inline-block;
-    }
-
-    .modal p {
-      color: #333;
-      margin: 16px 0;
-      font-size: 15px;
-      line-height: 1.7;
-    }
-
-    .modal .info-block {
-      background: var(--kab-cream);
-      border-left: 4px solid var(--kab-gold);
-      padding: 14px 18px;
-      border-radius: 4px;
-      margin: 18px 0;
-      font-size: 14px;
-    }
-
-    .modal a {
-      color: var(--kab-navy);
-      font-weight: 600;
-      text-decoration: underline;
-    }
-
-    /* ============ MOBILE ============ */
-    @media (max-width: 768px) {
-      .hero { padding: 50px 20px 70px; }
-      .hero h2 { font-size: 28px; }
-      .hero p.lead { font-size: 15px; }
-      .hero-logo { height: 50px; margin-bottom: 24px; }
-      .cta { min-width: 100%; padding: 16px 24px; }
-      .cta-buttons { flex-direction: column; gap: 12px; }
-      .header-logo { height: 36px; }
-      .header-subtitle { font-size: 10px; }
-      .section-title { font-size: 20px; }
-    }
-
-
-    /* ===================== IKONOS (monochrominės, paveldi teksto spalvą) ===================== */
-    .ic{ display:inline-block; width:14px; height:14px; vertical-align:-2px; background:currentColor;
-      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:center; mask-position:center;
-      -webkit-mask-size:contain; mask-size:contain; flex:0 0 14px; opacity:.9; }
-    .btn .ic{ margin-right:2px; } .sec-title .ic{ width:13px; height:13px; opacity:.7; }
-    .ic-ai{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203l1.9%204.6L18.5%209.5l-4.6%201.9L12%2016l-1.9-4.6L5.5%209.5l4.6-1.9z%27%2F%3E%3Cpath%20d%3D%27M18%2015l.7%201.8%201.8.7-1.8.7L18%2020l-.7-1.8-1.8-.7%201.8-.7z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203l1.9%204.6L18.5%209.5l-4.6%201.9L12%2016l-1.9-4.6L5.5%209.5l4.6-1.9z%27%2F%3E%3Cpath%20d%3D%27M18%2015l.7%201.8%201.8.7-1.8.7L18%2020l-.7-1.8-1.8-.7%201.8-.7z%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-alarm{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cpath%20d%3D%27M5%203L2%206M19%203l3%203%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cpath%20d%3D%27M5%203L2%206M19%203l3%203%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-alert{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10.29%203.86L1.82%2018a2%202%200%200%200%201.71%203h16.94a2%202%200%200%200%201.71-3L13.71%203.86a2%202%200%200%200-3.42%200z%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%279%27%20x2%3D%2712%27%20y2%3D%2713%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2717%27%20x2%3D%2712.01%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10.29%203.86L1.82%2018a2%202%200%200%200%201.71%203h16.94a2%202%200%200%200%201.71-3L13.71%203.86a2%202%200%200%200-3.42%200z%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%279%27%20x2%3D%2712%27%20y2%3D%2713%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2717%27%20x2%3D%2712.01%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-archive{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%275%27%20rx%3D%271%27%2F%3E%3Cpath%20d%3D%27M4%209v10a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V9%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2713%27%20x2%3D%2714%27%20y2%3D%2713%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%275%27%20rx%3D%271%27%2F%3E%3Cpath%20d%3D%27M4%209v10a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V9%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2713%27%20x2%3D%2714%27%20y2%3D%2713%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-arrowl{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2719%27%20y1%3D%2712%27%20x2%3D%275%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%2019%205%2012%2012%205%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2719%27%20y1%3D%2712%27%20x2%3D%275%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%2019%205%2012%2012%205%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-arrowr{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%205%2019%2012%2012%2019%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3Cpolyline%20points%3D%2712%205%2019%2012%2012%2019%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-arrowu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%2719%27%20x2%3D%2712%27%20y2%3D%275%27%2F%3E%3Cpolyline%20points%3D%275%2012%2012%205%2019%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%2719%27%20x2%3D%2712%27%20y2%3D%275%27%2F%3E%3Cpolyline%20points%3D%275%2012%2012%205%2019%2012%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-back{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%279%2014%204%209%209%204%27%2F%3E%3Cpath%20d%3D%27M20%2020v-7a4%204%200%200%200-4-4H4%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%279%2014%204%209%209%204%27%2F%3E%3Cpath%20d%3D%27M20%2020v-7a4%204%200%200%200-4-4H4%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-ban{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%274.93%27%20y1%3D%274.93%27%20x2%3D%2719.07%27%20y2%3D%2719.07%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%274.93%27%20y1%3D%274.93%27%20x2%3D%2719.07%27%20y2%3D%2719.07%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-bank{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2721%27%20x2%3D%2721%27%20y2%3D%2721%27%2F%3E%3Cpolyline%20points%3D%273%209%2012%203%2021%209%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2721%27%20x2%3D%276%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2721%27%20x2%3D%2710%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2721%27%20x2%3D%2714%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2718%27%20y1%3D%2721%27%20x2%3D%2718%27%20y2%3D%2711%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2721%27%20x2%3D%2721%27%20y2%3D%2721%27%2F%3E%3Cpolyline%20points%3D%273%209%2012%203%2021%209%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2721%27%20x2%3D%276%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2721%27%20x2%3D%2710%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2721%27%20x2%3D%2714%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2718%27%20y1%3D%2721%27%20x2%3D%2718%27%20y2%3D%2711%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-bell{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%208A6%206%200%200%200%206%208c0%207-3%209-3%209h18s-3-2-3-9%27%2F%3E%3Cpath%20d%3D%27M13.73%2021a2%202%200%200%201-3.46%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%208A6%206%200%200%200%206%208c0%207-3%209-3%209h18s-3-2-3-9%27%2F%3E%3Cpath%20d%3D%27M13.73%2021a2%202%200%200%201-3.46%200%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-book{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20%27%2F%3E%3Cpath%20d%3D%27M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%2019.5A2.5%202.5%200%200%201%206.5%2017H20%27%2F%3E%3Cpath%20d%3D%27M6.5%202H20v20H6.5A2.5%202.5%200%200%201%204%2019.5v-15A2.5%202.5%200%200%201%206.5%202z%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-briefcase{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%277%27%20width%3D%2720%27%20height%3D%2714%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M16%2021V5a2%202%200%200%200-2-2h-4a2%202%200%200%200-2%202v16%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%277%27%20width%3D%2720%27%20height%3D%2714%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M16%2021V5a2%202%200%200%200-2-2h-4a2%202%200%200%200-2%202v16%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-building{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%2021h18%27%2F%3E%3Cpath%20d%3D%27M5%2021V5a2%202%200%200%201%202-2h10a2%202%200%200%201%202%202v16%27%2F%3E%3Cpath%20d%3D%27M9%207h1M9%2011h1M9%2015h1M14%207h1M14%2011h1M14%2015h1%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%2021h18%27%2F%3E%3Cpath%20d%3D%27M5%2021V5a2%202%200%200%201%202-2h10a2%202%200%200%201%202%202v16%27%2F%3E%3Cpath%20d%3D%27M9%207h1M9%2011h1M9%2015h1M14%207h1M14%2011h1M14%2015h1%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-bulb{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2018h6%27%2F%3E%3Cpath%20d%3D%27M10%2022h4%27%2F%3E%3Cpath%20d%3D%27M12%202a7%207%200%200%200-4%2012.7V17h8v-2.3A7%207%200%200%200%2012%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2018h6%27%2F%3E%3Cpath%20d%3D%27M10%2022h4%27%2F%3E%3Cpath%20d%3D%27M12%202a7%207%200%200%200-4%2012.7V17h8v-2.3A7%207%200%200%200%2012%202z%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-calc{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%274%27%20y%3D%272%27%20width%3D%2716%27%20height%3D%2720%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2711%27%20x2%3D%278.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2711%27%20x2%3D%2712.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2711%27%20x2%3D%2716.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2716%27%20x2%3D%278.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2716%27%20x2%3D%2712.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2716%27%20x2%3D%2716.01%27%20y2%3D%2716%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%274%27%20y%3D%272%27%20width%3D%2716%27%20height%3D%2720%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2711%27%20x2%3D%278.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2711%27%20x2%3D%2712.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2711%27%20x2%3D%2716.01%27%20y2%3D%2711%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2716%27%20x2%3D%278.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2716%27%20x2%3D%2712.01%27%20y2%3D%2716%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%2716%27%20x2%3D%2716.01%27%20y2%3D%2716%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-calendar{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%274%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%272%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%272%27%20x2%3D%278%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2710%27%20x2%3D%2721%27%20y2%3D%2710%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%274%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%272%27%20x2%3D%2716%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%272%27%20x2%3D%278%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2710%27%20x2%3D%2721%27%20y2%3D%2710%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-cam{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M23%2019a2%202%200%200%201-2%202H3a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h4l2-3h6l2%203h4a2%202%200%200%201%202%202z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M23%2019a2%202%200%200%201-2%202H3a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h4l2-3h6l2%203h4a2%202%200%200%201%202%202z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-cart{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%279%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Ccircle%20cx%3D%2720%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Cpath%20d%3D%27M1%201h4l2.68%2013.39a2%202%200%200%200%202%201.61h9.72a2%202%200%200%200%202-1.61L23%206H6%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%279%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Ccircle%20cx%3D%2720%27%20cy%3D%2721%27%20r%3D%271%27%2F%3E%3Cpath%20d%3D%27M1%201h4l2.68%2013.39a2%202%200%200%200%202%201.61h9.72a2%202%200%200%200%202-1.61L23%206H6%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-chart{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%2720%27%20x2%3D%2718%27%20y2%3D%2710%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2720%27%20x2%3D%2712%27%20y2%3D%274%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2720%27%20x2%3D%276%27%20y2%3D%2714%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%2720%27%20x2%3D%2718%27%20y2%3D%2710%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2720%27%20x2%3D%2712%27%20y2%3D%274%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%2720%27%20x2%3D%276%27%20y2%3D%2714%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-chat{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2011.5a8.38%208.38%200%200%201-.9%203.8%208.5%208.5%200%200%201-7.6%204.7%208.38%208.38%200%200%201-3.8-.9L3%2021l1.9-5.7a8.38%208.38%200%200%201-.9-3.8%208.5%208.5%200%200%201%204.7-7.6%208.38%208.38%200%200%201%203.8-.9h.5a8.48%208.48%200%200%201%208%208z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2011.5a8.38%208.38%200%200%201-.9%203.8%208.5%208.5%200%200%201-7.6%204.7%208.38%208.38%200%200%201-3.8-.9L3%2021l1.9-5.7a8.38%208.38%200%200%201-.9-3.8%208.5%208.5%200%200%201%204.7-7.6%208.38%208.38%200%200%201%203.8-.9h.5a8.48%208.48%200%200%201%208%208z%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-check{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2720%206%209%2017%204%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2720%206%209%2017%204%2012%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-chevrond{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%276%209%2012%2015%2018%209%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-chevronu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2718%2015%2012%209%206%2015%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2718%2015%2012%209%206%2015%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-circle{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-clip{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.44%2011.05l-9.19%209.19a6%206%200%200%201-8.49-8.49l9.19-9.19a4%204%200%200%201%205.66%205.66l-9.2%209.19a2%202%200%200%201-2.83-2.83l8.49-8.48%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.44%2011.05l-9.19%209.19a6%206%200%200%201-8.49-8.49l9.19-9.19a4%204%200%200%201%205.66%205.66l-9.2%209.19a2%202%200%200%201-2.83-2.83l8.49-8.48%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-clipboard{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%272%27%20width%3D%278%27%20height%3D%274%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%272%27%20width%3D%278%27%20height%3D%274%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-clock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cpolyline%20points%3D%2712%206%2012%2012%2016%2014%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cpolyline%20points%3D%2712%206%2012%2012%2016%2014%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-down{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%277%2010%2012%2015%2017%2010%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2715%27%20x2%3D%2712%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%277%2010%2012%2015%2017%2010%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%2715%27%20x2%3D%2712%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-euro{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%271%27%20x2%3D%2712%27%20y2%3D%2723%27%2F%3E%3Cpath%20d%3D%27M17%205H9.5a3.5%203.5%200%200%200%200%207h5a3.5%203.5%200%200%201%200%207H6%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%271%27%20x2%3D%2712%27%20y2%3D%2723%27%2F%3E%3Cpath%20d%3D%27M17%205H9.5a3.5%203.5%200%200%200%200%207h5a3.5%203.5%200%200%201%200%207H6%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-external{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%2013v6a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h6%27%2F%3E%3Cpolyline%20points%3D%2715%203%2021%203%2021%209%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2714%27%20x2%3D%2721%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M18%2013v6a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V8a2%202%200%200%201%202-2h6%27%2F%3E%3Cpolyline%20points%3D%2715%203%2021%203%2021%209%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2714%27%20x2%3D%2721%27%20y2%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-eye{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M1%2012s4-8%2011-8%2011%208%2011%208-4%208-11%208-11-8-11-8z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M1%2012s4-8%2011-8%2011%208%2011%208-4%208-11%208-11-8-11-8z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-file{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V8z%27%2F%3E%3Cpolyline%20points%3D%2714%202%2014%208%2020%208%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V8z%27%2F%3E%3Cpolyline%20points%3D%2714%202%2014%208%2020%208%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-folder{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M22%2019a2%202%200%200%201-2%202H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h5l2%203h9a2%202%200%200%201%202%202z%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-gear{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M19.4%2015a1.65%201.65%200%200%200%20.33%201.82l.06.06a2%202%200%201%201-2.83%202.83l-.06-.06a1.65%201.65%200%200%200-1.82-.33%201.65%201.65%200%200%200-1%201.51V21a2%202%200%200%201-4%200v-.09A1.65%201.65%200%200%200%209%2019.4a1.65%201.65%200%200%200-1.82.33l-.06.06a2%202%200%201%201-2.83-2.83l.06-.06a1.65%201.65%200%200%200%20.33-1.82%201.65%201.65%200%200%200-1.51-1H3a2%202%200%200%201%200-4h.09A1.65%201.65%200%200%200%204.6%209a1.65%201.65%200%200%200-.33-1.82l-.06-.06a2%202%200%201%201%202.83-2.83l.06.06a1.65%201.65%200%200%200%201.82.33H9a1.65%201.65%200%200%200%201-1.51V3a2%202%200%200%201%204%200v.09a1.65%201.65%200%200%200%201%201.51%201.65%201.65%200%200%200%201.82-.33l.06-.06a2%202%200%201%201%202.83%202.83l-.06.06a1.65%201.65%200%200%200-.33%201.82V9a1.65%201.65%200%200%200%201.51%201H21a2%202%200%200%201%200%204h-.09a1.65%201.65%200%200%200-1.51%201z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3Cpath%20d%3D%27M19.4%2015a1.65%201.65%200%200%200%20.33%201.82l.06.06a2%202%200%201%201-2.83%202.83l-.06-.06a1.65%201.65%200%200%200-1.82-.33%201.65%201.65%200%200%200-1%201.51V21a2%202%200%200%201-4%200v-.09A1.65%201.65%200%200%200%209%2019.4a1.65%201.65%200%200%200-1.82.33l-.06.06a2%202%200%201%201-2.83-2.83l.06-.06a1.65%201.65%200%200%200%20.33-1.82%201.65%201.65%200%200%200-1.51-1H3a2%202%200%200%201%200-4h.09A1.65%201.65%200%200%200%204.6%209a1.65%201.65%200%200%200-.33-1.82l-.06-.06a2%202%200%201%201%202.83-2.83l.06.06a1.65%201.65%200%200%200%201.82.33H9a1.65%201.65%200%200%200%201-1.51V3a2%202%200%200%201%204%200v.09a1.65%201.65%200%200%200%201%201.51%201.65%201.65%200%200%200%201.82-.33l.06-.06a2%202%200%201%201%202.83%202.83l-.06.06a1.65%201.65%200%200%200-.33%201.82V9a1.65%201.65%200%200%200%201.51%201H21a2%202%200%200%201%200%204h-.09a1.65%201.65%200%200%200-1.51%201z%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-globe{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%272%27%20y1%3D%2712%27%20x2%3D%2722%27%20y2%3D%2712%27%2F%3E%3Cpath%20d%3D%27M12%202a15.3%2015.3%200%200%201%204%2010%2015.3%2015.3%200%200%201-4%2010%2015.3%2015.3%200%200%201-4-10%2015.3%2015.3%200%200%201%204-10z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cline%20x1%3D%272%27%20y1%3D%2712%27%20x2%3D%2722%27%20y2%3D%2712%27%2F%3E%3Cpath%20d%3D%27M12%202a15.3%2015.3%200%200%201%204%2010%2015.3%2015.3%200%200%201-4%2010%2015.3%2015.3%200%200%201-4-10%2015.3%2015.3%200%200%201%204-10z%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-grid{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%273%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%273%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%273%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3Crect%20x%3D%2714%27%20y%3D%2714%27%20width%3D%277%27%20height%3D%277%27%20rx%3D%271%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-hash{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%274%27%20y1%3D%279%27%20x2%3D%2720%27%20y2%3D%279%27%2F%3E%3Cline%20x1%3D%274%27%20y1%3D%2715%27%20x2%3D%2720%27%20y2%3D%2715%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%273%27%20x2%3D%278%27%20y2%3D%2721%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%273%27%20x2%3D%2714%27%20y2%3D%2721%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%274%27%20y1%3D%279%27%20x2%3D%2720%27%20y2%3D%279%27%2F%3E%3Cline%20x1%3D%274%27%20y1%3D%2715%27%20x2%3D%2720%27%20y2%3D%2715%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%273%27%20x2%3D%278%27%20y2%3D%2721%27%2F%3E%3Cline%20x1%3D%2716%27%20y1%3D%273%27%20x2%3D%2714%27%20y2%3D%2721%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-home{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2z%27%2F%3E%3Cpolyline%20points%3D%279%2022%209%2012%2015%2012%2015%2022%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%209l9-7%209%207v11a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2z%27%2F%3E%3Cpolyline%20points%3D%279%2022%209%2012%2015%2012%2015%2022%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-image{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Ccircle%20cx%3D%278.5%27%20cy%3D%278.5%27%20r%3D%271.5%27%2F%3E%3Cpolyline%20points%3D%2721%2015%2016%2010%205%2021%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%273%27%20width%3D%2718%27%20height%3D%2718%27%20rx%3D%272%27%2F%3E%3Ccircle%20cx%3D%278.5%27%20cy%3D%278.5%27%20r%3D%271.5%27%2F%3E%3Cpolyline%20points%3D%2721%2015%2016%2010%205%2021%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-key{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%202l-2%202%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61a5.5%205.5%200%201%201-7.78%207.78%205.5%205.5%200%200%201%207.78-7.78z%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61L15.5%207.5l3%203L22%207l-3-3-3.5%203.5%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%202l-2%202%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61a5.5%205.5%200%201%201-7.78%207.78%205.5%205.5%200%200%201%207.78-7.78z%27%2F%3E%3Cpath%20d%3D%27M11.39%2011.61L15.5%207.5l3%203L22%207l-3-3-3.5%203.5%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-layers{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%202%207%2012%2012%2022%207%2012%202%27%2F%3E%3Cpolyline%20points%3D%272%2017%2012%2022%2022%2017%27%2F%3E%3Cpolyline%20points%3D%272%2012%2012%2017%2022%2012%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%202%207%2012%2012%2022%207%2012%202%27%2F%3E%3Cpolyline%20points%3D%272%2017%2012%2022%2022%2017%27%2F%3E%3Cpolyline%20points%3D%272%2012%2012%2017%2022%2012%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-link{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10%2013a5%205%200%200%200%207.54.54l3-3a5%205%200%200%200-7.07-7.07l-1.72%201.71%27%2F%3E%3Cpath%20d%3D%27M14%2011a5%205%200%200%200-7.54-.54l-3%203a5%205%200%200%200%207.07%207.07l1.71-1.71%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M10%2013a5%205%200%200%200%207.54.54l3-3a5%205%200%200%200-7.07-7.07l-1.72%201.71%27%2F%3E%3Cpath%20d%3D%27M14%2011a5%205%200%200%200-7.54-.54l-3%203a5%205%200%200%200%207.07%207.07l1.71-1.71%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-list{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%273.01%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%273.01%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%273.01%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%278%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%278%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%273.01%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%273.01%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%273.01%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-lock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%2010%200v4%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%2010%200v4%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-logout{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h4%27%2F%3E%3Cpolyline%20points%3D%2716%2017%2021%2012%2016%207%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2712%27%20x2%3D%279%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h4%27%2F%3E%3Cpolyline%20points%3D%2716%2017%2021%2012%2016%207%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2712%27%20x2%3D%279%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-mail{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%2716%27%20rx%3D%272%27%2F%3E%3Cpolyline%20points%3D%2722%206%2012%2013%202%206%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%272%27%20y%3D%274%27%20width%3D%2720%27%20height%3D%2716%27%20rx%3D%272%27%2F%3E%3Cpolyline%20points%3D%2722%206%2012%2013%202%206%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-menu{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%273%27%20y1%3D%2712%27%20x2%3D%2721%27%20y2%3D%2712%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%276%27%20x2%3D%2721%27%20y2%3D%276%27%2F%3E%3Cline%20x1%3D%273%27%20y1%3D%2718%27%20x2%3D%2721%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-package{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2716.5%27%20y1%3D%279.4%27%20x2%3D%277.5%27%20y2%3D%274.21%27%2F%3E%3Cpath%20d%3D%27M21%2016V8a2%202%200%200%200-1-1.73l-7-4a2%202%200%200%200-2%200l-7%204A2%202%200%200%200%203%208v8a2%202%200%200%200%201%201.73l7%204a2%202%200%200%200%202%200l7-4A2%202%200%200%200%2021%2016z%27%2F%3E%3Cpolyline%20points%3D%273.27%206.96%2012%2012.01%2020.73%206.96%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2716.5%27%20y1%3D%279.4%27%20x2%3D%277.5%27%20y2%3D%274.21%27%2F%3E%3Cpath%20d%3D%27M21%2016V8a2%202%200%200%200-1-1.73l-7-4a2%202%200%200%200-2%200l-7%204A2%202%200%200%200%203%208v8a2%202%200%200%200%201%201.73l7%204a2%202%200%200%200%202%200l7-4A2%202%200%200%200%2021%2016z%27%2F%3E%3Cpolyline%20points%3D%273.27%206.96%2012%2012.01%2020.73%206.96%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-pencil{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%203a2.828%202.828%200%201%201%204%204L7.5%2020.5%202%2022l1.5-5.5L17%203z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%203a2.828%202.828%200%201%201%204%204L7.5%2020.5%202%2022l1.5-5.5L17%203z%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-pin{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2010c0%207-9%2013-9%2013s-9-6-9-13a9%209%200%200%201%2018%200z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2710%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2010c0%207-9%2013-9%2013s-9-6-9-13a9%209%200%200%201%2018%200z%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2710%27%20r%3D%273%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-plus{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%275%27%20x2%3D%2712%27%20y2%3D%2719%27%2F%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20y1%3D%275%27%20x2%3D%2712%27%20y2%3D%2719%27%2F%3E%3Cline%20x1%3D%275%27%20y1%3D%2712%27%20x2%3D%2719%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-puzzle{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%207h4V5a2%202%200%201%201%204%200v2h4a1%201%200%200%201%201%201v4h2a2%202%200%201%201%200%204h-2v4a1%201%200%200%201-1%201h-4v-2a2%202%200%201%200-4%200v2H4a1%201%200%200%201-1-1v-4h2a2%202%200%201%200%200-4H3V8a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%207h4V5a2%202%200%201%201%204%200v2h4a1%201%200%200%201%201%201v4h2a2%202%200%201%201%200%204h-2v4a1%201%200%200%201-1%201h-4v-2a2%202%200%201%200-4%200v2H4a1%201%200%200%201-1-1v-4h2a2%202%200%201%200%200-4H3V8a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-receipt{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M6%202h12v20l-3-2-3%202-3-2-3%202z%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%278%27%20x2%3D%2715%27%20y2%3D%278%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%2712%27%20x2%3D%2715%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M6%202h12v20l-3-2-3%202-3-2-3%202z%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%278%27%20x2%3D%2715%27%20y2%3D%278%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%2712%27%20x2%3D%2715%27%20y2%3D%2712%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-refresh{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2723%204%2023%2010%2017%2010%27%2F%3E%3Cpolyline%20points%3D%271%2020%201%2014%207%2014%27%2F%3E%3Cpath%20d%3D%27M3.51%209a9%209%200%200%201%2014.85-3.36L23%2010M1%2014l4.64%204.36A9%209%200%200%200%2020.49%2015%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2723%204%2023%2010%2017%2010%27%2F%3E%3Cpolyline%20points%3D%271%2020%201%2014%207%2014%27%2F%3E%3Cpath%20d%3D%27M3.51%209a9%209%200%200%201%2014.85-3.36L23%2010M1%2014l4.64%204.36A9%209%200%200%200%2020.49%2015%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-rocket{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4.5%2016.5c-1.5%201.26-2%205-2%205s3.74-.5%205-2c.71-.84.7-2.13-.09-2.91a2.18%202.18%200%200%200-2.91-.09z%27%2F%3E%3Cpath%20d%3D%27M12%2015l-3-3a22%2022%200%200%201%202-3.95A12.88%2012.88%200%200%201%2022%202c0%202.72-.78%207.5-6%2011a22.35%2022.35%200%200%201-4%202z%27%2F%3E%3Cpath%20d%3D%27M9%2012H4s.55-3.03%202-4c1.62-1.08%205%200%205%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4.5%2016.5c-1.5%201.26-2%205-2%205s3.74-.5%205-2c.71-.84.7-2.13-.09-2.91a2.18%202.18%200%200%200-2.91-.09z%27%2F%3E%3Cpath%20d%3D%27M12%2015l-3-3a22%2022%200%200%201%202-3.95A12.88%2012.88%200%200%201%2022%202c0%202.72-.78%207.5-6%2011a22.35%2022.35%200%200%201-4%202z%27%2F%3E%3Cpath%20d%3D%27M9%2012H4s.55-3.03%202-4c1.62-1.08%205%200%205%200%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-ruler{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.3%208.7L8.7%2021.3a1%201%200%200%201-1.4%200l-4.6-4.6a1%201%200%200%201%200-1.4L15.3%202.7a1%201%200%200%201%201.4%200l4.6%204.6a1%201%200%200%201%200%201.4z%27%2F%3E%3Cpath%20d%3D%27M7.5%2010.5l2%202M10.5%207.5l2%202M13.5%204.5l2%202M4.5%2013.5l2%202%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21.3%208.7L8.7%2021.3a1%201%200%200%201-1.4%200l-4.6-4.6a1%201%200%200%201%200-1.4L15.3%202.7a1%201%200%200%201%201.4%200l4.6%204.6a1%201%200%200%201%200%201.4z%27%2F%3E%3Cpath%20d%3D%27M7.5%2010.5l2%202M10.5%207.5l2%202M13.5%204.5l2%202M4.5%2013.5l2%202%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-save{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M19%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h11l5%205v11a2%202%200%200%201-2%202z%27%2F%3E%3Cpolyline%20points%3D%2717%2021%2017%2013%207%2013%207%2021%27%2F%3E%3Cpolyline%20points%3D%277%203%207%208%2015%208%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M19%2021H5a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h11l5%205v11a2%202%200%200%201-2%202z%27%2F%3E%3Cpolyline%20points%3D%2717%2021%2017%2013%207%2013%207%2021%27%2F%3E%3Cpolyline%20points%3D%277%203%207%208%2015%208%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-scale{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203v18%27%2F%3E%3Cpath%20d%3D%27M5%207h14%27%2F%3E%3Cpath%20d%3D%27M7%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M17%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%203v18%27%2F%3E%3Cpath%20d%3D%27M5%207h14%27%2F%3E%3Cpath%20d%3D%27M7%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M17%207l-4%207h8z%27%2F%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-search{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-star{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%2015.09%208.26%2022%209.27%2017%2014.14%2018.18%2021.02%2012%2017.77%205.82%2021.02%207%2014.14%202%209.27%208.91%208.26%2012%202%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolygon%20points%3D%2712%202%2015.09%208.26%2022%209.27%2017%2014.14%2018.18%2021.02%2012%2017.77%205.82%2021.02%207%2014.14%202%209.27%208.91%208.26%2012%202%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-swap{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2717%201%2021%205%2017%209%27%2F%3E%3Cpath%20d%3D%27M3%2011V9a4%204%200%200%201%204-4h14%27%2F%3E%3Cpolyline%20points%3D%277%2023%203%2019%207%2015%27%2F%3E%3Cpath%20d%3D%27M21%2013v2a4%204%200%200%201-4%204H3%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%2717%201%2021%205%2017%209%27%2F%3E%3Cpath%20d%3D%27M3%2011V9a4%204%200%200%201%204-4h14%27%2F%3E%3Cpolyline%20points%3D%277%2023%203%2019%207%2015%27%2F%3E%3Cpath%20d%3D%27M21%2013v2a4%204%200%200%201-4%204H3%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-timer{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%272%27%20x2%3D%2715%27%20y2%3D%272%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2713%27%20r%3D%278%27%2F%3E%3Cpolyline%20points%3D%2712%209%2012%2013%2015%2014%27%2F%3E%3Cline%20x1%3D%279%27%20y1%3D%272%27%20x2%3D%2715%27%20y2%3D%272%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-tool{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14.7%206.3a1%201%200%200%200%200%201.4l1.6%201.6a1%201%200%200%200%201.4%200l3.77-3.77a6%206%200%200%201-7.94%207.94l-6.91%206.91a2.12%202.12%200%200%201-3-3l6.91-6.91a6%206%200%200%201%207.94-7.94l-3.76%203.76z%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14.7%206.3a1%201%200%200%200%200%201.4l1.6%201.6a1%201%200%200%200%201.4%200l3.77-3.77a6%206%200%200%201-7.94%207.94l-6.91%206.91a2.12%202.12%200%200%201-3-3l6.91-6.91a6%206%200%200%201%207.94-7.94l-3.76%203.76z%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-trash{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%273%206%205%206%2021%206%27%2F%3E%3Cpath%20d%3D%27M19%206v14a2%202%200%200%201-2%202H7a2%202%200%200%201-2-2V6m3%200V4a2%202%200%200%201%202-2h4a2%202%200%200%201%202%202v2%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2711%27%20x2%3D%2710%27%20y2%3D%2717%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2711%27%20x2%3D%2714%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpolyline%20points%3D%273%206%205%206%2021%206%27%2F%3E%3Cpath%20d%3D%27M19%206v14a2%202%200%200%201-2%202H7a2%202%200%200%201-2-2V6m3%200V4a2%202%200%200%201%202-2h4a2%202%200%200%201%202%202v2%27%2F%3E%3Cline%20x1%3D%2710%27%20y1%3D%2711%27%20x2%3D%2710%27%20y2%3D%2717%27%2F%3E%3Cline%20x1%3D%2714%27%20y1%3D%2711%27%20x2%3D%2714%27%20y2%3D%2717%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-trophy{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3Cpath%20d%3D%27M12%2017v4%27%2F%3E%3Cpath%20d%3D%27M7%204h10v5a5%205%200%200%201-10%200z%27%2F%3E%3Cpath%20d%3D%27M7%206H4a2%202%200%200%200%200%204h3%27%2F%3E%3Cpath%20d%3D%27M17%206h3a2%202%200%200%201%200%204h-3%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M8%2021h8%27%2F%3E%3Cpath%20d%3D%27M12%2017v4%27%2F%3E%3Cpath%20d%3D%27M7%204h10v5a5%205%200%200%201-10%200z%27%2F%3E%3Cpath%20d%3D%27M7%206H4a2%202%200%200%200%200%204h3%27%2F%3E%3Cpath%20d%3D%27M17%206h3a2%202%200%200%201%200%204h-3%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-unlock{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%209.9-1%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%273%27%20y%3D%2711%27%20width%3D%2718%27%20height%3D%2711%27%20rx%3D%272%27%2F%3E%3Cpath%20d%3D%27M7%2011V7a5%205%200%200%201%209.9-1%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-up{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%2717%208%2012%203%207%208%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%273%27%20x2%3D%2712%27%20y2%3D%2715%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4%27%2F%3E%3Cpolyline%20points%3D%2717%208%2012%203%207%208%27%2F%3E%3Cline%20x1%3D%2712%27%20y1%3D%273%27%20x2%3D%2712%27%20y2%3D%2715%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-user{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-users{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%2021v-2a4%204%200%200%200-4-4H5a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M23%2021v-2a4%204%200%200%200-3-3.87%27%2F%3E%3Cpath%20d%3D%27M16%203.13a4%204%200%200%201%200%207.75%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M17%2021v-2a4%204%200%200%200-4-4H5a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%279%27%20cy%3D%277%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M23%2021v-2a4%204%200%200%200-3-3.87%27%2F%3E%3Cpath%20d%3D%27M16%203.13a4%204%200%200%201%200%207.75%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-worker{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M5%208a7%207%200%200%201%2014%200%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20%2021v-2a4%204%200%200%200-4-4H8a4%204%200%200%200-4%204v2%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%2F%3E%3Cpath%20d%3D%27M5%208a7%207%200%200%201%2014%200%27%2F%3E%3C%2Fsvg%3E"); }
-    .ic-x{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%276%27%20x2%3D%276%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%276%27%20x2%3D%2718%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2718%27%20y1%3D%276%27%20x2%3D%276%27%20y2%3D%2718%27%2F%3E%3Cline%20x1%3D%276%27%20y1%3D%276%27%20x2%3D%2718%27%20y2%3D%2718%27%2F%3E%3C%2Fsvg%3E"); }
-    :root{ --ic-search:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2711%27%20cy%3D%2711%27%20r%3D%278%27%2F%3E%3Cline%20x1%3D%2721%27%20y1%3D%2721%27%20x2%3D%2716.65%27%20y2%3D%2716.65%27%2F%3E%3C%2Fsvg%3E"); }
-
-    /* =========================================================================
-       KAB dizaino sistema — suvienodinimas (2026-08-14)
-       Vieša svetainė: perimama sistemos paletė, tipografija, rėmeliai ir
-       radiusai. Reprezentacinė hero sekcija sąmoningai išlaikoma.
-       ========================================================================= */
-    :root{
-      --navy:#0B1E3F; --navy2:#16304F; --ink:#23364B; --txt:#425A70;
-      --muted:#7B8C9B; --faint:#9AA8B4;
-      --bd:rgba(66,90,112,.16); --bd2:rgba(66,90,112,.09);
-      --bg:#F5F6F8; --r:6px; --r-sm:4px;
-      --kab-cream:#F5F6F8; --kab-gray:#7B8C9B; --kab-gray-light:#9AA8B4;
-      --kab-light:#F7F9FB; --kab-border:rgba(66,90,112,.16); --kab-navy-light:#16304F;
-    }
-    body{ background:var(--bg); color:var(--txt); font-size:15px; line-height:1.55;
-      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
-
-    /* Antraštė ir hero — reprezentaciniai, tik nuraminti */
-    header{ border-bottom:1px solid rgba(255,255,255,.10); }
-    .header-subtitle{ letter-spacing:.16em; font-size:10.5px; }
-    .hero{ padding:64px 20px 76px; }
-    .hero::after{ height:1px; background:rgba(201,169,97,.5); }
-    .hero h2{ font-size:38px; letter-spacing:-.8px; }
-    .hero p.lead{ font-size:16.5px; opacity:.88; }
-
-    /* CTA — vienodesni su sistemos mygtukais */
-    .cta{ border-radius:var(--r); font-size:15px; padding:14px 30px; min-width:230px; }
-    .cta-client{ background:#fff; color:var(--navy); border:1px solid #fff; }
-    .cta-client:hover{ background:#F1F3F6; transform:none; box-shadow:0 4px 14px rgba(0,0,0,.14); }
-    .cta-admin{ background:var(--kab-gold); color:var(--navy); border:1px solid var(--kab-gold); }
-    .cta-admin:hover{ background:#D7B978; border-color:#D7B978; transform:none;
-      box-shadow:0 4px 14px rgba(0,0,0,.14); }
-    .cta-icon{ font-size:16px; display:inline-flex; }
-    .cta-icon .ic{ width:17px; height:17px; }
-
-    /* Turinys */
-    main{ padding:52px 20px; }
-    .section{ margin-bottom:52px; }
-    .section-title{ font-size:21px; font-weight:700; color:var(--ink); letter-spacing:-.3px;
-      border-bottom:2px solid var(--kab-gold); padding-bottom:7px; }
-    .section-subtitle{ color:var(--muted); font-size:13.5px; margin-bottom:26px; }
-
-    .about-card{ background:#fff; border:1px solid var(--bd); border-radius:var(--r);
-      padding:22px 24px; }
-    .about-card:hover{ transform:none; box-shadow:none; border-color:var(--navy); }
-    .about-card-icon{ font-size:0; margin-bottom:12px; line-height:0; }
-    .about-card-icon .ic{ width:22px; height:22px; color:var(--navy); vertical-align:top; }
-    .about-card h3{ color:var(--ink); font-size:16px; font-weight:600; letter-spacing:-.2px; }
-    .about-card p{ color:var(--txt); font-size:14px; }
-
-    .news-item{ background:#fff; border:1px solid var(--bd); border-radius:var(--r); }
-    .news-date{ color:var(--faint); font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; }
-    .news-item h3{ color:var(--ink); font-size:16px; font-weight:600; }
-    .news-item p{ color:var(--txt); font-size:14px; }
-    .news-placeholder{ color:var(--muted); border:1px dashed var(--bd); border-radius:var(--r);
-      background:#fff; }
-
-    footer{ background:var(--navy); }
-    .footer-section h4{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
-    .footer-bottom{ border-top:1px solid rgba(255,255,255,.10); font-size:12px; }
-
-    .modal{ border-radius:8px; border:1px solid var(--bd);
-      box-shadow:0 14px 40px rgba(11,30,63,.24); }
-    .modal h2{ color:var(--ink); font-size:19px; font-weight:600; letter-spacing:-.2px; }
-    .modal p{ color:var(--txt); font-size:14px; }
-    .modal .info-block{ background:#F7F9FB; border:1px solid var(--bd); border-radius:var(--r); }
-    .modal-close{ color:var(--muted); border-radius:var(--r-sm); }
-    .modal-close:hover{ background:rgba(66,90,112,.08); color:var(--ink); }
-    @media (max-width:768px){ .hero h2{ font-size:28px; } .hero p.lead{ font-size:15px; } }
-
-  </style>
 </head>
-<body>
+<body class="loading">
+<div class="gate load" role="status"><p class="label">KAB Consulting</p><h1>Kraunamas pasiūlymas…</h1></div>
+<div class="gate fail" role="alert"><p class="label">KAB Consulting</p><h1>Nuoroda neteisinga arba nebegalioja</h1><p>Patikrinkite, ar nukopijavote visą nuorodą. Jei problema kartojasi, susisiekite: tomas.malinauskas@kab.lt, +370 698 37119.</p></div>
+<header class="bar">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="KAB Consulting"><b>KAB</b><span>CONSULTING</span></a>
+    <nav class="nav" aria-label="Pasiūlymo skyriai">
+      <a href="#keliai">Sprendimai</a><a href="#eiga">Eiga</a><a href="#vaidmuo">Vaidmuo</a><a href="#kainos">Kainos</a><a href="#patirtis">Patirtis</a>
+      <a class="cta" href="#kontaktai">Susisiekti</a>
+    </nav>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
 
-  <!-- ============ HEADER ============ -->
-  <header>
-    <div class="container">
-      <div class="logo-group">
-        <img src="kab-logo-dark.png" alt="KAB Consulting" class="header-logo">
+<main id="top">
+  <section class="hero" id="hero">
+    <div class="wrap">
+      <p class="label">Komercinis pasiūlymas · Restruktūrizavimas</p>
+      <h1 id="headline">Ramiai per sudėtingus sprendimus.</h1>
+      <div class="hero-row">
         <div>
-          <div class="header-subtitle">Klausimynų sistema</div>
+          <p class="client" data-k="client">—</p>
+          <p class="meta">Restruktūrizavimo paslaugos · <span data-k="date">—</span>, <span data-k="city">Klaipėda</span></p>
+          <p class="meta valid" id="validLine" hidden>Pasiūlymas galioja iki <span data-k="valid">—</span></p>
         </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- ============ HERO ============ -->
-  <section class="hero">
-    <div class="hero-content">
-      <img src="kab-logo-dark.png" alt="KAB Consulting" class="hero-logo">
-      <h2>Profesionalus <span class="gold">nemokumo proceso</span><br>konsultavimas</h2>
-      <p class="lead">
-        KAB Consulting klausimynų sistema — saugus įrankis įmonių ir asmenų pasirengimui
-        nemokumo, restruktūrizavimo bei kitiems teisiniams procesams.
-      </p>
-
-      <div class="cta-buttons">
-        <button class="cta cta-client" onclick="openClientModal()">
-          <span class="cta-icon"><span class="ic ic-clipboard"></span></span>
-          <span>Klientui</span>
-        </button>
-        <a href="/admin.html" class="cta cta-admin">
-          <span class="cta-icon"><span class="ic ic-lock"></span></span>
-          <span>Administratoriui</span>
-        </a>
+        <div>
+          <p>Siūlome aiškų, teisiškai tvirtą kelią finansinei padėčiai stabilizuoti: išsaugoti veiklą, reputaciją ir vadovybės kontrolę.</p>
+          <p class="scroll-hint">Slinkite žemyn <i aria-hidden="true">↓</i></p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ MAIN ============ -->
-  <main>
+  <section class="sec" id="keliai">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><p class="label">01 · Galimi sprendimai</p><h2>Keturi keliai, vienas rekomenduojamas</h2></div>
+        <p>Tikslas – stabilizuoti finansinę padėtį ir išsaugoti veiklą, reputaciją bei vadovybės kontrolę.</p>
+      </div>
+      <div class="frame g4">
+        <div class="cell path rec"><p class="label">Rekomenduojama</p><h3>Teisminis restruktūrizavimas</h3><p>Teismo prižiūrimas skolų pertvarkymas: apsauga nuo išieškojimo ir 4+1 metų atsiskaitymo planas.</p></div>
+        <div class="cell path"><p class="label">Papildomai</p><h3>Skolų išpirkimas su nuolaida</h3><p>Kreditorių reikalavimų išpirkimas ar dalinis nurašymas derybų keliu mažina bendrą skolų naštą.</p></div>
+        <div class="cell path"><p class="label">Papildomai</p><h3>Investuotojas, pardavimas ar susijungimas</h3><p>Strateginio investuotojo pritraukimas, įmonės pardavimas ar veiklos sujungimas – sinergija ir mažesnės sąnaudos.</p></div>
+        <div class="cell path"><p class="label no">Nerekomenduojama</p><h3>Bankroto procesas</h3><p>Kontrolė pereina bankroto administratoriui, didėja ginčų, kreditorių pretenzijų ir neapibrėžtumo rizika.</p></div>
+      </div>
+      <p class="note">Skolų išpirkimas ir investuotojo paieška gali būti taikomi kaip restruktūrizavimo plano priemonės – derindami sprendimus siekiame geriausio rezultato.</p>
+    </div>
+  </section>
 
-    <!-- ============ APIE SISTEMĄ ============ -->
-    <section class="section">
-      <h2 class="section-title">Apie sistemą</h2>
-      <p class="section-subtitle">Kuo galime padėti</p>
-
-      <div class="about-grid">
-        <div class="about-card">
-          <div class="about-card-icon"><span class="ic ic-scale"></span></div>
-          <h3>Nemokumo procesas</h3>
-          <p>Surenkame visus reikalingus duomenis ir dokumentus, kad galėtume tinkamai įvertinti įmonės finansinę būklę bei parengti reikiamus dokumentus.</p>
-        </div>
-
-        <div class="about-card">
-          <div class="about-card-icon"><span class="ic ic-tool"></span></div>
-          <h3>Restruktūrizavimas</h3>
-          <p>Padedame parengti restruktūrizavimo plano projektą, surinkti duomenis kreditoriams ir teismui, įvertinti veiklos atkūrimo galimybes.</p>
-        </div>
-
-        <div class="about-card">
-          <div class="about-card-icon"><span class="ic ic-lock"></span></div>
-          <h3>Duomenų sauga</h3>
-          <p>Visi pateikiami duomenys saugomi šifruotame ES serveryje pagal BDAR reikalavimus. Prieiga apsaugota dviejų faktorių patvirtinimu.</p>
+  <section class="sec" id="eiga">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><p class="label">02 · Rekomenduojamas kelias</p><h2>Kodėl teisminis restruktūrizavimas</h2></div>
+        <p>Teismo prižiūrimas procesas sukuria palankiausią pagrindą išsaugoti verslo vertę ir planingai vykdyti įsipareigojimus.</p>
+      </div>
+      <div class="frame g3 benefits">
+        <div class="cell"><p class="label">Veikla</p><h3>Veikla tęsiama</h3><p>Įmonė dirba toliau, vadovybė išlaiko kontrolę, išsaugomos darbo vietos ir sutartys su partneriais.</p></div>
+        <div class="cell"><p class="label">Apsauga</p><h3>Apsauga nuo išieškojimo</h3><p>Iškėlus bylą stabdomas priverstinis skolų išieškojimas – įmonė gauna laiko pertvarkai.</p></div>
+        <div class="cell"><p class="label">Planas</p><h3>Planuotas atsiskaitymas</h3><p>Skolos grąžinamos pagal teismo patvirtintą planą per 4 metus, prireikus pratęsiant dar 1 metams.</p></div>
+      </div>
+      <p class="label" style="margin-bottom:18px">Proceso eiga</p>
+      <div class="tl" id="tl">
+        <div class="tl-track"><div class="tl-fill" id="tlFill"></div></div>
+        <div class="tl-grid">
+          <div class="phase on"><p class="t">1 mėnuo</p><p class="d">Pasirengimas: dokumentų parengimas ir bylos iškėlimas</p></div>
+          <div class="phase on"><p class="t">4 + 1 mėn.</p><p class="d">Plano rengimas: reikalavimų derinimas, tvirtinimas ir ginčijimas, derybos su kreditoriais ir tiekėjais</p></div>
+          <div class="phase on"><p class="t">4 metai</p><p class="d">Plano įgyvendinimas: atsiskaitymas su kreditoriais pagal patvirtintą planą</p></div>
+          <div class="phase on ext"><p class="t">+1 metai</p><p class="d">Pratęsimas, jei reikia įvykdyti likusius įsipareigojimus</p></div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- ============ NAUJIENOS ============ -->
-    <section class="section">
-      <h2 class="section-title">Naujienos</h2>
-      <p class="section-subtitle">Aktualijos ir sistemos atnaujinimai</p>
-
-      <div class="news-list">
-
-        <!-- Naujiena #1 - galite redaguoti -->
-        <div class="news-item">
-          <div class="news-date">2026 m. birželio 3 d.</div>
-          <h3>Klausimynų sistemos paleidimas</h3>
-          <p>
-            Pristatome naują KAB Consulting klausimynų valdymo sistemą su pažangiu saugumo sluoksniu —
-            dviejų faktorių autentifikavimu, automatiniu nuorodų galiojimo valdymu ir individualia kiekvieno
-            kliento prieiga. Sistema veikia adresu <strong>help.vvc.lt</strong>.
-          </p>
+  <section class="role" id="vaidmuo">
+    <div class="role-pin" id="rolePin">
+      <div class="role-sticky">
+        <div class="wrap role-inner">
+          <p class="label">03 · Mūsų vaidmuo</p>
+          <h2>Perimame derybas – vadovai dirba savo darbą.</h2>
+          <p class="lead">Mūsų funkcijos neapsiriboja plano priežiūra. Atėję į įmonę aktyviai dalyvaujame visame procese ir nuimame nuo administracijos derybų bei sąlygų derinimo naštą.</p>
+          <div class="acts" id="acts">
+            <div class="act on"><p class="n">01</p><h3>Derybos su kreditoriais</h3><p>Reikalavimų išpirkimas, dalinis nurašymas, atsiskaitymo sąlygos</p></div>
+            <div class="act on"><p class="n">02</p><h3>Derybos su tiekėjais</h3><p>Paslaugų ir žaliavų tiekimo tęstinumas bei sąlygos</p></div>
+            <div class="act on"><p class="n">03</p><h3>Investuotojų paieška</h3><p>Strateginio investuotojo ar pirkėjo pritraukimas</p></div>
+            <div class="act on"><p class="n">04</p><h3>Finansų kontrolė</h3><p>Pinigų srautų planavimas ir veiklos optimizavimas</p></div>
+          </div>
         </div>
-
-        <!-- Pavyzdys ateičiai - kaip pridėti naujienas -->
-        <div class="news-placeholder">
-          <span class="ic ic-pencil"></span> Naujienos sekcija paruošta papildymui. Vėliau čia bus skelbiamos teisės aktų aktualijos,
-          straipsniai apie restruktūrizavimą, bankrotą ir varžytynes.
-        </div>
-
       </div>
-    </section>
+    </div>
+  </section>
 
-  </main>
-
-  <!-- ============ FOOTER ============ -->
-  <footer>
-    <div class="footer-content">
-
-      <div class="footer-section">
-        <h4>Kontaktai</h4>
-        <p>KAB Consulting</p>
-        <a href="mailto:klausk@kab.lt">klausk@kab.lt</a>
+  <section class="sec" id="kainos">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><p class="label">04 · Kainos</p><h2>Paslaugų kainos</h2></div>
+        <p>Kaina sudaryta iš trijų modulių. Darbai, neįeinantys į modulius, apmokami valandiniu įkainiu.</p>
       </div>
-
-      <div class="footer-section">
-        <h4>Sistema</h4>
-        <a href="/admin.html">Administratoriaus prisijungimas</a>
-        <a href="#" onclick="openClientModal(); return false;">Klientams</a>
+      <div class="frame g3">
+        <div class="cell mod"><span class="label">I modulis</span><h3>Pasirengimas restruktūrizavimui</h3><p class="price num" data-price="m1">—</p><p class="unit">vienkartinis mokestis + PVM</p>
+          <ul><li>Finansinės padėties ir kreditorių analizė</li><li>Restruktūrizavimo plano projektas</li><li>Pareiškimas ir procesiniai dokumentai bylai iškelti, pateikimas teismui</li></ul></div>
+        <div class="cell mod"><span class="label">II modulis</span><h3>Proceso koordinavimas ir administravimas</h3><p class="price num" data-price="m2">—</p><p class="unit">per mėnesį + PVM, nuo pareiškimo pateikimo teismui dienos</p>
+          <ul><li>Restruktūrizavimo administratoriaus funkcijos</li><li>Reikalavimų derinimas, derybos su kreditoriais ir tiekėjais</li><li>Plano vykdymo priežiūra ir ataskaitos</li></ul></div>
+        <div class="cell mod"><span class="label">III modulis</span><h3>Restruktūrizavimo plano parengimas</h3><p class="price num" data-price="m3">—</p><p class="unit">vienkartinis mokestis + PVM, proceso metu</p>
+          <ul><li>Galutinio restruktūrizavimo plano parengimas</li><li>Plano pateikimas tvirtinti kreditorių susirinkime</li></ul></div>
       </div>
-
-      <div class="footer-section">
-        <h4>Saugumas</h4>
-        <p style="font-size: 13px; opacity: 0.7;">
-          Duomenys saugomi ES serveryje (Frankfurt) pagal BDAR.
-          Visa komunikacija šifruota TLS protokolu.
-        </p>
+      <div class="extra">
+        <div><p class="label">Pagal poreikį</p><h3>Papildomos paslaugos</h3></div>
+        <p>Darbai, neįeinantys į modulius: finansų ir veiklos monitoringas, atstovavimas ginčuose, investuotojo paieška ir kt. Apmokama pagal faktiškai suteiktas paslaugas.</p>
+        <div><p class="price num" data-price="hour">—</p><p class="unit">už valandą + PVM</p></div>
       </div>
 
     </div>
+  </section>
 
-    <div class="footer-bottom">
-      © 2026 KAB Consulting · Visos teisės saugomos
-    </div>
-  </footer>
-
-  <!-- ============ CLIENT MODAL ============ -->
-  <div class="modal-overlay" id="client-modal" onclick="closeModalIfOverlay(event)">
-    <div class="modal">
-      <button class="modal-close" onclick="closeClientModal()" aria-label="Uždaryti"><span class="ic ic-x"></span></button>
-
-      <h2><span class="ic ic-clipboard"></span> Klientams</h2>
-
-      <p>
-        Klausimynus pildo tik klientai, kuriems KAB Consulting išsiuntė asmeninę nuorodą el. paštu.
-      </p>
-
-      <div class="info-block">
-        <strong>Gavote nuorodą iš KAB Consulting?</strong><br>
-        Atidarykite ją iš el. laiško. Saugumo sumetimais nuorodos negalima atidaryti kitu būdu —
-        kiekviena nuoroda yra individuali ir susieta su jūsų el. pašto adresu.
+  <section class="sec" id="patirtis">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><p class="label">05 · Patirtis</p><h2>Restruktūrizavimas neturi baigtis bankrotu</h2></div>
+        <p>Įprasta manyti, kad restruktūrizavimas dažniausiai baigiasi bankrotu. Mūsų praktika rodo ką kita.</p>
       </div>
-
-      <p>
-        <strong>Pametėte nuorodą arba ji nustojo veikti?</strong><br>
-        Susisiekite su mumis, ir mes nedelsdami atsiųsime naują:
-      </p>
-
-      <p style="text-align: center; margin: 20px 0;">
-        <a href="mailto:klausk@kab.lt" style="display: inline-block; padding: 12px 28px; background: var(--kab-navy); color: white; border-radius: 6px; text-decoration: none; font-weight: 600;">
-          <span class="ic ic-mail"></span> klausk@kab.lt
-        </a>
-      </p>
-
-      <p style="font-size: 13px; color: var(--kab-gray); margin-top: 24px;">
-        <em>Dar nesate KAB Consulting klientas? Susisiekite su mumis ir aptarkime jūsų situaciją —
-        padėsime išsiaiškinti, ar mūsų paslaugos jums tinka.</em>
-      </p>
+      <div class="stats">
+        <div class="stat"><b data-count="40" data-prefix="iki " data-suffix=" %">iki 40 %</b><p>mūsų restruktūrizavimo procesų baigiasi sėkmingai – planas įvykdomas, veikla tęsiama</p></div>
+        <div class="stat"><b data-count="30" data-suffix="+">30+</b><p>įmonių restruktūrizavimo procesų</p></div>
+        <div class="stat"><b>Nuo 2000 m.</b><p>administruojame restruktūrizavimo ir nemokumo procesus</p></div>
+      </div>
+      <div class="frame g2">
+        <div class="cell"><p class="label">Per pastaruosius metus</p><h3>Rezultatai</h3>
+          <ul class="list"><li>Sėkmingai užbaigti UAB „Šilutės automobilių keliai“ ir UAB „Šiaulių plentas“ restruktūrizavimai – planų priemonės įvykdytos, veikla tęsiama</li><li>Restruktūrizuojama bendrovė parduota strateginiam investuotojui – akcijos išpirktos, skolos padengtos, veikla tęsiama</li></ul></div>
+        <div class="cell"><p class="label">Šiuo metu, be kita ko</p><h3>Administruojame</h3>
+          <ul class="list"><li>AUGA Group – daugiau nei 10 grupės įmonių restruktūrizavimas</li><li>Gamybos ir statybos bendroves UAB „Nord Steel“, UAB „Litvija“</li><li>Daug kitų restruktūrizavimo, nemokumo ir konsultavimo projektų</li></ul></div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <script>
-    function openClientModal() {
-      document.getElementById('client-modal').classList.add('active');
-      document.body.style.overflow = 'hidden';
+  <section class="sec" id="kontaktai" style="border-bottom:2px solid var(--ink)">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><p class="label">06 · Tolesni žingsniai</p><h2>Kaip pradedame</h2></div>
+        <p>Nuo pirmo pokalbio iki pareiškimo teismui – aiškūs žingsniai ir aiški kaina.</p>
+      </div>
+      <div class="frame g3">
+        <div class="cell step"><b>1</b><h3>Pirminė konsultacija</h3><p>Aptariame situaciją, gauname finansinius duomenis ir kreditorių sąrašą.</p></div>
+        <div class="cell step"><b>2</b><h3>Sutartis ir I modulis</h3><p>Analizė, restruktūrizavimo plano projektas ir pareiškimas teismui.</p></div>
+        <div class="cell step"><b>3</b><h3>Proceso administravimas</h3><p>Nuo pareiškimo pateikimo teismui – administravimas (II modulis) ir plano parengimas tvirtinimui (III modulis).</p></div>
+      </div>
+      <div class="contact">
+        <h2>Pasikalbėkime apie jūsų situaciją.</h2>
+        <div>
+          <p class="who" style="color:var(--paper)">Tomas Malinauskas, vadovaujantis partneris</p>
+          <p class="line"><span id="email">tomas.malinauskas@kab.lt</span><button type="button" class="copy" data-copy="email">Kopijuoti</button></p>
+          <p class="line"><span id="phone">+370 698 37119</span><button type="button" class="copy" data-copy="phone">Kopijuoti</button></p>
+          <p style="margin-top:12px">S. Daukanto g. 3, LT-92138 Klaipėda · kab.lt<br>Nemokumo administravimo licencija Nr. N-JA0045</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap"><span>© 2026 KAB Consulting · UAB „Klaipėdos administratorių biuras“</span><span>Komercinis pasiūlymas <span data-k="client">—</span></span></div></footer>
+
+<script>
+var SB_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
+var PASIULYMAS = null;
+(function(){
+  var t = new URLSearchParams(location.search).get('t');
+  function fail(){ document.body.className = 'failed'; }
+  if (!t || !/^[a-f0-9]{24,64}$/.test(t)) { fail(); return; }
+  fetch(SB_URL + '/rest/v1/rpc/get_commercial_proposal', {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_token: t })
+  }).then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if (!d || !d.kainos) { fail(); return; }
+      d.pvm = 0.21;
+      PASIULYMAS = d;
+      document.title = 'Komercinis pasiūlymas – ' + d.klientas + ' | KAB Consulting';
+      document.body.className = '';
+      start();
+    }).catch(fail);
+})();
+function start(){
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fmt = function(n){ return Math.round(n).toLocaleString('lt-LT').replace(/[\u00a0\u202f]/g,' ') + ' €'; };
+  var C = PASIULYMAS, K = C.kainos, priceOf = {m1:K.m1, m2:K.m2, m3:K.m3, hour:K.valanda};
+  var map = {client:C.klientas, date:C.data, city:C.miestas, valid:C.galioja_iki || ''};
+  if (C.galioja_iki) document.getElementById('validLine').hidden = false;
+  document.querySelectorAll('[data-k]').forEach(function(el){ el.textContent = map[el.dataset.k]; });
+  document.querySelectorAll('[data-price]').forEach(function(el){ el.textContent = fmt(priceOf[el.dataset.price]); });
+
+  // headline words
+  var h = document.getElementById('headline');
+  var words = h.textContent.trim().split(' ');
+  h.innerHTML = words.map(function(w){ return '<span class="w">'+w+'</span>'; }).join(' ');
+  var ws = h.querySelectorAll('.w');
+
+  var bar = document.getElementById('progress');
+  var tl = document.getElementById('tl'), tlFill = document.getElementById('tlFill'), phases = tl.querySelectorAll('.phase');
+  var acts = document.getElementById('acts'), actEls = acts.querySelectorAll('.act'), pin = document.getElementById('rolePin');
+  if (!reduce) { tl.classList.add('js'); }
+
+  function clamp(v){ return Math.max(0, Math.min(1, v)); }
+  function tick(){
+    var sh = document.documentElement.scrollHeight - innerHeight;
+    bar.style.width = (sh > 0 ? scrollY / sh * 100 : 0) + '%';
+    // words: fully dark after scrolling ~40% of viewport
+    var p = reduce ? 1 : clamp(0.25 + scrollY / (innerHeight * 0.4));
+    var lit = Math.ceil(p * ws.length);
+    ws.forEach(function(w,i){ w.classList.toggle('on', i < lit); });
+    // timeline
+    if (!reduce) {
+      var r = tl.getBoundingClientRect();
+      var tp = clamp((innerHeight * 0.85 - r.top) / (innerHeight * 0.6));
+      tlFill.style.width = (tp * 100) + '%';
+      phases.forEach(function(ph,i){ ph.classList.toggle('on', tp >= i / phases.length + 0.02 || tp === 1); });
     }
+    // role acts (desktop pinned)
+    var pinned = getComputedStyle(pin).height !== 'auto' && pin.offsetHeight > innerHeight * 1.5;
+    if (pinned && !reduce) {
+      var pr = pin.getBoundingClientRect();
+      var rp = clamp(-pr.top / (pin.offsetHeight - innerHeight));
+      var idx = Math.min(actEls.length - 1, Math.floor(rp * actEls.length));
+      acts.classList.toggle('play', rp > 0 && rp < 1);
+      actEls.forEach(function(a,i){ a.classList.toggle('on', i <= idx); });
+    } else { acts.classList.remove('play'); actEls.forEach(function(a){ a.classList.add('on'); }); }
+  }
+  var ticking = false;
+  addEventListener('scroll', function(){ if (!ticking) { ticking = true; requestAnimationFrame(function(){ tick(); ticking = false; }); } }, {passive:true});
+  addEventListener('resize', tick);
+  tick();
 
-    function closeClientModal() {
-      document.getElementById('client-modal').classList.remove('active');
-      document.body.style.overflow = '';
-    }
+  // count-up on first view
+  if (!reduce && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var el = e.target, to = +el.dataset.count, pre = el.dataset.prefix || '', suf = el.dataset.suffix || '', t0 = null;
+        io.unobserve(el);
+        function step(ts){ if (!t0) t0 = ts; var k = clamp((ts - t0) / 1100); var v = Math.round(to * (1 - Math.pow(1 - k, 3)));
+          el.textContent = pre + v + suf; if (k < 1) requestAnimationFrame(step); }
+        requestAnimationFrame(step);
+      });
+    }, {threshold:.6});
+    document.querySelectorAll('[data-count]').forEach(function(el){ io.observe(el); });
+  }
 
-    function closeModalIfOverlay(event) {
-      if (event.target.id === 'client-modal') {
-        closeClientModal();
-      }
-    }
+  // calculator
+  var m = document.getElementById('months'), hr = document.getElementById('hours');
+  if (m && hr) {
+  function calc(){
+    var months = +m.value, hours = +hr.value;
+    var m2 = months * K.m2, ex = hours * K.valanda, total = K.m1 + m2 + K.m3 + ex;
+    document.getElementById('monthsOut').textContent = months + ' mėn.';
+    document.getElementById('hoursOut').textContent = hours + ' val.';
+    document.getElementById('m2Label').textContent = 'II modulis · ' + months + ' mėn. × ' + fmt(K.m2);
+    document.getElementById('m2').textContent = fmt(m2);
+    document.getElementById('exLabel').textContent = 'Papildomos paslaugos · ' + hours + ' val.';
+    document.getElementById('ex').textContent = fmt(ex);
+    document.getElementById('total').textContent = fmt(total);
+    document.getElementById('vat').textContent = 'Su PVM (' + Math.round(C.pvm*100) + ' %): ' + fmt(total * (1 + C.pvm));
+  }
+  m.addEventListener('input', calc); hr.addEventListener('input', calc);
+  document.getElementById('calc').addEventListener('submit', function(e){ e.preventDefault(); });
+  calc();
+  }
 
-    // Escape klavišas uždaro modalą
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeClientModal();
-      }
+  // copy buttons
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click', function(){
+      var el = document.getElementById(b.dataset.copy), txt = el.textContent;
+      var done = function(){ b.textContent = 'Nukopijuota'; setTimeout(function(){ b.textContent = 'Kopijuoti'; }, 1600); };
+      var fallback = function(){ var s = getSelection(), r = document.createRange(); r.selectNodeContents(el); s.removeAllRanges(); s.addRange(r); b.textContent = 'Pažymėta'; setTimeout(function(){ b.textContent = 'Kopijuoti'; }, 1600); };
+      try { navigator.clipboard.writeText(txt).then(done, fallback); } catch (err) { fallback(); }
     });
-  </script>
+  });
+}
+
+</script>
 
 </body>
 </html>
