@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAB Admin — Komerciniai pasiūlymai</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root { --navy:#0B1E3F; --navy2:#1A3660; --gold:#C9A961; --cream:#F7F4EC; --gray:#5A5A5A; --bd:#E5E5E5; --light:#F9F9F9; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif; background:var(--cream); color:#333; line-height:1.55; }
+    .header { background:var(--navy); border-bottom:4px solid var(--gold); padding:14px 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+    .header h1 { color:#fff; font-size:18px; font-weight:600; }
+    .header .right { color:rgba(255,255,255,.85); font-size:13px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+    .header a { color:#fff; text-decoration:underline; font-size:12px; }
+    .container { max-width:1250px; margin:0 auto; padding:24px 20px; }
+    .card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .btn { background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
+    .btn:hover { background:var(--navy2); } .btn:disabled { opacity:.55; cursor:not-allowed; }
+    .btn-ghost { background:#fff; color:var(--navy); border:1px solid var(--navy); } .btn-ghost:hover { background:#EEF3FB; }
+    .btn-gold { background:var(--gold); color:var(--navy); }
+    .btn-sm { padding:6px 10px; font-size:12.5px; }
+    .input,.textarea { width:100%; padding:10px 12px; border:1px solid var(--bd); border-radius:6px; font-size:14px; font-family:inherit; background:#fff; }
+    .input:focus,.textarea:focus { outline:none; border-color:var(--gold); }
+    .textarea { min-height:80px; resize:vertical; }
+    .label { display:block; font-size:13px; color:var(--gray); margin-bottom:5px; font-weight:600; margin-top:12px; }
+    .error { background:#FDECEA; color:#C0392B; border:1px solid #F5B7B1; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
+    .success { background:#E8F8F0; color:#1E8449; border:1px solid #ABEBC6; padding:9px 12px; border-radius:6px; font-size:13px; margin:8px 0; }
+    .hidden { display:none !important; } .muted { color:var(--gray); font-size:13px; } .hint { font-size:12px; color:var(--gray); margin-top:3px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th { text-align:left; background:var(--light); padding:9px 12px; border-bottom:2px solid var(--bd); font-size:12px; color:var(--gray); text-transform:uppercase; white-space:nowrap; }
+    td { padding:10px 12px; border-bottom:1px solid #F0F0F0; vertical-align:top; }
+    tr:hover td { background:#FBFAF6; }
+    .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
+    .badge-green { background:#E8F8F0; color:#1E8449; } .badge-gray { background:#EEE; color:#777; } .badge-red { background:#FDECEA; color:#C0392B; } .badge-gold { background:#FBF3DF; color:#9A7B24; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:18px; }
+    .stat-card { background:#fff; border:1px solid var(--bd); border-radius:10px; padding:14px 16px; }
+    .stat-card .v { font-size:24px; font-weight:700; color:var(--navy); } .stat-card .l { font-size:12px; color:var(--gray); }
+    .toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+    .toolbar h2 { color:var(--navy); font-size:18px; }
+    .acts { display:flex; gap:6px; flex-wrap:wrap; }
+    .rcp { font-size:12.5px; color:var(--gray); word-break:break-all; }
+    .tbl-wrap { overflow-x:auto; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
+    .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:0 12px; }
+    @media (max-width:700px){ .grid2,.grid4 { grid-template-columns:1fr; } }
+    .modal-bg { position:fixed; inset:0; background:rgba(11,30,63,.45); display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px; z-index:50; overflow-y:auto; }
+    .modal { background:#fff; border-radius:10px; width:100%; max-width:720px; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,.25); }
+    .modal h3 { color:var(--navy); font-size:18px; margin-bottom:6px; }
+    .modal .foot { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; flex-wrap:wrap; }
+    .link-box { display:flex; gap:8px; align-items:center; background:var(--light); border:1px solid var(--bd); border-radius:6px; padding:8px 10px; font-family:ui-monospace,Menlo,monospace; font-size:13px; word-break:break-all; }
+    .chk { display:flex; gap:8px; align-items:center; font-size:14px; padding:4px 0; }
+    .perm-view .edit-only { display:none !important; }
+    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--navy); color:#fff; padding:10px 18px; border-radius:6px; font-size:14px; z-index:80; box-shadow:0 4px 16px rgba(0,0,0,.2); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📄 KAB Admin — Komerciniai pasiūlymai</h1>
+    <div class="right">
+      <a href="admin.html">← Pagrindinis</a>
+      <span id="userEmail"></span>
+      <button class="btn btn-sm btn-ghost" id="logoutBtn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4);">Atsijungti</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="loginView" class="card hidden" style="max-width:420px;margin:60px auto;">
+      <h2 style="color:var(--navy);font-size:18px;">Prisijungimas</h2>
+      <label class="label" for="loginEmail">El. paštas</label><input id="loginEmail" class="input" type="email" autocomplete="username">
+      <label class="label" for="loginPassword">Slaptažodis</label><input id="loginPassword" class="input" type="password" autocomplete="current-password">
+      <div id="loginError" class="error hidden"></div>
+      <button id="loginBtn" class="btn" style="width:100%;margin-top:16px;">Prisijungti</button>
+    </div>
+
+    <div id="mainView" class="hidden">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="v" id="stTotal">—</div><div class="l">Iš viso pasiūlymų</div></div>
+        <div class="stat-card"><div class="v" id="stActive">—</div><div class="l">Galiojantys</div></div>
+        <div class="stat-card"><div class="v" id="stViewed">—</div><div class="l">Klientas atidarė</div></div>
+        <div class="stat-card"><div class="v" id="stExpired">—</div><div class="l">Pasibaigę / išjungti</div></div>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <h2>Pasiūlymai</h2>
+          <button class="btn edit-only" id="newBtn">+ Naujas pasiūlymas</button>
+        </div>
+        <div id="listMsg" class="hidden"></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Klientas</th><th>Data</th><th>Galioja iki</th><th>Gavėjai</th><th>Būsena</th><th>Atidarymai</th><th>Veiksmai</th></tr></thead>
+            <tbody id="rows"><tr><td colspan="7" class="muted">Kraunama…</td></tr></tbody>
+          </table>
+        </div>
+        <p class="hint" style="margin-top:12px;">Pasiūlymą klientas atidaro tik įvedęs el. pašto adresą, kuris yra gavėjų sąraše, ir tik iki galiojimo pabaigos. Nuoroda neatskleidžia jokios informacijos be teisingo adreso.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Redagavimo forma -->
+  <div id="editModal" class="modal-bg hidden" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+    <form class="modal" id="editForm" novalidate>
+      <h3 id="editTitle">Naujas pasiūlymas</h3>
+      <p class="muted">Kainos nurodomos eurais be PVM.</p>
+      <label class="label" for="fClient">Klientas *</label>
+      <input id="fClient" class="input" required placeholder="UAB „Pavyzdys“">
+      <div class="grid2">
+        <div><label class="label" for="fDate">Pasiūlymo data *</label><input id="fDate" class="input" type="date" required></div>
+        <div><label class="label" for="fValid">Galioja iki *</label><input id="fValid" class="input" type="date" required><div class="hint">Po šios datos nuoroda nebeatsidaro.</div></div>
+      </div>
+      <label class="label" for="fRecipients">Gavėjų el. pašto adresai *</label>
+      <textarea id="fRecipients" class="textarea" placeholder="vardas@imone.lt&#10;kitas@imone.lt"></textarea>
+      <div class="hint">Po vieną adresą eilutėje arba atskirkite kableliais. Pasiūlymą atidarys tik šie adresai.</div>
+      <div class="grid4">
+        <div><label class="label" for="fM1">I modulis, €</label><input id="fM1" class="input" type="number" min="0" step="1"></div>
+        <div><label class="label" for="fM2">II modulis, €/mėn.</label><input id="fM2" class="input" type="number" min="0" step="1"></div>
+        <div><label class="label" for="fM3">III modulis, €</label><input id="fM3" class="input" type="number" min="0" step="1"></div>
+        <div><label class="label" for="fHour">Valandinis, €</label><input id="fHour" class="input" type="number" min="0" step="1"></div>
+      </div>
+      <div class="grid2">
+        <div><label class="label" for="fCity">Miestas</label><input id="fCity" class="input"></div>
+        <div><label class="label" for="fActive">Būsena</label><label class="chk"><input id="fActive" type="checkbox" checked> Aktyvus (nuoroda veikia)</label></div>
+      </div>
+      <label class="label" for="fNotes">Vidinės pastabos</label>
+      <textarea id="fNotes" class="textarea" style="min-height:60px;" placeholder="Klientas šių pastabų nemato"></textarea>
+      <div id="editErr" class="error hidden"></div>
+      <div class="foot">
+        <button type="button" class="btn btn-ghost" data-close="editModal">Atšaukti</button>
+        <button type="submit" class="btn" id="saveBtn">Išsaugoti</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Nuoroda -->
+  <div id="linkModal" class="modal-bg hidden" role="dialog" aria-modal="true" aria-labelledby="linkTitle">
+    <div class="modal">
+      <h3 id="linkTitle">Nuoroda klientui</h3>
+      <p class="muted" id="linkClient"></p>
+      <label class="label">Nuoroda</label>
+      <div class="link-box"><span id="linkUrl" style="flex:1;"></span><button class="btn btn-sm" id="linkCopy" type="button">Kopijuoti</button></div>
+      <p class="hint" style="margin-top:8px;">Atidarius nuorodą, reikės įvesti vieną iš gavėjų adresų: <span id="linkRcp"></span></p>
+      <div class="foot"><a class="btn btn-ghost" id="linkOpen" href="#" target="_blank" rel="noopener" style="text-decoration:none;">Peržiūrėti kaip klientas</a><button type="button" class="btn" data-close="linkModal">Uždaryti</button></div>
+    </div>
+  </div>
+
+  <!-- Siuntimas -->
+  <div id="sendModal" class="modal-bg hidden" role="dialog" aria-modal="true" aria-labelledby="sendTitle">
+    <div class="modal">
+      <h3 id="sendTitle">Siųsti el. paštu</h3>
+      <p class="muted" id="sendClient"></p>
+      <label class="label">Gavėjai</label>
+      <div id="sendList"></div>
+      <label class="label" for="sendNote">Papildomas tekstas laiške (nebūtina)</label>
+      <textarea id="sendNote" class="textarea" placeholder="Pvz., kaip aptarėme telefonu…"></textarea>
+      <p class="hint">Laiškas siunčiamas iš noreply@help.vvc.lt, atsakymai keliauja į tomas.malinauskas@kab.lt.</p>
+      <div id="sendMsg" class="hidden"></div>
+      <div class="foot"><button type="button" class="btn btn-ghost" data-close="sendModal">Atšaukti</button><button type="button" class="btn" id="sendBtn">Siųsti</button></div>
+    </div>
+  </div>
+
+  <!-- Žurnalas -->
+  <div id="logModal" class="modal-bg hidden" role="dialog" aria-modal="true" aria-labelledby="logTitle">
+    <div class="modal">
+      <h3 id="logTitle">Atidarymų žurnalas</h3>
+      <p class="muted" id="logClient"></p>
+      <div class="tbl-wrap" style="margin-top:12px;"><table><thead><tr><th>Laikas</th><th>El. paštas</th><th>Rezultatas</th></tr></thead><tbody id="logRows"></tbody></table></div>
+      <div class="foot"><button type="button" class="btn" data-close="logModal">Uždaryti</button></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const LINK_BASE = 'https://help.vvc.lt/p/?';
+    const DEFAULT_PRICES = { m1:7000, m2:6000, m3:3000, hour:150 };
+    const $ = id => document.getElementById(id);
+    const show = id => $(id).classList.remove('hidden');
+    const hide = id => $(id).classList.add('hidden');
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const fmtEur = n => (n == null ? '—' : Math.round(n).toLocaleString('lt-LT').replace(/[  ]/g, ' ') + ' €');
+    const fmtDT = s => s ? new Date(s).toLocaleString('lt-LT', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+    const today = () => new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+    const addDays = (d, n) => { const x = new Date(d + 'T00:00:00'); x.setDate(x.getDate() + n); return new Date(x - x.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let LEVEL = 'none', ROWS = [], EDIT_ID = null, CUR = null;
+
+    function toast(t){ const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2200); }
+    function openModal(id){ show(id); const f = $(id).querySelector('input,textarea,button'); if (f) setTimeout(() => f.focus(), 30); }
+    function closeModal(id){ hide(id); }
+    document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+    document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-bg:not(.hidden)').forEach(m => closeModal(m.id)); });
+
+    function status(r){
+      if (!r.is_active) return { cls:'badge-gray', t:'Išjungtas', live:false };
+      if (r.valid_until < today()) return { cls:'badge-red', t:'Pasibaigęs', live:false };
+      return { cls:'badge-green', t:'Galioja', live:true };
+    }
+
+    async function boot(){
+      const { data:{ session } } = await sb.auth.getSession();
+      if (!session) { hide('mainView'); show('loginView'); return; }
+      try { const { data, error } = await sb.rpc('module_access', { p_module:'pasiulymai' }); if (error) throw error; LEVEL = data || 'none'; } catch(e) { LEVEL = 'none'; }
+      if (LEVEL === 'none') {
+        document.querySelector('.container').innerHTML = '<div class="card" style="max-width:480px;margin:10vh auto;text-align:center;"><h2 style="color:var(--navy);">⛔ Prieiga negalima</h2><p class="muted" style="margin:10px 0 16px;">Jūsų paskyra neturi prieigos prie šio modulio.</p><a href="admin.html" style="color:var(--navy);font-weight:600;">← Grįžti</a></div>';
+        return;
+      }
+      if (LEVEL === 'view') document.body.classList.add('perm-view');
+      $('userEmail').textContent = session.user.email;
+      hide('loginView'); show('mainView');
+      await load();
+    }
+
+    async function load(){
+      const { data, error } = await sb.from('commercial_proposals')
+        .select('id, client_name, proposal_date, city, valid_until, recipients, short_code, is_active, price_m1, price_m2_monthly, price_m3, price_hour, notes, view_count, first_viewed_at, last_viewed_at, last_email_sent_at, created_at')
+        .order('created_at', { ascending:false });
+      if (error) { $('rows').innerHTML = '<tr><td colspan="7"><div class="error">Nepavyko užkrauti: ' + esc(error.message) + '</div></td></tr>'; return; }
+      ROWS = data || [];
+      render();
+    }
+
+    function render(){
+      const live = ROWS.filter(r => status(r).live).length;
+      $('stTotal').textContent = ROWS.length;
+      $('stActive').textContent = live;
+      $('stViewed').textContent = ROWS.filter(r => r.view_count > 0).length;
+      $('stExpired').textContent = ROWS.length - live;
+      if (!ROWS.length) { $('rows').innerHTML = '<tr><td colspan="7" class="muted">Pasiūlymų dar nėra. Spauskite „+ Naujas pasiūlymas“.</td></tr>'; return; }
+      $('rows').innerHTML = ROWS.map(r => {
+        const st = status(r);
+        const rc = (r.recipients || []).length ? (r.recipients || []).map(esc).join('<br>') : '<span class="badge badge-red">Nėra gavėjų</span>';
+        const views = r.view_count > 0 ? '<strong>' + r.view_count + '</strong> k.<br><span class="muted">pask. ' + fmtDT(r.last_viewed_at) + '</span>' : '<span class="muted">Neatidarytas</span>';
+        const sent = r.last_email_sent_at ? '<br><span class="muted">išsiųsta ' + fmtDT(r.last_email_sent_at) + '</span>' : '';
+        return '<tr>' +
+          '<td><strong>' + esc(r.client_name) + '</strong><br><span class="muted">I ' + fmtEur(r.price_m1) + ' · II ' + fmtEur(r.price_m2_monthly) + '/mėn. · III ' + fmtEur(r.price_m3) + ' · ' + fmtEur(r.price_hour) + '/val.</span></td>' +
+          '<td>' + esc(r.proposal_date) + '</td>' +
+          '<td>' + esc(r.valid_until) + '</td>' +
+          '<td class="rcp">' + rc + '</td>' +
+          '<td><span class="badge ' + st.cls + '">' + st.t + '</span>' + sent + '</td>' +
+          '<td>' + views + '</td>' +
+          '<td><div class="acts">' +
+            '<button class="btn btn-sm" data-act="link" data-id="' + r.id + '">Nuoroda</button>' +
+            '<button class="btn btn-sm btn-ghost edit-only" data-act="send" data-id="' + r.id + '"' + (st.live && (r.recipients||[]).length ? '' : ' disabled') + '>Siųsti</button>' +
+            '<button class="btn btn-sm btn-ghost edit-only" data-act="edit" data-id="' + r.id + '">Redaguoti</button>' +
+            '<button class="btn btn-sm btn-ghost edit-only" data-act="toggle" data-id="' + r.id + '">' + (r.is_active ? 'Išjungti' : 'Įjungti') + '</button>' +
+            '<button class="btn btn-sm btn-ghost" data-act="log" data-id="' + r.id + '">Žurnalas</button>' +
+          '</div></td></tr>';
+      }).join('');
+    }
+
+    $('rows').addEventListener('click', e => {
+      const b = e.target.closest('button[data-act]'); if (!b || b.disabled) return;
+      const r = ROWS.find(x => x.id === b.dataset.id); if (!r) return;
+      ({ link:openLink, send:openSend, edit:openEdit, toggle:toggleActive, log:openLog })[b.dataset.act](r);
+    });
+
+    // Nuoroda
+    function openLink(r){
+      CUR = r;
+      const url = LINK_BASE + r.short_code;
+      $('linkClient').textContent = r.client_name + ' · galioja iki ' + r.valid_until;
+      $('linkUrl').textContent = url;
+      $('linkOpen').href = url;
+      $('linkRcp').textContent = (r.recipients || []).join(', ') || '—';
+      openModal('linkModal');
+    }
+    $('linkCopy').addEventListener('click', () => {
+      const url = $('linkUrl').textContent;
+      const fallback = () => { const s = getSelection(), rg = document.createRange(); rg.selectNodeContents($('linkUrl')); s.removeAllRanges(); s.addRange(rg); toast('Nuoroda pažymėta – spauskite Cmd+C'); };
+      try { navigator.clipboard.writeText(url).then(() => toast('Nuoroda nukopijuota'), fallback); } catch(e) { fallback(); }
+    });
+
+    // Redagavimas
+    function parseEmails(t){ return Array.from(new Set(String(t || '').split(/[\s,;]+/).map(s => s.trim().toLowerCase()).filter(Boolean))); }
+    function openEdit(r){
+      EDIT_ID = r ? r.id : null;
+      $('editTitle').textContent = r ? 'Redaguoti pasiūlymą' : 'Naujas pasiūlymas';
+      const d = r ? r.proposal_date : today();
+      $('fClient').value = r ? r.client_name : '';
+      $('fDate').value = d;
+      $('fValid').value = r ? r.valid_until : addDays(d, 30);
+      $('fRecipients').value = r ? (r.recipients || []).join('\n') : '';
+      $('fM1').value = r ? r.price_m1 : DEFAULT_PRICES.m1;
+      $('fM2').value = r ? r.price_m2_monthly : DEFAULT_PRICES.m2;
+      $('fM3').value = r ? r.price_m3 : DEFAULT_PRICES.m3;
+      $('fHour').value = r ? r.price_hour : DEFAULT_PRICES.hour;
+      $('fCity').value = r ? (r.city || '') : 'Klaipėda';
+      $('fActive').checked = r ? r.is_active : true;
+      $('fNotes').value = r ? (r.notes || '') : '';
+      hide('editErr');
+      openModal('editModal');
+    }
+    $('newBtn').addEventListener('click', () => openEdit(null));
+    $('editForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const err = m => { $('editErr').textContent = m; show('editErr'); };
+      const emails = parseEmails($('fRecipients').value);
+      const bad = emails.filter(x => !EMAIL_RE.test(x));
+      const client = $('fClient').value.trim(), date = $('fDate').value, valid = $('fValid').value;
+      if (!client) return err('Įveskite kliento pavadinimą.');
+      if (!date || !valid) return err('Nurodykite pasiūlymo datą ir galiojimo terminą.');
+      if (valid < date) return err('Galiojimo terminas negali būti ankstesnis už pasiūlymo datą.');
+      if (!emails.length) return err('Įveskite bent vieną gavėjo el. pašto adresą.');
+      if (bad.length) return err('Neteisingi adresai: ' + bad.join(', '));
+      const num = id => { const v = $(id).value; return v === '' ? 0 : Math.max(0, Number(v)); };
+      const row = { client_name:client, proposal_date:date, valid_until:valid, recipients:emails,
+        price_m1:num('fM1'), price_m2_monthly:num('fM2'), price_m3:num('fM3'), price_hour:num('fHour'),
+        city:$('fCity').value.trim() || 'Klaipėda', is_active:$('fActive').checked, notes:$('fNotes').value.trim() || null };
+      $('saveBtn').disabled = true;
+      const q = EDIT_ID ? sb.from('commercial_proposals').update(row).eq('id', EDIT_ID).select().single()
+                        : sb.from('commercial_proposals').insert(row).select().single();
+      const { data, error } = await q;
+      $('saveBtn').disabled = false;
+      if (error) return err('Nepavyko išsaugoti: ' + error.message);
+      closeModal('editModal');
+      await load();
+      toast('Išsaugota');
+      if (!EDIT_ID && data) { const r = ROWS.find(x => x.id === data.id); if (r) openLink(r); }
+    });
+
+    async function toggleActive(r){
+      const { error } = await sb.from('commercial_proposals').update({ is_active: !r.is_active }).eq('id', r.id);
+      if (error) { toast('Nepavyko: ' + error.message); return; }
+      await load(); toast(r.is_active ? 'Nuoroda išjungta' : 'Nuoroda įjungta');
+    }
+
+    // Siuntimas
+    function openSend(r){
+      CUR = r;
+      $('sendClient').textContent = r.client_name + ' · galioja iki ' + r.valid_until;
+      $('sendList').innerHTML = (r.recipients || []).map((m, i) => '<label class="chk"><input type="checkbox" value="' + esc(m) + '" checked> ' + esc(m) + '</label>').join('');
+      $('sendNote').value = '';
+      hide('sendMsg'); $('sendBtn').disabled = false;
+      openModal('sendModal');
+    }
+    $('sendBtn').addEventListener('click', async () => {
+      const to = Array.from($('sendList').querySelectorAll('input:checked')).map(i => i.value);
+      const msg = (cls, t) => { $('sendMsg').className = cls; $('sendMsg').textContent = t; };
+      if (!to.length) return msg('error', 'Pažymėkite bent vieną gavėją.');
+      $('sendBtn').disabled = true; msg('muted', 'Siunčiama…');
+      try {
+        const { data, error } = await sb.functions.invoke('send-proposal-email', { body: { proposal_id: CUR.id, recipients: to, note: $('sendNote').value } });
+        if (error) throw error;
+        const okN = (data.results || []).filter(x => x.ok).length, failed = (data.results || []).filter(x => !x.ok).map(x => x.email);
+        if (failed.length) { msg('error', 'Išsiųsta: ' + okN + '. Nepavyko: ' + failed.join(', ')); $('sendBtn').disabled = false; }
+        else { msg('success', 'Išsiųsta ' + okN + ' gavėjams.'); setTimeout(() => closeModal('sendModal'), 1200); }
+        await load();
+      } catch(e) { msg('error', 'Nepavyko išsiųsti: ' + (e.message || e)); $('sendBtn').disabled = false; }
+    });
+
+    // Žurnalas
+    async function openLog(r){
+      $('logClient').textContent = r.client_name;
+      $('logRows').innerHTML = '<tr><td colspan="3" class="muted">Kraunama…</td></tr>';
+      openModal('logModal');
+      const { data, error } = await sb.from('commercial_proposal_access_log').select('created_at, email, success, reason').eq('proposal_id', r.id).order('created_at', { ascending:false }).limit(200);
+      if (error) { $('logRows').innerHTML = '<tr><td colspan="3"><div class="error">' + esc(error.message) + '</div></td></tr>'; return; }
+      if (!data.length) { $('logRows').innerHTML = '<tr><td colspan="3" class="muted">Bandymų atidaryti dar nebuvo.</td></tr>'; return; }
+      const why = { email:'Neteisingas el. paštas', expired:'Pasibaigęs / išjungtas' };
+      $('logRows').innerHTML = data.map(x => '<tr><td>' + fmtDT(x.created_at) + '</td><td>' + esc(x.email || '—') + '</td><td>' + (x.success ? '<span class="badge badge-green">Atidarė</span>' : '<span class="badge badge-red">' + esc(why[x.reason] || 'Atmesta') + '</span>') + '</td></tr>').join('');
+    }
+
+    // Prisijungimas
+    $('loginBtn').onclick = async () => {
+      hide('loginError');
+      const { error } = await sb.auth.signInWithPassword({ email:$('loginEmail').value.trim(), password:$('loginPassword').value });
+      if (error) { $('loginError').textContent = 'Nepavyko prisijungti: ' + error.message; show('loginError'); return; }
+      boot();
+    };
+    $('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') $('loginBtn').click(); });
+    $('logoutBtn').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+    boot();
+  </script>
+</body>
+</html>
