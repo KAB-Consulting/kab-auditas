@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://pezhnbcsifxnrswsdhui.supabase.co; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<title>Komercinis pasiūlymas | KAB Consulting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;600;800&display=swap">
+<style>
+/* Layout: KAB brandbook – Swiss grid on paper grey, ink rules, one blue statement band; scroll-driven like svetainė v3. Single light brand look by choice. */
+:root{
+  --paper:#F3F2F2; --paper-2:#E8E7E6; --ink:#201E1D; --muted:#55534F; --grey:#A6A8AB;
+  --blue:#002E6E; --blue-soft:#C9D3E6; --blue-line:#4F6C9A; --word-off:#9A9997;
+  --font:'Archivo', Arial, Helvetica, sans-serif;
+  --max:1180px; --gut:clamp(16px,4vw,40px);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--max);margin-inline:auto;padding-inline:var(--gut)}
+h1,h2,h3{font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0;text-wrap:balance}
+p,ul{margin:0}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.label{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);border-bottom:2px solid var(--ink)}
+.bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:14px}
+.logo{display:flex;flex-direction:column;text-decoration:none;line-height:1}
+.logo b{font-weight:800;font-size:22px;letter-spacing:-.03em;color:var(--grey)}
+.logo span{font-weight:300;font-size:15px;letter-spacing:.06em;color:#2F4F80}
+.nav{display:flex;gap:22px;align-items:center;font-size:14px}
+.nav a{text-decoration:none}
+.nav a:hover{color:var(--blue)}
+.nav .cta{background:var(--blue);color:var(--paper);font-weight:800;padding:10px 16px}
+.nav .cta:hover{color:var(--paper);background:#01224F}
+.progress{position:absolute;left:0;bottom:-2px;height:2px;width:0;background:var(--blue)}
+@media (max-width:860px){.nav a:not(.cta){display:none}}
+
+section{scroll-margin-top:72px}
+.sec{padding-block:clamp(56px,9vw,112px);border-bottom:1px solid var(--grey)}
+.sec-head{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:44px;align-items:end}
+.sec-head h2{font-size:clamp(34px,4.6vw,56px);margin-top:10px}
+.sec-head p{color:var(--muted);max-width:52ch}
+@media (max-width:760px){.sec-head{grid-template-columns:1fr}}
+
+/* hero */
+.hero{padding-block:clamp(48px,8vw,96px) clamp(40px,6vw,72px);border-bottom:2px solid var(--ink)}
+.hero h1{font-size:clamp(46px,9vw,118px);letter-spacing:-.035em;margin:18px 0 28px}
+.hero h1 .w{color:var(--word-off);transition:color .25s}
+.hero h1 .w.on{color:var(--ink)}
+.hero-row{display:grid;grid-template-columns:1.1fr 1fr;gap:32px;border-top:1px solid var(--grey);padding-top:24px}
+.hero-row p{max-width:48ch}
+.client{font-size:clamp(22px,2.6vw,30px);font-weight:800;letter-spacing:-.01em}
+.meta{color:var(--muted);font-size:15px;margin-top:6px}
+.scroll-hint{margin-top:28px;font-size:14px;font-weight:600;display:flex;gap:8px;align-items:center}
+.scroll-hint i{font-style:normal;color:var(--blue);display:inline-block;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(4px)}}
+@media (max-width:760px){.hero-row{grid-template-columns:1fr}}
+
+/* grids with ink frame */
+.frame{display:grid;border:2px solid var(--ink)}
+.frame>*{padding:26px;min-width:0}
+.frame>*+*{border-left:1px solid var(--grey)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+@media (max-width:900px){.g4{grid-template-columns:1fr 1fr}.g4>*:nth-child(3){border-left:none}.g4>*:nth-child(n+3){border-top:1px solid var(--grey)}}
+@media (max-width:640px){.g4,.g3,.g2{grid-template-columns:1fr}.frame>*+*{border-left:none;border-top:1px solid var(--grey)}}
+.cell h3{font-size:21px;margin:10px 0 8px}
+.cell p{color:var(--muted);font-size:15.5px}
+
+/* paths */
+.path{position:relative;transition:background .25s,color .25s}
+.path.rec{background:var(--blue);color:var(--paper)}
+.path.rec .label{color:var(--paper)}
+.path.rec p{color:var(--blue-soft)}
+.path .label.no{color:var(--muted)}
+.note{margin-top:20px;color:var(--muted);font-size:15.5px;max-width:78ch}
+
+/* timeline */
+.benefits{margin-bottom:56px}
+.tl{position:relative}
+.tl-track{position:relative;height:4px;background:var(--paper-2);margin-bottom:22px}
+.tl-fill{position:absolute;inset:0 auto 0 0;width:100%;background:var(--blue)}
+.tl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.phase{opacity:1;transition:opacity .35s}
+.tl.js .phase:not(.on){opacity:.38}
+.phase .t{font-size:clamp(26px,3vw,36px);font-weight:800;letter-spacing:-.02em}
+.phase .d{color:var(--muted);font-size:15.5px;margin-top:6px}
+.phase.ext .t{color:var(--muted)}
+@media (max-width:760px){.tl-grid{grid-template-columns:1fr 1fr;row-gap:32px}}
+
+/* role – blue band, sticky reveal on desktop */
+.role{background:var(--blue);color:var(--paper);border-bottom:none}
+.role .label{color:var(--blue-soft)}
+.role-inner{padding-block:clamp(56px,9vw,112px)}
+.role h2{font-size:clamp(38px,6vw,84px);letter-spacing:-.035em;margin:12px 0 24px;max-width:15ch}
+.role .lead{color:var(--blue-soft);font-size:clamp(17px,1.6vw,20px);max-width:62ch;margin-bottom:48px}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--paper)}
+.act{padding:24px 24px 0 0;transition:opacity .35s}
+.act+.act{border-left:1px solid var(--blue-line);padding-left:24px}
+.act .n{font-size:13px;font-weight:600;letter-spacing:.14em;color:var(--blue-soft)}
+.act h3{font-size:22px;margin:10px 0 8px}
+.act p{color:var(--blue-soft);font-size:15.5px}
+.acts.play .act:not(.on){opacity:.3}
+@media (min-width:901px) and (prefers-reduced-motion:no-preference){
+  .role-pin{height:240vh}
+  .role-sticky{position:sticky;top:70px;min-height:calc(100vh - 70px);display:flex;align-items:center}
+}
+@media (max-width:900px){.acts{grid-template-columns:1fr 1fr}.act:nth-child(3){border-left:none;padding-left:0}.act:nth-child(n+3){margin-top:24px}}
+@media (max-width:560px){.acts{grid-template-columns:1fr}.act+.act{border-left:none;padding-left:0;margin-top:24px}}
+
+/* pricing */
+.mod .label{margin-bottom:8px;display:block}
+.mod h3{font-size:22px;min-height:2.2em}
+.price{font-size:clamp(28px,3vw,36px);font-weight:800;letter-spacing:-.02em;color:var(--blue);margin-top:18px;white-space:nowrap}
+.unit{color:var(--muted);font-size:15px;min-height:3.1em}
+.mod ul{border-top:1px solid var(--grey);margin-top:16px;padding:16px 0 0 18px;font-size:15.5px;display:grid;gap:6px}
+.extra{margin-top:24px;background:var(--ink);color:var(--paper);display:grid;grid-template-columns:auto 1fr auto;gap:32px;align-items:center;padding:24px 28px}
+.extra .label{color:var(--grey)}
+.extra h3{font-size:22px;margin-top:4px}
+.extra p{color:#D4D3D1;font-size:15.5px}
+.extra .price{color:var(--paper);margin:0;text-align:right}
+.extra .unit{color:#D4D3D1;min-height:0;text-align:right}
+@media (max-width:760px){.extra{grid-template-columns:1fr;gap:12px}.extra .price,.extra .unit{text-align:left}}
+
+.calc{margin-top:48px;border:2px solid var(--ink);display:grid;grid-template-columns:1fr 1fr}
+.calc>div{padding:28px;min-width:0}
+.calc>div+div{border-left:1px solid var(--grey);background:var(--paper-2)}
+.calc h3{font-size:22px;margin:8px 0 6px}
+.calc .hint{color:var(--muted);font-size:14.5px;margin-bottom:22px}
+.field{display:grid;gap:8px;margin-bottom:22px}
+.field label{font-weight:600;font-size:15px;display:flex;justify-content:space-between;gap:12px}
+.field output{color:var(--blue);font-weight:800}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.rows{display:grid;gap:10px;font-size:15.5px}
+.rows div{display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid var(--grey);padding-bottom:10px}
+.rows span:last-child{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.total{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-top:18px;flex-wrap:wrap}
+.total b{font-size:clamp(26px,2.8vw,34px);letter-spacing:-.03em;color:var(--blue);font-variant-numeric:tabular-nums}
+.vat{color:var(--muted);font-size:14.5px;margin-top:4px;text-align:right}
+@media (max-width:760px){.calc{grid-template-columns:1fr}.calc>div+div{border-left:none;border-top:1px solid var(--grey)}}
+
+/* experience */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);margin-bottom:32px}
+.stat{padding:26px 24px 26px 0}
+.stat+.stat{border-left:1px solid var(--grey);padding-left:24px}
+.stat b{display:block;font-size:clamp(44px,5.6vw,76px);letter-spacing:-.04em;color:var(--blue);line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.stat p{margin-top:10px;font-size:15.5px;max-width:30ch}
+.list{padding-left:18px;display:grid;gap:10px;font-size:15.5px}
+@media (max-width:700px){.stats{grid-template-columns:1fr}.stat+.stat{border-left:none;padding-left:0;border-top:1px solid var(--grey)}}
+
+/* steps + contact */
+.step b{font-size:44px;color:var(--blue);line-height:1;display:block}
+.contact{margin-top:32px;background:var(--blue);color:var(--paper);display:grid;grid-template-columns:1.1fr 1fr;gap:32px;padding:clamp(28px,4vw,48px);align-items:end}
+.contact h2{font-size:clamp(34px,4.4vw,56px);letter-spacing:-.03em}
+.contact .who{font-weight:800;font-size:19px}
+.contact p{color:var(--blue-soft);font-size:15.5px}
+.contact .line{color:var(--paper);display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.copy{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--blue-soft);background:transparent;color:var(--paper);padding:4px 10px;cursor:pointer}
+.copy:hover{background:var(--paper);color:var(--blue)}
+@media (max-width:760px){.contact{grid-template-columns:1fr}}
+footer{padding-block:28px;font-size:13.5px;color:var(--muted)}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+body.loading main, body.loading footer, body.failed main, body.failed footer{display:none}
+.gate{display:none;max-width:640px;margin:0 auto;padding:clamp(48px,10vw,120px) var(--gut)}
+body.loading .gate.load, body.failed .gate.fail{display:block}
+.gate h1{font-size:clamp(30px,4vw,44px);margin:14px 0 14px}
+.gate p{color:var(--muted)}
+.valid{color:var(--blue);font-weight:600}
+</style>
+
+</head>
+<body class="loading">
+<div class="gate load" role="status"><p class="label">KAB Consulting</p><h1>Kraunamas pasiūlymas…</h1></div>
+<div class="gate fail" role="alert"><p class="label">KAB Consulting</p><h1>Nuoroda neteisinga arba nebegalioja</h1><p>Patikrinkite, ar nukopijavote visą nuorodą. Jei problema kartojasi, susisiekite: tomas.malinauskas@kab.lt, +370 698 37119.</p></div>
+<header class="bar">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="KAB Consulting"><b>KAB</b><span>CONSULTING</span></a>
+    <nav class="nav" aria-label="Pasiūlymo skyriai">
+      <a href="#keliai">Sprendimai</a><a href="#eiga">Eiga</a><a href="#vaidmuo">Vaidmuo</a><a href="#kainos">Kainos</a><a href="#patirtis">Patirtis</a>
+      <a class="cta" href="#kontaktai">Susisiekti</a>
+    </nav>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<main id="top">
+  <section class="hero" id="hero">
+    <div class="wrap">
+      <p class="label">Komercinis pasiūlymas · Restruktūrizavimas</p>
+      <h1 id="headline">Ramiai per sudėtingus sprendimus.</h1>
+      <div class="hero-row">
+        <div>
+          <p class="client" data-k="client">—</p>
+          <p class="meta">Restruktūrizavimo paslaugos · <span data-k="date">—</span>, <span data-k="city">Klaipėda</span></p>
+          <p class="meta valid" id="validLine" hidden>Pasiūlymas galioja iki <span data-k="valid">—</span></p>
+        </div>
+        <div>
+          <p>Siūlome aiškų, teisiškai tvirtą kelią finansinei padėčiai stabilizuoti: išsaugoti veiklą, reputaciją ir vadovybės kontrolę.</p>
+          <p class="scroll-hint">Slinkite žemyn <i aria-hidden="true">↓</i></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="keliai">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><p class="label">01 · Galimi sprendimai</p><h2>Keturi keliai, vienas rekomenduojamas</h2></div>
+        <p>Tikslas – stabilizuoti finansinę padėtį ir išsaugoti veiklą, reputaciją bei vadovybės kontrolę.</p>
+      </div>
+      <div class="frame g4">
+        <div class="cell path rec"><p class="label">Rekomenduojama</p><h3>Teisminis restruktūrizavimas</h3><p>Teismo prižiūrimas skolų pertvarkymas: apsauga nuo išieškojimo ir 4+1 metų atsiskaitymo planas.</p></div>
+        <div class="cell path"><p class="label">Papildomai</p><h3>Skolų išpirkimas su nuolaida</h3><p>Kreditorių reikalavimų išpirkimas ar dalinis nurašymas derybų keliu mažina bendrą skolų naštą.</p></div>
+        <div class="cell path"><p class="label">Papildomai</p><h3>Investuotojas, pardavimas ar susijungimas</h3><p>Strateginio investuotojo pritraukimas, įmonės pardavimas ar veiklos sujungimas – sinergija ir mažesnės sąnaudos.</p></div>
+        <div class="cell path"><p class="label no">Nerekomenduojama</p><h3>Bankroto procesas</h3><p>Kontrolė pereina bankroto administratoriui, didėja ginčų, kreditorių pretenzijų ir neapibrėžtumo rizika.</p></div>
+      </div>
+      <p class="note">Skolų išpirkimas ir investuotojo paieška gali būti taikomi kaip restruktūrizavimo plano priemonės – derindami sprendimus siekiame geriausio rezultato.</p>
+    </div>
+  </section>
+
+  <section class="sec" id="eiga">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><p class="label">02 · Rekomenduojamas kelias</p><h2>Kodėl teisminis restruktūrizavimas</h2></div>
+        <p>Teismo prižiūrimas procesas sukuria palankiausią pagrindą išsaugoti verslo vertę ir planingai vykdyti įsipareigojimus.</p>
+      </div>
+      <div class="frame g3 benefits">
+        <div class="cell"><p class="label">Veikla</p><h3>Veikla tęsiama</h3><p>Įmonė dirba toliau, vadovybė išlaiko kontrolę, išsaugomos darbo vietos ir sutartys su partneriais.</p></div>
+        <div class="cell"><p class="label">Apsauga</p><h3>Apsauga nuo išieškojimo</h3><p>Iškėlus bylą stabdomas priverstinis skolų išieškojimas – įmonė gauna laiko pertvarkai.</p></div>
+        <div class="cell"><p class="label">Planas</p><h3>Planuotas atsiskaitymas</h3><p>Skolos grąžinamos pagal teismo patvirtintą planą per 4 metus, prireikus pratęsiant dar 1 metams.</p></div>
+      </div>
+      <p class="label" style="margin-bottom:18px">Proceso eiga</p>
+      <div class="tl" id="tl">
+        <div class="tl-track"><div class="tl-fill" id="tlFill"></div></div>
+        <div class="tl-grid">
+          <div class="phase on"><p class="t">1 mėnuo</p><p class="d">Pasirengimas: dokumentų parengimas ir bylos iškėlimas</p></div>
+          <div class="phase on"><p class="t">4 + 1 mėn.</p><p class="d">Plano rengimas: reikalavimų derinimas, tvirtinimas ir ginčijimas, derybos su kreditoriais ir tiekėjais</p></div>
+          <div class="phase on"><p class="t">4 metai</p><p class="d">Plano įgyvendinimas: atsiskaitymas su kreditoriais pagal patvirtintą planą</p></div>
+          <div class="phase on ext"><p class="t">+1 metai</p><p class="d">Pratęsimas, jei reikia įvykdyti likusius įsipareigojimus</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="role" id="vaidmuo">
+    <div class="role-pin" id="rolePin">
+      <div class="role-sticky">
+        <div class="wrap role-inner">
+          <p class="label">03 · Mūsų vaidmuo</p>
+          <h2>Perimame derybas – vadovai dirba savo darbą.</h2>
+          <p class="lead">Mūsų funkcijos neapsiriboja plano priežiūra. Atėję į įmonę aktyviai dalyvaujame visame procese ir nuimame nuo administracijos derybų bei sąlygų derinimo naštą.</p>
+          <div class="acts" id="acts">
+            <div class="act on"><p class="n">01</p><h3>Derybos su kreditoriais</h3><p>Reikalavimų išpirkimas, dalinis nurašymas, atsiskaitymo sąlygos</p></div>
+            <div class="act on"><p class="n">02</p><h3>Derybos su tiekėjais</h3><p>Paslaugų ir žaliavų tiekimo tęstinumas bei sąlygos</p></div>
+            <div class="act on"><p class="n">03</p><h3>Investuotojų paieška</h3><p>Strateginio investuotojo ar pirkėjo pritraukimas</p></div>
+            <div class="act on"><p class="n">04</p><h3>Finansų kontrolė</h3><p>Pinigų srautų planavimas ir veiklos optimizavimas</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="kainos">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><p class="label">04 · Kainos</p><h2>Paslaugų kainos</h2></div>
+        <p>Kaina sudaryta iš trijų modulių. Darbai, neįeinantys į modulius, apmokami valandiniu įkainiu.</p>
+      </div>
+      <div class="frame g3">
+        <div class="cell mod"><span class="label">I modulis</span><h3>Pasirengimas restruktūrizavimui</h3><p class="price num" data-price="m1">—</p><p class="unit">vienkartinis mokestis + PVM</p>
+          <ul><li>Finansinės padėties ir kreditorių analizė</li><li>Restruktūrizavimo plano projektas</li><li>Pareiškimas ir procesiniai dokumentai bylai iškelti, pateikimas teismui</li></ul></div>
+        <div class="cell mod"><span class="label">II modulis</span><h3>Proceso koordinavimas ir administravimas</h3><p class="price num" data-price="m2">—</p><p class="unit">per mėnesį + PVM, nuo pareiškimo pateikimo teismui dienos</p>
+          <ul><li>Restruktūrizavimo administratoriaus funkcijos</li><li>Reikalavimų derinimas, derybos su kreditoriais ir tiekėjais</li><li>Plano vykdymo priežiūra ir ataskaitos</li></ul></div>
+        <div class="cell mod"><span class="label">III modulis</span><h3>Restruktūrizavimo plano parengimas</h3><p class="price num" data-price="m3">—</p><p class="unit">vienkartinis mokestis + PVM, proceso metu</p>
+          <ul><li>Galutinio restruktūrizavimo plano parengimas</li><li>Plano pateikimas tvirtinti kreditorių susirinkime</li></ul></div>
+      </div>
+      <div class="extra">
+        <div><p class="label">Pagal poreikį</p><h3>Papildomos paslaugos</h3></div>
+        <p>Darbai, neįeinantys į modulius: finansų ir veiklos monitoringas, atstovavimas ginčuose, investuotojo paieška ir kt. Apmokama pagal faktiškai suteiktas paslaugas.</p>
+        <div><p class="price num" data-price="hour">—</p><p class="unit">už valandą + PVM</p></div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="sec" id="patirtis">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><p class="label">05 · Patirtis</p><h2>Restruktūrizavimas neturi baigtis bankrotu</h2></div>
+        <p>Įprasta manyti, kad restruktūrizavimas dažniausiai baigiasi bankrotu. Mūsų praktika rodo ką kita.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><b data-count="40" data-prefix="iki " data-suffix=" %">iki 40 %</b><p>mūsų restruktūrizavimo procesų baigiasi sėkmingai – planas įvykdomas, veikla tęsiama</p></div>
+        <div class="stat"><b data-count="30" data-suffix="+">30+</b><p>įmonių restruktūrizavimo procesų</p></div>
+        <div class="stat"><b>Nuo 2000 m.</b><p>administruojame restruktūrizavimo ir nemokumo procesus</p></div>
+      </div>
+      <div class="frame g2">
+        <div class="cell"><p class="label">Per pastaruosius metus</p><h3>Rezultatai</h3>
+          <ul class="list"><li>Sėkmingai užbaigti UAB „Šilutės automobilių keliai“ ir UAB „Šiaulių plentas“ restruktūrizavimai – planų priemonės įvykdytos, veikla tęsiama</li><li>Restruktūrizuojama bendrovė parduota strateginiam investuotojui – akcijos išpirktos, skolos padengtos, veikla tęsiama</li></ul></div>
+        <div class="cell"><p class="label">Šiuo metu, be kita ko</p><h3>Administruojame</h3>
+          <ul class="list"><li>AUGA Group – daugiau nei 10 grupės įmonių restruktūrizavimas</li><li>Gamybos ir statybos bendroves UAB „Nord Steel“, UAB „Litvija“</li><li>Daug kitų restruktūrizavimo, nemokumo ir konsultavimo projektų</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="kontaktai" style="border-bottom:2px solid var(--ink)">
+    <div class="wrap">
+      <div class="sec-head">
+        <div><p class="label">06 · Tolesni žingsniai</p><h2>Kaip pradedame</h2></div>
+        <p>Nuo pirmo pokalbio iki pareiškimo teismui – aiškūs žingsniai ir aiški kaina.</p>
+      </div>
+      <div class="frame g3">
+        <div class="cell step"><b>1</b><h3>Pirminė konsultacija</h3><p>Aptariame situaciją, gauname finansinius duomenis ir kreditorių sąrašą.</p></div>
+        <div class="cell step"><b>2</b><h3>Sutartis ir I modulis</h3><p>Analizė, restruktūrizavimo plano projektas ir pareiškimas teismui.</p></div>
+        <div class="cell step"><b>3</b><h3>Proceso administravimas</h3><p>Nuo pareiškimo pateikimo teismui – administravimas (II modulis) ir plano parengimas tvirtinimui (III modulis).</p></div>
+      </div>
+      <div class="contact">
+        <h2>Pasikalbėkime apie jūsų situaciją.</h2>
+        <div>
+          <p class="who" style="color:var(--paper)">Tomas Malinauskas, vadovaujantis partneris</p>
+          <p class="line"><span id="email">tomas.malinauskas@kab.lt</span><button type="button" class="copy" data-copy="email">Kopijuoti</button></p>
+          <p class="line"><span id="phone">+370 698 37119</span><button type="button" class="copy" data-copy="phone">Kopijuoti</button></p>
+          <p style="margin-top:12px">S. Daukanto g. 3, LT-92138 Klaipėda · kab.lt<br>Nemokumo administravimo licencija Nr. N-JA0045</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap"><span>© 2026 KAB Consulting · UAB „Klaipėdos administratorių biuras“</span><span>Komercinis pasiūlymas <span data-k="client">—</span></span></div></footer>
+
+<script>
+var SB_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlemhuYmNzaWZ4bnJzd3NkaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzI1OTcsImV4cCI6MjA5MjEwODU5N30.oUiYrd7o0Viynk3th8v4I5NDfvkHODVYclRi3NGAZEs';
+var PASIULYMAS = null;
+(function(){
+  var t = new URLSearchParams(location.search).get('t');
+  function fail(){ document.body.className = 'failed'; }
+  if (!t || !/^[a-f0-9]{24,64}$/.test(t)) { fail(); return; }
+  fetch(SB_URL + '/rest/v1/rpc/get_commercial_proposal', {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_token: t })
+  }).then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if (!d || !d.kainos) { fail(); return; }
+      d.pvm = 0.21;
+      PASIULYMAS = d;
+      document.title = 'Komercinis pasiūlymas – ' + d.klientas + ' | KAB Consulting';
+      document.body.className = '';
+      start();
+    }).catch(fail);
+})();
+function start(){
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fmt = function(n){ return Math.round(n).toLocaleString('lt-LT').replace(/[\u00a0\u202f]/g,' ') + ' €'; };
+  var C = PASIULYMAS, K = C.kainos, priceOf = {m1:K.m1, m2:K.m2, m3:K.m3, hour:K.valanda};
+  var map = {client:C.klientas, date:C.data, city:C.miestas, valid:C.galioja_iki || ''};
+  if (C.galioja_iki) document.getElementById('validLine').hidden = false;
+  document.querySelectorAll('[data-k]').forEach(function(el){ el.textContent = map[el.dataset.k]; });
+  document.querySelectorAll('[data-price]').forEach(function(el){ el.textContent = fmt(priceOf[el.dataset.price]); });
+
+  // headline words
+  var h = document.getElementById('headline');
+  var words = h.textContent.trim().split(' ');
+  h.innerHTML = words.map(function(w){ return '<span class="w">'+w+'</span>'; }).join(' ');
+  var ws = h.querySelectorAll('.w');
+
+  var bar = document.getElementById('progress');
+  var tl = document.getElementById('tl'), tlFill = document.getElementById('tlFill'), phases = tl.querySelectorAll('.phase');
+  var acts = document.getElementById('acts'), actEls = acts.querySelectorAll('.act'), pin = document.getElementById('rolePin');
+  if (!reduce) { tl.classList.add('js'); }
+
+  function clamp(v){ return Math.max(0, Math.min(1, v)); }
+  function tick(){
+    var sh = document.documentElement.scrollHeight - innerHeight;
+    bar.style.width = (sh > 0 ? scrollY / sh * 100 : 0) + '%';
+    // words: fully dark after scrolling ~40% of viewport
+    var p = reduce ? 1 : clamp(0.25 + scrollY / (innerHeight * 0.4));
+    var lit = Math.ceil(p * ws.length);
+    ws.forEach(function(w,i){ w.classList.toggle('on', i < lit); });
+    // timeline
+    if (!reduce) {
+      var r = tl.getBoundingClientRect();
+      var tp = clamp((innerHeight * 0.85 - r.top) / (innerHeight * 0.6));
+      tlFill.style.width = (tp * 100) + '%';
+      phases.forEach(function(ph,i){ ph.classList.toggle('on', tp >= i / phases.length + 0.02 || tp === 1); });
+    }
+    // role acts (desktop pinned)
+    var pinned = getComputedStyle(pin).height !== 'auto' && pin.offsetHeight > innerHeight * 1.5;
+    if (pinned && !reduce) {
+      var pr = pin.getBoundingClientRect();
+      var rp = clamp(-pr.top / (pin.offsetHeight - innerHeight));
+      var idx = Math.min(actEls.length - 1, Math.floor(rp * actEls.length));
+      acts.classList.toggle('play', rp > 0 && rp < 1);
+      actEls.forEach(function(a,i){ a.classList.toggle('on', i <= idx); });
+    } else { acts.classList.remove('play'); actEls.forEach(function(a){ a.classList.add('on'); }); }
+  }
+  var ticking = false;
+  addEventListener('scroll', function(){ if (!ticking) { ticking = true; requestAnimationFrame(function(){ tick(); ticking = false; }); } }, {passive:true});
+  addEventListener('resize', tick);
+  tick();
+
+  // count-up on first view
+  if (!reduce && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var el = e.target, to = +el.dataset.count, pre = el.dataset.prefix || '', suf = el.dataset.suffix || '', t0 = null;
+        io.unobserve(el);
+        function step(ts){ if (!t0) t0 = ts; var k = clamp((ts - t0) / 1100); var v = Math.round(to * (1 - Math.pow(1 - k, 3)));
+          el.textContent = pre + v + suf; if (k < 1) requestAnimationFrame(step); }
+        requestAnimationFrame(step);
+      });
+    }, {threshold:.6});
+    document.querySelectorAll('[data-count]').forEach(function(el){ io.observe(el); });
+  }
+
+  // calculator
+  var m = document.getElementById('months'), hr = document.getElementById('hours');
+  if (m && hr) {
+  function calc(){
+    var months = +m.value, hours = +hr.value;
+    var m2 = months * K.m2, ex = hours * K.valanda, total = K.m1 + m2 + K.m3 + ex;
+    document.getElementById('monthsOut').textContent = months + ' mėn.';
+    document.getElementById('hoursOut').textContent = hours + ' val.';
+    document.getElementById('m2Label').textContent = 'II modulis · ' + months + ' mėn. × ' + fmt(K.m2);
+    document.getElementById('m2').textContent = fmt(m2);
+    document.getElementById('exLabel').textContent = 'Papildomos paslaugos · ' + hours + ' val.';
+    document.getElementById('ex').textContent = fmt(ex);
+    document.getElementById('total').textContent = fmt(total);
+    document.getElementById('vat').textContent = 'Su PVM (' + Math.round(C.pvm*100) + ' %): ' + fmt(total * (1 + C.pvm));
+  }
+  m.addEventListener('input', calc); hr.addEventListener('input', calc);
+  document.getElementById('calc').addEventListener('submit', function(e){ e.preventDefault(); });
+  calc();
+  }
+
+  // copy buttons
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click', function(){
+      var el = document.getElementById(b.dataset.copy), txt = el.textContent;
+      var done = function(){ b.textContent = 'Nukopijuota'; setTimeout(function(){ b.textContent = 'Kopijuoti'; }, 1600); };
+      var fallback = function(){ var s = getSelection(), r = document.createRange(); r.selectNodeContents(el); s.removeAllRanges(); s.addRange(r); b.textContent = 'Pažymėta'; setTimeout(function(){ b.textContent = 'Kopijuoti'; }, 1600); };
+      try { navigator.clipboard.writeText(txt).then(done, fallback); } catch (err) { fallback(); }
+    });
+  });
+}
+
+</script>
+
+</body>
+</html>
