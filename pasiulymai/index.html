@@ -172,7 +172,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 footer{padding-block:28px;font-size:13.5px;color:var(--muted)}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
-body.loading main, body.loading footer, body.failed main, body.failed footer{display:none}
+body.loading main, body.loading footer, body.loading .bar, body.failed main, body.failed footer, body.failed .bar{display:none}
 .gate{display:none;max-width:640px;margin:0 auto;padding:clamp(48px,10vw,120px) var(--gut)}
 body.loading .gate.load, body.failed .gate.fail{display:block}
 .gate h1{font-size:clamp(30px,4vw,44px);margin:14px 0 14px}
@@ -360,6 +360,7 @@ var PASIULYMAS = null;
       document.title = 'Komercinis pasiūlymas – ' + d.klientas + ' | KAB Consulting';
       document.body.className = '';
       start();
+      if (location.hash.length > 1) { var tg = document.getElementById(location.hash.slice(1)); if (tg) setTimeout(function(){ tg.scrollIntoView(); }, 50); }
     }).catch(fail);
 })();
 function start(){
