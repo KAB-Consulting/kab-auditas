@@ -1247,6 +1247,7 @@
     .item.has-query{ background:var(--warn-bg); }
     .item.answered{ background:#fff; }
     .item.na{ background:#FAFBFC; }
+    .item.needs-fix{ background:#FEF2F2; border-left:4px solid #B91C1C; }
     .item-number{ color:var(--faint); font-weight:700; }
     .item-title{ color:var(--ink); font-weight:600; font-size:13.5px; }
     .item-description{ color:var(--muted); font-size:12.5px; }
@@ -1770,6 +1771,45 @@
       if (customData) {
         customSections = customData;
       }
+
+      // Template attachments
+      try {
+        const { data: attData } = await supabase
+          .from('questionnaire_template_attachments')
+          .select('*')
+          .eq('template_id', submission.template_id);
+        window._templateAttachments = attData || [];
+      } catch (e) {
+        window._templateAttachments = [];
+      }
+    }
+
+    async function clientDownloadTemplate(attId) {
+      const att = (window._templateAttachments || []).find(a => a.id === attId);
+      if (!att) { alert('Priedas nerastas'); return; }
+      const { data } = await supabase.storage
+        .from('questionnaire-template-files')
+        .createSignedUrl(att.storage_path, 3600, { download: att.original_name });
+      if (!data?.signedUrl) { alert('Nepavyko gauti nuorodos'); return; }
+      const a = document.createElement('a');
+      a.href = data.signedUrl;
+      a.download = att.original_name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function renderTemplateAttsForClient(itemId) {
+      const atts = (window._templateAttachments || []).filter(a => a.item_id === itemId);
+      if (atts.length === 0) return '';
+      let html = '<div style="margin:10px 0; padding:10px 12px; background:#EFF6FF; border-left:3px solid #2563EB; border-radius:4px;">';
+      html += '<div style="font-size:12px; color:#1E40AF; font-weight:700; margin-bottom:6px;">📎 Šablonai iš KAB — parsisiųskite ir užpildykite</div>';
+      for (const a of atts) {
+        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:#FFF; border:1px solid #DBEAFE; border-radius:4px; margin-top:4px; font-size:13px;">
+          <span><strong>${escapeHtml(a.original_name)}</strong>${a.description ? `<br><small style="color:#6B7280;">${escapeHtml(a.description)}</small>` : ''}</span>
+          <button type="button" onclick="clientDownloadTemplate('${a.id}')" style="background:#2563EB; color:#FFF; border:none; padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:600;">⬇ Parsisiųsti šabloną</button>
+        </div>`;
+      }
+      html += '</div>';
+      return html;
     }
 
     // ============================================================
@@ -1945,19 +1985,38 @@
       const isNA = itemState.client_marked_as === 'not_applicable';
       const isAnswered = itemState.admin_status === 'answered';
       const hasQuery = itemComments.some(c => c.author_role === 'admin' && !c.read_by_client);
+      const needsFix = itemState.needs_fix === true;
 
       let itemClass = 'item ' + layoutClass;
-      if (isNA) itemClass += ' na';
+      if (needsFix) itemClass += ' needs-fix';
+      else if (isNA) itemClass += ' na';
       else if (hasQuery) itemClass += ' has-query';
       else if (isAnswered) itemClass += ' answered';
 
       // Badge
       let badge = '';
-      if (isNA) badge = `<span class="badge na">Neaktualu</span>`;
+      if (needsFix) badge = `<span class="badge" style="background:#FEF2F2; color:#991B1B; border:1px solid #FCA5A5; padding:2px 8px; border-radius:3px; font-weight:700;">⚠ Prašoma patikslinti</span>`;
+      else if (isNA) badge = `<span class="badge na">Neaktualu</span>`;
       else if (hasQuery) badge = `<span class="badge query"><span class="ic ic-alert"></span> Paklausimas</span>`;
       else if (isAnswered) badge = `<span class="badge answered"><span class="ic ic-check"></span> Atsakyta</span>`;
       else if (itemFiles.length > 0 || itemState.client_comment) badge = `<span class="badge pending"><span class="ic ic-circle"></span> Pateikta</span>`;
       else badge = `<span class="badge pending"><span class="ic ic-circle"></span> Laukia</span>`;
+
+      // needs_fix banner
+      let needsFixBanner = '';
+      if (needsFix) {
+        const reason = itemState.needs_fix_reason || '—';
+        const what = itemState.needs_fix_requested_what;
+        needsFixBanner = `
+          <div style="background:#FEF2F2; border-left:4px solid #B91C1C; padding:12px 14px; margin:10px 0; border-radius:4px;">
+            <div style="color:#991B1B; font-weight:700; font-size:13px; margin-bottom:6px;">
+              ⚠ KAB specialistas prašo patikslinti šį atsakymą
+            </div>
+            <div style="color:#374151; font-size:13px;"><strong>Priežastis:</strong> ${escapeHtml(reason)}</div>
+            ${what ? `<div style="color:#374151; font-size:13px; margin-top:4px;"><strong>Ko reikia:</strong> ${escapeHtml(what)}</div>` : ''}
+            <div style="color:#6B7280; font-size:12px; margin-top:8px;">Įkelkite naują failą arba papildykite komentarą — ankstesnis atsakymas lieka istorijoje.</div>
+          </div>`;
+      }
 
       // Number label (item.id's last portion or period label)
       const numberLabel = itemDef._period_label || `${section.number}.${section.items.indexOf(itemDef) + 1}`;
@@ -2012,6 +2071,8 @@
             </div>
             <div>${badge}</div>
           </div>
+          ${needsFixBanner}
+          ${renderTemplateAttsForClient(itemDef.id)}
           ${applicabilityHtml}
           ${contentHtml}
           ${commentsHtml}
