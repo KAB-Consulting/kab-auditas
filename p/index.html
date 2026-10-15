@@ -351,7 +351,7 @@ body.locked .gate.ask{display:block}
     </div>
   </section>
 </main>
-<footer><div class="wrap"><span>© 2026 KAB Consulting · UAB „Klaipėdos administratorių biuras“</span><span>Komercinis pasiūlymas <span data-k="client">—</span></span></div></footer>
+<footer><div class="wrap"><span>© 2026 KAB Consulting · UAB „Klaipėdos administratorių biuras“</span><span>Komercinis pasiūlymas<span data-k="client2"></span></span></div></footer>
 
 <script>
 var SB_URL = 'https://pezhnbcsifxnrswsdhui.supabase.co';
@@ -377,7 +377,7 @@ var PASIULYMAS = null;
         if (d && d.ok && d.kainos) {
           try { sessionStorage.setItem('kabp_' + code, email); } catch (e) {}
           d.pvm = 0.21; PASIULYMAS = d;
-          document.title = 'Komercinis pasiūlymas – ' + d.klientas + ' | KAB Consulting';
+          document.title = 'Komercinis pasiūlymas' + (d.klientas ? ' – ' + d.klientas : '') + ' | KAB Consulting';
           document.body.className = '';
           start();
           if (location.hash.length > 1) { var tg = document.getElementById(location.hash.slice(1)); if (tg) setTimeout(function(){ tg.scrollIntoView(); }, 50); }
@@ -405,7 +405,7 @@ function start(){
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var fmt = function(n){ return Math.round(n).toLocaleString('lt-LT').replace(/[\u00a0\u202f]/g,' ') + ' €'; };
   var C = PASIULYMAS, K = C.kainos, priceOf = {m1:K.m1, m2:K.m2, m3:K.m3, hour:K.valanda};
-  var map = {client:C.klientas, date:C.data, city:C.miestas, valid:C.galioja_iki || ''};
+  var map = {client:C.klientas || 'Komercinis pasiūlymas', client2:C.klientas ? ' ' + C.klientas : '', date:C.data, city:C.miestas, valid:C.galioja_iki || ''};
   if (C.galioja_iki) document.getElementById('validLine').hidden = false;
   document.querySelectorAll('[data-k]').forEach(function(el){ el.textContent = map[el.dataset.k]; });
   document.querySelectorAll('[data-price]').forEach(function(el){ el.textContent = fmt(priceOf[el.dataset.price]); });
