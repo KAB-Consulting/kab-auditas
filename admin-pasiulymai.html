@@ -51,6 +51,31 @@
     .link-box { display:flex; gap:8px; align-items:center; background:var(--light); border:1px solid var(--bd); border-radius:6px; padding:8px 10px; font-family:ui-monospace,Menlo,monospace; font-size:13px; word-break:break-all; }
     .chk { display:flex; gap:8px; align-items:center; font-size:14px; padding:4px 0; }
     .perm-view .edit-only { display:none !important; }
+    .lib-filters { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+    .lib-filters .input { max-width:340px; }
+    .chips { display:flex; gap:6px; flex-wrap:wrap; }
+    .chip { padding:6px 12px; border:1px solid var(--bd); border-radius:20px; background:#fff; cursor:pointer; font-size:13px; font-weight:600; color:var(--gray); font-family:inherit; }
+    .chip.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+    .lib-wrap { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.25fr); gap:18px; align-items:start; }
+    @media (max-width:980px){ .lib-wrap { grid-template-columns:1fr; } }
+    .lib-group h4 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--gray); margin:14px 0 6px; }
+    .lib-group:first-child h4 { margin-top:0; }
+    .lib-item { display:flex; gap:12px; align-items:flex-start; padding:10px 12px; border:1px solid var(--bd); border-radius:8px; margin-bottom:8px; cursor:pointer; background:#fff; width:100%; text-align:left; font-family:inherit; }
+    .lib-item:hover { border-color:var(--gold); }
+    .lib-item.active { border-color:var(--navy); box-shadow:inset 0 0 0 1px var(--navy); background:#EEF3FB; }
+    .ftype { flex:0 0 42px; height:42px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; background:#6B7280; }
+    .ftype.pdf { background:#B91C1C; } .ftype.ppt { background:#C2410C; } .ftype.doc { background:#1D4ED8; } .ftype.xls { background:#15803D; } .ftype.img { background:#7C3AED; }
+    .lib-item .t { font-weight:600; color:var(--navy); font-size:14px; }
+    .lib-item .d { font-size:12.5px; color:var(--gray); }
+    .lib-panel { position:sticky; top:16px; border:1px solid var(--bd); border-radius:10px; background:var(--light); min-height:420px; display:flex; flex-direction:column; overflow:hidden; }
+    .lib-empty { margin:auto; padding:30px; text-align:center; color:var(--gray); font-size:14px; }
+    .lib-head { padding:14px 16px; background:#fff; border-bottom:1px solid var(--bd); }
+    .lib-head h3 { color:var(--navy); font-size:16px; margin-bottom:4px; }
+    .lib-head .acts { margin-top:10px; }
+    .lib-view { flex:1; min-height:560px; display:flex; }
+    .lib-view iframe { flex:1; width:100%; border:0; min-height:560px; background:#fff; }
+    .lib-view img { max-width:100%; margin:auto; display:block; padding:12px; }
+    .lib-msg { margin:auto; padding:30px; text-align:center; color:var(--gray); font-size:14px; }
     .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--navy); color:#fff; padding:10px 18px; border-radius:6px; font-size:14px; z-index:80; box-shadow:0 4px 16px rgba(0,0,0,.2); }
   </style>
 </head>
@@ -94,6 +119,33 @@
         </div>
         <p class="hint" style="margin-top:12px;">Pasiūlymą klientas atidaro tik įvedęs el. pašto adresą, kuris yra gavėjų sąraše, ir tik iki galiojimo pabaigos. Nuoroda neatskleidžia jokios informacijos be teisingo adreso.</p>
       </div>
+
+      <div class="card">
+        <div class="toolbar"><h2>Siuntimų istorija</h2><span class="muted">Paskutiniai 100 įrašų</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Laikas</th><th>Pasiūlymas</th><th>Būdas</th><th>Gavėjai</th><th>Būsena</th><th>Siuntė</th></tr></thead>
+            <tbody id="sendRows"><tr><td colspan="6" class="muted">Kraunama…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" id="libCard">
+        <div class="toolbar">
+          <h2>Dokumentų biblioteka</h2>
+          <button class="btn edit-only" id="libUploadBtn">+ Įkelti dokumentą</button>
+        </div>
+        <div class="lib-filters">
+          <input id="libSearch" class="input" type="search" placeholder="Ieškoti pagal pavadinimą ar aprašymą" aria-label="Ieškoti bibliotekoje">
+          <div class="chips" id="libCats" role="tablist" aria-label="Kategorijos"></div>
+        </div>
+        <div class="lib-wrap">
+          <div class="lib-list" id="libList"><p class="muted">Kraunama…</p></div>
+          <aside class="lib-panel" id="libPanel" aria-live="polite">
+            <div class="lib-empty">Pasirinkite dokumentą kairėje – peržiūra atsidarys čia.</div>
+          </aside>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -102,8 +154,9 @@
     <form class="modal" id="editForm" novalidate>
       <h3 id="editTitle">Naujas pasiūlymas</h3>
       <p class="muted">Kainos nurodomos eurais be PVM.</p>
-      <label class="label" for="fClient">Klientas *</label>
-      <input id="fClient" class="input" required placeholder="UAB „Pavyzdys“">
+      <label class="label" for="fClient">Klientas</label>
+      <input id="fClient" class="input" placeholder="UAB „Pavyzdys“ – galima palikti tuščią">
+      <div class="hint">Palikus tuščią, klientas matys bendrą „Komercinis pasiūlymas“ be įmonės pavadinimo.</div>
       <div class="grid2">
         <div><label class="label" for="fDate">Pasiūlymo data *</label><input id="fDate" class="input" type="date" required></div>
         <div><label class="label" for="fValid">Galioja iki *</label><input id="fValid" class="input" type="date" required><div class="hint">Po šios datos nuoroda nebeatsidaro.</div></div>
@@ -158,6 +211,30 @@
     </div>
   </div>
 
+  <!-- Bibliotekos dokumentas -->
+  <div id="docModal" class="modal-bg hidden" role="dialog" aria-modal="true" aria-labelledby="docTitle">
+    <form class="modal" id="docForm" novalidate>
+      <h3 id="docTitle">Įkelti dokumentą</h3>
+      <p class="muted">PDF, Word, PowerPoint, Excel ar paveikslėlis, iki 50 MB.</p>
+      <div id="docFileWrap">
+        <label class="label" for="dFile">Failas *</label>
+        <input id="dFile" class="input" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.odt,.odp,.ods,.rtf,.png,.jpg,.jpeg,.webp,.gif">
+      </div>
+      <label class="label" for="dTitle">Pavadinimas *</label>
+      <input id="dTitle" class="input" placeholder="Pvz., Restruktūrizavimo proceso aprašymas">
+      <label class="label" for="dCat">Kategorija</label>
+      <select id="dCat" class="input"></select>
+      <label class="label" for="dDesc">Aprašymas</label>
+      <textarea id="dDesc" class="textarea" style="min-height:60px;" placeholder="Kam skirtas, kada naudoti"></textarea>
+      <div id="docErr" class="error hidden"></div>
+      <div id="docProg" class="muted hidden" style="margin-top:8px;"></div>
+      <div class="foot">
+        <button type="button" class="btn btn-ghost" data-close="docModal">Atšaukti</button>
+        <button type="submit" class="btn" id="docSave">Išsaugoti</button>
+      </div>
+    </form>
+  </div>
+
   <!-- Žurnalas -->
   <div id="logModal" class="modal-bg hidden" role="dialog" aria-modal="true" aria-labelledby="logTitle">
     <div class="modal">
@@ -193,6 +270,7 @@
     document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-bg:not(.hidden)').forEach(m => closeModal(m.id)); });
 
+    function clientLabel(r){ return r.client_name ? esc(r.client_name) : '<em class="muted">Be kliento pavadinimo</em>'; }
     function status(r){
       if (!r.is_active) return { cls:'badge-gray', t:'Išjungtas', live:false };
       if (r.valid_until < today()) return { cls:'badge-red', t:'Pasibaigęs', live:false };
@@ -211,6 +289,7 @@
       $('userEmail').textContent = session.user.email;
       hide('loginView'); show('mainView');
       await load();
+      loadLib();
     }
 
     async function load(){
@@ -220,6 +299,7 @@
       if (error) { $('rows').innerHTML = '<tr><td colspan="7"><div class="error">Nepavyko užkrauti: ' + esc(error.message) + '</div></td></tr>'; return; }
       ROWS = data || [];
       render();
+      loadSends();
     }
 
     function render(){
@@ -235,7 +315,7 @@
         const views = r.view_count > 0 ? '<strong>' + r.view_count + '</strong> k.<br><span class="muted">pask. ' + fmtDT(r.last_viewed_at) + '</span>' : '<span class="muted">Neatidarytas</span>';
         const sent = r.last_email_sent_at ? '<br><span class="muted">išsiųsta ' + fmtDT(r.last_email_sent_at) + '</span>' : '';
         return '<tr>' +
-          '<td><strong>' + esc(r.client_name) + '</strong><br><span class="muted">I ' + fmtEur(r.price_m1) + ' · II ' + fmtEur(r.price_m2_monthly) + '/mėn. · III ' + fmtEur(r.price_m3) + ' · ' + fmtEur(r.price_hour) + '/val.</span></td>' +
+          '<td><strong>' + clientLabel(r) + '</strong><br><span class="muted">I ' + fmtEur(r.price_m1) + ' · II ' + fmtEur(r.price_m2_monthly) + '/mėn. · III ' + fmtEur(r.price_m3) + ' · ' + fmtEur(r.price_hour) + '/val.</span></td>' +
           '<td>' + esc(r.proposal_date) + '</td>' +
           '<td>' + esc(r.valid_until) + '</td>' +
           '<td class="rcp">' + rc + '</td>' +
@@ -261,7 +341,7 @@
     function openLink(r){
       CUR = r;
       const url = LINK_BASE + r.short_code;
-      $('linkClient').textContent = r.client_name + ' · galioja iki ' + r.valid_until;
+      $('linkClient').textContent = (r.client_name || 'Be kliento pavadinimo') + ' · galioja iki ' + r.valid_until;
       $('linkUrl').textContent = url;
       $('linkOpen').href = url;
       $('linkRcp').textContent = (r.recipients || []).join(', ') || '—';
@@ -271,6 +351,7 @@
       const url = $('linkUrl').textContent;
       const fallback = () => { const s = getSelection(), rg = document.createRange(); rg.selectNodeContents($('linkUrl')); s.removeAllRanges(); s.addRange(rg); toast('Nuoroda pažymėta – spauskite Cmd+C'); };
       try { navigator.clipboard.writeText(url).then(() => toast('Nuoroda nukopijuota'), fallback); } catch(e) { fallback(); }
+      if (CUR && LEVEL === 'full') sb.from('commercial_proposal_sends').insert({ proposal_id: CUR.id, channel: 'link', recipients: CUR.recipients || [] }).then(() => loadSends());
     });
 
     // Redagavimas
@@ -300,13 +381,12 @@
       const emails = parseEmails($('fRecipients').value);
       const bad = emails.filter(x => !EMAIL_RE.test(x));
       const client = $('fClient').value.trim(), date = $('fDate').value, valid = $('fValid').value;
-      if (!client) return err('Įveskite kliento pavadinimą.');
       if (!date || !valid) return err('Nurodykite pasiūlymo datą ir galiojimo terminą.');
       if (valid < date) return err('Galiojimo terminas negali būti ankstesnis už pasiūlymo datą.');
       if (!emails.length) return err('Įveskite bent vieną gavėjo el. pašto adresą.');
       if (bad.length) return err('Neteisingi adresai: ' + bad.join(', '));
       const num = id => { const v = $(id).value; return v === '' ? 0 : Math.max(0, Number(v)); };
-      const row = { client_name:client, proposal_date:date, valid_until:valid, recipients:emails,
+      const row = { client_name:client || null, proposal_date:date, valid_until:valid, recipients:emails,
         price_m1:num('fM1'), price_m2_monthly:num('fM2'), price_m3:num('fM3'), price_hour:num('fHour'),
         city:$('fCity').value.trim() || 'Klaipėda', is_active:$('fActive').checked, notes:$('fNotes').value.trim() || null };
       $('saveBtn').disabled = true;
@@ -330,7 +410,7 @@
     // Siuntimas
     function openSend(r){
       CUR = r;
-      $('sendClient').textContent = r.client_name + ' · galioja iki ' + r.valid_until;
+      $('sendClient').textContent = (r.client_name || 'Be kliento pavadinimo') + ' · galioja iki ' + r.valid_until;
       $('sendList').innerHTML = (r.recipients || []).map((m, i) => '<label class="chk"><input type="checkbox" value="' + esc(m) + '" checked> ' + esc(m) + '</label>').join('');
       $('sendNote').value = '';
       hide('sendMsg'); $('sendBtn').disabled = false;
@@ -353,7 +433,7 @@
 
     // Žurnalas
     async function openLog(r){
-      $('logClient').textContent = r.client_name;
+      $('logClient').textContent = r.client_name || 'Be kliento pavadinimo';
       $('logRows').innerHTML = '<tr><td colspan="3" class="muted">Kraunama…</td></tr>';
       openModal('logModal');
       const { data, error } = await sb.from('commercial_proposal_access_log').select('created_at, email, success, reason').eq('proposal_id', r.id).order('created_at', { ascending:false }).limit(200);
@@ -361,6 +441,135 @@
       if (!data.length) { $('logRows').innerHTML = '<tr><td colspan="3" class="muted">Bandymų atidaryti dar nebuvo.</td></tr>'; return; }
       const why = { email:'Neteisingas el. paštas', expired:'Pasibaigęs / išjungtas' };
       $('logRows').innerHTML = data.map(x => '<tr><td>' + fmtDT(x.created_at) + '</td><td>' + esc(x.email || '—') + '</td><td>' + (x.success ? '<span class="badge badge-green">Atidarė</span>' : '<span class="badge badge-red">' + esc(why[x.reason] || 'Atmesta') + '</span>') + '</td></tr>').join('');
+    }
+
+    // ================= Siuntimų istorija =================
+    async function loadSends(){
+      const { data, error } = await sb.from('commercial_proposal_sends').select('created_at, channel, recipients, status, sent_by, proposal_id').order('created_at', { ascending:false }).limit(100);
+      if (error) { $('sendRows').innerHTML = '<tr><td colspan="6"><div class="error">' + esc(error.message) + '</div></td></tr>'; return; }
+      if (!data.length) { $('sendRows').innerHTML = '<tr><td colspan="6" class="muted">Siuntimų dar nebuvo. Įrašai atsiras išsiuntus pasiūlymą el. paštu arba nukopijavus nuorodą.</td></tr>'; return; }
+      const name = id => { const r = ROWS.find(x => x.id === id); return r ? clientLabel(r) : '—'; };
+      const st = { ok:'<span class="badge badge-green">Išsiųsta</span>', partial:'<span class="badge badge-gold">Dalinai</span>', failed:'<span class="badge badge-red">Nepavyko</span>' };
+      $('sendRows').innerHTML = data.map(x => '<tr><td>' + fmtDT(x.created_at) + '</td><td>' + name(x.proposal_id) + '</td><td>' +
+        (x.channel === 'email' ? 'El. paštu (Resend)' : 'Nuoroda nukopijuota') + '</td><td class="rcp">' + (x.recipients || []).map(esc).join('<br>') + '</td><td>' +
+        (x.channel === 'email' ? (st[x.status] || esc(x.status)) : '<span class="badge badge-gray">Siųsta rankiniu būdu</span>') + '</td><td class="rcp">' + esc(x.sent_by || '—') + '</td></tr>').join('');
+    }
+
+    // ================= Dokumentų biblioteka =================
+    const LIB_BUCKET = 'proposal-library';
+    const LIB_CATS = ['Prezentacijos', 'Proceso aprašymai', 'Pavyzdiniai dokumentai', 'Kita'];
+    let DOCS = [], LIB_CAT = '', LIB_Q = '', DOC_SEL = null, DOC_EDIT = null;
+    $('dCat').innerHTML = LIB_CATS.map(c => '<option>' + esc(c) + '</option>').join('');
+    function renderCats(){
+      $('libCats').innerHTML = ['', ...LIB_CATS].map(c => '<button type="button" class="chip' + (c === LIB_CAT ? ' active' : '') + '" data-cat="' + esc(c) + '">' + esc(c || 'Visi') + ' (' + DOCS.filter(d => !c || d.category === c).length + ')</button>').join('');
+    }
+    $('libCats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; LIB_CAT = b.dataset.cat; renderLib(); });
+    $('libSearch').addEventListener('input', e => { LIB_Q = e.target.value.trim().toLowerCase(); renderLib(); });
+    function ftype(n){ const x = (n.split('.').pop() || '').toLowerCase();
+      if (x === 'pdf') return ['pdf','PDF']; if (/^pptx?$|^odp$/.test(x)) return ['ppt','PPT']; if (/^docx?$|^odt$|^rtf$/.test(x)) return ['doc','DOC'];
+      if (/^xlsx?$|^ods$/.test(x)) return ['xls','XLS']; if (/^(png|jpe?g|gif|webp)$/.test(x)) return ['img','IMG']; return ['', x.toUpperCase().slice(0,4)]; }
+    const fmtSize = b => b == null ? '' : b > 1048576 ? (b/1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b/1024)) + ' KB';
+    async function loadLib(){
+      const { data, error } = await sb.from('proposal_library_docs').select('*').order('title');
+      if (error) { $('libList').innerHTML = '<div class="error">' + esc(error.message) + '</div>'; return; }
+      DOCS = data || [];
+      renderLib();
+      if (DOC_SEL) { const d = DOCS.find(x => x.id === DOC_SEL); if (d) showDoc(d); else clearPanel(); }
+    }
+    function renderLib(){
+      renderCats();
+      const list = DOCS.filter(d => (!LIB_CAT || d.category === LIB_CAT) && (!LIB_Q || (d.title + ' ' + (d.description || '') + ' ' + d.file_name).toLowerCase().includes(LIB_Q)));
+      if (!DOCS.length) { $('libList').innerHTML = '<p class="muted">Bibliotekoje dar nėra dokumentų. Spauskite „+ Įkelti dokumentą“ ir įkelkite prezentaciją, proceso aprašymą ar kitą dokumentą.</p>'; return; }
+      if (!list.length) { $('libList').innerHTML = '<p class="muted">Nieko nerasta.</p>'; return; }
+      $('libList').innerHTML = LIB_CATS.filter(c => list.some(d => d.category === c)).map(c => '<div class="lib-group"><h4>' + esc(c) + '</h4>' +
+        list.filter(d => d.category === c).map(d => { const [cls, lbl] = ftype(d.file_name);
+          return '<button type="button" class="lib-item' + (d.id === DOC_SEL ? ' active' : '') + '" data-id="' + d.id + '"><span class="ftype ' + cls + '">' + esc(lbl) + '</span><span><span class="t">' + esc(d.title) + '</span><br><span class="d">' +
+            (d.description ? esc(d.description.length > 90 ? d.description.slice(0, 90) + '…' : d.description) + '<br>' : '') + esc(d.file_name) + ' · ' + fmtSize(d.size_bytes) + ' · ' + esc((d.created_at || '').slice(0,10)) + '</span></span></button>'; }).join('') + '</div>').join('');
+    }
+    $('libList').addEventListener('click', e => { const b = e.target.closest('.lib-item'); if (!b) return; const d = DOCS.find(x => x.id === b.dataset.id); if (d) { DOC_SEL = d.id; renderLib(); showDoc(d); } });
+    function clearPanel(){ DOC_SEL = null; $('libPanel').innerHTML = '<div class="lib-empty">Pasirinkite dokumentą kairėje – peržiūra atsidarys čia.</div>'; }
+    async function showDoc(d){
+      const [cls] = ftype(d.file_name);
+      $('libPanel').innerHTML = '<div class="lib-head"><h3>' + esc(d.title) + '</h3><div class="muted">' + esc(d.category) + ' · ' + esc(d.file_name) + ' · ' + fmtSize(d.size_bytes) + '</div>' +
+        (d.description ? '<p style="margin-top:6px;font-size:14px;">' + esc(d.description) + '</p>' : '') +
+        '<div class="acts"><button type="button" class="btn btn-sm" id="docDl">Atsisiųsti</button><button type="button" class="btn btn-sm btn-ghost" id="docNewTab">Atidaryti naujame lange</button>' +
+        '<button type="button" class="btn btn-sm btn-ghost edit-only" id="docEditBtn">Redaguoti</button><button type="button" class="btn btn-sm btn-ghost edit-only" id="docDelBtn" style="color:#C0392B;border-color:#C0392B;">Ištrinti</button></div></div>' +
+        '<div class="lib-view" id="libView"><div class="lib-msg">Kraunama peržiūra…</div></div>';
+      $('docDl').onclick = () => downloadDoc(d);
+      $('docNewTab').onclick = async () => { const u = await signed(d.preview_path || d.file_path); if (u) window.open(u, '_blank', 'noopener'); };
+      $('docEditBtn').onclick = () => openDoc(d);
+      $('docDelBtn').onclick = () => deleteDoc(d);
+      const view = $('libView');
+      if (!d.preview_path) {
+        view.innerHTML = '<div class="lib-msg">Peržiūra šiam failui dar neparuošta.<br><br>' + (LEVEL === 'full' ? '<button type="button" class="btn btn-sm" id="mkPrev">Sukurti peržiūrą</button>' : '') + '</div>';
+        if ($('mkPrev')) $('mkPrev').onclick = async () => { view.innerHTML = '<div class="lib-msg">Kuriama peržiūra…</div>'; await makePreview(d.id); await loadLib(); };
+        return;
+      }
+      const url = await signed(d.preview_path);
+      if (!url) { view.innerHTML = '<div class="lib-msg">Nepavyko atidaryti peržiūros.</div>'; return; }
+      view.innerHTML = cls === 'img' ? '<img src="' + esc(url) + '" alt="' + esc(d.title) + '">' : '<iframe src="' + esc(url) + '#view=FitH" title="Peržiūra: ' + esc(d.title) + '"></iframe>';
+    }
+    async function signed(path, download){
+      const { data, error } = await sb.storage.from(LIB_BUCKET).createSignedUrl(path, 900, download ? { download } : undefined);
+      if (error) { toast('Nepavyko: ' + error.message); return null; }
+      return data.signedUrl;
+    }
+    async function downloadDoc(d){
+      const u = await signed(d.file_path, d.file_name); if (!u) return;
+      const a = document.createElement('a'); a.href = u; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+    }
+    async function makePreview(id){
+      try { const { data, error } = await sb.functions.invoke('library-preview', { body: { id } }); if (error || !data || !data.ok) throw new Error((data && data.error) || (error && error.message) || 'klaida'); return true; }
+      catch(e) { toast('Peržiūros sukurti nepavyko: ' + e.message); return false; }
+    }
+    function safeName(n){ return n.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9._-]+/g, '_').replace(/_+/g, '_').slice(-120) || 'failas'; }
+    function openDoc(d){
+      DOC_EDIT = d || null;
+      $('docTitle').textContent = d ? 'Redaguoti dokumentą' : 'Įkelti dokumentą';
+      $('docFileWrap').classList.toggle('hidden', !!d);
+      $('dFile').value = '';
+      $('dTitle').value = d ? d.title : '';
+      $('dCat').value = d ? d.category : (LIB_CAT || 'Prezentacijos');
+      $('dDesc').value = d ? (d.description || '') : '';
+      hide('docErr'); hide('docProg'); $('docSave').disabled = false;
+      openModal('docModal');
+    }
+    $('libUploadBtn').addEventListener('click', () => openDoc(null));
+    $('dFile').addEventListener('change', () => { const f = $('dFile').files[0]; if (f && !$('dTitle').value.trim()) $('dTitle').value = f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' '); });
+    $('docForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const err = m => { $('docErr').textContent = m; show('docErr'); $('docSave').disabled = false; hide('docProg'); };
+      const prog = m => { $('docProg').textContent = m; show('docProg'); };
+      const title = $('dTitle').value.trim(), category = $('dCat').value, description = $('dDesc').value.trim() || null;
+      if (!title) return err('Įveskite pavadinimą.');
+      $('docSave').disabled = true; hide('docErr');
+      if (DOC_EDIT) {
+        const { error } = await sb.from('proposal_library_docs').update({ title, category, description, updated_at: new Date().toISOString() }).eq('id', DOC_EDIT.id);
+        if (error) return err('Nepavyko išsaugoti: ' + error.message);
+        closeModal('docModal'); await loadLib(); toast('Išsaugota'); return;
+      }
+      const f = $('dFile').files[0];
+      if (!f) return err('Pasirinkite failą.');
+      if (f.size > 50 * 1024 * 1024) return err('Failas didesnis nei 50 MB.');
+      const id = crypto.randomUUID();
+      const path = 'docs/' + id + '/' + safeName(f.name);
+      prog('Įkeliama…');
+      const up = await sb.storage.from(LIB_BUCKET).upload(path, f, { contentType: f.type || 'application/octet-stream', upsert: false });
+      if (up.error) return err('Nepavyko įkelti: ' + up.error.message);
+      const isDirect = /\.(pdf|png|jpe?g|gif|webp)$/i.test(f.name);
+      const { error } = await sb.from('proposal_library_docs').insert({ id, title, category, description, file_path: path, file_name: f.name, mime_type: f.type || null, size_bytes: f.size, preview_path: isDirect ? path : null });
+      if (error) { await sb.storage.from(LIB_BUCKET).remove([path]); return err('Nepavyko išsaugoti: ' + error.message); }
+      DOC_SEL = id;
+      if (!isDirect) { prog('Kuriama PDF peržiūra…'); await makePreview(id); }
+      closeModal('docModal'); await loadLib(); toast('Dokumentas įkeltas');
+    });
+    async function deleteDoc(d){
+      if (!window.confirm('Ištrinti „' + d.title + '“ iš bibliotekos? Šio veiksmo atšaukti negalima.')) return;
+      const paths = [d.file_path]; if (d.preview_path && d.preview_path !== d.file_path) paths.push(d.preview_path);
+      const { error } = await sb.from('proposal_library_docs').delete().eq('id', d.id);
+      if (error) { toast('Nepavyko: ' + error.message); return; }
+      await sb.storage.from(LIB_BUCKET).remove(paths);
+      clearPanel(); await loadLib(); toast('Ištrinta');
     }
 
     // Prisijungimas
