@@ -2092,7 +2092,7 @@
           <div class="upload-zone" data-item-id="${itemDef.id}">
             <div class="upload-zone-icon"><span class="ic ic-folder"></span></div>
             <div><strong>Nutempkite failus čia</strong> arba spustelėkite pasirinkti</div>
-            <div class="upload-zone-hint">Maks. 10 MB vienam failui</div>
+            <div class="upload-zone-hint">Maks. 100 MB vienam failui · didesnius padalinkite arba suspauskite ZIP formatu</div>
             <input type="file" multiple style="display:none;" onchange="handleFileSelect(event, '${itemDef.id}')">
           </div>
         </div>
@@ -2529,8 +2529,8 @@
 
     async function uploadFiles(filesList, itemId) {
       for (const file of filesList) {
-        if (file.size > 10 * 1024 * 1024) {
-          alert(`Failas "${file.name}" per didelis (>10 MB)`);
+        if (file.size > 100 * 1024 * 1024) {
+          alert(`Failas "${file.name}" per didelis (${Math.round(file.size/1024/1024)} MB).\n\nMaksimalus vieno failo dydis — 100 MB.\n\nJei failas didesnis — padalinkite jį į mažesnes dalis arba suspauskite ZIP formatu.`);
           continue;
         }
 

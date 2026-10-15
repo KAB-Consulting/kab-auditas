@@ -1842,9 +1842,11 @@
     const container = document.getElementById('submissions-table-container');
     container.innerHTML = '<div class="empty-state">Kraunasi...</div>';
 
+    // v6.1: Imam ir sena v3 (questionnaire_files), ir nauja v4 (questionnaire_item_files) failu skaicius
+    // Taip pat items + files max updated_at, kad nustatytume ar yra atnaujinimu po paskutinio admin apsilankymo.
     const { data, error } = await supabase
       .from('questionnaire_submissions')
-      .select('*, questionnaire_files(count)')
+      .select('*, questionnaire_files(count), questionnaire_item_files(count)')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -1853,8 +1855,55 @@
     }
 
     allSubmissions = data || [];
+
+    // Paimam questionnaire_items ir questionnaire_item_files max(updated_at/uploaded_at)
+    // kad galetume aptikti pokycius po paskutinio admin apsilankymo.
+    // PASTABA: custom section failai saugomi tame paciame questionnaire_item_files, taigi
+    // atskiros lenteles custom_section_files nera - viskas jau skaiciuojama per v4Files.
+    try {
+      const ids = allSubmissions.map(s => s.id);
+      if (ids.length > 0) {
+        const [itemsAgg, filesAgg] = await Promise.all([
+          supabase.from('questionnaire_items').select('submission_id, updated_at').in('submission_id', ids),
+          supabase.from('questionnaire_item_files').select('submission_id, uploaded_at').in('submission_id', ids)
+        ]);
+        const lastClientActivity = {};
+        for (const row of (itemsAgg.data || [])) {
+          const prev = lastClientActivity[row.submission_id];
+          if (!prev || new Date(row.updated_at) > new Date(prev)) lastClientActivity[row.submission_id] = row.updated_at;
+        }
+        for (const row of (filesAgg.data || [])) {
+          const prev = lastClientActivity[row.submission_id];
+          if (!prev || new Date(row.uploaded_at) > new Date(prev)) lastClientActivity[row.submission_id] = row.uploaded_at;
+        }
+        allSubmissions.forEach(s => {
+          s._last_client_activity = lastClientActivity[s.id] || s.updated_at || s.created_at;
+          s._custom_files_count = 0; // viskas jau įskaičiuota per v4Files
+        });
+      }
+    } catch (e) {
+      console.warn('last_client_activity enrichment:', e);
+    }
+
     updateStats();
     renderTable();
+  }
+
+  // v6.1: adminos paskutinio apsilankymo saugojimas (per submission) localStorage'e
+  function getAdminLastVisited(submissionId) {
+    try { return localStorage.getItem('kab_last_visited_' + submissionId); }
+    catch { return null; }
+  }
+  function setAdminLastVisited(submissionId) {
+    try { localStorage.setItem('kab_last_visited_' + submissionId, new Date().toISOString()); }
+    catch (e) {}
+  }
+  function hasNewActivity(submission) {
+    const lastClient = submission._last_client_activity;
+    if (!lastClient) return false;
+    const lastVisit = getAdminLastVisited(submission.id);
+    if (!lastVisit) return true; // nebuvo lankomas - viskas nauja
+    return new Date(lastClient) > new Date(lastVisit);
   }
 
   function updateStats() {
@@ -1983,9 +2032,36 @@
 
     for (const s of filtered) {
       const badge = statusLabels[s.status] || statusLabels.draft;
-      const filesCount = (s.questionnaire_files && s.questionnaire_files[0] && s.questionnaire_files[0].count) || 0;
+      // v6.1: suskaičiuoti failų skaičių iš abiejų lentelių (sena v3 + nauja v4)
+      const legacyFiles = (s.questionnaire_files && s.questionnaire_files[0] && s.questionnaire_files[0].count) || 0;
+      const v4Files = (s.questionnaire_item_files && s.questionnaire_item_files[0] && s.questionnaire_item_files[0].count) || 0;
+      const customFiles = s._custom_files_count || 0;
+      const filesCount = legacyFiles + v4Files + customFiles;
+
       const date = new Date(s.submitted_at || s.created_at);
       const dateStr = date.toLocaleDateString('lt-LT') + ' ' + date.toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' });
+
+      // v6.1: Naujos veiklos indikatorius
+      const isNew = hasNewActivity(s);
+      const rowStyle = isNew ? ' style="background: linear-gradient(90deg, #FEF3C7 0%, #FFFBEB 15%, transparent 60%); border-left: 4px solid #D97706;"' : '';
+      const newBadge = isNew
+        ? '<span style="background:#D97706; color:#FFF; font-size:10px; font-weight:700; padding:2px 6px; border-radius:3px; margin-left:6px; letter-spacing:0.5px;" title="Yra atnaujinimų po paskutinio apsilankymo">NAUJA</span>'
+        : '';
+
+      // v6.1: Failų ląstelė — vizualiai paryškina kad yra failai
+      const filesCellStyle = filesCount > 0
+        ? 'text-align:center; font-weight:700; color:var(--navy);'
+        : 'text-align:center; color:#9CA3AF;';
+      const filesCellContent = filesCount > 0
+        ? `${filesCount} <small style="font-weight:400; color:#6B7280;">${filesCount === 1 ? 'failas' : (filesCount < 10 ? 'failai' : 'failų')}</small>`
+        : '0';
+
+      // v6.1: paskutinio kliento veiksmo laikas (ne submission.created_at)
+      let lastActivityStr = '';
+      if (s._last_client_activity) {
+        const la = new Date(s._last_client_activity);
+        lastActivityStr = `<br><small style="color:#6B7280; font-size:11px;">↻ Klientas: ${la.toLocaleDateString('lt-LT')} ${la.toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' })}</small>`;
+      }
 
       // Template badge
       const tplCode = getTemplateCode(s);
@@ -2001,16 +2077,16 @@
       }
 
       html += `
-        <tr>
-          <td><strong>${escapeHtml(s.client_name || '-')}</strong></td>
+        <tr${rowStyle}>
+          <td><strong>${escapeHtml(s.client_name || '-')}</strong>${newBadge}</td>
           <td>${tplBadge}</td>
           <td>
             ${escapeHtml(s.client_contact || '-')}<br>
             <small style="color: #999;">${escapeHtml(s.client_email || '')}</small>
           </td>
           <td><span class="badge ${badge.class}">${badge.label}</span></td>
-          <td style="text-align: center;">${filesCount}</td>
-          <td style="font-size: 12px;">${dateStr}</td>
+          <td style="${filesCellStyle}">${filesCellContent}</td>
+          <td style="font-size: 12px;">${dateStr}${lastActivityStr}</td>
           <td class="actions-cell">
             <button class="btn btn-primary btn-small" onclick="viewDetail('${s.id}')">Peržiūrėti</button>
             ${s.status === 'draft' ? `<button class="btn btn-ghost btn-small" onclick="copyLinkForSubmission('${s.id}')" title="Kopijuoti nuorodą"><span class="ic ic-link"></span></button>` : ''}
@@ -2171,6 +2247,9 @@
     const content = document.getElementById('modal-content');
     content.innerHTML = '<div style="padding: 40px; text-align: center;">Kraunasi...</div>';
     modal.classList.remove('hidden');
+
+    // v6.1: pažymim submission kaip apsilankytą — kito karto "NAUJA" dings
+    setAdminLastVisited(id);
 
     const { data: sub } = await supabase
       .from('questionnaire_submissions')
