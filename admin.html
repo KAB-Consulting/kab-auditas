@@ -2997,7 +2997,7 @@
     }
     const file = fileInput.files[0];
     const templateId = window._currentTemplateState.template.id;
-    const safeName = file.name.replace(/[^\w\s.-]/g, '_');
+    const safeName = sanitizeStorageName(file.name);
     const storagePath = `${templateId}/${itemId}/${Date.now()}_${safeName}`;
     try {
       prgEl.textContent = '⏳ Keliama...'; prgEl.style.display='block';
@@ -4050,6 +4050,24 @@
   }
 
   // ===== HELPERS =====
+
+  // Supabase Storage key sanitizer — nepriima lietuviškų raidžių, tarpų ir dalies simbolių.
+  function sanitizeStorageName(name) {
+    if (!name) return 'failas';
+    const map = {
+      'ą':'a','č':'c','ę':'e','ė':'e','į':'i','š':'s','ų':'u','ū':'u','ž':'z',
+      'Ą':'A','Č':'C','Ę':'E','Ė':'E','Į':'I','Š':'S','Ų':'U','Ū':'U','Ž':'Z'
+    };
+    let s = String(name).replace(/[ąčęėįšųūžĄČĘĖĮŠŲŪŽ]/g, ch => map[ch] || ch);
+    try { s = s.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch(e) {}
+    s = s.replace(/[^A-Za-z0-9._-]+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+    if (s.length > 180) {
+      const dot = s.lastIndexOf('.');
+      const ext = dot > 0 ? s.slice(dot) : '';
+      s = s.slice(0, 180 - ext.length) + ext;
+    }
+    return s || 'failas';
+  }
 
   function escapeHtml(s) {
     if (s == null) return '';
