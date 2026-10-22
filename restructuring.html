@@ -1404,11 +1404,35 @@
           <div class="subtitle" id="templateSubtitle">Restruktūrizavimo klausimynas</div>
         </div>
       </div>
-      <div class="save-indicator" id="saveIndicator">
-        <span><span class="ic ic-save"></span></span><span id="saveText">Pasiruošęs</span>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <!-- v6.2: Nauji admin klausimai -->
+        <button id="adminQBtn" type="button" onclick="openAdminQueriesPopup()"
+          style="display:none; position:relative; background:#D97706; color:#FFF; border:none; padding:7px 14px; border-radius:5px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 2px 8px rgba(217,119,6,0.25);"
+          title="Yra naujų KAB specialisto klausimų / pastabų — spauskite peržiūrėti">
+          🔔 Nauji KAB klausimai <span id="adminQBadge" style="background:#FFF; color:#D97706; padding:1px 6px; border-radius:10px; font-size:11px; font-weight:800; margin-left:4px;">0</span>
+        </button>
+        <div class="save-indicator" id="saveIndicator">
+          <span><span class="ic ic-save"></span></span><span id="saveText">Pasiruošęs</span>
+        </div>
       </div>
     </div>
   </header>
+
+  <!-- v6.2: Admin klausimų popup'as -->
+  <div id="adminQModal" style="display:none; position:fixed; inset:0; background:rgba(11,30,63,0.55); z-index:9999; align-items:center; justify-content:center; padding:3vh 3vw;">
+    <div style="background:#FFF; width:min(680px, 100%); max-height:90vh; border-radius:10px; box-shadow:0 25px 70px rgba(0,0,0,0.4); display:flex; flex-direction:column;">
+      <div style="padding:16px 20px; border-bottom:1px solid #E5E7EB; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(90deg,#FEF3C7,#FFFBEB);">
+        <div>
+          <div style="font-size:16px; font-weight:800; color:#92400E;">🔔 Nauji KAB specialisto klausimai</div>
+          <div style="font-size:12px; color:#78350F; margin-top:2px;">Spauskite „Peržiūrėti" ir pateksite tiesiai į atitinkamą klausimą</div>
+        </div>
+        <button type="button" onclick="closeAdminQueriesPopup()" style="background:transparent; border:none; font-size:22px; cursor:pointer; color:#78350F; padding:4px 10px;">✕</button>
+      </div>
+      <div id="adminQList" style="padding:12px 16px; overflow-y:auto; flex:1;">
+        <div style="color:#999; padding:20px; text-align:center;">Nėra naujų klausimų</div>
+      </div>
+    </div>
+  </div>
 
   <!-- PROGRESS BAR -->
   <div class="progress-bar-container" id="progressBar" style="display:none;">
@@ -1737,6 +1761,131 @@
     }
 
     // ============================================================
+    // v6.2 — „Nauji KAB specialisto klausimai" notifikacijos
+    // ============================================================
+    function collectUnreadAdminQueries() {
+      // Grąžina masyvą: { commentId, itemId, sectionNumber, itemTitle, authorName, text, createdAt }
+      const out = [];
+      if (!sections || !comments) return out;
+      // Build item->section map
+      const itemMap = {};
+      for (const s of sections) {
+        for (const it of (s.items || [])) {
+          itemMap[it.id] = { section: s, item: it };
+        }
+      }
+      for (const [itemId, list] of Object.entries(comments || {})) {
+        const meta = itemMap[itemId];
+        if (!meta) continue;
+        for (const c of list) {
+          // Tik admin'o paklausimas, matomas klientui, dar neperskaitytas
+          if (c.author_role !== 'admin') continue;
+          if (c.visible_to_client !== true) continue;
+          if (c.read_by_client === true) continue;
+          out.push({
+            commentId: c.id,
+            itemId: itemId,
+            sectionNumber: meta.section.number || meta.section.id,
+            sectionTitle: meta.section.title,
+            itemTitle: meta.item.title,
+            authorName: c.author_name || 'KAB specialistas',
+            text: c.comment_text,
+            createdAt: c.created_at
+          });
+        }
+      }
+      // Chronologinė tvarka — naujausi apačioje
+      out.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+      return out;
+    }
+
+    function refreshAdminQueriesBadge() {
+      const btn = document.getElementById('adminQBtn');
+      const badge = document.getElementById('adminQBadge');
+      if (!btn || !badge) return;
+      const unread = collectUnreadAdminQueries();
+      if (unread.length > 0) {
+        badge.textContent = unread.length;
+        btn.style.display = 'inline-flex';
+      } else {
+        btn.style.display = 'none';
+      }
+      return unread;
+    }
+
+    function openAdminQueriesPopup() {
+      const unread = collectUnreadAdminQueries();
+      const listEl = document.getElementById('adminQList');
+      const modal = document.getElementById('adminQModal');
+      if (!listEl || !modal) return;
+      if (unread.length === 0) {
+        listEl.innerHTML = '<div style="color:#059669; padding:30px; text-align:center; font-size:14px;">✓ Visi KAB klausimai perskaityti</div>';
+      } else {
+        let html = '';
+        for (const q of unread) {
+          const whenStr = new Date(q.createdAt).toLocaleString('lt-LT');
+          html += `
+            <div style="margin-bottom:10px; padding:12px 14px; background:#FFFBEB; border:1px solid #FDE68A; border-left:4px solid #D97706; border-radius:6px;">
+              <div style="font-size:11px; color:#92400E; font-weight:700; margin-bottom:4px;">
+                ${escapeHtml(q.sectionNumber)}. ${escapeHtml(q.sectionTitle || '')} → <span style="color:#78350F;">${escapeHtml(q.itemTitle)}</span>
+              </div>
+              <div style="font-size:13px; color:#1F2937; white-space:pre-wrap; margin:6px 0;">${escapeHtml(q.text)}</div>
+              <div style="font-size:11px; color:#6B7280; margin-bottom:8px;">${escapeHtml(q.authorName)} · ${whenStr}</div>
+              <button type="button" onclick="jumpToAdminQuery('${q.commentId}','${q.itemId}')"
+                style="background:#0B1E3F; color:#FFF; border:none; padding:7px 14px; border-radius:5px; font-size:12px; font-weight:700; cursor:pointer;">
+                → Peržiūrėti ir atsakyti
+              </button>
+            </div>`;
+        }
+        listEl.innerHTML = html;
+      }
+      modal.style.display = 'flex';
+    }
+
+    function closeAdminQueriesPopup() {
+      const m = document.getElementById('adminQModal'); if (m) m.style.display = 'none';
+    }
+
+    async function jumpToAdminQuery(commentId, itemId) {
+      closeAdminQueriesPopup();
+      // Pažymim perskaityta
+      try {
+        await supabase.from('questionnaire_comments')
+          .update({ read_by_client: true })
+          .eq('id', commentId);
+        // Atnaujinam local state
+        for (const list of Object.values(comments || {})) {
+          const c = list.find(x => x.id === commentId);
+          if (c) { c.read_by_client = true; break; }
+        }
+      } catch (e) { console.warn('mark read:', e); }
+      refreshAdminQueriesBadge();
+
+      // Jei skyriai sukleisti — išskleidžiam
+      const el = document.getElementById(`item-${itemId}`);
+      if (el) {
+        // Expand parent collapsible if any
+        let parent = el.closest('.collapsible-section, .collapsed, [data-collapsed]');
+        if (parent && parent.classList.contains('collapsed')) parent.classList.remove('collapsed');
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Trumpas pažymėjimas
+          el.style.transition = 'background 0.3s';
+          const prev = el.style.background;
+          el.style.background = '#FEF3C7';
+          setTimeout(() => { el.style.background = prev; }, 1800);
+        }, 50);
+      } else {
+        alert('Klausimas šiuo metu nerodomas (gal uždarytas skyrius). Perslinkite prie atitinkamo klausimo rankiniu būdu.');
+      }
+    }
+
+    // Pridedam į global, kad onclick'ai veiktų
+    window.openAdminQueriesPopup = openAdminQueriesPopup;
+    window.closeAdminQueriesPopup = closeAdminQueriesPopup;
+    window.jumpToAdminQuery = jumpToAdminQuery;
+
+    // ============================================================
     // RENDERING
     // ============================================================
 
@@ -1744,6 +1893,9 @@
       document.getElementById('loadingState').style.display = 'none';
       document.getElementById('formContainer').style.display = 'block';
       document.getElementById('progressBar').style.display = 'block';
+
+      // v6.2 — admin klausimų notifikacijos badge
+      try { refreshAdminQueriesBadge(); } catch(e) { console.warn('badge:', e); }
 
       // Update template subtitle
       document.getElementById('templateSubtitle').textContent = template.name;
@@ -1964,7 +2116,7 @@
       }
 
       return `
-        <div class="${itemClass}" data-item-id="${itemDef.id}">
+        <div class="${itemClass}" data-item-id="${itemDef.id}" id="item-${itemDef.id}">
           <div class="item-header">
             <div class="item-title-group">
               <h4 style="margin:0;">
@@ -2040,14 +2192,22 @@
           ? '<span class="file-version-badge">AKTUALI</span>'
           : `<span class="file-old-badge">v${f.version_number}</span>`;
 
+        // v6.2 — ar failą įkėlė KAB specialistas (admin)
+        const isFromAdmin = f.uploaded_by && f.uploaded_by !== 'client';
+        const adminBadge = isFromAdmin
+          ? '<span style="background:#DBEAFE; color:#1E3A8A; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:700; margin-left:4px;">📩 PATEIKĖ KAB</span>'
+          : '';
+        // Admin'o įkelto failo klientas negali ištrinti
+        const canDelete = !isReadonly && !isFromAdmin;
+
         html += `
           <div class="file-item ${isCurrent ? 'current' : ''}">
             <span class="file-icon"><span class="ic ic-file"></span></span>
             <span class="file-name">${escapeHtml(f.original_name)}</span>
             <span class="file-meta">${formatSize(f.file_size)} · ${formatDate(f.uploaded_at)}</span>
-            ${badgeHtml}
+            ${badgeHtml}${adminBadge}
             <button class="file-action-btn" onclick="downloadFile('${f.id}', '${escapeHtml(f.storage_path)}', '${escapeHtml(f.original_name)}')"><span class="ic ic-down"></span></button>
-            ${!isReadonly ? `<button class="file-action-btn" onclick="deleteFile('${f.id}', '${f.storage_path}')" title="Ištrinti"><span class="ic ic-trash"></span></button>` : ''}
+            ${canDelete ? `<button class="file-action-btn" onclick="deleteFile('${f.id}', '${f.storage_path}')" title="Ištrinti"><span class="ic ic-trash"></span></button>` : ''}
           </div>
         `;
       }

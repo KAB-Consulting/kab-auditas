@@ -468,7 +468,6 @@
           <button class="mod" data-mod="submissions" onclick="navigateTo('submissions')"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><rect x='8' y='2' width='8' height='4' rx='1'/></svg><span>Klausimynai</span></button>
           <a class="mod" href="admin-dokumentai.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/></svg><span>Dokumentai kreditoriams</span></a>
           <a class="mod" href="admin-bankrotas.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M12 3v18'/><path d='M5 7h14'/><path d='M7 7l-4 7h8z'/><path d='M17 7l-4 7h8z'/><path d='M8 21h8'/></svg><span>Nemokumo procesai</span></a>
-          <a class="mod" href="admin-pasiulymai.html" data-module="pasiulymai"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><path d='M14 2v6h6'/><path d='M8 13h8'/><path d='M8 17h5'/></svg><span>Pasiūlymai</span></a>
           <a class="mod" href="admin-avnis.html"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M8 21h8'/><path d='M12 17v4'/><path d='M7 4h10v5a5 5 0 0 1-10 0z'/><path d='M7 6H4a2 2 0 0 0 0 4h3'/><path d='M17 6h3a2 2 0 0 1 0 4h-3'/></svg><span>Konkursai</span></a>
         </nav>
         <div class="tb-user"><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg><span id="user-email-top"></span></div>
@@ -590,15 +589,6 @@
                 <p style="font-size: 12px; color: #6B7280; margin: 0;">Nemokumo proceso valdymas: pirminiai raštai, blankai, registras</p>
               </div>
             </a>
-            <a href="admin-pasiulymai.html" id="card-pasiulymai" data-module="pasiulymai" style="text-decoration:none; color: inherit; display: block;">
-              <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
-                  <div style="width:42px; height:42px; background:#EDE9FE; color:#6D28D9; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">📄</div>
-                  <strong style="color: var(--kab-navy); font-size: 14px;">Pasiūlymų teikimas</strong>
-                </div>
-                <p style="font-size: 12px; color: #6B7280; margin: 0;">Pasiūlymai klientams, siuntimų istorija ir dokumentų biblioteka</p>
-              </div>
-            </a>
             <a href="admin-avnis.html" id="card-avnis" data-module="avnis" style="text-decoration:none; color: inherit; display: block;">
               <div style="border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px; transition: all 0.15s; cursor: pointer; background: #FFF;" onmouseover="this.style.borderColor='#C9A961'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
@@ -667,26 +657,27 @@
         <div class="page-section-header">
           <h2 class="page-section-title"><span class="ic ic-ruler"></span> Klausimynų šablonai</h2>
         </div>
-        <p style="color:#6B7280; margin: 0 0 12px;">Sistemoje veikiantys šablonai. Naujus šablonus pridėti per Supabase SQL Editor (lentelė <code>questionnaire_templates</code>).</p>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-          <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
-            <div style="font-weight: 600; color: var(--kab-navy);"><span class="ic ic-search"></span> Auditas</div>
-            <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">Standartinis audito klausimynas</div>
-          </div>
-          <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
-            <div style="font-weight: 600; color: var(--kab-navy);"><span class="ic ic-chart"></span> Restrukturizavimas</div>
-            <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">RSP-1 plėtros klausimynas</div>
-          </div>
-          <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
-            <div style="font-weight: 600; color: var(--kab-navy);"><span class="ic ic-scale"></span> Fizinių asmenų bankrotas</div>
-            <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">FAB klausimynas</div>
-          </div>
-          <div style="border:1px solid #E5E7EB; border-radius:8px; padding: 14px;">
-            <div style="font-weight: 600; color: var(--kab-navy);"><span class="ic ic-folder"></span> Įmonių grupės duomenys (spec.)</div>
-            <div style="font-size: 12px; color: #6B7280; margin-top: 4px;">Multi-entity pavienis šablonas</div>
-          </div>
+        <p style="color:#6B7280; margin: 0 0 12px;">Čia galite tvarkyti <strong>bendrus šablono dokumentus</strong>, kurie pateikiami <strong>visiems klientams</strong>, naudojantiems atitinkamą klausimyno šabloną (pvz., FAR šablonas Excel formatu). Dokumentai, skirti konkrečiam klientui, keliami iš to kliento klausimyno peržiūros.</p>
+        <div id="templates-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
+          <div style="color:#9CA3AF; font-size:12px;">Kraunama...</div>
         </div>
       </section>
+
+      <!-- v6.2: Šablono dokumentų redaktorius -->
+      <div id="template-editor-modal" class="modal-backdrop hidden" style="z-index:9997;" onclick="if(event.target===this) closeTemplateEditor()">
+        <div class="modal" style="max-width:960px; max-height:92vh; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:6px;">
+            <div>
+              <h2 style="margin:0; color:var(--kab-navy);"><span class="ic ic-ruler"></span> <span id="te-tpl-name">Šablono dokumentai</span></h2>
+              <p style="margin:4px 0 0; color:#6B7280; font-size:12px;">Čia pridėti dokumentai bus matomi <strong>VISIEMS klientams</strong>, naudojantiems šį šabloną.</p>
+            </div>
+            <button class="btn btn-ghost btn-small" onclick="closeTemplateEditor()">✕ Uždaryti</button>
+          </div>
+          <div id="te-content" style="overflow-y:auto; flex:1; padding:8px 2px;">
+            <div style="color:#9CA3AF; padding:30px; text-align:center;">Kraunasi...</div>
+          </div>
+        </div>
+      </div>
 
       <!-- =============== VARTOTOJAI =============== -->
       <section id="users-section" class="page-section">
@@ -1278,6 +1269,133 @@
       opt.dataset.description = t.description || '';
       select.appendChild(opt);
     }
+
+    // v6.2 — užpildyti „Klausimynų šablonai" sekciją su mygtuku „Tvarkyti dokumentus"
+    renderTemplatesGrid();
+  }
+
+  // ============================================================
+  // v6.2 — Šablonų dokumentų valdymas (bendri visiems)
+  // ============================================================
+  function renderTemplatesGrid() {
+    const grid = document.getElementById('templates-grid');
+    if (!grid) return;
+    // Rodom ir aktyvius ir spec. šablonus
+    const all = [...allTemplates, ...(specTemplates || [])];
+    if (!all.length) {
+      grid.innerHTML = '<div style="color:#9CA3AF;">Nėra sukurtų šablonų</div>';
+      return;
+    }
+    const iconMap = {
+      auditas: 'ic-search', restrukturizavimas: 'ic-chart',
+      bankrotas_fizinis: 'ic-scale', imoniu_grupes_duomenys: 'ic-folder'
+    };
+    let html = '';
+    for (const t of all) {
+      const ico = iconMap[t.code] || 'ic-clipboard';
+      html += `
+        <div style="border:1px solid #E5E7EB; border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-weight:600; color:var(--kab-navy);"><span class="ic ${ico}"></span> ${escapeHtml(t.name)}</div>
+          <div style="font-size:12px; color:#6B7280; flex:1;">${escapeHtml(t.description || '')}</div>
+          <button class="btn btn-primary btn-small" onclick="openTemplateEditor('${t.id}')" style="width:100%;">
+            📎 Tvarkyti bendrus dokumentus
+          </button>
+        </div>`;
+    }
+    grid.innerHTML = html;
+  }
+
+  async function openTemplateEditor(templateId) {
+    const template = allTemplates.find(t => t.id === templateId) || (specTemplates || []).find(t => t.id === templateId);
+    if (!template) { alert('Šablonas nerastas'); return; }
+
+    document.getElementById('te-tpl-name').textContent = template.name;
+    const modal = document.getElementById('template-editor-modal');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+
+    const content = document.getElementById('te-content');
+    content.innerHTML = '<div style="color:#9CA3AF; padding:30px; text-align:center;">Kraunasi…</div>';
+
+    // Užkrauti template attachments (visiems šio šablono itemams)
+    const atts = await loadTemplateAttachments(templateId);
+    // Grupuoti pagal item_id
+    const attsByItem = {};
+    for (const a of atts) {
+      (attsByItem[a.item_id] = attsByItem[a.item_id] || []).push(a);
+    }
+
+    // Nustatom template struktūrą (sections.sections pagal convention)
+    const sections = (template.sections && template.sections.sections) ? template.sections.sections : [];
+    if (!sections.length) {
+      content.innerHTML = '<div style="color:#B91C1C; padding:20px;">Šablonas neturi klausimų struktūros</div>';
+      return;
+    }
+
+    // Išsaugom konteksta, kad upload/delete galėtų žinoti
+    window._currentTemplateEditor = { templateId, template, attsByItem };
+
+    let html = '';
+    for (const s of sections) {
+      html += `<div style="margin-bottom:14px; border:1px solid #E5E7EB; border-radius:6px; overflow:hidden;">
+        <div style="background:#F9FAFB; padding:10px 14px; font-weight:700; color:var(--kab-navy); border-bottom:1px solid #E5E7EB;">
+          <span style="background:var(--kab-gold); color:var(--kab-navy); padding:2px 8px; border-radius:3px; font-size:11px; margin-right:8px;">${escapeHtml(s.number || s.id || '')}</span>
+          ${escapeHtml(s.title || '')}
+        </div>
+        <div style="padding:8px 10px;">`;
+      for (const it of (s.items || [])) {
+        const list = attsByItem[it.id] || [];
+        let attHtml = '';
+        if (list.length) {
+          attHtml = '<div style="margin:6px 0;">';
+          for (const a of list) {
+            attHtml += `<div class="file-list-item" style="background:#FFF; border:1px solid #DBEAFE;">
+              <span>📄 ${escapeHtml(a.original_name)} <small style="color:#999; margin-left:6px;">${formatBytes(a.file_size || 0)}</small>
+                ${a.description ? `<small style="color:#1E40AF; margin-left:6px;">— ${escapeHtml(a.description)}</small>` : ''}
+              </span>
+              <span style="display:inline-flex; gap:6px;">
+                <button class="btn btn-ghost btn-small" onclick="downloadTemplateAttachment('${a.id}')">⬇ Parsisiųsti</button>
+                <button class="btn btn-ghost btn-small" style="color:#B91C1C;" onclick="deleteTplAttFromEditor('${a.id}','${templateId}')">🗑</button>
+              </span>
+            </div>`;
+          }
+          attHtml += '</div>';
+        }
+        html += `<div style="padding:8px 6px; border-bottom:1px dashed #F3F4F6;">
+          <div style="font-size:13px; color:#111; margin-bottom:4px;"><strong>${escapeHtml(it.title || '')}</strong></div>
+          ${attHtml}
+          <button class="btn btn-ghost btn-small" style="color:#1E40AF; font-size:11px;"
+            onclick="openUploadTemplateDialog('${it.id}', '${escapeHtml(it.title || '').replace(/'/g, '&#39;')}')">
+            📎 Pridėti dokumentą šiam klausimui
+          </button>
+        </div>`;
+      }
+      html += `</div></div>`;
+    }
+    content.innerHTML = html;
+    // Padedam openUploadTemplateDialog žinoti kad veikiame per Template editor (reikia žinoti templateId)
+    window._currentTemplateState = window._currentTemplateState || {};
+    window._currentTemplateState.template = template;
+  }
+
+  function closeTemplateEditor() {
+    const m = document.getElementById('template-editor-modal');
+    if (m) { m.classList.add('hidden'); m.style.display = 'none'; }
+  }
+
+  async function deleteTplAttFromEditor(attId, templateId) {
+    if (!confirm('Pašalinti šį šablono dokumentą? Jis dings VISIEMS klientams, naudojantiems šį šabloną.')) return;
+    try {
+      // storage path
+      const { data: row } = await supabase.from('questionnaire_template_attachments').select('storage_path').eq('id', attId).single();
+      if (row?.storage_path) {
+        await supabase.storage.from('questionnaire-template-files').remove([row.storage_path]);
+      }
+      await supabase.from('questionnaire_template_attachments').delete().eq('id', attId);
+      await openTemplateEditor(templateId);
+    } catch (err) {
+      alert('Klaida: ' + (err.message || String(err)));
+    }
   }
 
   // Spec. (multi_entity) šablonai — atskirai, nes jie is_active=false,
@@ -1295,6 +1413,9 @@
     }
 
     specTemplates = data || [];
+
+    // v6.2 — perrender'inam šablonų grid'ą kad įsitrauktų ir spec. šablonai
+    try { renderTemplatesGrid(); } catch(e) {}
 
     const select = document.getElementById('spec-template-id');
     if (!select) return;
@@ -2252,6 +2373,9 @@
 
   // ===== DETALI PERŽIŪRA =====
 
+  // v6.2 — alias (kai kur kviečiamas openDetail, bet pati funkcija vadinasi viewDetail)
+  async function openDetail(id) { return viewDetail(id); }
+
   async function viewDetail(id) {
     const modal = document.getElementById('detail-modal');
     const content = document.getElementById('modal-content');
@@ -2850,8 +2974,10 @@
       ? 'background: #FFFAF0; border-left: 4px solid #C62828;'
       : '';
 
+    // Šablonai (bendri) — rodomi tik-skaitymui per-kliento peržiūroje; redaguojami per „Šablonų valdymas" meniu
     const templateAttsHtml = renderTemplateAttachmentsForItem(itemDef.id);
-    const addTemplateBtn = `<button class="btn btn-ghost btn-small" style="margin-top:6px; font-size:11px; color:#1E40AF;" onclick="openUploadTemplateDialog('${itemDef.id}', '${escapeHtml(itemDef.title).replace(/'/g, '&#39;')}')" title="Priskirti šabloną šiam klausimui (matys visi klientai, naudojantys šį klausimyno šabloną)">📎 Pridėti šabloną klientui</button>`;
+    // v6.2: per-kliento dokumento įkėlimas (izoliuotas per submission_id)
+    const addClientFileBtn = `<button class="btn btn-ghost btn-small" style="margin-top:6px; font-size:11px; color:#0B1E3F;" onclick="openUploadToClientDialog('${itemDef.id}', '${escapeHtml(itemDef.title).replace(/'/g, '&#39;')}')" title="Įkelti dokumentą TIK šiam klientui (matys tik ši paskyra)">📎 Įkelti dokumentą šiam klientui</button>`;
 
     return `
       <div class="admin-item" style="${itemHighlight}">
@@ -2868,7 +2994,7 @@
         ${contentHtml}
         ${commentsHtml}
         ${commentFormHtml}
-        ${addTemplateBtn}
+        ${addClientFileBtn}
       </div>
     `;
   }
@@ -3028,8 +3154,14 @@
       });
       if (insErr) throw insErr;
       closeUploadTemplateDialog();
-      const sub = window._currentTemplateState.submission;
-      await openDetail(sub.id);
+      // v6.2: jei esam template editor'yje — refresh'inam jį; priešingu atveju klientinė peržiūra
+      const editorCtx = window._currentTemplateEditor;
+      const sub = window._currentTemplateState?.submission;
+      if (editorCtx && editorCtx.templateId === templateId) {
+        await openTemplateEditor(templateId);
+      } else if (sub?.id) {
+        await openDetail(sub.id);
+      }
     } catch (err) {
       prgEl.style.display='none';
       errEl.textContent = 'Klaida: ' + (err.message || String(err));
@@ -3179,6 +3311,11 @@
         ? '<span style="background: var(--kab-gold); color: var(--kab-navy); padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 700;">AKTUALI</span>'
         : `<span style="background: #E0E0E0; color: #666; padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 600;">v${f.version_number}</span>`;
 
+      // v6.2: Pažymim kas įkėlė (admin arba klientas)
+      const uploaderBadge = (f.uploaded_by === 'admin' || (f.uploaded_by && f.uploaded_by.includes('@')))
+        ? '<span style="background:#DBEAFE; color:#1E3A8A; padding:1px 6px; border-radius:3px; font-size:9px; font-weight:700; margin-left:4px;">PATEIKĖ KAB</span>'
+        : '<span style="background:#F3F4F6; color:#374151; padding:1px 6px; border-radius:3px; font-size:9px; font-weight:600; margin-left:4px;">PATEIKĖ KLIENTAS</span>';
+
       // Preview mygtukas tik jei failo tipas palaikomas
       const previewBtn = isPreviewable(f.original_name)
         ? `<button class="btn btn-ghost btn-small" onclick="openFilePreview('${encodeURIComponent(f.storage_path || '')}', '${escapeHtml(f.original_name).replace(/'/g, '&#39;')}')" title="Peržiūrėti be atsisiuntimo">👁 Peržiūrėti</button>`
@@ -3186,7 +3323,7 @@
 
       html += `
         <div class="file-list-item">
-          <span><span class="ic ic-file"></span> ${escapeHtml(f.original_name)} ${badge}
+          <span><span class="ic ic-file"></span> ${escapeHtml(f.original_name)} ${badge} ${uploaderBadge}
             <small style="color:#999; margin-left: 8px;">${formatBytes(f.file_size)} · ${new Date(f.uploaded_at).toLocaleDateString('lt-LT')}</small>
           </span>
           <span style="display:inline-flex; gap:6px; align-items:center;">
@@ -3198,6 +3335,153 @@
     }
     html += '</div>';
     return html;
+  }
+
+  // ============================================================
+  // v6.2 — Admin'o įkėlimas TIK ŠIAM klientui (per-submission izoliuotas)
+  // ============================================================
+  function openUploadToClientDialog(itemId, itemTitle) {
+    const sub = window._currentTemplateState?.submission;
+    if (!sub) { alert('Klaida: klientas nepasirinktas'); return; }
+
+    let modal = document.getElementById('kab-upload-client-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'kab-upload-client-modal';
+      modal.className = 'modal-backdrop';
+      modal.style.zIndex = '9998';
+      modal.innerHTML = `
+        <div class="modal" style="max-width:580px;">
+          <h2 style="color:#0B1E3F;">📎 Įkelti dokumentą šiam klientui</h2>
+          <p style="font-size:13px; color:#111; margin-bottom:6px;">Klientas: <strong id="uplc-client-name">—</strong></p>
+          <p style="font-size:13px; color:#666; margin-bottom:12px;">Klausimas: <strong id="uplc-item-title">—</strong></p>
+          <div style="background:#F0F9FF; border-left:3px solid #0369A1; padding:8px 10px; border-radius:4px; font-size:12px; color:#0C4A6E; margin-bottom:12px;">
+            🔒 <strong>Izoliacija:</strong> Šis failas bus matomas <strong>TIK ŠIO kliento</strong> paskyroje. Kiti klientai jo nematys. Jei norite įkelti bendrą šabloną (visiems klientams) — naudokite „Šablonų valdymas" meniu.
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; color:#374151; font-weight:600;">Failas *</label>
+            <input type="file" id="uplc-file" style="display:block; width:100%; margin-top:4px;" accept=".pdf,.xlsx,.xls,.docx,.doc,.txt,.csv,.zip,.png,.jpg,.jpeg">
+            <small style="color:#6B7280; font-size:11px;">Maks. 100 MB</small>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-ghost" onclick="closeUploadToClientDialog()">Atšaukti</button>
+            <button class="btn btn-primary" onclick="submitClientUpload()">📤 Įkelti klientui</button>
+          </div>
+          <div id="uplc-error" style="display:none; color:#B91C1C; font-size:12px; margin-top:8px;"></div>
+          <div id="uplc-progress" style="display:none; color:#0369A1; font-size:12px; margin-top:8px;"></div>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', e => { if (e.target === modal) closeUploadToClientDialog(); });
+    }
+    document.getElementById('uplc-client-name').textContent = sub.client_name || '—';
+    document.getElementById('uplc-item-title').textContent = itemTitle;
+    document.getElementById('uplc-file').value = '';
+    document.getElementById('uplc-error').style.display = 'none';
+    document.getElementById('uplc-progress').style.display = 'none';
+    modal.dataset.itemId = itemId;
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+
+  function closeUploadToClientDialog() {
+    const m = document.getElementById('kab-upload-client-modal');
+    if (m) { m.style.display = 'none'; m.classList.add('hidden'); }
+  }
+
+  async function submitClientUpload() {
+    const modal = document.getElementById('kab-upload-client-modal');
+    const errEl = document.getElementById('uplc-error');
+    const prgEl = document.getElementById('uplc-progress');
+    const fileInput = document.getElementById('uplc-file');
+    const itemId = modal.dataset.itemId;
+    errEl.style.display = 'none';
+
+    if (!fileInput.files || !fileInput.files[0]) {
+      errEl.textContent = 'Pasirinkite failą'; errEl.style.display = 'block'; return;
+    }
+    const file = fileInput.files[0];
+    if (file.size > 100 * 1024 * 1024) {
+      errEl.textContent = `Failas per didelis (${Math.round(file.size/1024/1024)} MB). Maks. 100 MB.`;
+      errEl.style.display = 'block'; return;
+    }
+
+    const state = window._currentTemplateState;
+    const sub = state.submission;
+
+    try {
+      prgEl.textContent = '⏳ Keliama...'; prgEl.style.display = 'block';
+
+      // Užtikrinam, kad items eilutė egzistuoja šiai submission + item_id porai
+      let itemRecord = state.items[itemId];
+      let itemDbId;
+      if (!itemRecord || !itemRecord.id) {
+        let sectionId = null, itemTitle = null;
+        for (const section of state.sections) {
+          for (const it of section.items) {
+            if (it.id === itemId) { sectionId = section.id; itemTitle = it.title; break; }
+          }
+          if (sectionId) break;
+        }
+        if (!sectionId) throw new Error('Nepavyko rasti klausimo apibrėžimo');
+        const { data: newItem, error: itErr } = await supabase
+          .from('questionnaire_items')
+          .upsert({ submission_id: sub.id, section_id: sectionId, item_id: itemId, item_title: itemTitle },
+                  { onConflict: 'submission_id,item_id' })
+          .select().single();
+        if (itErr) throw itErr;
+        itemDbId = newItem.id;
+        state.items[itemId] = newItem;
+      } else {
+        itemDbId = itemRecord.id;
+      }
+
+      // Nustatyti versiją (+1 nuo esamo max)
+      const existing = (state.files[itemId] || []).map(f => f.version_number || 1);
+      const versionNumber = existing.length ? Math.max(...existing) + 1 : 1;
+
+      // Senas aktualus failas → is_current=false (versijavimas)
+      const { data: currents } = await supabase
+        .from('questionnaire_item_files')
+        .select('id').eq('item_id', itemDbId).eq('is_current', true);
+      if (currents && currents.length) {
+        await supabase.from('questionnaire_item_files')
+          .update({ is_current: false })
+          .in('id', currents.map(x => x.id));
+      }
+
+      // Storage path — sanitizuotas pavadinimas; prefiksas 'admin_' kad būtų vizualiai aišku saugyklos lygmenyje
+      const safeName = sanitizeStorageName(file.name);
+      const sectionId = state.items[itemId].section_id;
+      const storagePath = `${sub.id}/${sectionId}/${itemId}/admin_v${versionNumber}_${safeName}`;
+
+      const { error: upErr } = await supabase.storage
+        .from('client-documents')
+        .upload(storagePath, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+      if (upErr) throw upErr;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const uploader = user?.email || 'admin';
+
+      const { error: insErr } = await supabase.from('questionnaire_item_files').insert({
+        item_id: itemDbId,
+        submission_id: sub.id,
+        original_name: file.name,
+        storage_path: storagePath,
+        file_size: file.size,
+        mime_type: file.type || null,
+        version_number: versionNumber,
+        is_current: true,
+        uploaded_by: uploader   // "admin" arba admin'o email'as — rodymui atskiriam nuo 'client'
+      });
+      if (insErr) throw insErr;
+
+      closeUploadToClientDialog();
+      await openDetail(sub.id);
+    } catch (err) {
+      prgEl.style.display='none';
+      errEl.textContent = 'Klaida: ' + (err.message || String(err));
+      errEl.style.display = 'block';
+    }
   }
 
   // ============================================================
