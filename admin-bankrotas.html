@@ -5881,7 +5881,9 @@
       let t=String(s).replace(/ /g,' ').trim();
       if(t===''||t==='—'||t==='-')return {v:null,bad:false};
       t=t.replace(/[^0-9.,\-]/g,'');
-      if(t===''||t==='-')return {v:null,bad:true};
+      // Be nė vieno skaitmens tai nėra skaičius. Svarbu: Number('') === 0, todėl
+      // „Inv. Nr.“ (lieka „..“) be šios patikros būtų palaikytas nuliu.
+      if(!/[0-9]/.test(t))return {v:null,bad:true};
       const hasDot=t.includes('.'), hasCom=t.includes(',');
       if(hasDot&&hasCom){
         // dešiniausias skyriklis = dešimtainis, kitas = tūkstančių
