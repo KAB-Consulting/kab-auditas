@@ -960,7 +960,7 @@
           </div>
         </div>
         <div id="assetPasteBlock" class="hidden" style="background:#EFF4FB;border:1px solid #CCD9EE;border-radius:6px;padding:12px;margin-bottom:12px;">
-          <div class="hint" style="margin-bottom:6px;">Įklijuokite iš Excel su <b>antraščių eilute</b> — stulpeliai atpažįstami automatiškai (Inv. Nr., Pavadinimas, Kiekis, Mato vnt., Vieta, Likutinė vertė, Kategorija, Aprašymas, Pastabos). Be antraštės laikoma tvarka: <b>Inv. Nr.; Pavadinimas; Kiekis; Vieta; Likutinė vertė</b>.</div>
+          <div class="hint" style="margin-bottom:6px;">Įklijuokite iš Excel su <b>antraščių eilute</b> — stulpeliai atpažįstami automatiškai (Inv. Nr., Pavadinimas, Kategorija, Kiekis, Mato vnt., Vieta, Įsigijimo data, Įsigijimo kaina, Likutinė vertė, Aprašymas, Pastabos). Stulpelių tvarka nesvarbi, nereikalingus galėsite išjungti peržiūroje. Be antraštės laikoma tvarka: <b>Inv. Nr.; Pavadinimas; Kiekis; Vieta; Likutinė vertė</b>.</div>
           <div class="hint" style="margin-bottom:6px;color:#8A6D00;">Importuojama <b>likutinė (balansinė) vertė</b>. Pradinė pardavimo kaina pildoma vėliau, patvirtinus kreditorių susirinkime.</div>
           <textarea id="assetPasteData" class="textarea" style="min-height:90px;font-family:monospace;" placeholder="Inv. Nr.	Pavadinimas	Kiekis	Vieta	Likutinė vertė&#10;A-1024	Stalas medinis	4	Sandėlis Vilniuje	120,50"></textarea>
           <div style="display:flex;gap:8px;margin-top:8px;">
@@ -1754,6 +1754,10 @@
       </div>
       <label class="label">Saugojimo vieta</label><input id="asLocation" class="input">
       <label class="label">Aprašymas</label><textarea id="asDesc" class="textarea" style="min-height:50px;"></textarea>
+      <div class="row">
+        <div><label class="label">Įsigijimo data</label><input id="asAcqDate" class="input" type="date" title="Kada turtas įsigytas pagal įmonės apskaitą"></div>
+        <div><label class="label">Įsigijimo kaina (€)</label><input id="asAcqPrice" class="input" type="number" step="0.01" title="Pirminė įsigijimo kaina pagal apskaitą"></div>
+      </div>
       <div class="row">
         <div><label class="label">Likutinė vertė (€)</label><input id="asBookValue" class="input" type="number" step="0.01" title="Balansinė vertė pagal įmonės apskaitą"></div>
         <div><label class="label">Pradinė pardavimo kaina (€)</label><input id="asPrice" class="input" type="number" step="0.01" title="Pildoma tik patvirtinus kreditorių susirinkime"></div>
@@ -5561,6 +5565,8 @@
       $('asCode').value=a.asset_code||'(bus suteiktas išsaugojus)';
       $('asInvNo').value=a.inventory_no||'';
       $('asBookValue').value=a.book_value??'';
+      $('asAcqDate').value=a.acquired_on||'';
+      $('asAcqPrice').value=a.acquisition_price??'';
       $('asStatus').value=(a.status&&a.status!=='sold')?a.status:'in_stock';
       $('asNotes').value=a.notes||''; $('assetMsg').innerHTML='';
       AS_PHOTOS=(a.photos||[]).slice();
@@ -5723,6 +5729,8 @@
       const row={ name, category:$('asCategory').value, quantity:Number($('asQty').value)||1, unit:$('asUnit').value.trim()||'vnt.',
         location:$('asLocation').value.trim()||null, description:$('asDesc').value.trim()||null,
         inventory_no:$('asInvNo').value.trim()||null, book_value:bookV,
+        acquired_on:$('asAcqDate').value||null,
+        acquisition_price:$('asAcqPrice').value===''?null:Number($('asAcqPrice').value),
         status:$('asStatus').value, notes:$('asNotes').value.trim()||null, needs_review:false, updated_at:new Date().toISOString() };
       let res;
       if(id){ row.current_price=price; res=await sb.from('insolvency_assets').update(row).eq('id',id); }
@@ -5836,28 +5844,30 @@
       const priceLabel=priceMode==='initial'?'Pradinė vertė (€)':'Aktuali kaina (€, datai)';
       let aoaPdf, aoaXlsx, moneyCols;
       if(view==='sold'){
-        const hh=['Nr.','Kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis','Vnt.','Vieta','Likutinė vertė (€)','Pardavimo data','Pardavimo kaina (€)','Pirkėjas','Šaltinis'];
-        aoaPdf=[hh.slice()]; aoaXlsx=[hh.slice()]; moneyCols=new Set([8,10]);
+        const hh=['Nr.','Kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis','Vnt.','Vieta','Įsigijimo data','Įsigijimo kaina (€)','Likutinė vertė (€)','Pardavimo data','Pardavimo kaina (€)','Pirkėjas','Šaltinis'];
+        aoaPdf=[hh.slice()]; aoaXlsx=[hh.slice()]; moneyCols=new Set([9,10,12]);
         let tot=0;
         rows.forEach((r,i)=>{ const a=r.a; const sp=a.sold_price!=null?Number(a.sold_price):0; tot+=sp; const src=a.source_act_id?'Perimta (aktas)':'Apskaita';
           const bv=a.book_value!=null?Number(a.book_value):'';
-          aoaXlsx.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',bv,a.sold_date||'',sp,a.buyer_name||'',src]);
-          aoaPdf.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',fmtEur(a.book_value),a.sold_date||'',fmtEur(sp),a.buyer_name||'',src]); });
-        aoaXlsx.push(['','','','','','','','','','VISO parduota:',tot,'','']);
-        aoaPdf.push(['','','','','','','','','','VISO parduota:',fmtEur(tot),'','']);
+          const ap=a.acquisition_price!=null?Number(a.acquisition_price):'';
+          aoaXlsx.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',ap,bv,a.sold_date||'',sp,a.buyer_name||'',src]);
+          aoaPdf.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',fmtEur(a.acquisition_price),fmtEur(a.book_value),a.sold_date||'',fmtEur(sp),a.buyer_name||'',src]); });
+        aoaXlsx.push(['','','','','','','','','','','','VISO parduota:',tot,'','']);
+        aoaPdf.push(['','','','','','','','','','','','VISO parduota:',fmtEur(tot),'','']);
       } else {
-        const hh=['Nr.','Kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis','Vnt.','Vieta','Likutinė vertė (€)',priceLabel,'Būsena (datai)','Pastaba','Šaltinis'];
-        aoaPdf=[hh.slice()]; aoaXlsx=[hh.slice()]; moneyCols=new Set([8,9]);
+        const hh=['Nr.','Kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis','Vnt.','Vieta','Įsigijimo data','Įsigijimo kaina (€)','Likutinė vertė (€)',priceLabel,'Būsena (datai)','Pastaba','Šaltinis'];
+        aoaPdf=[hh.slice()]; aoaXlsx=[hh.slice()]; moneyCols=new Set([9,10,11]);
         let tot=0;
         rows.forEach((r,i)=>{ const a=r.a; const src=a.source_act_id?'Perimta (aktas)':'Apskaita';
           const price=priceMode==='initial'?(a.initial_price!=null?Number(a.initial_price):0):assetPriceAsOf(a,asOf); tot+=price;
           const bv=a.book_value!=null?Number(a.book_value):'';
+          const ap=a.acquisition_price!=null?Number(a.acquisition_price):'';
           const stLabel=AS_ST[r.stAsOf]||r.stAsOf;
           const note=r.soldByDate?('Parduota '+(a.sold_date||'')+(a.sold_price!=null?' už '+fmtEur(a.sold_price):'')+(a.buyer_name?' ('+a.buyer_name+')':'')):'';
-          aoaXlsx.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',bv,price,stLabel,note,src]);
-          aoaPdf.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',fmtEur(a.book_value),fmtEur(price),stLabel,note,src]); });
-        aoaXlsx.push(['','','','','','','','','',tot,'VISO','','']);
-        aoaPdf.push(['','','','','','','','','',fmtEur(tot),'VISO','','']);
+          aoaXlsx.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',ap,bv,price,stLabel,note,src]);
+          aoaPdf.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',fmtEur(a.acquisition_price),fmtEur(a.book_value),fmtEur(price),stLabel,note,src]); });
+        aoaXlsx.push(['','','','','','','','','','','',tot,'VISO','','']);
+        aoaPdf.push(['','','','','','','','','','','',fmtEur(tot),'VISO','','']);
       }
       const viewLabel={all:'Visas turto registras (pagal apskaitą)',taken:'Perimtas turtas (pagal perdavimo aktus)',unsold:'Neparduotas / aktualus turtas',sold:'Parduotas turtas'}[view];
       const metaLines=['Ataskaitos data: '+asOf, 'Pjūvis: '+viewLabel, (view!=='sold'?('Kainos: '+(priceMode==='initial'?'pradinės vertės':'aktualios datai')):''), 'Pozicijų: '+rows.length].filter(Boolean);
@@ -5899,10 +5909,30 @@
       const n=Number(t);
       return isNaN(n)?{v:null,bad:true}:{v:n,bad:false};
     }
-    // Antraščių atpažinimas — tikrinimo eiliškumas svarbus („mato vnt.“ prieš „kiekis“)
+    // Datos atpažinimas: 2019-05-14 / 2019.05.14 / 14.05.2019 / 14/05/2019 / Excel serijos nr.
+    function parseDate(s){
+      if(s==null)return {v:null,bad:false};
+      const t=String(s).replace(/ /g,' ').trim();
+      if(t===''||t==='—'||t==='-')return {v:null,bad:false};
+      if(/^\d{5}(\.\d+)?$/.test(t)){           // Excel saugo datas kaip skaičių
+        const n=Number(t);
+        if(n>=20000&&n<=60000)
+          return { v:new Date(Date.UTC(1899,11,30)+n*86400000).toISOString().slice(0,10), bad:false };
+      }
+      let m=t.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})$/);
+      if(!m){ const m2=t.match(/^(\d{1,2})[-./](\d{1,2})[-./](\d{4})$/); if(m2)m=[m2[0],m2[3],m2[2],m2[1]]; }
+      if(!m)return {v:null,bad:true};
+      const y=+m[1], mo=+m[2], da=+m[3];
+      if(mo<1||mo>12||da<1||da>31)return {v:null,bad:true};
+      return { v:y+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0'), bad:false };
+    }
+    // Antraščių atpažinimas — tikrinimo eiliškumas svarbus („mato vnt.“ prieš „kiekis“,
+    // „įsigijimo vertė“ prieš „likutinė vertė“)
     const AS_FIELDS={ '':'— nenaudoti —', inventory_no:'Inv. Nr.', name:'Pavadinimas', category:'Kategorija',
-      quantity:'Kiekis', unit:'Mato vnt.', location:'Vieta', book_value:'Likutinė vertė',
+      quantity:'Kiekis', unit:'Mato vnt.', location:'Vieta',
+      acquired_on:'Įsigijimo data', acquisition_price:'Įsigijimo kaina', book_value:'Likutinė vertė',
       description:'Aprašymas', notes:'Pastabos' };
+    const AS_NUM_FIELDS=['quantity','book_value','acquisition_price'];
     function assetGuessKey(h){
       const n=String(h||'').toLowerCase().trim();
       if(!n)return '';
@@ -5910,6 +5940,8 @@
       if(/mato\s*vnt|matav|^vnt\.?$|^unit$/.test(n))return 'unit';
       if(/kiek|qty|quantity/.test(n))return 'quantity';
       if(/kategor|r[ūu][šs]is|tipas/.test(n))return 'category';
+      if(/([įi]sigij|pirkim|[įi]sigyt).*dat|dat.*([įi]sigij|pirkim)/.test(n))return 'acquired_on';
+      if(/([įi]sigij|pirkim|[įi]sigyt).*(kain|vert|sum)|savikain/.test(n))return 'acquisition_price';
       if(/likutin|balansin|vert[ėe]|book/.test(n))return 'book_value';
       if(/pradin.*kain|patvirtint.*kain/.test(n))return '';   // kainos – atskiras importas
       if(/vieta|adres|saugoj|location/.test(n))return 'location';
@@ -5953,7 +5985,8 @@
       AS_IMP.cells.forEach((c,idx)=>{
         const o={ __line:idx+1+(AS_IMP.hasHeader?1:0), __badNums:[] };
         AS_IMP.map.forEach((k,i)=>{ if(!k)return; const raw=(c[i]||'').trim();
-          if(k==='quantity'||k==='book_value'){ const r=parseNum(raw); o[k]=r.v; if(r.bad)o.__badNums.push(AS_FIELDS[k]); }
+          if(AS_NUM_FIELDS.includes(k)){ const r=parseNum(raw); o[k]=r.v; if(r.bad)o.__badNums.push(AS_FIELDS[k]); }
+          else if(k==='acquired_on'){ const r=parseDate(raw); o[k]=r.v; if(r.bad)o.__badNums.push(AS_FIELDS[k]); }
           else if(k==='category'){ o[k]=raw?guessCategory(raw):'movable'; }
           else o[k]=raw||null;
         });
@@ -5982,7 +6015,7 @@
       const w=[];
       if(!AS_IMP.map.includes('name'))w.push('<div class="error">Nenurodytas stulpelis „Pavadinimas“ — be jo importuoti negalima.</div>');
       if(noName.length)w.push('<div class="hint">Praleidžiamos '+noName.length+' eilutės be pavadinimo (eil. '+noName.slice(0,10).map(r=>r.__line).join(', ')+(noName.length>10?'…':'')+').</div>');
-      if(badNum.length)w.push('<div class="hint" style="color:#8A6D00;">Nepavyko nuskaityti skaičiaus '+badNum.length+' eilutėse: '+badNum.slice(0,10).map(r=>'eil. '+r.__line+' ('+r.__badNums.join(', ')+')').join('; ')+(badNum.length>10?'…':'')+'. Jos bus importuotos su tuščia reikšme.</div>');
+      if(badNum.length)w.push('<div class="hint" style="color:#8A6D00;">Nepavyko nuskaityti reikšmės '+badNum.length+' eilutėse: '+badNum.slice(0,10).map(r=>'eil. '+r.__line+' ('+r.__badNums.join(', ')+')').join('; ')+(badNum.length>10?'…':'')+'. Jos bus importuotos su tuščia reikšme.</div>');
       if(dupInv.length)w.push('<div class="hint" style="color:#8A6D00;">Įklijuotame sąraše kartojasi inventoriniai Nr.: '+dupInv.slice(0,8).map(esc).join(', ')+(dupInv.length>8?'…':'')+'. Importas nestabdomas.</div>');
       if(already.length)w.push('<div class="hint" style="color:#8A6D00;">'+already.length+' inventoriniai Nr. byloje jau yra ('+already.slice(0,8).map(esc).join(', ')+(already.length>8?'…':'')+'). Galimas pakartotinis to paties sąrašo importas.</div>');
       $('assetPasteWarn').innerHTML=w.join('');
@@ -6002,7 +6035,9 @@
         .map(r=>({ inventory_no:r.inventory_no||null, name:r.name, category:r.category||'movable',
                    quantity:r.quantity==null?null:String(r.quantity), unit:r.unit||null,
                    location:r.location||null, description:r.description||null, notes:r.notes||null,
-                   book_value:r.book_value==null?null:String(r.book_value) }));
+                   book_value:r.book_value==null?null:String(r.book_value),
+                   acquired_on:r.acquired_on||null,
+                   acquisition_price:r.acquisition_price==null?null:String(r.acquisition_price) }));
       if(!rows.length)return;
       $('assetPasteSave').disabled=true;
       const { data, error }=await sb.rpc('import_assets',{ p_case_id:CURRENT.id, p_rows:rows });
@@ -6291,6 +6326,8 @@
             <tr><td style="border:1px solid #ccc;padding:5px;"><b>Kiekis</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(String(a.quantity??''))} ${esc(a.unit||'')}</td></tr>
             <tr><td style="border:1px solid #ccc;padding:5px;"><b>Saugojimo vieta</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(a.location||'—')}</td></tr>
             <tr><td style="border:1px solid #ccc;padding:5px;"><b>Aprašymas</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(a.description||'—')}</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:5px;"><b>Įsigijimo data</b></td><td style="border:1px solid #ccc;padding:5px;">${esc(a.acquired_on||'—')}</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:5px;"><b>Įsigijimo kaina</b></td><td style="border:1px solid #ccc;padding:5px;">${fmtEur(a.acquisition_price)}</td></tr>
             <tr><td style="border:1px solid #ccc;padding:5px;"><b>Likutinė vertė (apskaitos)</b></td><td style="border:1px solid #ccc;padding:5px;">${fmtEur(a.book_value)}</td></tr>
             <tr><td style="border:1px solid #ccc;padding:5px;"><b>Pradinė pardavimo kaina</b></td><td style="border:1px solid #ccc;padding:5px;">${a.initial_price==null?'nepatvirtinta':fmtEur(a.initial_price)}</td></tr>
             <tr><td style="border:1px solid #ccc;padding:5px;"><b>Dabartinė kaina</b></td><td style="border:1px solid #ccc;padding:5px;">${fmtEur(a.current_price)}</td></tr>
