@@ -34,7 +34,7 @@
       --warn:#8A6D00; --warn-bg:#FFF8E6;--warn-bd:#EBDCAE;
       --info:#1B4F9C; --info-bg:#EFF4FB;--info-bd:#CCD9EE;
       /* --- forma --- */
-      --r:6px; --r-sm:4px; --sb-w:214px;
+      --r:10px; --r-sm:7px; --sb-w:214px;
       /* --- suderinamumas su senais inline stiliais --- */
       --cream:#F5F6F8; --gray:#7B8C9B; --light:#F7F9FB;
     }
@@ -182,6 +182,44 @@
     .modal{ background:#fff; border:1px solid var(--bd); border-radius:8px; max-width:720px; width:100%;
       padding:22px 24px; box-shadow:0 10px 34px rgba(11,30,63,.18); }
     .modal h2{ color:var(--ink); font-size:16px; font-weight:600; margin-bottom:12px; }
+    /* Ilgų kortelių veiksmų juosta – visada matoma, be slinkimo iki apačios */
+    .modal-foot{ position:sticky; bottom:-22px; margin:16px -24px -22px; padding:12px 24px;
+      background:#fff; border-top:1px solid var(--bd); display:flex; gap:8px; justify-content:flex-end;
+      flex-wrap:wrap; border-radius:0 0 var(--r) var(--r); z-index:2; }
+    /* Antrinės modalės VISADA virš pirminių (peržiūra, atidaryta iš turto kortelės) */
+    #previewModal{ z-index:200; }
+    #photoBox{ z-index:300; }
+
+    /* ===================== NUOTRAUKŲ MINIATIŪROS IR PERŽIŪRA ===================== */
+    .ph-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+    .ph-thumb{ position:relative; width:104px; height:104px; border-radius:8px; overflow:hidden;
+      border:1px solid var(--bd); background:#F3F5F8; cursor:zoom-in; flex:0 0 auto; }
+    .ph-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .ph-thumb .ph-del{ position:absolute; top:4px; right:4px; width:26px; height:26px; border-radius:50%;
+      border:0; background:rgba(17,24,39,.62); color:#fff; cursor:pointer; font-size:14px; line-height:1;
+      display:flex; align-items:center; justify-content:center; padding:0; }
+    .ph-thumb .ph-del:hover{ background:rgba(179,38,30,.92); }
+    .ph-thumb .ph-n{ position:absolute; left:4px; bottom:4px; background:rgba(17,24,39,.6); color:#fff;
+      font-size:10px; padding:1px 6px; border-radius:20px; }
+    .ph-add{ width:104px; height:104px; border-radius:8px; border:1.5px dashed var(--bd); background:#fff;
+      color:var(--muted); cursor:pointer; font-size:12px; font-family:inherit; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:4px; flex:0 0 auto; }
+    .ph-add:hover{ border-color:var(--navy); color:var(--navy); background:var(--hov); }
+    /* Peržiūros langas (lightbox) */
+    #photoBox{ position:fixed; inset:0; background:rgba(12,18,28,.93); display:flex; flex-direction:column; }
+    #photoBox .pb-top{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 14px; color:#fff; font-size:13px; }
+    #photoBox .pb-stage{ flex:1; display:flex; align-items:center; justify-content:center; padding:0 8px 14px;
+      min-height:0; position:relative; }
+    #photoBox img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; }
+    #photoBox .pb-nav{ position:absolute; top:50%; transform:translateY(-50%); width:52px; height:52px;
+      border-radius:50%; border:0; background:rgba(255,255,255,.14); color:#fff; font-size:24px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; }
+    #photoBox .pb-nav:hover{ background:rgba(255,255,255,.26); }
+    #photoBox .pb-prev{ left:10px; } #photoBox .pb-next{ right:10px; }
+    #photoBox .pb-btn{ background:rgba(255,255,255,.14); color:#fff; border:0; border-radius:var(--r-sm);
+      padding:8px 14px; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; min-height:40px; }
+    #photoBox .pb-btn:hover{ background:rgba(255,255,255,.26); }
 
     /* ===================== KITA ===================== */
     .crumb{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; color:var(--muted);
@@ -502,6 +540,14 @@
       .tab{ min-height:38px; display:inline-flex; align-items:center; }
       .nav-i{ min-height:40px; }
       td .btn-sm{ margin:2px; }
+    }
+
+    /* --- Lietimui valdomi įrenginiai: didesni piktogramų mygtukai lentelėse --- */
+    @media (pointer:coarse){
+      td .btn-sm{ min-width:42px; min-height:42px; padding:9px 11px; }
+      .ph-thumb,.ph-add{ width:118px; height:118px; }
+      .ph-thumb .ph-del{ width:32px; height:32px; font-size:16px; }
+      input[type="checkbox"]{ width:20px; height:20px; }
     }
 
     /* --- Planšetė portrait ir siauriau: šoninis meniu tampa slankiuoju --- */
@@ -1499,6 +1545,10 @@
           <div id="actMsg"></div>
           <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
             <button class="btn btn-ghost" id="actSaveDraft"><span class="ic ic-save"></span> Išsaugoti (tarpinis)</button>
+            <label id="actPhotoOptWrap" class="hidden" style="display:none;align-items:center;gap:6px;font-size:13px;cursor:pointer;border:1px solid var(--bd);border-radius:var(--r-sm);padding:6px 12px;background:#fff;">
+              <input type="checkbox" id="actWithPhotos" style="width:auto;min-height:0;"> Su nuotraukų priedu
+              <span id="actPhotoCnt" class="muted" style="font-size:12px;"></span>
+            </label>
             <button class="btn" id="actGenPdf"><span class="ic ic-file"></span> Generuoti PDF</button>
             <button class="btn btn-ghost" id="actLockBtn" style="display:none;"><span class="ic ic-lock"></span> Užrakinti aktą</button>
           </div>
@@ -1683,6 +1733,25 @@
   </div>
 
   <!-- PDF PERŽIŪROS MODALĖ -->
+  <!-- NUOTRAUKŲ PERŽIŪRA (visada viršutinis sluoksnis) -->
+  <div id="photoBox" class="hidden">
+    <div class="pb-top">
+      <div style="min-width:0;">
+        <div id="pbTitle" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        <div id="pbSub" style="opacity:.65;font-size:12px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex:0 0 auto;">
+        <button class="pb-btn" id="pbDl">Atsisiųsti</button>
+        <button class="pb-btn" id="pbClose">Uždaryti</button>
+      </div>
+    </div>
+    <div class="pb-stage">
+      <button class="pb-nav pb-prev" id="pbPrev" aria-label="Ankstesnė">‹</button>
+      <img id="pbImg" alt="">
+      <button class="pb-nav pb-next" id="pbNext" aria-label="Kita">›</button>
+    </div>
+  </div>
+
   <div id="previewModal" class="modal-bg hidden">
     <div class="modal" style="max-width:900px;width:100%;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -1875,7 +1944,7 @@
         </div>
       </div>
       <div id="assetMsg"></div>
-      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+      <div class="modal-foot">
         <button class="btn btn-ghost" id="assetCancel">Uždaryti</button>
         <button class="btn" id="assetSave">Išsaugoti</button>
       </div>
@@ -4450,6 +4519,77 @@
         docx.map(d=>`<tr><td class="muted">${fmtDate(d.created_at)}</td><td><b>${esc(d.file_name||'—')}</b></td><td>${esc(d.template_code||'')}</td><td style="text-align:right;white-space:nowrap;">${d.docx_path?`<button class="btn btn-sm btn-ghost" onclick="downloadDoc('${esc(d.docx_path)}')"><span class="ic ic-down"></span> DOCX</button> <button class="btn btn-sm btn-ghost" onclick="openDocEditor('${d.id}')"><span class="ic ic-pencil"></span> Taisyti</button> <button class="btn btn-sm btn-gold" onclick="openPdfModal('${d.id}','${esc(d.file_name||'')}')"><span class="ic ic-file"></span> Generuoti PDF</button>`:''}</td></tr>`).join('')+'</tbody></table>';
     }
     let PREVIEW_PATH=null, PREVIEW_BLOB=null;
+    /* ===== NUOTRAUKŲ MINIATIŪROS IR PERŽIŪRA =====
+       Nuotrauka nėra dokumentas: ją reikia matyti, o ne atidaryti per failo peržiūrą.
+       Todėl visur rodomos miniatiūros, o paspaudus – pilno dydžio peržiūra viršutiniame
+       sluoksnyje (veikia ir atidarius iš turto kortelės). */
+    const PH_URL=new Map();                       // path -> pasirašyta nuoroda (podėlis)
+    async function photoUrl(path){
+      if(!path)return '';
+      if(PH_URL.has(path))return PH_URL.get(path);
+      try{
+        const { data:{ session } } = await sb.auth.getSession();
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{
+          method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
+          body:JSON.stringify({ path })});
+        const r=await res.json(); const u=r.url||'';
+        if(u)PH_URL.set(path,u);
+        return u;
+      }catch(_){ return ''; }
+    }
+    // Miniatiūrų tinklelis. items: [{path,name}], onDel – funkcijos pavadinimas (string) arba null
+    async function photoThumbs(el,items,onDel,addBtns){
+      if(!el)return;
+      const add=(addBtns||[]).map(b=>`<button type="button" class="ph-add" onclick="${b.fn}"><span class="ic ${b.ic}"></span>${esc(b.label)}</button>`).join('');
+      if(!items.length){ el.innerHTML=add||'<span class="muted" style="font-size:12px;">Nuotraukų nėra.</span>'; return; }
+      el.innerHTML=items.map((p,i)=>`<div class="ph-thumb" data-i="${i}" style="background:#F3F5F8;"></div>`).join('')+add;
+      const urls=await Promise.all(items.map(p=>photoUrl(p.path)));
+      el.querySelectorAll('.ph-thumb').forEach((d,i)=>{
+        d.innerHTML=`<img src="${urls[i]||''}" alt="${esc(items[i].name||'')}" loading="lazy">`
+          +`<span class="ph-n">${i+1}</span>`
+          +(onDel?`<button type="button" class="ph-del" title="Pašalinti">✕</button>`:'');
+        d.onclick=e=>{ if(e.target.closest('.ph-del'))return; openPhotoBox(items,i); };
+        const db=d.querySelector('.ph-del');
+        if(db)db.onclick=e=>{ e.stopPropagation(); onDel(i); };
+      });
+    }
+    // --- peržiūros langas ---
+    let PB_ITEMS=[], PB_I=0;
+    async function openPhotoBox(items,i){
+      PB_ITEMS=items||[]; PB_I=i||0;
+      show('photoBox'); document.body.style.overflow='hidden';
+      await pbRender();
+    }
+    async function pbRender(){
+      const p=PB_ITEMS[PB_I]; if(!p)return;
+      $('pbTitle').textContent=p.name||('Nuotrauka '+(PB_I+1));
+      $('pbSub').textContent=(PB_I+1)+' iš '+PB_ITEMS.length;
+      const one=PB_ITEMS.length<2;
+      $('pbPrev').style.display=one?'none':'flex';
+      $('pbNext').style.display=one?'none':'flex';
+      $('pbImg').src=await photoUrl(p.path);
+    }
+    function pbStep(d){ if(!PB_ITEMS.length)return; PB_I=(PB_I+d+PB_ITEMS.length)%PB_ITEMS.length; pbRender(); }
+    function pbClose(){ hide('photoBox'); $('pbImg').src=''; document.body.style.overflow=''; }
+    $('pbPrev').onclick=()=>pbStep(-1);
+    $('pbNext').onclick=()=>pbStep(1);
+    $('pbClose').onclick=pbClose;
+    $('pbDl').onclick=()=>{ const p=PB_ITEMS[PB_I]; if(p)downloadDoc(p.path); };
+    $('photoBox').onclick=e=>{ if(e.target.id==='photoBox'||e.target.classList.contains('pb-stage'))pbClose(); };
+    document.addEventListener('keydown',e=>{
+      if($('photoBox').classList.contains('hidden'))return;
+      if(e.key==='Escape')pbClose();
+      else if(e.key==='ArrowLeft')pbStep(-1);
+      else if(e.key==='ArrowRight')pbStep(1);
+    });
+    // braukimas planšetėje
+    (()=>{ let x0=null;
+      const st=$('photoBox');
+      st.addEventListener('touchstart',e=>{ x0=e.changedTouches[0].clientX; },{passive:true});
+      st.addEventListener('touchend',e=>{ if(x0===null)return; const dx=e.changedTouches[0].clientX-x0; x0=null;
+        if(Math.abs(dx)>50)pbStep(dx<0?1:-1); },{passive:true});
+    })();
+
     window.previewDoc=async(path,title)=>{ // peržiūra modaliame lange per blob (visada inline)
       PREVIEW_PATH=path;
       $('previewTitle').textContent=title||'Dokumento peržiūra';
@@ -5767,9 +5907,9 @@
       finally{ e.target.value=''; }
     };
     function renderAsPhotos(){
-      $('asPhotoGrid').innerHTML=AS_PHOTOS.length?AS_PHOTOS.map((p,i)=>`<div style="border:1px solid var(--bd);border-radius:6px;padding:4px 8px;display:flex;align-items:center;gap:6px;font-size:12px;">
-        <span class="ic ic-image"></span> ${esc(p.name||('foto '+(i+1)))} <span style="cursor:pointer;" onclick="previewDoc('${esc(p.path)}','${esc(p.name||'Nuotrauka')}')"><span class="ic ic-eye"></span></span>
-        <span style="cursor:pointer;color:#B3261E;" onclick="delAsPhoto(${i})"><span class="ic ic-x"></span></span></div>`).join(''):'<span class="muted" style="font-size:12px;">Nuotraukų nėra.</span>';
+      const el=$('asPhotoGrid'); if(!el)return;
+      el.className='ph-grid';
+      photoThumbs(el, AS_PHOTOS, i=>delAsPhoto(i));
     }
     window.delAsPhoto=async(i)=>{ AS_PHOTOS.splice(i,1); renderAsPhotos(); await saveAsPhotos(); };
     async function saveAsPhotos(){
@@ -6469,11 +6609,7 @@
             (st==='found'?'✓ Inventorizuota '+esc((a.inventory_checked_at||'').slice(0,10))
                          :'✕ Nerasta'+(a.inventory_note?': '+esc(a.inventory_note):''))+'</div>':''}
           <div class="sec-title" style="margin-top:0;">Fotofiksacija</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-            <button class="btn btn-sm btn-ghost" id="invCamBtn"><span class="ic ic-cam"></span> Fotografuoti</button>
-            <button class="btn btn-sm btn-ghost" id="invUpBtn"><span class="ic ic-up"></span> Įkelti nuotraukas</button>
-          </div>
-          <div id="invPhotos" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+          <div id="invPhotos" class="ph-grid" style="margin-bottom:12px;"></div>
           <div id="invMsg" style="margin-bottom:8px;"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-sm" id="invOkNext"><span class="ic ic-check"></span> Patvirtinti ir kitas</button>
@@ -6483,8 +6619,6 @@
           </div>
         </div>`;
       renderInvPhotos();
-      $('invCamBtn').onclick=()=>$('invPhotoCam').click();
-      $('invUpBtn').onclick=()=>$('invPhotoFile').click();
       $('invOkNext').onclick=()=>invMark('found',true);
       $('invOkClose').onclick=()=>invMark('found',false);
       $('invMissBtn').onclick=()=>{
@@ -6498,11 +6632,11 @@
     function renderInvPhotos(){
       const a=ASSETS.find(x=>x.id===INV_ID); if(!a)return;
       const ph=a.photos||[];
-      $('invPhotos').innerHTML=ph.length?ph.map((p,i)=>`<div style="border:1px solid var(--bd);border-radius:5px;padding:3px 7px;font-size:12px;display:flex;gap:5px;align-items:center;">
-        <span class="ic ic-image"></span>${esc(p.name||('foto '+(i+1)))}
-        <span style="cursor:pointer;" onclick="previewDoc('${esc(p.path)}','${esc(p.name||'Nuotrauka')}')"><span class="ic ic-eye"></span></span>
-        <span style="cursor:pointer;color:#B3261E;" onclick="invDelPhoto(${i})"><span class="ic ic-x"></span></span></div>`).join('')
-        :'<span class="muted" style="font-size:12px;">Nuotraukų dar nėra.</span>';
+      const el=$('invPhotos'); el.className='ph-grid';
+      photoThumbs(el, ph, i=>invDelPhoto(i), [
+        { fn:"$('invPhotoCam').click()",  ic:'ic-cam', label:'Fotografuoti' },
+        { fn:"$('invPhotoFile').click()", ic:'ic-up',  label:'Įkelti' }
+      ]);
     }
     window.invDelPhoto=async i=>{
       const a=ASSETS.find(x=>x.id===INV_ID); if(!a)return;
@@ -6589,9 +6723,12 @@
         const t=INV_ACT_TYPE[c]||'asset_other';
         const rows=byCat[c].map(a=>{
           const ref=[a.asset_code,a.inventory_no?'inv. '+a.inventory_no:''].filter(Boolean).join(' · ');
-          if(t==='asset_realestate')return { name:a.name||'', address:a.location||'', unique_no:'', notes1:ref, notes2:a.description||'' };
-          if(t==='asset_intangible')return { name:a.name||'', notes1:ref, notes2:a.description||'' };
-          return { name:a.name||'', location:a.location||'', qty:String(a.quantity??''), notes1:ref, notes2:a.description||'' };
+          // _asset_id / _ref – tarnybiniai laukai: lentelėje nerodomi (jų nėra ACT_COLS),
+          // bet pagal juos sudaromas nuotraukų priedas su inventoriniais numeriais
+          const base={ _asset_id:a.id, _ref:(a.inventory_no||a.asset_code||'') };
+          if(t==='asset_realestate')return { ...base, name:a.name||'', address:a.location||'', unique_no:'', notes1:ref, notes2:a.description||'' };
+          if(t==='asset_intangible')return { ...base, name:a.name||'', notes1:ref, notes2:a.description||'' };
+          return { ...base, name:a.name||'', location:a.location||'', qty:String(a.quantity??''), notes1:ref, notes2:a.description||'' };
         });
         const p={ case_id:CURRENT.id, act_type:t, act_no:'', act_date:today, handover_person:'',
                   receiver_person:receiver, rows, meta:{}, photos:[],
@@ -10261,6 +10398,7 @@
       renderActFiles(); $('actFileMsg').innerHTML='';
       $('pasteBlock').classList.add('hidden'); $('pasteData').value=''; $('pasteMapBlock').classList.add('hidden'); $('pasteMsg').innerHTML='';
       renderPhotos();
+      refreshActPhotoOption();
       const m=a.meta||{};
       $('vMarke').value=m.marke||''; $('vVin').value=m.vin||''; $('vPlate').value=m.plate||''; $('vKm').value=m.km||''; $('vColor').value=m.color||''; $('vCond').value=m.cond||''; $('vNotes').value=m.notes||'';
       // grupių / dvikalbio akto laukai
@@ -10757,7 +10895,21 @@
         +(es?`<div style="border:1px dashed #888;padding:4px 8px;font-size:${data?'9px':'11px'};line-height:1.45;margin:4px 0;display:inline-block;">Pasirašyta elektroniniu būdu (el. paštu)<br><b>${esc(es.name||'')}</b><br>${esc(es.email||'')}<br>${new Date(es.signed_at).toLocaleString('lt-LT',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>`
         :(data?'':'<div style="height:50px;"></div>'))
       }<div style="border-top:1px solid #333;font-size:12px;padding-top:3px;">${esc(who||'')}</div></div>`;
-      const photosHtml=(p._photoData&&p._photoData.length)?`<div style="margin-top:20px;"><div style="font-weight:bold;font-size:13px;margin-bottom:6px;">Nuotraukos (priedas):</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${p._photoData.map(d=>`<img src="${d}" style="width:160px;height:160px;object-fit:cover;border:1px solid #999;">`).join('')}</div></div>`:'';
+      // Nuotraukų priedas: po vieną nuotrauką pozicijai, langelis 40×30 mm su inventoriniu Nr.
+      // actW px atitinka turinio plotį mm (žr. žemiau), todėl matmenys perskaičiuojami į px.
+      const MM=(p.act_type==='vehicle'||p.act_type==='grouped')?(700/170):(1050/267); // px viename mm
+      const CW=Math.round(40*MM), CH=Math.round(30*MM);
+      const photosHtml=(p._photoData&&p._photoData.length)?`
+        <div style="margin-top:46px;"><!-- tarpas, kad puslapių pjaustyklė rastų švarią vietą -->
+          <div style="font-weight:bold;font-size:13px;margin-bottom:2px;">Priedas Nr. 1. Perduodamo turto fotofiksacija</div>
+          <div style="font-size:11px;color:#444;margin-bottom:8px;">Prie ${esc(p.act_date||'')} ${p.act_no?('Nr. '+esc(p.act_no)):''} perdavimo akto. Nuotraukų: ${p._photoData.length}.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:${Math.round(2*MM)}px;">
+            ${p._photoData.map(d=>`<div style="width:${CW}px;border:1px solid #999;">
+              <img src="${d.src}" style="width:100%;height:${CH}px;object-fit:cover;display:block;">
+              <div style="font-size:9px;text-align:center;padding:2px 1px;border-top:1px solid #999;line-height:1.2;word-break:break-all;">${esc(d.label||'')}</div>
+            </div>`).join('')}
+          </div>
+        </div>`:'';
       const totalLine=p.act_type==='documents_v2'?`<div style="font-size:13px;margin-top:10px;">Iš viso perduota bylų (dokumentų): <b>${p.rows.length}</b>.</div>`:'';
       const actW = (p.act_type==='vehicle') ? 700 : 1050; // lenteliniai aktai — gulsčias (landscape) A4
       return `<div style="font-family:'Times New Roman',serif;color:#000;width:${actW}px;padding:10px;">
@@ -10784,23 +10936,63 @@
         ${photosHtml}
       </div>`;
     }
+    // Nuotraukų priedo pasirinkimas rodomas tik tada, kai nuotraukų iš tiesų yra
+    async function refreshActPhotoOption(){
+      const wrap=$('actPhotoOptWrap'); if(!wrap)return;
+      let n=ACT_PHOTOS.length;
+      const ids=(ACT_ROWS||[]).map(r=>r._asset_id).filter(Boolean);
+      if(ids.length){
+        try{
+          const { data }=await sb.from('insolvency_assets').select('id,photos').in('id',ids);
+          n+=(data||[]).filter(a=>(a.photos||[]).length).length;
+        }catch(_){}
+      }
+      if(!n){ wrap.classList.add('hidden'); wrap.style.display='none'; $('actWithPhotos').checked=false; return; }
+      wrap.classList.remove('hidden'); wrap.style.display='inline-flex';
+      $('actPhotoCnt').textContent='('+n+' vnt., po vieną pozicijai)';
+    }
     $('actGenPdf').onclick=async()=>{
       $('actMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Generuojama…</div>'; $('actGenPdf').disabled=true;
       try{
         const id=await saveAct('final'); if(!id)return;
         const p=collectAct('final');
         p.esign_handover=ACT_ESIGN.handover; p.esign_receiver=ACT_ESIGN.receiver;
-        // atsisiunčiam nuotraukas kaip base64 (kad html2canvas jas įtrauktų)
+        // Nuotraukų priedas – tik jei pažymėta. Po vieną nuotrauką kiekvienai pozicijai,
+        // pasirašyta inventoriniu numeriu; papildomai – prie akto prisegtos nuotraukos.
         p._photoData=[];
-        if(ACT_PHOTOS.length){
-          const { data:{ session } } = await sb.auth.getSession();
-          for(const ph of ACT_PHOTOS){
+        if($('actWithPhotos')&&$('actWithPhotos').checked){
+          $('actMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Ruošiamas nuotraukų priedas…</div>';
+          const wanted=[];
+          const ids=(p.rows||[]).map(r=>r._asset_id).filter(Boolean);
+          if(ids.length){
+            const { data:as }=await sb.from('insolvency_assets')
+              .select('id,asset_code,inventory_no,photos').in('id',ids);
+            const byId={}; (as||[]).forEach(a=>byId[a.id]=a);
+            (p.rows||[]).forEach(r=>{
+              const a=byId[r._asset_id]; if(!a)return;
+              const ph=(a.photos||[])[0]; if(!ph||!ph.path)return;
+              wanted.push({ path:ph.path, label:a.inventory_no||a.asset_code||r._ref||'' });
+            });
+          }
+          ACT_PHOTOS.forEach(ph=>wanted.push({ path:ph.path, label:'' }));
+          for(const w of wanted){
             try{
-              const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},body:JSON.stringify({ path:ph.path })});
-              const r=await res.json(); if(!r.url)continue;
-              const blob=await (await fetch(r.url)).blob();
+              const url=await photoUrl(w.path); if(!url)continue;
+              const blob=await (await fetch(url)).blob();
               const b64=await new Promise(rs=>{ const fr=new FileReader(); fr.onload=()=>rs(fr.result); fr.readAsDataURL(blob); });
-              p._photoData.push(b64);
+              // sumažinam: langelis ~40×30 mm, todėl 640 px pakanka; kitaip PDF tampa milžiniškas
+              const small=await new Promise(rs=>{
+                const im=new Image();
+                im.onload=()=>{ try{
+                  const mx=640, k=Math.min(1,mx/Math.max(im.width,im.height));
+                  const cv=document.createElement('canvas');
+                  cv.width=Math.max(1,Math.round(im.width*k)); cv.height=Math.max(1,Math.round(im.height*k));
+                  cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+                  rs(cv.toDataURL('image/jpeg',0.78));
+                }catch(_){ rs(b64); } };
+                im.onerror=()=>rs(b64); im.src=b64;
+              });
+              p._photoData.push({ src:small, label:w.label });
             }catch(_){}
           }
         }
