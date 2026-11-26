@@ -7180,15 +7180,7 @@
       let ok=0, fail=0;
       for(const c of cats){
         const t=INV_ACT_TYPE[c]||'asset_other';
-        const rows=byCat[c].map(a=>{
-          const ref=[a.asset_code,a.inventory_no?'inv. '+a.inventory_no:''].filter(Boolean).join(' · ');
-          // _asset_id / _ref – tarnybiniai laukai: lentelėje nerodomi (jų nėra ACT_COLS),
-          // bet pagal juos sudaromas nuotraukų priedas su inventoriniais numeriais
-          const base={ _asset_id:a.id, _ref:(a.inventory_no||a.asset_code||'') };
-          if(t==='asset_realestate')return { ...base, name:a.name||'', address:a.location||'', unique_no:'', notes1:ref, notes2:a.description||'' };
-          if(t==='asset_intangible')return { ...base, name:a.name||'', notes1:ref, notes2:a.description||'' };
-          return { ...base, name:a.name||'', location:a.location||'', qty:String(a.quantity??''), notes1:ref, notes2:a.description||'' };
-        });
+        const rows=byCat[c].map(a=>assetToActRow(a,t));
         const p={ case_id:CURRENT.id, act_type:t, act_no:'', act_date:today, handover_person:'',
                   receiver_person:receiver, rows, meta:{}, photos:[],
                   sig_handover:null, sig_receiver:null, status:'draft' };
@@ -11350,9 +11342,29 @@
         fact_qty:a.inventory_state==='not_found'?'0':(a.inventory_qty!=null?String(a.inventory_qty):(a.inventory_state==='found'?String(a.quantity??''):'')),
         state:actInvStLbl(a.inventory_state), notes1:a.inventory_note||'' };
       const ref=[a.asset_code,a.inventory_no?'inv. '+a.inventory_no:''].filter(Boolean).join(' · ');
-      if(t==='asset_realestate')return { ...base, name:a.name||'', address:a.location||'', unique_no:'', notes1:ref, notes2:a.description||'' };
-      if(t==='asset_intangible')return { ...base, name:a.name||'', notes1:ref, notes2:a.description||'' };
-      return { ...base, name:a.name||'', location:a.location||'', qty:String(a.quantity??''), notes1:ref, notes2:a.description||'' };
+      let r;
+      if(t==='asset_realestate')r={ ...base, name:a.name||'', address:a.location||'', unique_no:'', notes1:ref, notes2:a.description||'' };
+      else if(t==='asset_intangible')r={ ...base, name:a.name||'', notes1:ref, notes2:a.description||'' };
+      else r={ ...base, name:a.name||'', location:a.location||'', qty:String(a.quantity??''), notes1:ref, notes2:a.description||'' };
+      return actMergeInvNote(r,a);
+    }
+    // Paskutinės inventorizacijos komentaras perdavimo akto „Pastabos 2“ skiltyje: pridedamas prie esamo teksto,
+    // ankstesnis (jei inventorizuota pakartotinai) pakeičiamas naujausiu; be komentaro – nieko nepridedama.
+    function actMergeInvNote(r,a){
+      const note=String((a&&a.inventory_note)||'').trim();
+      let cur=String(r.notes2||'');
+      const prev=String(r._inv_note||'').trim();
+      if(prev&&prev!==note&&cur.includes(prev)){ cur=cur.split(prev).join('').replace(/^[\s;·]+|[\s;·]+$/g,'').replace(/\s*;\s*;\s*/g,'; '); }
+      if(note&&!cur.includes(note))cur=cur.trim()?cur.trim()+'; '+note:note;
+      r.notes2=cur; if(note)r._inv_note=note; else delete r._inv_note;
+      return r;
+    }
+    // susietos perdavimo akto eilutės papildomos inventorizacijos komentarais (atidarant ir prieš PDF)
+    function actApplyInvNotes(){
+      const t=$('actType').value; if(!actSrcApplies(t)||t==='inventory_check'||!ACT_SRC_ASSETS)return false;
+      const byId=new Map(ACT_SRC_ASSETS.map(a=>[a.id,a])); let ch=false;
+      ACT_ROWS.forEach(r=>{ const a=r._asset_id&&byId.get(r._asset_id); if(!a)return; const before=r.notes2+'|'+r._inv_note; actMergeInvNote(r,a); if(before!==r.notes2+'|'+r._inv_note)ch=true; });
+      return ch;
     }
     // kurios objekto pozicijos patenka į aktą
     function actSrcSelect(assets,t,obj,stateMode){
@@ -11374,6 +11386,7 @@
       if(!actSrcApplies(t))return;
       $('actSrcState').value=t==='inventory_check'?'all':'found';
       try{ await actFetchAssets(); }catch(e){ $('actSrcInfo').textContent='Nepavyko gauti turto sąrašo: '+(e.message||e); return; }
+      if(actApplyInvNotes())renderActRows();
       const locs=[...new Set(ACT_SRC_ASSETS.map(a=>(a.location||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'lt'));
       const cnt=l=>ACT_SRC_ASSETS.filter(a=>(a.location||'').trim()===l).length;
       const noLoc=ACT_SRC_ASSETS.filter(a=>!(a.location||'').trim()).length;
@@ -11435,7 +11448,9 @@
             ACT_ROWS=sel.map(a=>assetToActRow(a,t));
           }
         }
-        // susietų eilučių duomenys – iš sistemos (inventorizacijos aktui: būsena, kiekis, pastaba)
+        // susietų eilučių duomenys – iš sistemos (inventorizacijos aktui: būsena, kiekis, pastaba;
+        // perdavimo aktams – inventorizacijos komentaras „Pastabos 2“ skiltyje)
+        actApplyInvNotes();
         if(t==='inventory_check'){
           const byId=new Map(ACT_SRC_ASSETS.map(a=>[a.id,a]));
           ACT_ROWS=ACT_ROWS.map(r=>{ const a=r._asset_id&&byId.get(r._asset_id); return a?assetToActRow(a,t):r; });
@@ -11468,7 +11483,7 @@
           const canUnlock = mlocked && (IS_SUPERADMIN || a.manual_locked_by===CURRENT_UID);
           const isInvAct = a.act_type==='inventory_check';
           const canEdit = !mlocked && (!locked || IS_SUPERADMIN);
-          const canDel = !mlocked && (!locked || IS_SUPERADMIN || isInvAct);   // inventorizacijos aktą gali ištrinti bet kuris administratorius
+          const canDel = true;   // aktą (bet kokio tipo, ir su PDF) gali ištrinti bet kuris administratorius; užraktas taikomas tik redagavimui
           const editBtn = canEdit ? `<button class="btn btn-sm btn-ghost" onclick="editAct('${a.id}')"><span class="ic ic-pencil"></span> Koreguoti</button> `
             : (!mlocked && locked && isInvAct) ? `<button class="btn btn-sm btn-ghost" title="Ištrinti šį aktą ir sukurti naują tam pačiam objektui su atnaujintu turto sąrašu" onclick="redoInvAct('${a.id}')"><span class="ic ic-refresh"></span> Sukurti iš naujo</button> ` : '';
           const delBtn = canDel ? `<button class="btn btn-sm btn-danger" title="Ištrinti aktą" onclick="delAct('${a.id}')"><span class="ic ic-trash"></span></button>` : '';
@@ -11601,21 +11616,25 @@
       openActEditor(a);
     };
     window.delAct=async id=>{
-      const a=ACTS.find(x=>x.id===id);
-      if(a&&a.manual_locked){ alert('Aktas užrakintas administratoriaus — ištrinti negalima, kol jis neatrakintas.'); return; }
-      const locked=a&&a.status==='final'&&a.pdf_path;
-      const isInv=a&&a.act_type==='inventory_check';
-      if(locked&&!IS_SUPERADMIN&&!isInv){ alert('Aktas užrakintas: PDF jau sugeneruotas. Ištrinti gali tik superadministratorius.'); return; }
-      if(!confirm(locked&&isInv?'Ištrinti inventorizacijos aktą '+(a.act_no||'')+'?\n\nPDF jau sugeneruotas — trynimas bus užfiksuotas veiklos žurnale. Po to galėsite sukurti naują aktą tam pačiam objektui.'
-        :locked?'DĖMESIO: trinamas GALUTINIS pasirašytas aktas su sugeneruotu PDF. Veiksmas bus užfiksuotas veiklos žurnale.\n\nIštrinti aktą?':'Ištrinti aktą?'))return;
+      const a=ACTS.find(x=>x.id===id); if(!a)return;
+      const name=(ACT_LABELS[a.act_type]||ACT_TITLES[a.act_type]||'Aktas')+(a.act_no?' Nr. '+a.act_no:'')+(a.act_date?' ('+a.act_date+')':'');
+      const warn=[];
+      if(a.status==='final'&&a.pdf_path)warn.push('• aktui jau sugeneruotas PDF');
+      if(a.sig_handover||a.sig_receiver||a.esign_handover||a.esign_receiver)warn.push('• aktas pasirašytas');
+      if(a.signed_copy_path)warn.push('• įkelta fiziškai pasirašyta kopija');
+      if(a.manual_locked)warn.push('• aktas užrakintas redagavimui');
+      if(!confirm('Ištrinti '+name+'?'+(warn.length?'\n\nDĖMESIO:\n'+warn.join('\n'):'')+
+        '\n\nAkto eilutės ir pasirašymo užklausos bus pašalintos, turto kortelės lieka sistemoje ir galės būti įtrauktos į naują aktą. Trynimas (kas, kada, koks aktas) fiksuojamas veiklos žurnale.'))return;
       const res=await sb.rpc('delete_insolvency_act',{ p_id:id });
+      if(res.error){ alert('Klaida: '+res.error.message); return; }
       if(res.data&&res.data.ok===false){
-        const m=res.data.error_code==='act_locked'?'Aktas užrakintas — ištrinti gali tik superadministratorius.'
-          :res.data.error_code==='act_locked_manual'?'Aktas užrakintas administratoriaus — ištrinti negalima, kol jis neatrakintas.'
-          :('Klaida: '+res.data.error_code);
-        alert(m); return;
+        alert(res.data.error_code==='act_locked'||res.data.error_code==='act_locked_manual'
+          ? 'Aktas neištrintas: duomenų bazėje dar neįdiegtas atnaujinimas, leidžiantis trinti užrakintus aktus. Kreipkitės į sistemos administratorių.'
+          : 'Klaida: '+res.data.error_code);
+        return;
       }
       await loadActs();
+      if(res.data&&res.data.assets_unlinked&&typeof loadAssets==='function'&&ASSETS.length){ try{ await loadAssets(); }catch(_){} }
     };
     // Užrakintas (sugeneruotas) inventorizacijos aktas: ištrinti ir sukurti naują tam pačiam objektui ir datai
     window.redoInvAct=async id=>{
@@ -11623,7 +11642,7 @@
       if(!confirm('Inventorizacijos aktas '+(a.act_no||'')+' jau sugeneruotas (PDF), todėl jo koreguoti negalima.\n\nIštrinti šį aktą ir sukurti naują tam pačiam objektui su atnaujintu turto sąrašu?\n(Trynimas fiksuojamas veiklos žurnale.)'))return;
       const res=await sb.rpc('delete_insolvency_act',{ p_id:id });
       if(res.error||(res.data&&res.data.ok===false)){
-        alert(res.error?res.error.message:res.data.error_code==='act_locked'?'Šio akto ištrinti negalima — sistema dar neatnaujinta (kreipkitės į administratorių).':('Klaida: '+res.data.error_code)); return; }
+        alert(res.error?res.error.message:(res.data.error_code==='act_locked'||res.data.error_code==='act_locked_manual')?'Aktas neištrintas: duomenų bazėje dar neįdiegtas atnaujinimas, leidžiantis trinti užrakintus aktus.':('Klaida: '+res.data.error_code)); return; }
       const m=a.meta||{};
       await openActEditor({ act_type:'inventory_check', act_date:a.act_date, handover_person:a.handover_person, receiver_person:a.receiver_person,
         meta:{ address:m.address||'', others:m.others||'', object:m.object||'' }, _autoload:true });
