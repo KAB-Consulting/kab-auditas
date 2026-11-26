@@ -211,6 +211,10 @@
     .av-sec{ margin-top:18px; }
     .av-note{ background:#F7F9FB; border-radius:var(--r-sm); padding:10px 12px; font-size:13px; white-space:pre-wrap; }
     .ph-pending{ font-size:12px; color:#8A6D00; margin-top:6px; }
+    .lb-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; margin-bottom:8px; }
+    .lb-grid .label{ white-space:nowrap; }
+    .av-seg{ display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border:1px solid var(--bd); border-radius:var(--r-sm); cursor:pointer; font-size:13px; background:#fff; }
+    .av-seg:has(input:checked){ border-color:#C9A961; background:#FBF6EA; font-weight:600; }
     /* Ilgų kortelių veiksmų juosta – visada matoma, be slinkimo iki apačios */
     .modal-bg:has(.modal-foot){ padding-bottom:0; }  /* kitaip juosta prilimpa 40 px virš krašto */
     .modal-foot{ position:sticky; bottom:0; margin:16px -24px -22px; padding:12px 24px;
@@ -1097,6 +1101,7 @@
           </select>
           <select id="bulkParent" class="select" style="max-width:240px;"><option value="">Priklauso pozicijai (nebūtina)…</option></select>
           <button class="btn btn-sm" id="bulkAssignBtn">Priskirti grupei</button>
+          <button class="btn btn-sm btn-ghost" id="bulkLabelsBtn" style="color:#fff;border-color:rgba(255,255,255,.4);">🏷 Lipdukai</button>
           <button class="btn btn-sm btn-ghost" id="bulkClearBtn" style="color:#fff;border-color:rgba(255,255,255,.4);">Išvalyti žymėjimą</button>
         </div>
         <div id="assetsTable"></div>
@@ -1439,14 +1444,22 @@
             <option value="asset_intangible">Turto perdavimas — Nematerialus</option>
             <option value="vehicle">Automobilio perdavimo aktas</option>
             <option value="grouped">Priėmimo-perdavimo aktas (grupėmis / dvikalbis)</option>
+            <option value="inventory_check">Turto inventorizacijos aktas</option>
           </select>
           <div class="row" style="margin-top:10px;">
             <div><label class="label">Akto Nr.</label><input id="actNo" class="input"></div>
             <div><label class="label">Data</label><input id="actDate" class="input" type="date"></div>
           </div>
           <div class="row">
-            <div><label class="label">Perduodantis asmuo (įmonės vadovas/įgaliotas)</label><input id="actHandover" class="input"></div>
-            <div><label class="label">Perimantis asmuo (nemokumo administratoriaus įgaliotas asmuo)</label><input id="actReceiver" class="input"></div>
+            <div><label class="label" id="actHandoverLbl">Perduodantis asmuo (įmonės vadovas/įgaliotas)</label><input id="actHandover" class="input"></div>
+            <div><label class="label" id="actReceiverLbl">Perimantis asmuo (nemokumo administratoriaus įgaliotas asmuo)</label><input id="actReceiver" class="input"></div>
+          </div>
+          <!-- inventorizacijos akto laukai -->
+          <div id="actInvFields" class="hidden">
+            <div class="row">
+              <div><label class="label">Inventorizacijos vieta / adresas (etapas)</label><input id="actInvAddr" class="input" placeholder="pvz. Gamyklos g. 5, Kaunas — sandėlis Nr. 2"></div>
+              <div><label class="label">Kiti dalyvavę asmenys (nebūtina)</label><input id="actInvOthers" class="input" placeholder="pvz. sandėlininkas Jonas Jonaitis"></div>
+            </div>
           </div>
           <div class="muted" style="font-size:12px;margin-top:6px;">Perdavėjas: bankrutuojanti įmonė <b id="actDebtor"></b> (įrašoma automatiškai).</div>
 
@@ -1858,8 +1871,8 @@
         <div style="max-width:200px;"><select id="invFilterCat" class="select"><option value="">Visos kategorijos</option></select></div>
         <div style="max-width:220px;"><select id="invFilterGroup" class="select"><option value="">Visos grupės</option></select></div>
         <div style="max-width:200px;"><select id="invFilterState" class="select">
+          <option value="">Visos būsenos</option>
           <option value="todo">Dar netikrintos</option>
-          <option value="">Visos</option>
           <option value="found">Inventorizuotos</option>
           <option value="not_found">Nerastos</option>
         </select></div>
@@ -1874,12 +1887,85 @@
           <div id="invCard"><div class="muted center" style="padding:40px 10px;">Pasirinkite poziciją kairėje.</div></div>
         </div>
       </div>
-      <div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px;flex-wrap:wrap;">
-        <button class="btn btn-ghost" id="invActBtn"><span class="ic ic-file"></span> Formuoti perdavimo aktą</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span class="muted" style="font-size:12px;">Etapas pagal filtrus (<span id="invStageCnt">0 poz.</span>):</span>
+          <button class="btn btn-ghost" id="invListXlsx" title="Darbinis sąrašas Excel: sistemos kodas, inv. Nr., pavadinimas, kiekis, būsena"><span class="ic ic-down"></span> Darbinis sąrašas</button>
+          <button class="btn btn-ghost" id="invCheckActBtn" title="Inventorizacijos akto juodraštis iš filtruotų pozicijų"><span class="ic ic-file"></span> Inventorizacijos aktas</button>
+          <button class="btn btn-ghost" id="invActBtn" title="Perdavimo akto juodraščiai iš filtruotų inventorizuotų pozicijų"><span class="ic ic-file"></span> Perdavimo aktas</button>
+          <button class="btn btn-ghost" id="invLabelsBtn" title="Spausdinti inventorinių numerių lipdukus filtruotoms pozicijoms">🏷 Lipdukai</button>
+        </div>
         <button class="btn btn-ghost" id="invCloseBtn">Uždaryti</button>
       </div>
       <input type="file" id="invPhotoFile" accept="image/*" multiple class="hidden">
       <input type="file" id="invPhotoCam" accept="image/*" capture="environment" class="hidden">
+    </div>
+  </div>
+
+
+  <!-- ===== LIPDUKŲ (INVENTORINIŲ NUMERIŲ) SPAUSDINIMAS ===== -->
+  <div id="labelModal" class="modal-bg hidden" data-no-dirty>
+    <div class="modal" style="max-width:980px;width:96vw;">
+      <h2 style="margin-bottom:4px;">Lipdukų spausdinimas</h2>
+      <div class="muted" style="font-size:13px;margin-bottom:12px;" id="lbSrc"></div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="flex:1 1 420px;min-width:300px;">
+          <label class="label">Lipdukų lapo formatas (A4)</label>
+          <select id="lbFmt" class="select"></select>
+          <div class="lb-grid" style="margin-top:8px;">
+            <div><label class="label">Plotis, mm</label><input id="lbW" class="input lbg" type="number" step="0.1" min="5"></div>
+            <div><label class="label">Aukštis, mm</label><input id="lbH" class="input lbg" type="number" step="0.1" min="5"></div>
+            <div><label class="label">Stulpelių</label><input id="lbC" class="input lbg" type="number" step="1" min="1"></div>
+            <div><label class="label">Eilučių</label><input id="lbR" class="input lbg" type="number" step="1" min="1"></div>
+          </div>
+          <div class="lb-grid">
+            <div><label class="label">Kairė paraštė</label><input id="lbML" class="input lbg" type="number" step="0.1" min="0"></div>
+            <div><label class="label">Viršaus paraštė</label><input id="lbMT" class="input lbg" type="number" step="0.1" min="0"></div>
+            <div><label class="label">Tarpas (stulp.)</label><input id="lbGX" class="input lbg" type="number" step="0.1" min="0"></div>
+            <div><label class="label">Tarpas (eil.)</label><input id="lbGY" class="input lbg" type="number" step="0.1" min="0"></div>
+          </div>
+          <div class="sec-title" style="margin-top:6px;">Turinys</div>
+          <div class="row">
+            <div><label class="label">Pagrindinis numeris</label>
+              <select id="lbPrimary" class="select">
+                <option value="inv">Įmonės inventorinis Nr. (jei nėra — sistemos kodas)</option>
+                <option value="code">Sistemos kodas</option>
+              </select></div>
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin:4px 0 8px;">
+            <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="lbShowCode" style="width:auto;"> Antras kodas</label>
+            <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="lbShowName" style="width:auto;"> Pavadinimas</label>
+            <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="lbShowOwner" style="width:auto;"> Įmonės pavadinimas</label>
+          </div>
+          <div class="row">
+            <div><label class="label">Kopijų skaičius</label>
+              <select id="lbCopies" class="select">
+                <option value="one">Po 1 kiekvienai pozicijai</option>
+                <option value="qty">Pagal kiekį (pvz. 30 kėdžių — 30 lipdukų)</option>
+              </select></div>
+            <div style="max-width:170px;"><label class="label">Praleisti pirmų lipdukų</label><input id="lbSkip" class="input" type="number" min="0" step="1" value="0" title="Jei lapas jau iš dalies panaudotas"></div>
+          </div>
+          <details style="margin-top:4px;font-size:13px;">
+            <summary style="cursor:pointer;">Spausdintuvo kalibravimas</summary>
+            <div class="row" style="margin-top:6px;">
+              <div><label class="label">Poslinkis į dešinę, mm</label><input id="lbOX" class="input" type="number" step="0.1" value="0"></div>
+              <div><label class="label">Poslinkis žemyn, mm</label><input id="lbOY" class="input" type="number" step="0.1" value="0"></div>
+            </div>
+            <label style="display:flex;gap:6px;align-items:center;margin-top:4px;"><input type="checkbox" id="lbOutline" style="width:auto;"> Spausdinti lipdukų kontūrus (bandomajam lapui ant paprasto popieriaus)</label>
+            <div class="hint" style="margin-top:6px;">Spausdinkite PDF be mastelio keitimo („Tikras dydis“ / 100 %). Pirmą kartą išbandykite ant paprasto popieriaus, uždėję ant lipdukų lapo prieš šviesą.</div>
+          </details>
+        </div>
+        <div style="flex:0 0 auto;">
+          <div class="label" style="margin-bottom:4px;">Pirmo lapo peržiūra</div>
+          <div id="lbPreview" style="width:300px;height:424px;border:1px solid var(--bd);background:#fff;position:relative;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);"></div>
+          <div id="lbStats" class="muted" style="font-size:12px;margin-top:6px;max-width:300px;"></div>
+        </div>
+      </div>
+      <div id="lbMsg" style="margin-top:8px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="lbCloseBtn">Uždaryti</button>
+        <button class="btn btn-gold" id="lbPdfBtn" data-save="0"><span class="ic ic-down"></span> Formuoti PDF</button>
+      </div>
     </div>
   </div>
 
@@ -2370,7 +2456,20 @@
         <option value="current">Aktualios kainos (pasirinktai datai)</option>
         <option value="initial">Pradinės vertės</option>
       </select>
-      <label style="display:flex;align-items:center;gap:6px;margin:10px 0 2px;font-size:13px;"><input type="checkbox" id="arInclWritten" style="width:auto;"> Įtraukti nurašytą / perduotą turtą (pjūvyje „visas registras")</label>
+      <div class="row" style="margin-top:8px;">
+        <div><label class="label">Inventorizacijos būsena</label>
+          <select id="arInv" class="select">
+            <option value="">Visos</option>
+            <option value="found">Inventorizuotos</option>
+            <option value="not_found">Nerastos</option>
+            <option value="todo">Netikrintos</option>
+            <option value="checked">Patikrintos (inventorizuotos + nerastos)</option>
+          </select></div>
+        <div><label class="label">Vieta / adresas</label>
+          <select id="arLoc" class="select"><option value="">Visos vietos</option></select></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;margin:10px 0 2px;font-size:13px;"><input type="checkbox" id="arInvCols" style="width:auto;"> Rodyti inventorizacijos stulpelius (būsena, data, faktinis kiekis, pastaba)</label>
+      <label style="display:flex;align-items:center;gap:6px;margin:6px 0 2px;font-size:13px;"><input type="checkbox" id="arInclWritten" style="width:auto;"> Įtraukti nurašytą / perduotą turtą (pjūvyje „visas registras")</label>
       <div id="arMsg" style="margin-top:8px;"></div>
       <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap;">
         <button class="btn btn-ghost" type="button" id="arCancel">Uždaryti</button>
@@ -6260,8 +6359,9 @@
     }
     function reportListToPdf(title, metaLines, aoa, moneyCols){
       const m=credCaseMeta(); const mc=moneyCols||new Set();
-      const th=aoa[0].map(h=>`<th style="border:1px solid #999;padding:4px 6px;background:#0B1E3F;color:#fff;font-size:10.5px;">${esc(String(h))}</th>`).join('');
-      const tr=aoa.slice(1).map(r=>'<tr>'+r.map((v,i)=>`<td style="border:1px solid #999;padding:4px 6px;font-size:10.5px;${mc.has(i)?'text-align:right;white-space:nowrap;':''}">${esc(String(v==null?'':v))}</td>`).join('')+'</tr>').join('');
+      const fs=aoa[0].length>15?'9px':'10.5px', pd=aoa[0].length>15?'3px 4px':'4px 6px';
+      const th=aoa[0].map(h=>`<th style="border:1px solid #999;padding:${pd};background:#0B1E3F;color:#fff;font-size:${fs};">${esc(String(h))}</th>`).join('');
+      const tr=aoa.slice(1).map(r=>'<tr>'+r.map((v,i)=>`<td style="border:1px solid #999;padding:${pd};font-size:${fs};${mc.has(i)?'text-align:right;white-space:nowrap;':''}">${esc(String(v==null?'':v))}</td>`).join('')+'</tr>').join('');
       const mrow=(l,v)=>v?`<tr><td style="padding:1px 10px 1px 0;color:#555;white-space:nowrap;vertical-align:top;">${esc(l)}</td><td style="padding:1px 0;font-weight:600;">${esc(v)}</td></tr>`:'';
       const holder=document.createElement('div');
       holder.style.cssText='position:absolute;left:-9999px;top:0;width:1040px;background:#fff;padding:26px;font-family:Arial,sans-serif;color:#0B1E3F;';
@@ -6305,6 +6405,10 @@
       }catch(_){ ASSET_PRICE_LOG=[]; }
       $('arDate').value=new Date().toISOString().slice(0,10);
       $('arView').value='all'; $('arPrice').value='current'; $('arInclWritten').checked=false; $('arMsg').innerHTML='';
+      $('arInv').value='';
+      const locs=[...new Set(ASSETS.map(a=>a.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'lt'));
+      $('arLoc').innerHTML='<option value="">Visos vietos</option>'+locs.map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');
+      $('arInvCols').checked=ASSETS.some(a=>a.inventory_state);
       show('assetReportModal');
     }
     $('assetReportBtn').onclick=openAssetReport;
@@ -6325,8 +6429,17 @@
     function assetReportBuild(){
       const asOf=$('arDate').value||new Date().toISOString().slice(0,10);
       const view=$('arView').value, priceMode=$('arPrice').value, inclW=$('arInclWritten').checked;
+      const invF=$('arInv').value, locF=$('arLoc').value, invCols=$('arInvCols').checked;
+      const INV_LBL={ found:'Inventorizuota', not_found:'Nerasta' };
+      const invPart=a=>invCols?[INV_LBL[a.inventory_state]||'Netikrinta',(a.inventory_checked_at||'').slice(0,10),a.inventory_qty??'',a.inventory_note||'']:[];
+      const invHead=invCols?['Inventorizacija','Inv. data','Faktinis kiekis','Inv. pastaba']:[];
+      const invBlank=invCols?['','','','']:[];
       const rows=[];
       ASSETS.forEach(a=>{
+        if(locF&&(a.location||'')!==locF) return;
+        if(invF==='todo'&&a.inventory_state) return;
+        if(invF==='checked'&&!a.inventory_state) return;
+        if((invF==='found'||invF==='not_found')&&a.inventory_state!==invF) return;
         const stAsOf=assetStatusAsOf(a,asOf); const soldByDate=(stAsOf==='sold');
         if(view==='taken' && !a.source_act_id) return;
         if(view==='sold' && !soldByDate) return;
@@ -6337,18 +6450,18 @@
       const priceLabel=priceMode==='initial'?'Pradinė vertė (€)':'Aktuali kaina (€, datai)';
       let aoaPdf, aoaXlsx, moneyCols;
       if(view==='sold'){
-        const hh=['Nr.','Kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis','Vnt.','Vieta','Įsigijimo data','Įsigijimo kaina (€)','Likutinė vertė (€)','Pardavimo data','Pardavimo kaina (€)','Pirkėjas','Šaltinis'];
+        const hh=['Nr.','Kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis','Vnt.','Vieta','Įsigijimo data','Įsigijimo kaina (€)','Likutinė vertė (€)','Pardavimo data','Pardavimo kaina (€)','Pirkėjas','Šaltinis',...invHead];
         aoaPdf=[hh.slice()]; aoaXlsx=[hh.slice()]; moneyCols=new Set([9,10,12]);
         let tot=0;
         rows.forEach((r,i)=>{ const a=r.a; const sp=a.sold_price!=null?Number(a.sold_price):0; tot+=sp; const src=a.source_act_id?'Perimta (aktas)':'Apskaita';
           const bv=a.book_value!=null?Number(a.book_value):'';
           const ap=a.acquisition_price!=null?Number(a.acquisition_price):'';
-          aoaXlsx.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',ap,bv,a.sold_date||'',sp,a.buyer_name||'',src]);
-          aoaPdf.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',fmtEur(a.acquisition_price),fmtEur(a.book_value),a.sold_date||'',fmtEur(sp),a.buyer_name||'',src]); });
-        aoaXlsx.push(['','','','','','','','','','','','VISO parduota:',tot,'','']);
-        aoaPdf.push(['','','','','','','','','','','','VISO parduota:',fmtEur(tot),'','']);
+          aoaXlsx.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',ap,bv,a.sold_date||'',sp,a.buyer_name||'',src,...invPart(a)]);
+          aoaPdf.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',fmtEur(a.acquisition_price),fmtEur(a.book_value),a.sold_date||'',fmtEur(sp),a.buyer_name||'',src,...invPart(a)]); });
+        aoaXlsx.push(['','','','','','','','','','','','VISO parduota:',tot,'','',...invBlank]);
+        aoaPdf.push(['','','','','','','','','','','','VISO parduota:',fmtEur(tot),'','',...invBlank]);
       } else {
-        const hh=['Nr.','Kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis','Vnt.','Vieta','Įsigijimo data','Įsigijimo kaina (€)','Likutinė vertė (€)',priceLabel,'Būsena (datai)','Pastaba','Šaltinis'];
+        const hh=['Nr.','Kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis','Vnt.','Vieta','Įsigijimo data','Įsigijimo kaina (€)','Likutinė vertė (€)',priceLabel,'Būsena (datai)','Pastaba','Šaltinis',...invHead];
         aoaPdf=[hh.slice()]; aoaXlsx=[hh.slice()]; moneyCols=new Set([9,10,11]);
         let tot=0;
         rows.forEach((r,i)=>{ const a=r.a; const src=a.source_act_id?'Perimta (aktas)':'Apskaita';
@@ -6357,13 +6470,15 @@
           const ap=a.acquisition_price!=null?Number(a.acquisition_price):'';
           const stLabel=AS_ST[r.stAsOf]||r.stAsOf;
           const note=r.soldByDate?('Parduota '+(a.sold_date||'')+(a.sold_price!=null?' už '+fmtEur(a.sold_price):'')+(a.buyer_name?' ('+a.buyer_name+')':'')):'';
-          aoaXlsx.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',ap,bv,price,stLabel,note,src]);
-          aoaPdf.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',fmtEur(a.acquisition_price),fmtEur(a.book_value),fmtEur(price),stLabel,note,src]); });
-        aoaXlsx.push(['','','','','','','','','','','',tot,'VISO','','']);
-        aoaPdf.push(['','','','','','','','','','','',fmtEur(tot),'VISO','','']);
+          aoaXlsx.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',ap,bv,price,stLabel,note,src,...invPart(a)]);
+          aoaPdf.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',a.category||'',a.quantity??'',a.unit||'',a.location||'',a.acquired_on||'',fmtEur(a.acquisition_price),fmtEur(a.book_value),fmtEur(price),stLabel,note,src,...invPart(a)]); });
+        aoaXlsx.push(['','','','','','','','','','','',tot,'VISO','','',...invBlank]);
+        aoaPdf.push(['','','','','','','','','','','',fmtEur(tot),'VISO','','',...invBlank]);
       }
       const viewLabel={all:'Visas turto registras (pagal apskaitą)',taken:'Perimtas turtas (pagal perdavimo aktus)',unsold:'Neparduotas / aktualus turtas',sold:'Parduotas turtas'}[view];
-      const metaLines=['Ataskaitos data: '+asOf, 'Pjūvis: '+viewLabel, (view!=='sold'?('Kainos: '+(priceMode==='initial'?'pradinės vertės':'aktualios datai')):''), 'Pozicijų: '+rows.length].filter(Boolean);
+      const invFL={found:'inventorizuotos',not_found:'nerastos',todo:'netikrintos',checked:'patikrintos'}[invF];
+      const metaLines=['Ataskaitos data: '+asOf, 'Pjūvis: '+viewLabel, (view!=='sold'?('Kainos: '+(priceMode==='initial'?'pradinės vertės':'aktualios datai')):''),
+        (invFL?'Inventorizacija: '+invFL:''), (locF?'Vieta: '+locF:''), 'Pozicijų: '+rows.length].filter(Boolean);
       return { title:'Turto ataskaita — '+viewLabel, metaLines, aoaPdf, aoaXlsx, moneyCols, count:rows.length };
     }
     function assetReportExport(fmt){
@@ -6805,8 +6920,12 @@
       const rows=invFiltered();
       const done=ASSETS.filter(a=>a.inventory_state==='found').length;
       const miss=ASSETS.filter(a=>a.inventory_state==='not_found').length;
-      $('invProgress').innerHTML='Inventorizuota <b style="color:#1E7A45;">'+done+'</b> · nerasta <b style="color:#B3261E;">'+miss+
+      const fd=rows.filter(a=>a.inventory_state==='found').length, fm=rows.filter(a=>a.inventory_state==='not_found').length;
+      const filtered=rows.length!==ASSETS.length;
+      $('invProgress').innerHTML=(filtered?'Etape (pagal filtrus) <b>'+rows.length+'</b>: ✓ <b style="color:#1E7A45;">'+fd+'</b> · ✕ <b style="color:#B3261E;">'+fm+'</b> · ○ <b>'+(rows.length-fd-fm)+'</b> &nbsp;|&nbsp; Visa byla: ':'')+
+        'inventorizuota <b style="color:#1E7A45;">'+done+'</b> · nerasta <b style="color:#B3261E;">'+miss+
         '</b> · liko <b>'+(ASSETS.length-done-miss)+'</b> iš '+ASSETS.length;
+      const sc=$('invStageCnt'); if(sc)sc.textContent=rows.length+' poz.';
       $('invAssetList').innerHTML=rows.length?rows.map(a=>{
         const st=a.inventory_state;
         const bg=st==='found'?'#E8F5EC':st==='not_found'?'#FDECEA':'transparent';
@@ -6818,6 +6937,8 @@
               <div style="font-weight:600;font-size:13px;">${esc(a.name)}</div>
               <div class="muted" style="font-size:11px;font-family:monospace;">${esc(a.asset_code||'')}${a.inventory_no?' · '+esc(a.inventory_no):''}</div>
               ${a.location?'<div class="muted" style="font-size:11px;">'+esc(a.location)+'</div>':''}
+              ${(a.inventory_qty!=null&&a.quantity!=null&&Number(a.inventory_qty)!==Number(a.quantity))?'<div style="font-size:11px;color:#8A5A00;">Faktinis kiekis '+esc(String(a.inventory_qty))+' (apskaitoje '+esc(String(a.quantity))+')</div>':''}
+              ${a.inventory_note?'<div class="muted" style="font-size:11px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">„'+esc(a.inventory_note)+'“</div>':''}
             </div>
             ${(a.photos||[]).length?'<span class="muted" style="font-size:11px;white-space:nowrap;"><span class="ic ic-image"></span> '+(a.photos||[]).length+'</span>':''}
           </div></div>`;
@@ -6827,39 +6948,42 @@
     function openInvCard(id){
       INV_ID=id; const a=ASSETS.find(x=>x.id===id); if(!a)return;
       const st=a.inventory_state;
+      const qtyVal=(a.inventory_qty!=null)?a.inventory_qty:(a.quantity??'');
       $('invCard').innerHTML=`
-        <div style="border:1px solid var(--bd);border-radius:6px;padding:14px;">
+        <div style="border:1px solid var(--bd);border-radius:var(--r);padding:14px;">
           <div style="font-family:monospace;font-size:12px;" class="muted">${esc(a.asset_code||'')}${a.inventory_no?' · inv. '+esc(a.inventory_no):''}</div>
           <h3 style="margin:4px 0 10px;">${esc(a.name)}</h3>
           <table style="font-size:13px;margin-bottom:12px;"><tbody>
             <tr><td class="muted" style="padding:2px 10px 2px 0;">Kategorija</td><td>${esc(AS_CAT[a.category]||'')}</td></tr>
-            <tr><td class="muted" style="padding:2px 10px 2px 0;">Kiekis</td><td>${esc(String(a.quantity??''))} ${esc(a.unit||'')}</td></tr>
+            <tr><td class="muted" style="padding:2px 10px 2px 0;">Kiekis pagal apskaitą</td><td>${esc(String(a.quantity??''))} ${esc(a.unit||'')}</td></tr>
             <tr><td class="muted" style="padding:2px 10px 2px 0;">Vieta</td><td>${esc(a.location||'—')}</td></tr>
             ${invAssetGroupName(a.id)?'<tr><td class="muted" style="padding:2px 10px 2px 0;">Grupė</td><td>'+esc(invAssetGroupName(a.id))+'</td></tr>':''}
             ${a.description?'<tr><td class="muted" style="padding:2px 10px 2px 0;">Aprašymas</td><td>'+esc(a.description)+'</td></tr>':''}
           </tbody></table>
-          ${st?'<div style="margin-bottom:10px;padding:7px 10px;border-radius:5px;font-size:12px;background:'+(st==='found'?'#E8F5EC':'#FDECEA')+';">'+
-            (st==='found'?'✓ Inventorizuota '+esc((a.inventory_checked_at||'').slice(0,10))
-                         :'✕ Nerasta'+(a.inventory_note?': '+esc(a.inventory_note):''))+'</div>':''}
+          ${st?'<div style="margin-bottom:10px;padding:8px 10px;border-radius:var(--r-sm);font-size:12.5px;background:'+(st==='found'?'#E8F5EC;color:#1E5F3A':'#FDECEA;color:#9B2C22')+';">'+
+            (st==='found'?'✓ Inventorizuota ':'✕ Nerasta ')+esc((a.inventory_checked_at||'').slice(0,10))+
+            ' <span style="opacity:.75;">— būseną galite pakeisti žemiau</span></div>':''}
           <div class="sec-title" style="margin-top:0;">Fotofiksacija</div>
           <div id="invPhotos" class="ph-grid" style="margin-bottom:12px;"></div>
-          <div id="invMsg" style="margin-bottom:8px;"></div>
+          <div class="row" style="margin-bottom:4px;">
+            <div style="max-width:190px;"><label class="label">Faktinis kiekis</label>
+              <div style="display:flex;gap:6px;align-items:center;"><input id="invQty" class="input" type="number" step="any" min="0" value="${esc(String(qtyVal))}" style="max-width:110px;"><span class="muted" style="font-size:12px;">${esc(a.unit||'')}</span></div></div>
+            <div><label class="label">Pastaba</label>
+              <textarea id="invNote" class="textarea" style="min-height:44px;" placeholder="pvz. komplekte 30 kėdžių; 2 vnt. pažeisti; nerasta — kur ieškota">${esc(a.inventory_note||'')}</textarea></div>
+          </div>
+          <div id="invMsg" style="margin:6px 0 8px;"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-sm" id="invOkNext"><span class="ic ic-check"></span> Patvirtinti ir kitas</button>
-            <button class="btn btn-sm btn-ghost" id="invOkClose">Patvirtinti ir uždaryti</button>
-            <button class="btn btn-sm btn-danger" id="invMissBtn">Nerasta</button>
-            ${st?'<button class="btn btn-sm btn-ghost" id="invResetBtn" title="Grąžinti į „dar netikrinta“">Atžymėti</button>':''}
+            <button class="btn" id="invOkNext"><span class="ic ic-check"></span> Inventorizuota ir kita</button>
+            <button class="btn btn-ghost" id="invOkClose">Inventorizuota ir uždaryti</button>
+            <button class="btn btn-danger" id="invMissBtn">Nerasta</button>
+            ${st?'<button class="btn btn-ghost" id="invResetBtn" title="Grąžinti į „dar netikrinta“">↺ Nuimti žymą</button>':''}
           </div>
         </div>`;
       renderInvPhotos();
-      $('invOkNext').onclick=()=>invMark('found',true);
-      $('invOkClose').onclick=()=>invMark('found',false);
-      $('invMissBtn').onclick=()=>{
-        const why=prompt('Kodėl pozicija nerasta? (matysite sąraše ir ataskaitoje)');
-        if(why===null)return;
-        invMark('not_found',true,why.trim());
-      };
-      if($('invResetBtn'))$('invResetBtn').onclick=()=>invMark(null,false);
+      $('invOkNext').onclick=()=>invMark('found','next');
+      $('invOkClose').onclick=()=>invMark('found','close');
+      $('invMissBtn').onclick=()=>invMark('not_found','next');
+      if($('invResetBtn'))$('invResetBtn').onclick=()=>invMark(null,'stay');
       renderInvList();
     }
     function renderInvPhotos(){
@@ -6899,24 +7023,42 @@
     }
     $('invPhotoFile').onchange=invHandlePhotos;
     $('invPhotoCam').onchange=invHandlePhotos;
-    async function invMark(state,goNext,note){
+    // mode: 'next' – pereiti prie kitos netikrintos (pagal filtrų tvarką), 'close' – likti kortelėje, 'stay' – likti
+    async function invMark(state,mode){
       const a=ASSETS.find(x=>x.id===INV_ID); if(!a)return;
+      const note=(($('invNote')||{}).value||'').trim();
+      const qRaw=(($('invQty')||{}).value||'').trim();
+      let qty=qRaw===''?null:Number(qRaw.replace(',','.'));
+      if(qty!=null&&(!isFinite(qty)||qty<0)){ $('invMsg').innerHTML='<div class="error">Neteisingas faktinis kiekis.</div>'; return; }
+      if(state==='not_found')qty=0;
+      if(state===null)qty=null;
       if(state==='found'&&!(a.photos||[]).length){
         if(!confirm('Prie šios pozicijos nėra nė vienos nuotraukos. Vis tiek žymėti kaip inventorizuotą?'))return;
       }
-      const { data, error }=await sb.rpc('set_asset_inventory',{ p_asset_id:a.id, p_state:state, p_note:note||null });
+      if(state==='not_found'&&!note){
+        if(!confirm('Pastaba tuščia. Rekomenduojama nurodyti, kur ieškota ar kodėl pozicija nerasta.\n\nVis tiek žymėti „Nerasta“?')){ $('invNote').focus(); return; }
+      }
+      if(state==='found'&&qty!=null&&a.quantity!=null&&Number(a.quantity)!==qty&&!note){
+        if(!confirm('Faktinis kiekis ('+qty+') skiriasi nuo apskaitos ('+a.quantity+'), o pastaba tuščia.\n\nVis tiek išsaugoti?')){ $('invNote').focus(); return; }
+      }
+      if(state===null&&!confirm('Nuimti inventorizacijos žymą? Pozicija vėl taps „dar netikrinta“. Pastaba bus išsaugota.'))return;
+      const { data, error }=await sb.rpc('set_asset_inventory',{ p_asset_id:a.id, p_state:state, p_note:note||null, p_qty:qty });
       if(error){ $('invMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
       if(data&&data.ok===false){ $('invMsg').innerHTML='<div class="error">'+esc(data.error_code)+'</div>'; return; }
-      a.inventory_state=state; a.inventory_note=state==='not_found'?(note||null):null;
+      a.inventory_state=state; a.inventory_note=note||null; a.inventory_qty=qty;
       a.inventory_checked_at=state?new Date().toISOString():null;
       if(state==='found')a.needs_review=false;
-      if(!goNext){ renderInvList(); if(state!==null)openInvCard(a.id); return; }
-      // kita pozicija pagal dabartinius filtrus
+      if(mode!=='next'){ openInvCard(a.id); $('invMsg').innerHTML='<div class="success">'+(state===null?'Žyma nuimta.':'Išsaugota.')+'</div>'; return; }
+      // kita netikrinta pozicija pagal dabartinius filtrus (po esamos, ratu)
       const list=invFiltered();
-      const nxt=list.find(x=>x.id!==a.id)||null;
-      if(nxt)openInvCard(nxt.id);
-      else{ INV_ID=null; $('invCard').innerHTML='<div class="muted center" style="padding:40px 10px;">Pagal šiuos filtrus pozicijų nebeliko.</div>'; renderInvList(); }
+      const ix=list.findIndex(x=>x.id===a.id);
+      const order=ix<0?list:list.slice(ix+1).concat(list.slice(0,ix));
+      const nxt=order.find(x=>!x.inventory_state&&x.id!==a.id)||null;
+      if(nxt){ openInvCard(nxt.id); invScrollToRow(nxt.id); }
+      else{ INV_ID=null; renderInvList();
+        $('invCard').innerHTML='<div class="center" style="padding:40px 10px;"><div style="font-size:28px;color:#1E7A45;">✓</div><b>Pagal šiuos filtrus netikrintų pozicijų nebeliko.</b><div class="muted" style="margin-top:6px;font-size:13px;">Galite suformuoti šio etapo inventorizacijos aktą ar darbinį sąrašą (apačioje).</div></div>'; }
     }
+    function invScrollToRow(id){ const r=document.querySelector('.invRow[data-id="'+id+'"]'); if(r&&r.scrollIntoView)r.scrollIntoView({block:'nearest'}); }
     function invFillFilters(){
       const locs=[...new Set(ASSETS.map(a=>a.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'lt'));
       $('invFilterLoc').innerHTML='<option value="">Visos vietos / adresai</option>'+locs.map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');
@@ -6939,8 +7081,8 @@
     const INV_ACT_TYPE={ realestate:'asset_realestate', movable:'asset_movable', inventory:'asset_inventory',
                          intangible:'asset_intangible', other:'asset_other' };
     $('invActBtn').onclick=async()=>{
-      const found=ASSETS.filter(a=>a.inventory_state==='found');
-      if(!found.length){ alert('Nė viena pozicija dar nepažymėta kaip inventorizuota.'); return; }
+      const found=invFiltered().filter(a=>a.inventory_state==='found');
+      if(!found.length){ alert('Tarp filtruotų pozicijų nėra pažymėtų kaip inventorizuotos. Pakeiskite filtrus (pvz. vietą / adresą).'); return; }
       const veh=found.filter(a=>a.category==='vehicle');
       const usable=found.filter(a=>a.category!=='vehicle');
       if(!usable.length){ alert('Transporto priemonėms aktas sudaromas atskirai, po vieną — naudokite skiltį „Aktai“.'); return; }
@@ -6977,6 +7119,229 @@
         : '<div class="error">Aktų suformuoti nepavyko.</div>';
       if(typeof loadActs==='function'){ try{ await loadActs(); }catch(_){} }
     };
+
+    // --- etapo (filtruotų pozicijų) aprašas aktams ir sąrašams ---
+    function invStageMeta(){
+      const parts=[];
+      const loc=$('invFilterLoc').value, cat=$('invFilterCat').value, grp=$('invFilterGroup').value, st=$('invFilterState').value, q=($('invSearch').value||'').trim();
+      if(loc)parts.push('Vieta: '+loc);
+      if(cat)parts.push('Kategorija: '+(AS_CAT[cat]||cat));
+      if(grp)parts.push('Grupė: '+((ASSET_GROUPS.find(g=>g.id===grp)||{}).name||''));
+      if(st)parts.push('Būsena: '+({todo:'dar netikrintos',found:'inventorizuotos',not_found:'nerastos'}[st]||st));
+      if(q)parts.push('Paieška: „'+q+'“');
+      return { loc, lines:parts };
+    }
+    const INV_ST_LBL=s=>s==='found'?'Rasta':s==='not_found'?'Nerasta':'Netikrinta';
+    const invSortKey=a=>[(a.location||''),(a.inventory_no||''),(a.asset_code||'')].join('\u0001');
+    function invStageRows(){ return invFiltered().slice().sort((x,y)=>invSortKey(x).localeCompare(invSortKey(y),'lt',{numeric:true})); }
+    // Darbinis sąrašas (Excel) – laukams pildyti ar kontrolei
+    $('invListXlsx').onclick=()=>{
+      const rows=invStageRows();
+      if(!rows.length){ alert('Pagal filtrus pozicijų nėra.'); return; }
+      const sm=invStageMeta();
+      const aoa=[['Nr.','Sistemos kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis pagal apskaitą','Mato vnt.','Faktinis kiekis','Būsena','Inv. data','Pastaba','Vieta','Grupė','Nuotraukų']];
+      rows.forEach((a,i)=>aoa.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',AS_CAT[a.category]||a.category||'',a.quantity??'',a.unit||'',
+        a.inventory_qty??'',a.inventory_state?INV_ST_LBL(a.inventory_state):'',(a.inventory_checked_at||'').slice(0,10),a.inventory_note||'',a.location||'',invAssetGroupName(a.id),(a.photos||[]).length]));
+      const today=new Date().toISOString().slice(0,10);
+      const fn='Inventorizacijos_sarasas_'+(CURRENT.case_short_code||'byla')+(sm.loc?'_'+sm.loc.replace(/[^A-Za-z0-9ĄČĘĖĮŠŲŪŽąčęėįšųūž]+/g,'_').slice(0,40):'')+'_'+today+'.xlsx';
+      reportListToXlsx('Inventorizacija',fn,['Turto inventorizacijos darbinis sąrašas','Suformuota: '+today,...sm.lines,'Pozicijų: '+rows.length],aoa);
+      try{ logEvent('asset_inventory_list_exported',{ count:rows.length, filters:sm.lines }); }catch(_){}
+    };
+    // Inventorizacijos akto juodraštis iš filtruotų pozicijų (etapo)
+    async function gotoActEditor(actId){
+      try{
+        const top=Object.keys(TOP_TABS).find(k=>TOP_TABS[k].some(s=>s[0]==='acts'));
+        if(top){ setTop(top); const t=document.querySelector('#subTabs .tab[data-sub="acts"]'); if(t)t.click(); }
+        else await loadActs();
+        // skirtuko atidarymas pats perkrauna aktų sąrašą (ir paslepia redaktorių) –
+        // laukiame, kol sąraše atsiras naujas aktas, ir tik tada atidarome jį redaguoti
+        for(let i=0;i<40&&actId&&!ACTS.some(a=>a.id===actId);i++)await new Promise(r=>setTimeout(r,100));
+        if(actId&&ACTS.some(a=>a.id===actId))editAct(actId);
+      }catch(_){}
+    }
+    $('invCheckActBtn').onclick=async()=>{
+      let rows=invStageRows();
+      if(!rows.length){ alert('Pagal filtrus pozicijų nėra.'); return; }
+      const todo=rows.filter(a=>!a.inventory_state).length;
+      if(todo){
+        const inc=confirm(todo+' iš '+rows.length+' filtruotų pozicijų dar netikrintos.\n\nGerai — įtraukti jas į aktą su žyma „Netikrinta“.\nAtšaukti — į aktą įtraukti tik patikrintas.');
+        if(!inc)rows=rows.filter(a=>a.inventory_state);
+        if(!rows.length){ alert('Patikrintų pozicijų nėra.'); return; }
+      }
+      const sm=invStageMeta();
+      const today=new Date().toISOString().slice(0,10);
+      const actRows=rows.map(a=>({ _asset_id:a.id, _ref:(a.inventory_no||a.asset_code||''), _state:a.inventory_state||'',
+        inv_no:a.inventory_no||'', code:a.asset_code||'', name:a.name||'',
+        qty:[a.quantity??'',a.unit||''].join(' ').trim(), fact_qty:a.inventory_state==='not_found'?'0':(a.inventory_qty!=null?String(a.inventory_qty):(a.inventory_state==='found'?String(a.quantity??''):'')),
+        state:INV_ST_LBL(a.inventory_state), notes1:a.inventory_note||'' }));
+      const p={ case_id:CURRENT.id, act_type:'inventory_check', act_no:'', act_date:today, handover_person:'',
+                receiver_person:(CURRENT_ADM&&CURRENT_ADM.authorized_person)||'', rows:actRows,
+                meta:{ address:sm.loc||'', others:'' }, photos:[], sig_handover:null, sig_receiver:null, status:'draft' };
+      const r=await sb.rpc('save_insolvency_act',{ p_id:null, p });
+      if(r.error||(r.data&&r.data.ok===false)){ alert('Akto suformuoti nepavyko: '+(r.error?r.error.message:r.data.error_code)); return; }
+      try{ logEvent('asset_inventory_act_drafted',{ count:actRows.length, filters:sm.lines }); }catch(_){}
+      hide('invModal');
+      $('assetsMsg').innerHTML='<div class="success">Inventorizacijos akto juodraštis suformuotas ('+actRows.length+' poz.). Patikslinkite adresą, dalyvius ir pasirašykite.</div>';
+      await gotoActEditor(r.data&&r.data.id);
+    };
+    /* ===== LIPDUKAI: inventorinių numerių spausdinimas ant standartinių A4 lipdukų lapų =====
+       Matmenys mm; PDF formuojamas pdf-lib tiksliais matmenimis (1 mm = 72/25,4 pt). */
+    const LB_FORMATS=(()=>{
+      const c=(id,label,w,h,cols,rows,gx,gy)=>{ const ml=+((210-cols*w-(cols-1)*gx)/2).toFixed(2), mt=+((297-rows*h-(rows-1)*gy)/2).toFixed(2);
+        return { id,label,w,h,cols,rows,gx,gy,ml,mt }; };
+      return [
+        c('l4731','25,4 × 10 mm — 189 vnt. (7×27), pvz. Avery L4731',25.4,10,7,27,2.5,0),
+        c('l4732','35,6 × 16,9 mm — 80 vnt. (5×16), pvz. Avery L4732',35.6,16.9,5,16,2.5,0),
+        c('l7656','46 × 11,1 mm — 84 vnt. (4×21), pvz. Avery L7656',46,11.1,4,21,3.6,1.6),
+        c('l7651','38,1 × 21,2 mm — 65 vnt. (5×13), pvz. Avery L7651',38.1,21.2,5,13,2.5,0),
+        c('z3657','48,5 × 25,4 mm — 44 vnt. (4×11), pvz. Zweckform 3657',48.5,25.4,4,11,0,0),
+        c('z3651','52,5 × 29,7 mm — 40 vnt. (4×10), pvz. Zweckform 3651',52.5,29.7,4,10,0,0),
+        c('z3474','70 × 37 mm — 24 vnt. (3×8), pvz. Zweckform 3474',70,37,3,8,0,0),
+        c('l7160','63,5 × 38,1 mm — 21 vnt. (3×7), pvz. Avery L7160',63.5,38.1,3,7,2.5,0),
+        c('g2010','20 × 10 mm — 207 vnt. (9×23), bendrinis — patikslinkite pagal lapą',20,10,9,23,2,2),
+        c('g2020','20 × 20 mm — 108 vnt. (9×12), bendrinis — patikslinkite pagal lapą',20,20,9,12,2,2),
+        { id:'custom', label:'Kitas formatas (įveskite matmenis)' }
+      ];
+    })();
+    const LB_KEY='npvs_label_cfg';
+    let LB_ITEMS=[];
+    const lbNum=id=>{ const v=parseFloat(String($(id).value).replace(',','.')); return isFinite(v)?v:0; };
+    function lbGeom(){ return { w:lbNum('lbW'), h:lbNum('lbH'), cols:Math.max(1,Math.round(lbNum('lbC'))), rows:Math.max(1,Math.round(lbNum('lbR'))),
+      ml:lbNum('lbML'), mt:lbNum('lbMT'), gx:lbNum('lbGX'), gy:lbNum('lbGY'), ox:lbNum('lbOX'), oy:lbNum('lbOY') }; }
+    function lbSaveCfg(){
+      try{ localStorage.setItem(LB_KEY,JSON.stringify({ fmt:$('lbFmt').value, g:lbGeom(), primary:$('lbPrimary').value,
+        code:$('lbShowCode').checked, name:$('lbShowName').checked, owner:$('lbShowOwner').checked, copies:$('lbCopies').value, outline:$('lbOutline').checked })); }catch(_){}
+    }
+    function lbApplyFmt(id){
+      const f=LB_FORMATS.find(x=>x.id===id); if(!f||id==='custom')return;
+      $('lbW').value=f.w; $('lbH').value=f.h; $('lbC').value=f.cols; $('lbR').value=f.rows;
+      $('lbML').value=f.ml; $('lbMT').value=f.mt; $('lbGX').value=f.gx; $('lbGY').value=f.gy;
+    }
+    // Lipduko tekstinės eilutės
+    function lbLines(a){
+      const inv=(a.inventory_no||'').trim(), code=(a.asset_code||'').trim();
+      const primary=$('lbPrimary').value==='code'?(code||inv):(inv||code);
+      const second=primary===inv?code:inv;
+      const L=[];
+      if($('lbShowOwner').checked&&CURRENT&&CURRENT.debtor_name)L.push({ t:CURRENT.debtor_name, rel:0.5, trunc:true });
+      L.push({ t:primary||'—', rel:1, bold:true });
+      if($('lbShowCode').checked&&second&&second!==primary)L.push({ t:second, rel:0.55 });
+      if($('lbShowName').checked&&a.name)L.push({ t:a.name, rel:0.5, trunc:true });
+      return L;
+    }
+    function lbExpand(){
+      const byQty=$('lbCopies').value==='qty', out=[];
+      LB_ITEMS.forEach(a=>{ let n=1; if(byQty){ const q=Math.round(Number(a.inventory_qty!=null?a.inventory_qty:a.quantity)); n=isFinite(q)&&q>0?q:1; } for(let i=0;i<n;i++)out.push(a); });
+      return out;
+    }
+    function lbValid(g){
+      if(g.w<5||g.h<5)return 'Lipduko matmenys per maži.';
+      const rw=g.ml+g.cols*g.w+(g.cols-1)*g.gx, rh=g.mt+g.rows*g.h+(g.rows-1)*g.gy;
+      if(rw>210.5||rh>297.5)return 'Lipdukai netelpa į A4 lapą (užima '+rw.toFixed(1)+' × '+rh.toFixed(1)+' mm). Patikrinkite matmenis ir paraštes.';
+      return '';
+    }
+    function lbRender(){
+      const g=lbGeom(), err=lbValid(g);
+      const all=lbExpand(), per=g.cols*g.rows, skip=Math.max(0,Math.round(lbNum('lbSkip')))%Math.max(1,per);
+      const pages=Math.ceil((all.length+skip)/per)||1;
+      $('lbStats').innerHTML=err?'<span style="color:#B3261E;">'+esc(err)+'</span>':
+        'Lapelyje <b>'+per+'</b> lipdukų · iš viso lipdukų <b>'+all.length+'</b> · lapų <b>'+pages+'</b>'+(skip?' · praleidžiama '+skip:'');
+      const k=300/210, el=$('lbPreview'); let html='';
+      if(!err){
+        for(let i=0;i<per;i++){
+          const r=Math.floor(i/g.cols), c=i%g.cols;
+          const x=(g.ml+g.ox+c*(g.w+g.gx))*k, y=(g.mt+g.oy+r*(g.h+g.gy))*k;
+          const idx=i-skip, a=idx>=0?all[idx]:null;
+          let inner='';
+          if(a){ const L=lbLines(a); const tot=L.reduce((s,l)=>s+l.rel,0);
+            const bh=(g.h*k*0.8)/(tot*1.15);
+            inner=L.map(l=>`<div style="font-size:${Math.max(3,Math.min(bh*l.rel,(g.w*k*0.9)/(Math.max(1,l.t.length)*0.55)))}px;line-height:1.15;${l.bold?'font-weight:700;':''}white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(l.t)}</div>`).join(''); }
+          html+=`<div style="position:absolute;left:${x}px;top:${y}px;width:${g.w*k}px;height:${g.h*k}px;border:1px ${a?'solid #9AA5B1':'dashed #D5DBE1'};border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;font-family:Arial,sans-serif;color:#0B1E3F;${idx<0?'background:repeating-linear-gradient(45deg,#F3F4F6 0 3px,#fff 3px 6px);':''}">${inner}</div>`;
+        }
+      }
+      el.innerHTML=html;
+    }
+    async function lbPdf(){
+      const g=lbGeom(), err=lbValid(g);
+      if(err){ $('lbMsg').innerHTML='<div class="error">'+esc(err)+'</div>'; return; }
+      const all=lbExpand();
+      if(!all.length){ $('lbMsg').innerHTML='<div class="error">Nėra pozicijų.</div>'; return; }
+      if(all.length>2000&&!confirm('Bus suformuota '+all.length+' lipdukų. Tęsti?'))return;
+      $('lbMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Formuojama…</div>';
+      try{
+        const { PDFDocument, rgb }=PDFLib;
+        const pdf=await PDFDocument.create();
+        const F=await getBodyFonts(pdf);
+        const MM=72/25.4, PW=210*MM, PH=297*MM;
+        const per=g.cols*g.rows, skip=Math.max(0,Math.round(lbNum('lbSkip')))%per;
+        const outline=$('lbOutline').checked;
+        const pad=Math.min(1.2,g.h*0.1,g.w*0.06);
+        const fit=(font,t,size,maxW)=>{ // sutrumpina tekstą, kad tilptų
+          if(font.widthOfTextAtSize(t,size)<=maxW)return t;
+          let s=t; while(s.length>1&&font.widthOfTextAtSize(s+'…',size)>maxW)s=s.slice(0,-1);
+          return s+'…';
+        };
+        let page=null;
+        const total=all.length+skip;
+        for(let i=0;i<total;i++){
+          const pos=i%per;
+          if(pos===0)page=pdf.addPage([PW,PH]);
+          const a=i>=skip?all[i-skip]:null;
+          const r=Math.floor(pos/g.cols), c=pos%g.cols;
+          const x0=(g.ml+g.ox+c*(g.w+g.gx))*MM, yTop=PH-(g.mt+g.oy+r*(g.h+g.gy))*MM;
+          const W=g.w*MM, H=g.h*MM;
+          if(outline)page.drawRectangle({ x:x0, y:yTop-H, width:W, height:H, borderColor:rgb(.6,.6,.6), borderWidth:.4 });
+          if(!a)continue;
+          const L=lbLines(a);
+          const availW=W-2*pad*MM, availH=H-2*pad*MM;
+          const tot=L.reduce((s,l)=>s+l.rel,0);
+          const base=Math.min(28, availH/(tot*1.15));
+          const sized=L.map(l=>{ const font=l.bold?F.bold:F.reg;
+            let size=base*l.rel; const w1=font.widthOfTextAtSize(l.t,1);
+            if(w1*size>availW){ const fs=availW/w1; size=l.trunc?Math.max(fs,Math.min(size,6)):fs; } // ilgi tekstai – ne mažiau 6 pt, likusi dalis trumpinama
+            size=Math.max(3,size);
+            return { font, size, t:fit(font,l.t,size,availW) }; });
+          const blockH=sized.reduce((s,l)=>s+l.size*1.15,0);
+          let y=yTop-pad*MM-(availH-blockH)/2;
+          sized.forEach(l=>{ y-=l.size*1.15; const tw=l.font.widthOfTextAtSize(l.t,l.size);
+            page.drawText(l.t,{ x:x0+(W-tw)/2, y:y+l.size*0.22, size:l.size, font:l.font, color:rgb(0.04,0.12,0.25) }); });
+        }
+        const bytes=await pdf.save();
+        const blob=new Blob([bytes],{type:'application/pdf'});
+        const url=URL.createObjectURL(blob);
+        const aEl=document.createElement('a'); aEl.href=url; aEl.download='Lipdukai_'+(CURRENT.case_short_code||'byla')+'_'+new Date().toISOString().slice(0,10)+'.pdf';
+        document.body.appendChild(aEl); aEl.click(); aEl.remove(); setTimeout(()=>URL.revokeObjectURL(url),60000);
+        lbSaveCfg();
+        $('lbMsg').innerHTML='<div class="success" style="font-size:13px;"><span class="ic ic-check"></span> PDF suformuotas: '+all.length+' lipdukų, '+Math.ceil(total/per)+' lap. Spausdinkite 100 % mastelio.</div>';
+        try{ logEvent('asset_labels_printed',{ count:all.length, positions:LB_ITEMS.length, w:g.w, h:g.h }); }catch(_){}
+      }catch(e){ $('lbMsg').innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
+    }
+    function openLabels(items,srcText){
+      LB_ITEMS=items.slice();
+      if(!LB_ITEMS.length){ alert('Nėra pozicijų lipdukams.'); return; }
+      $('lbSrc').textContent=srcText+' · pozicijų: '+LB_ITEMS.length+(LB_ITEMS.filter(a=>!a.inventory_no).length?' (be įmonės inv. Nr.: '+LB_ITEMS.filter(a=>!a.inventory_no).length+' — bus naudojamas sistemos kodas)':'');
+      $('lbFmt').innerHTML=LB_FORMATS.map(f=>`<option value="${f.id}">${esc(f.label)}</option>`).join('');
+      let cfg=null; try{ cfg=JSON.parse(localStorage.getItem(LB_KEY)||'null'); }catch(_){}
+      if(cfg&&cfg.g){
+        $('lbFmt').value=LB_FORMATS.some(f=>f.id===cfg.fmt)?cfg.fmt:'custom';
+        const g=cfg.g; $('lbW').value=g.w; $('lbH').value=g.h; $('lbC').value=g.cols; $('lbR').value=g.rows;
+        $('lbML').value=g.ml; $('lbMT').value=g.mt; $('lbGX').value=g.gx; $('lbGY').value=g.gy; $('lbOX').value=g.ox||0; $('lbOY').value=g.oy||0;
+        $('lbPrimary').value=cfg.primary||'inv'; $('lbShowCode').checked=!!cfg.code; $('lbShowName').checked=!!cfg.name; $('lbShowOwner').checked=!!cfg.owner;
+        $('lbCopies').value=cfg.copies||'one'; $('lbOutline').checked=!!cfg.outline;
+      } else {
+        $('lbFmt').value='l7651'; lbApplyFmt('l7651'); $('lbOX').value=0; $('lbOY').value=0;
+        $('lbPrimary').value='inv'; $('lbShowCode').checked=true; $('lbShowName').checked=true; $('lbShowOwner').checked=false; $('lbCopies').value='one'; $('lbOutline').checked=false;
+      }
+      $('lbSkip').value=0; $('lbMsg').innerHTML='';
+      lbRender(); show('labelModal');
+    }
+    $('lbFmt').onchange=()=>{ lbApplyFmt($('lbFmt').value); lbRender(); };
+    document.querySelectorAll('#labelModal .lbg').forEach(el=>el.addEventListener('input',()=>{ $('lbFmt').value='custom'; lbRender(); }));
+    ['lbPrimary','lbShowCode','lbShowName','lbShowOwner','lbCopies','lbSkip','lbOX','lbOY','lbOutline'].forEach(id=>{ $(id).addEventListener('input',lbRender); $(id).addEventListener('change',lbRender); });
+    $('lbPdfBtn').onclick=lbPdf;
+    $('lbCloseBtn').onclick=()=>hide('labelModal');
+    $('invLabelsBtn').onclick=()=>openLabels(invStageRows(),'Inventorizacijos etapas (pagal filtrus)');
+    $('bulkLabelsBtn').onclick=()=>openLabels(ASSETS.filter(a=>AS_SEL.has(a.id)).sort((x,y)=>invSortKey(x).localeCompare(invSortKey(y),'lt',{numeric:true})),'Pažymėtos pozicijos');
 
     /* ===== TURTO PERŽIŪROS KORTELĖ =====
        Atidaroma iš sąrašo. Tik skaitymui; „Redaguoti“ atidaro redagavimo formą.
@@ -7019,7 +7384,7 @@
           <div><div class="k">${sold?'Parduota už':'Dabartinė kaina'}</div><div class="v">${sold?fmtEur(a.sold_price):(a.current_price!=null?fmtEur(a.current_price):'—')}</div>
                <div class="s">${sold?esc([a.sold_date,a.buyer_name].filter(Boolean).join(' · ')):'&nbsp;'}</div></div>
         </div>
-        ${a.inventory_state==='not_found'&&a.inventory_note?`<div class="av-note" style="background:#FDECEA;margin-bottom:10px;"><b>Nerasta:</b> ${esc(a.inventory_note)}</div>`:''}
+        <div class="av-sec" id="avInvSec"></div>
         ${a.description?`<div class="av-sec"><div class="sec-title" style="margin-top:0;">Aprašymas</div><div class="av-note">${esc(a.description)}</div></div>`:''}
         ${a.notes?`<div class="av-sec"><div class="sec-title" style="margin-top:0;">Pastabos</div><div class="av-note">${esc(a.notes)}</div></div>`:''}
         <div class="av-sec">
@@ -7034,6 +7399,7 @@
         <div class="av-sec"><div class="sec-title" style="margin-top:0;"><span class="ic ic-key"></span> Nuoma</div><div>${assetLeaseInfoHtml(a.id)}</div></div>
       `;
       renderAvPhotos();
+      renderAvInv(false);
       show('assetViewModal');
       // dokumentai (tik peržiūrai)
       try{
@@ -7048,6 +7414,56 @@
             <span class="ic ic-file"></span> ${esc(d.doc_type||'Dokumentas')}${d.valid_until?' <span class="muted">(iki '+esc(d.valid_until)+')</span>':''}</button>`).join('')+'</div>';
       }catch(e){ $('avDocs').innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
     };
+    // --- inventorizacijos būsena peržiūros kortelėje (keitimas / žymos nuėmimas su pastaba) ---
+    function renderAvInv(edit){
+      const a=ASSETS.find(x=>x.id===AV_ID); const el=$('avInvSec'); if(!a||!el)return;
+      const st=a.inventory_state||'';
+      const lbl={ found:'<span style="color:#1E7A45;font-weight:600;">✓ Inventorizuota</span>', not_found:'<span style="color:#B3261E;font-weight:600;">✕ Nerasta</span>', '':'<span class="muted">○ Dar netikrinta</span>' }[st];
+      const diff=a.inventory_qty!=null&&a.quantity!=null&&Number(a.inventory_qty)!==Number(a.quantity);
+      if(!edit){
+        el.innerHTML=`<div class="sec-title" style="margin-top:0;display:flex;justify-content:space-between;align-items:center;">Inventorizacija
+            <button type="button" class="btn btn-sm btn-ghost" id="avInvEdit" style="text-transform:none;">Keisti būseną</button></div>
+          <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:13px;align-items:baseline;">
+            <div>${lbl}${a.inventory_checked_at?' <span class="muted">'+esc(a.inventory_checked_at.slice(0,10))+'</span>':''}</div>
+            ${a.inventory_qty!=null?'<div>Faktinis kiekis: <b'+(diff?' style="color:#8A5A00;"':'')+'>'+esc(String(a.inventory_qty))+'</b> '+esc(a.unit||'')+(diff?' <span class="muted">(apskaitoje '+esc(String(a.quantity))+')</span>':'')+'</div>':''}
+          </div>
+          ${a.inventory_note?'<div class="av-note" style="margin-top:6px;'+(st==='not_found'?'background:#FDECEA;':'')+'">'+esc(a.inventory_note)+'</div>':''}`;
+        $('avInvEdit').onclick=()=>renderAvInv(true);
+        return;
+      }
+      const qv=a.inventory_qty!=null?a.inventory_qty:(a.quantity??'');
+      el.innerHTML=`<div class="sec-title" style="margin-top:0;">Inventorizacija — keitimas</div>
+        <div class="av-inv-seg" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+          <label class="av-seg"><input type="radio" name="avInvSt" value="found" ${st==='found'?'checked':''}> ✓ Inventorizuota</label>
+          <label class="av-seg"><input type="radio" name="avInvSt" value="not_found" ${st==='not_found'?'checked':''}> ✕ Nerasta</label>
+          <label class="av-seg"><input type="radio" name="avInvSt" value="" ${!st?'checked':''}> ○ Netikrinta (nuimti žymą)</label>
+        </div>
+        <div class="row">
+          <div style="max-width:170px;"><label class="label">Faktinis kiekis</label><input id="avInvQty" class="input" type="number" step="any" min="0" value="${esc(String(qv))}"></div>
+          <div><label class="label">Pastaba (kodėl keičiama, kas rasta)</label><textarea id="avInvNote" class="textarea" style="min-height:44px;">${esc(a.inventory_note||'')}</textarea></div>
+        </div>
+        <div id="avInvMsg" style="margin:6px 0;"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button type="button" class="btn btn-sm btn-ghost" id="avInvCancel">Atšaukti</button>
+          <button type="button" class="btn btn-sm" id="avInvSave">Įrašyti būseną</button>
+        </div>`;
+      $('avInvCancel').onclick=()=>renderAvInv(false);
+      $('avInvSave').onclick=async()=>{
+        const ns=(document.querySelector('input[name="avInvSt"]:checked')||{}).value||null;
+        const note=$('avInvNote').value.trim();
+        const qr=$('avInvQty').value.trim();
+        let qty=qr===''?null:Number(qr.replace(',','.'));
+        if(qty!=null&&(!isFinite(qty)||qty<0)){ $('avInvMsg').innerHTML='<div class="error">Neteisingas kiekis.</div>'; return; }
+        if(ns==='not_found')qty=0; if(ns===null)qty=null;
+        if((ns||'')!==st&&!note){ $('avInvMsg').innerHTML='<div class="error">Keičiant būseną įrašykite pastabą (priežastį) — ji fiksuojama veiksmų žurnale.</div>'; $('avInvNote').focus(); return; }
+        const { data, error }=await sb.rpc('set_asset_inventory',{ p_asset_id:a.id, p_state:ns, p_note:note||null, p_qty:qty });
+        if(error||(data&&data.ok===false)){ $('avInvMsg').innerHTML='<div class="error">'+esc(error?error.message:data.error_code)+'</div>'; return; }
+        a.inventory_state=ns; a.inventory_note=note||null; a.inventory_qty=qty;
+        a.inventory_checked_at=ns?new Date().toISOString():null; if(ns==='found')a.needs_review=false;
+        renderAvInv(false); renderAssets();
+        const b=$('avBadges'); if(b)openAssetView(a.id);
+      };
+    }
     function renderAvPhotos(){
       const a=ASSETS.find(x=>x.id===AV_ID); if(!a)return;
       photoThumbs($('avPhotos'), a.photos||[], null, [
@@ -10544,16 +10960,19 @@
       asset_inventory:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
       asset_other:[['name','Pavadinimas'],['location','Saugojimo vieta'],['qty','Kiekis'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
       asset_intangible:[['name','Pavadinimas'],['notes1','Pastabos 1'],['notes2','Pastabos 2']],
+      inventory_check:[['inv_no','Inv. Nr.'],['code','Sistemos kodas'],['name','Pavadinimas'],['qty','Kiekis pagal apskaitą'],['fact_qty','Faktinis kiekis'],['state','Rezultatas'],['notes1','Pastabos']],
     };
     // Stulpelių pločiai: siauri kiekiniams/pasirinkimams, platūs pavadinimui ir pastaboms
     const ACT_COL_W={ name:'30%', notes:'20%', chrono:'12%', kind:'9%', pages:'6%', folders:'7%', transfer_form:'10%',
-      qty:'7%', location:'16%', address:'18%', unique_no:'12%', notes1:'16%', notes2:'16%', file_no:'8%', box_no:'8%' };
+      qty:'7%', location:'16%', address:'18%', unique_no:'12%', notes1:'16%', notes2:'16%', file_no:'8%', box_no:'8%',
+      inv_no:'9%', code:'9%', fact_qty:'7%', state:'9%' };
     const ACT_INP_W={ name:'min-width:240px;', notes:'min-width:180px;', chrono:'min-width:130px;width:130px;', kind:'width:100px;min-width:100px;',
       pages:'width:64px;min-width:64px;', folders:'width:76px;min-width:76px;', transfer_form:'width:110px;min-width:110px;',
       qty:'width:76px;min-width:76px;', file_no:'width:90px;min-width:90px;', box_no:'width:90px;min-width:90px;',
-      unique_no:'min-width:120px;width:120px;', address:'min-width:160px;', location:'min-width:140px;', notes1:'min-width:140px;', notes2:'min-width:140px;' };
-    const ACT_TITLES={ documents:'DOKUMENTŲ PERDAVIMO AKTAS', documents_v2:'BYLŲ (DOKUMENTŲ) PERDAVIMO AKTAS', grouped:'PRIĖMIMO-PERDAVIMO AKTAS', asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)', asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)', asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)', asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)', asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)', vehicle:'AUTOMOBILIO PERDAVIMO AKTAS' };
-    const ACT_LABELS={ documents:'Dokumentų perdavimo aktas', documents_v2:'Bylų (dokumentų) perdavimo aktas — nauja forma', asset_realestate:'Turto perdavimas — Nekilnojamas', asset_movable:'Turto perdavimas — Kilnojamas', asset_inventory:'Turto perdavimas — Prekės / Atsargos', asset_other:'Turto perdavimas — Kitas', asset_intangible:'Turto perdavimas — Nematerialus', vehicle:'Automobilio perdavimo aktas', grouped:'Priėmimo-perdavimo aktas (grupėmis / dvikalbis)' };
+      unique_no:'min-width:120px;width:120px;', address:'min-width:160px;', location:'min-width:140px;', notes1:'min-width:140px;', notes2:'min-width:140px;',
+      inv_no:'width:90px;min-width:90px;', code:'width:96px;min-width:96px;', fact_qty:'width:76px;min-width:76px;', state:'width:100px;min-width:100px;' };
+    const ACT_TITLES={ documents:'DOKUMENTŲ PERDAVIMO AKTAS', documents_v2:'BYLŲ (DOKUMENTŲ) PERDAVIMO AKTAS', grouped:'PRIĖMIMO-PERDAVIMO AKTAS', asset_realestate:'TURTO PERDAVIMO AKTAS (Nekilnojamas turtas)', asset_movable:'TURTO PERDAVIMO AKTAS (Kilnojamas turtas)', asset_inventory:'TURTO PERDAVIMO AKTAS (Prekės / Atsargos)', asset_other:'TURTO PERDAVIMO AKTAS (Kitas turtas)', asset_intangible:'TURTO PERDAVIMO AKTAS (Nematerialus turtas)', vehicle:'AUTOMOBILIO PERDAVIMO AKTAS', inventory_check:'TURTO INVENTORIZACIJOS AKTAS' };
+    const ACT_LABELS={ documents:'Dokumentų perdavimo aktas', documents_v2:'Bylų (dokumentų) perdavimo aktas — nauja forma', asset_realestate:'Turto perdavimas — Nekilnojamas', asset_movable:'Turto perdavimas — Kilnojamas', asset_inventory:'Turto perdavimas — Prekės / Atsargos', asset_other:'Turto perdavimas — Kitas', asset_intangible:'Turto perdavimas — Nematerialus', vehicle:'Automobilio perdavimo aktas', grouped:'Priėmimo-perdavimo aktas (grupėmis / dvikalbis)', inventory_check:'Turto inventorizacijos aktas' };
     const ASSET_ACT_TYPES=['asset_realestate','asset_movable','asset_inventory','asset_other','asset_intangible','vehicle'];
     let ACTS=[], ACT_ROWS=[], ACT_PHOTOS=[];
 
@@ -10745,6 +11164,7 @@
       $('gSubLt').value=m.sub_lt||''; $('gSub2').value=m.sub2||'';
       $('gIntroLt').value=m.intro_lt||''; $('gIntro2').value=m.intro2||'';
       $('gNotesLt').value=m.notes_lt||''; $('gNotes2').value=m.notes2||'';
+      $('actInvAddr').value=m.address||''; $('actInvOthers').value=m.others||'';
       GROUPED=Array.isArray(m.groups)?m.groups.map(g=>({t_lt:g.t_lt||'',t2:g.t2||'',b_lt:g.b_lt||'',b2:g.b2||''})):[];
       $('actMsg').innerHTML = (a.id && a.status==='final' && a.pdf_path)
         ? '<div style="background:#FFF8E6;border:1px solid #F59E0B;color:#8A6D00;border-radius:6px;padding:10px 12px;margin-top:10px;font-size:13px;"><span class="ic ic-lock"></span> <b>Užrakintas galutinis aktas.</b> Koreguojate superadministratoriaus teisėmis — atlikę pakeitimus iš naujo sugeneruokite PDF, kad akto turinys ir PDF failas sutaptų. Veiksmas fiksuojamas veiklos žurnale.</div>'
@@ -10772,6 +11192,10 @@
       $('actVehicleFields').classList.toggle('hidden',!isVehicle);
       $('actGroupedFields').classList.toggle('hidden',!isGrouped);
       $('actTableWrap').classList.toggle('hidden',isVehicle||isGrouped);
+      const isInv=t==='inventory_check';
+      $('actInvFields').classList.toggle('hidden',!isInv);
+      $('actHandoverLbl').textContent=isInv?'Dalyvavo (įmonės atstovas / turto saugotojas)':'Perduodantis asmuo (įmonės vadovas/įgaliotas)';
+      $('actReceiverLbl').textContent=isInv?'Inventorizaciją atliko (nemokumo administratoriaus įgaliotas asmuo)':'Perimantis asmuo (nemokumo administratoriaus įgaliotas asmuo)';
       if(isGrouped){ toggleBilingualUI(); renderGroups(); }
       if(!isVehicle&&!isGrouped){ $('actTableTitle').textContent='Eilutės'; renderActRows(); }
     }
@@ -10958,7 +11382,9 @@
               intro_lt:$('gIntroLt').value, intro2:$('gIntro2').value,
               groups:GROUPED.filter(g=>g.t_lt||g.b_lt||g.t2||g.b2),
               notes_lt:$('gNotesLt').value, notes2:$('gNotes2').value
-            }:{},
+            }
+          : t==='inventory_check'?{ address:$('actInvAddr').value.trim(), others:$('actInvOthers').value.trim() }
+          :{},
         photos: [...ACT_PHOTOS, ...ACT_FILES],
         sig_handover:sigData('sigHandover'), sig_receiver:sigData('sigReceiver'), status
       };
@@ -11238,8 +11664,8 @@
       const CW=Math.round(40*MM), CH=Math.round(30*MM);
       const photosHtml=(p._photoData&&p._photoData.length)?`
         <div style="margin-top:46px;"><!-- tarpas, kad puslapių pjaustyklė rastų švarią vietą -->
-          <div style="font-weight:bold;font-size:13px;margin-bottom:2px;">Priedas Nr. 1. Perduodamo turto fotofiksacija</div>
-          <div style="font-size:11px;color:#444;margin-bottom:8px;">Prie ${esc(p.act_date||'')} ${p.act_no?('Nr. '+esc(p.act_no)):''} perdavimo akto. Nuotraukų: ${p._photoData.length}.</div>
+          <div style="font-weight:bold;font-size:13px;margin-bottom:2px;">Priedas Nr. 1. ${p.act_type==='inventory_check'?'Inventorizuoto':'Perduodamo'} turto fotofiksacija</div>
+          <div style="font-size:11px;color:#444;margin-bottom:8px;">Prie ${esc(p.act_date||'')} ${p.act_no?('Nr. '+esc(p.act_no)):''} ${p.act_type==='inventory_check'?'inventorizacijos':'perdavimo'} akto. Nuotraukų: ${p._photoData.length}.</div>
           <div style="display:flex;flex-wrap:wrap;gap:${Math.round(2*MM)}px;">
             ${p._photoData.map(d=>`<div style="width:${CW}px;border:1px solid #999;">
               <img src="${d.src}" style="width:100%;height:${CH}px;object-fit:cover;display:block;">
@@ -11247,7 +11673,13 @@
             </div>`).join('')}
           </div>
         </div>`:'';
-      const totalLine=p.act_type==='documents_v2'?`<div style="font-size:13px;margin-top:10px;">Iš viso perduota bylų (dokumentų): <b>${p.rows.length}</b>.</div>`:'';
+      const isInvAct=p.act_type==='inventory_check';
+      const invSum=(()=>{ if(!isInvAct)return '';
+        const rs=p.rows||[]; const sOf=r=>/^\s*nerast/i.test(r.state||'')?'not_found':/^\s*rast/i.test(r.state||'')?'found':'';
+        const f=rs.filter(r=>sOf(r)==='found').length, n=rs.filter(r=>sOf(r)==='not_found').length;
+        const d=rs.filter(r=>sOf(r)==='found'&&r.qty!==''&&r.fact_qty!==''&&r.qty!=null&&r.fact_qty!=null&&parseFloat(String(r.qty).replace(',','.'))!==parseFloat(String(r.fact_qty).replace(',','.'))).length;
+        return `<div style="font-size:13px;margin-top:10px;">Iš viso patikrinta pozicijų: <b>${rs.length}</b>; rasta: <b>${f}</b>; nerasta: <b>${n}</b>${d?`; kiekio neatitikimų: <b>${d}</b>`:''}.</div>`; })();
+      const totalLine=p.act_type==='documents_v2'?`<div style="font-size:13px;margin-top:10px;">Iš viso perduota bylų (dokumentų): <b>${p.rows.length}</b>.</div>`:invSum;
       const actW = (p.act_type==='vehicle') ? 700 : 1050; // lenteliniai aktai — gulsčias (landscape) A4
       return `<div style="font-family:'Times New Roman',serif;color:#000;width:${actW}px;padding:10px;">
         <div style="text-align:right;font-size:12px;">${esc(p.act_date||'')} ${p.act_no?('Nr. '+esc(p.act_no)):''}</div>
@@ -11264,12 +11696,14 @@
               .replace(/{{perdave}}/g,p.handover_person||'')
               .replace(/{{pereme}}/g,p.receiver_person||'')).replace(/\n/g,'<br>');
           }
+          if(isInvAct){ const m=p.meta||{};
+            return `${esc(p.act_date||'')} ${m.address?('adresu <b>'+esc(m.address)+'</b>'):''} atlikta bankrutuojančios įmonės ${esc(CURRENT.debtor_name||'')}${CURRENT.debtor_code?(' (įmonės kodas '+esc(CURRENT.debtor_code)+')'):''} turto inventorizacija — pozicijos patikrintos natūroje ir palygintos su apskaitos duomenimis. Inventorizaciją atliko nemokumo administratoriaus įgaliotas asmuo <b>${esc(p.receiver_person||'')}</b>${p.handover_person?(', dalyvavo <b>'+esc(p.handover_person)+'</b>'):''}${m.others?(', taip pat '+esc(m.others)):''}.`; }
           return `Perdavėjas: ${esc(CURRENT.debtor_name||'')}${CURRENT.debtor_code?(', įmonės kodas '+esc(CURRENT.debtor_code)):''}${CURRENT.debtor_address?(', '+esc(CURRENT.debtor_address)):''}, perduodantis asmuo: <b>${esc(p.handover_person||'')}</b>. Perėmėjas: nemokumo administratoriaus įgaliotas asmuo <b>${esc(p.receiver_person||'')}</b>.`;
         })()}</div>
         ${body}
         ${totalLine}
         ${(()=>{ const fl=(p.photos||[]).filter(f=>f.kind==='file'); return fl.length?`<div style="font-size:12.5px;margin-top:12px;"><b>Priedai:</b> ${fl.map((f,i)=>(i+1)+') '+esc(f.name)).join('; ')}</div>`:''; })()}
-        <div style="margin-top:30px;">${sig('Perdavė:',p.handover_person,p.sig_handover,p.esign_handover)}<span style="display:inline-block;width:8%;"></span>${sig('Priėmė:',p.receiver_person,p.sig_receiver,p.esign_receiver)}</div>
+        <div style="margin-top:30px;">${sig(isInvAct?'Dalyvavo:':'Perdavė:',p.handover_person,p.sig_handover,p.esign_handover)}<span style="display:inline-block;width:8%;"></span>${sig(isInvAct?'Inventorizaciją atliko:':'Priėmė:',p.receiver_person,p.sig_receiver,p.esign_receiver)}</div>
         ${photosHtml}
       </div>`;
     }
