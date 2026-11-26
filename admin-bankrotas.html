@@ -1933,6 +1933,7 @@
               </select></div>
           </div>
           <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin:4px 0 8px;">
+            <label style="display:flex;gap:6px;align-items:center;" title="QR kodas – nuoroda į turto kortelę: nuskaičius telefonu atsidaro pozicija (reikia būti prisijungus)"><input type="checkbox" id="lbQr" style="width:auto;"> <b>QR kodas</b></label>
             <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="lbShowCode" style="width:auto;"> Antras kodas</label>
             <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="lbShowName" style="width:auto;"> Pavadinimas</label>
             <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="lbShowOwner" style="width:auto;"> Įmonės pavadinimas</label>
@@ -1940,11 +1941,20 @@
           <div class="row">
             <div><label class="label">Kopijų skaičius</label>
               <select id="lbCopies" class="select">
+                <option value="units">Pagal daiktų skaičių (rekomenduojama)</option>
+                <option value="qty">Pagal kiekį sąraše</option>
                 <option value="one">Po 1 kiekvienai pozicijai</option>
-                <option value="qty">Pagal kiekį (pvz. 30 kėdžių — 30 lipdukų)</option>
-              </select></div>
+              </select>
+              <div class="hint" id="lbCopiesHint" style="margin-top:4px;"></div></div>
             <div style="max-width:170px;"><label class="label">Praleisti pirmų lipdukų</label><input id="lbSkip" class="input" type="number" min="0" step="1" value="0" title="Jei lapas jau iš dalies panaudotas"></div>
           </div>
+          <label style="display:flex;gap:6px;align-items:center;font-size:13px;margin:2px 0 6px;"><input type="checkbox" id="lbNumber" style="width:auto;"> Kai pozicijai keli lipdukai – numeruoti (1/3, 2/3, 3/3)</label>
+          <details id="lbCntWrap" style="margin-top:4px;font-size:13px;">
+            <summary style="cursor:pointer;">Lipdukų skaičius pagal pozicijas (<span id="lbCntSum">0</span>) — galima pakoreguoti</summary>
+            <div style="max-height:220px;overflow:auto;border:1px solid var(--bd);border-radius:var(--r-sm);margin-top:6px;">
+              <table style="font-size:12.5px;width:100%;"><thead><tr><th>Kodas</th><th>Pavadinimas</th><th style="width:70px;">Kiekis</th><th style="width:70px;">Daiktų</th><th style="width:84px;">Lipdukų</th></tr></thead><tbody id="lbCntBody"></tbody></table>
+            </div>
+          </details>
           <details style="margin-top:4px;font-size:13px;">
             <summary style="cursor:pointer;">Spausdintuvo kalibravimas</summary>
             <div class="row" style="margin-top:6px;">
@@ -4048,6 +4058,30 @@
       await loadDocKinds();
     };
 
+    // --- Gilioji nuoroda į turto kortelę (iš lipduko QR: i.html#… → ?asset=<uuid>) ---
+    (function(){
+      try{
+        const u=new URL(location.href); const id=u.searchParams.get('asset');
+        if(id&&/^[0-9a-f-]{36}$/i.test(id)){ sessionStorage.setItem('npvs_open_asset',id.toLowerCase());
+          u.searchParams.delete('asset'); history.replaceState(null,'',u.pathname+(u.search||'')+u.hash); }
+      }catch(_){}
+    })();
+    async function openPendingAsset(){
+      let id=null; try{ id=sessionStorage.getItem('npvs_open_asset'); }catch(_){}
+      if(!id)return;
+      try{ sessionStorage.removeItem('npvs_open_asset'); }catch(_){}
+      try{
+        const { data:a }=await sb.from('insolvency_assets').select('id,case_id').eq('id',id).maybeSingle();
+        if(!a){ alert('Turto pozicija nerasta arba neturite teisės jos matyti.'); return; }
+        const { data:c }=await sb.from('insolvency_cases').select('id,administrator_id').eq('id',a.case_id).maybeSingle();
+        if(!c||!ADMINS.some(x=>x.id===c.administrator_id)){ alert('Neturite prieigos prie šios bylos.'); return; }
+        await openWorkspace(c.administrator_id);
+        await openCase(c.id);
+        if(TOP_TABS.assets&&!document.querySelector('#topTabs > .tab[data-top="assets"].hidden')) setTop('assets');
+        await loadAssets();
+        if(ASSETS.some(x=>x.id===id)) openAssetView(id);
+      }catch(e){ console.warn('asset deep link',e); }
+    }
     async function boot(){
       try{
         const { data:{ session } } = await sb.auth.getSession();
@@ -4086,6 +4120,7 @@
       ADMINS=a.data||[]; TEMPLATES=t.data||[];
       renderAdmGrid(); views('admListView');
       loadInbox();
+      openPendingAsset();
     }
     function renderAdmGrid(){
       if(!ADMINS.length){ $('admGrid').innerHTML='<div class="muted" style="padding:20px;">Administratorių nėra. Sukurkite naują.</div>'; return; }
@@ -6431,9 +6466,9 @@
       const view=$('arView').value, priceMode=$('arPrice').value, inclW=$('arInclWritten').checked;
       const invF=$('arInv').value, locF=$('arLoc').value, invCols=$('arInvCols').checked;
       const INV_LBL={ found:'Inventorizuota', not_found:'Nerasta' };
-      const invPart=a=>invCols?[INV_LBL[a.inventory_state]||'Netikrinta',(a.inventory_checked_at||'').slice(0,10),a.inventory_qty??'',a.inventory_note||'']:[];
-      const invHead=invCols?['Inventorizacija','Inv. data','Faktinis kiekis','Inv. pastaba']:[];
-      const invBlank=invCols?['','','','']:[];
+      const invPart=a=>invCols?[INV_LBL[a.inventory_state]||'Netikrinta',(a.inventory_checked_at||'').slice(0,10),a.inventory_qty??'',a.inventory_units??'',a.inventory_note||'']:[];
+      const invHead=invCols?['Inventorizacija','Inv. data','Faktinis kiekis','Daiktų sk.','Inv. pastaba']:[];
+      const invBlank=invCols?['','','','','']:[];
       const rows=[];
       ASSETS.forEach(a=>{
         if(locF&&(a.location||'')!==locF) return;
@@ -6938,6 +6973,7 @@
               <div class="muted" style="font-size:11px;font-family:monospace;">${esc(a.asset_code||'')}${a.inventory_no?' · '+esc(a.inventory_no):''}</div>
               ${a.location?'<div class="muted" style="font-size:11px;">'+esc(a.location)+'</div>':''}
               ${(a.inventory_qty!=null&&a.quantity!=null&&Number(a.inventory_qty)!==Number(a.quantity))?'<div style="font-size:11px;color:#8A5A00;">Faktinis kiekis '+esc(String(a.inventory_qty))+' (apskaitoje '+esc(String(a.quantity))+')</div>':''}
+              ${a.inventory_units>1?'<div style="font-size:11px;color:#1F4E8C;">Komplektas: '+a.inventory_units+' daikt.</div>':''}
               ${a.inventory_note?'<div class="muted" style="font-size:11px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">„'+esc(a.inventory_note)+'“</div>':''}
             </div>
             ${(a.photos||[]).length?'<span class="muted" style="font-size:11px;white-space:nowrap;"><span class="ic ic-image"></span> '+(a.photos||[]).length+'</span>':''}
@@ -6968,6 +7004,8 @@
           <div class="row" style="margin-bottom:4px;">
             <div style="max-width:190px;"><label class="label">Faktinis kiekis</label>
               <div style="display:flex;gap:6px;align-items:center;"><input id="invQty" class="input" type="number" step="any" min="0" value="${esc(String(qtyVal))}" style="max-width:110px;"><span class="muted" style="font-size:12px;">${esc(a.unit||'')}</span></div></div>
+            <div style="max-width:200px;"><label class="label" title="Kiek atskirų fizinių daiktų sudaro poziciją – tiek lipdukų reikės. Pvz. darbo vietos komplektas (stalas, kėdė, spinta) = 3.">Daiktų sk. (lipdukų) ⓘ</label>
+              <input id="invUnits" class="input" type="number" step="1" min="1" value="${a.inventory_units!=null?esc(String(a.inventory_units)):''}" placeholder="komplektui, pvz. 3" style="max-width:130px;"></div>
             <div><label class="label">Pastaba</label>
               <textarea id="invNote" class="textarea" style="min-height:44px;" placeholder="pvz. komplekte 30 kėdžių; 2 vnt. pažeisti; nerasta — kur ieškota">${esc(a.inventory_note||'')}</textarea></div>
           </div>
@@ -7032,6 +7070,9 @@
       if(qty!=null&&(!isFinite(qty)||qty<0)){ $('invMsg').innerHTML='<div class="error">Neteisingas faktinis kiekis.</div>'; return; }
       if(state==='not_found')qty=0;
       if(state===null)qty=null;
+      const uRaw=(($('invUnits')||{}).value||'').trim();
+      const units=uRaw===''?null:Math.round(Number(uRaw));
+      if(units!=null&&(!isFinite(units)||units<1)){ $('invMsg').innerHTML='<div class="error">Daiktų skaičius turi būti teigiamas sveikas skaičius.</div>'; return; }
       if(state==='found'&&!(a.photos||[]).length){
         if(!confirm('Prie šios pozicijos nėra nė vienos nuotraukos. Vis tiek žymėti kaip inventorizuotą?'))return;
       }
@@ -7042,10 +7083,10 @@
         if(!confirm('Faktinis kiekis ('+qty+') skiriasi nuo apskaitos ('+a.quantity+'), o pastaba tuščia.\n\nVis tiek išsaugoti?')){ $('invNote').focus(); return; }
       }
       if(state===null&&!confirm('Nuimti inventorizacijos žymą? Pozicija vėl taps „dar netikrinta“. Pastaba bus išsaugota.'))return;
-      const { data, error }=await sb.rpc('set_asset_inventory',{ p_asset_id:a.id, p_state:state, p_note:note||null, p_qty:qty });
+      const { data, error }=await sb.rpc('set_asset_inventory',{ p_asset_id:a.id, p_state:state, p_note:note||null, p_qty:qty, p_units:units });
       if(error){ $('invMsg').innerHTML='<div class="error">'+esc(error.message)+'</div>'; return; }
       if(data&&data.ok===false){ $('invMsg').innerHTML='<div class="error">'+esc(data.error_code)+'</div>'; return; }
-      a.inventory_state=state; a.inventory_note=note||null; a.inventory_qty=qty;
+      a.inventory_state=state; a.inventory_note=note||null; a.inventory_qty=qty; a.inventory_units=units;
       a.inventory_checked_at=state?new Date().toISOString():null;
       if(state==='found')a.needs_review=false;
       if(mode!=='next'){ openInvCard(a.id); $('invMsg').innerHTML='<div class="success">'+(state===null?'Žyma nuimta.':'Išsaugota.')+'</div>'; return; }
@@ -7139,9 +7180,9 @@
       const rows=invStageRows();
       if(!rows.length){ alert('Pagal filtrus pozicijų nėra.'); return; }
       const sm=invStageMeta();
-      const aoa=[['Nr.','Sistemos kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis pagal apskaitą','Mato vnt.','Faktinis kiekis','Būsena','Inv. data','Pastaba','Vieta','Grupė','Nuotraukų']];
+      const aoa=[['Nr.','Sistemos kodas','Inv. Nr.','Pavadinimas','Kategorija','Kiekis pagal apskaitą','Mato vnt.','Faktinis kiekis','Daiktų sk. (lipdukų)','Būsena','Inv. data','Pastaba','Vieta','Grupė','Nuotraukų']];
       rows.forEach((a,i)=>aoa.push([i+1,a.asset_code||'',a.inventory_no||'',a.name||'',AS_CAT[a.category]||a.category||'',a.quantity??'',a.unit||'',
-        a.inventory_qty??'',a.inventory_state?INV_ST_LBL(a.inventory_state):'',(a.inventory_checked_at||'').slice(0,10),a.inventory_note||'',a.location||'',invAssetGroupName(a.id),(a.photos||[]).length]));
+        a.inventory_qty??'',a.inventory_units??'',a.inventory_state?INV_ST_LBL(a.inventory_state):'',(a.inventory_checked_at||'').slice(0,10),a.inventory_note||'',a.location||'',invAssetGroupName(a.id),(a.photos||[]).length]));
       const today=new Date().toISOString().slice(0,10);
       const fn='Inventorizacijos_sarasas_'+(CURRENT.case_short_code||'byla')+(sm.loc?'_'+sm.loc.replace(/[^A-Za-z0-9ĄČĘĖĮŠŲŪŽąčęėįšųūž]+/g,'_').slice(0,40):'')+'_'+today+'.xlsx';
       reportListToXlsx('Inventorizacija',fn,['Turto inventorizacijos darbinis sąrašas','Suformuota: '+today,...sm.lines,'Pozicijų: '+rows.length],aoa);
@@ -7185,7 +7226,8 @@
       await gotoActEditor(r.data&&r.data.id);
     };
     /* ===== LIPDUKAI: inventorinių numerių spausdinimas ant standartinių A4 lipdukų lapų =====
-       Matmenys mm; PDF formuojamas pdf-lib tiksliais matmenimis (1 mm = 72/25,4 pt). */
+       Matmenys mm; PDF formuojamas pdf-lib tiksliais matmenimis (1 mm = 72/25,4 pt).
+       QR kodas – trumpa nuoroda į turto kortelę (i.html#<ID>), nuskaičius telefonu atsidaro pozicija. */
     const LB_FORMATS=(()=>{
       const c=(id,label,w,h,cols,rows,gx,gy)=>{ const ml=+((210-cols*w-(cols-1)*gx)/2).toFixed(2), mt=+((297-rows*h-(rows-1)*gy)/2).toFixed(2);
         return { id,label,w,h,cols,rows,gx,gy,ml,mt }; };
@@ -7204,34 +7246,105 @@
       ];
     })();
     const LB_KEY='npvs_label_cfg';
-    let LB_ITEMS=[];
+    const PT_MM=25.4/72;
+    let LB_ITEMS=[], LB_CNT=new Map(), LB_MODE='units';
     const lbNum=id=>{ const v=parseFloat(String($(id).value).replace(',','.')); return isFinite(v)?v:0; };
     function lbGeom(){ return { w:lbNum('lbW'), h:lbNum('lbH'), cols:Math.max(1,Math.round(lbNum('lbC'))), rows:Math.max(1,Math.round(lbNum('lbR'))),
       ml:lbNum('lbML'), mt:lbNum('lbMT'), gx:lbNum('lbGX'), gy:lbNum('lbGY'), ox:lbNum('lbOX'), oy:lbNum('lbOY') }; }
     function lbSaveCfg(){
-      try{ localStorage.setItem(LB_KEY,JSON.stringify({ fmt:$('lbFmt').value, g:lbGeom(), primary:$('lbPrimary').value,
-        code:$('lbShowCode').checked, name:$('lbShowName').checked, owner:$('lbShowOwner').checked, copies:$('lbCopies').value, outline:$('lbOutline').checked })); }catch(_){}
+      try{ localStorage.setItem(LB_KEY,JSON.stringify({ v:2, fmt:$('lbFmt').value, g:lbGeom(), primary:$('lbPrimary').value, qr:$('lbQr').checked,
+        code:$('lbShowCode').checked, name:$('lbShowName').checked, owner:$('lbShowOwner').checked, copies:$('lbCopies').value,
+        number:$('lbNumber').checked, outline:$('lbOutline').checked })); }catch(_){}
     }
     function lbApplyFmt(id){
       const f=LB_FORMATS.find(x=>x.id===id); if(!f||id==='custom')return;
       $('lbW').value=f.w; $('lbH').value=f.h; $('lbC').value=f.cols; $('lbR').value=f.rows;
       $('lbML').value=f.ml; $('lbMT').value=f.mt; $('lbGX').value=f.gx; $('lbGY').value=f.gy;
     }
-    // Lipduko tekstinės eilutės
-    function lbLines(a){
+    // --- QR ---
+    async function ensureQrLib(){
+      if(window.qrcode)return;
+      await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+        s.onload=res; s.onerror=()=>rej(new Error('Nepavyko įkelti QR bibliotekos.')); document.head.appendChild(s); });
+    }
+    function lbQrUrl(a){
+      const hex=String(a.id||'').replace(/-/g,''); let bin='';
+      for(let i=0;i<hex.length;i+=2)bin+=String.fromCharCode(parseInt(hex.substr(i,2),16));
+      const b64=btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      const base=/^https?:/.test(location.protocol)?location.origin+location.pathname.replace(/[^/]*$/,''):'https://help.vvc.lt/';
+      return base+'i.html#'+b64;
+    }
+    const LB_QR=new Map();
+    function lbQrMatrix(a){
+      if(LB_QR.has(a.id))return LB_QR.get(a.id);
+      if(!window.qrcode)return null;
+      const q=qrcode(0,'L'); q.addData(lbQrUrl(a)); q.make();
+      const n=q.getModuleCount(), m=[];
+      for(let r=0;r<n;r++){ const row=[]; for(let c=0;c<n;c++)row.push(q.isDark(r,c)); m.push(row); }
+      LB_QR.set(a.id,m); return m;
+    }
+    // --- kiek lipdukų kiekvienai pozicijai ---
+    const lbQtyOf=a=>{ const q=Math.round(Number(a.inventory_qty!=null?a.inventory_qty:a.quantity)); return isFinite(q)&&q>0?q:1; };
+    function lbDefCount(a,mode){
+      if(mode==='one')return 1;
+      if(mode==='units')return a.inventory_units>0?a.inventory_units:lbQtyOf(a);
+      return lbQtyOf(a);
+    }
+    function lbResetCounts(){
+      LB_MODE=$('lbCopies').value; LB_CNT=new Map(LB_ITEMS.map(a=>[a.id,lbDefCount(a,LB_MODE)]));
+      $('lbCopiesHint').textContent={ units:'Komplektams – inventorizuojant nurodytas daiktų skaičius (pvz. darbo vieta = 3), kitoms pozicijoms – kiekis.',
+        qty:'Faktinis kiekis, jei pozicija inventorizuota, kitaip – kiekis pagal apskaitą.', one:'Vienas lipdukas kiekvienai pozicijai.' }[LB_MODE]||'';
+      lbRenderCounts();
+    }
+    function lbRenderCounts(){
+      const many=LB_ITEMS.length>300;
+      $('lbCntBody').innerHTML=(many?LB_ITEMS.slice(0,300):LB_ITEMS).map(a=>`<tr>
+        <td style="font-family:monospace;white-space:nowrap;">${esc(a.inventory_no||a.asset_code||'')}</td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(a.name||'')}</td>
+        <td>${esc(String(a.inventory_qty!=null?a.inventory_qty:(a.quantity??'')))}</td>
+        <td>${a.inventory_units!=null?esc(String(a.inventory_units)):'<span class="muted">—</span>'}</td>
+        <td><input class="input lbCnt" data-id="${a.id}" type="number" min="0" step="1" value="${LB_CNT.get(a.id)}" style="width:70px;padding:4px 6px;"></td></tr>`).join('')
+        +(many?'<tr><td colspan="5" class="muted">Rodomos pirmos 300 pozicijų.</td></tr>':'');
+      $('lbCntBody').querySelectorAll('.lbCnt').forEach(el=>el.oninput=()=>{ const v=Math.max(0,Math.round(Number(el.value)||0)); LB_CNT.set(el.dataset.id,v); lbRender(); });
+    }
+    // --- lipduko išdėstymas (mm; šriftai pt). measure(t,bold,pt) → plotis mm ---
+    function lbLines(a,k,n){
       const inv=(a.inventory_no||'').trim(), code=(a.asset_code||'').trim();
       const primary=$('lbPrimary').value==='code'?(code||inv):(inv||code);
       const second=primary===inv?code:inv;
+      const num=($('lbNumber').checked&&n>1)?(k+'/'+n):'';
       const L=[];
-      if($('lbShowOwner').checked&&CURRENT&&CURRENT.debtor_name)L.push({ t:CURRENT.debtor_name, rel:0.5, trunc:true });
+      if($('lbShowOwner').checked&&CURRENT&&CURRENT.debtor_name)L.push({ t:CURRENT.debtor_name, rel:0.55, trunc:true });
       L.push({ t:primary||'—', rel:1, bold:true });
-      if($('lbShowCode').checked&&second&&second!==primary)L.push({ t:second, rel:0.55 });
-      if($('lbShowName').checked&&a.name)L.push({ t:a.name, rel:0.5, trunc:true });
+      const sec=[($('lbShowCode').checked&&second&&second!==primary)?second:'',num].filter(Boolean).join(' · ');
+      if(sec)L.push({ t:sec, rel:0.6 });
+      if($('lbShowName').checked&&a.name)L.push({ t:a.name, rel:0.55, trunc:true });
       return L;
     }
+    function lbLayout(g,L,withQr,measure){
+      const pad=Math.min(1.2,g.h*0.1,g.w*0.06);
+      const aw=g.w-2*pad, ah=g.h-2*pad;
+      let qr=null, rx=pad, ry=pad, rw=aw, rh=ah, align='center';
+      if(withQr){
+        if(g.w/g.h>=1.4){ const qs=Math.min(ah,aw*0.45), gap=Math.min(1.5,g.w*0.04);
+          qr={ x:pad, y:pad+(ah-qs)/2, s:qs }; rx=pad+qs+gap; rw=aw-qs-gap; align='left'; }
+        else { const qs=Math.min(aw,ah*0.62); qr={ x:pad+(aw-qs)/2, y:pad, s:qs }; ry=pad+qs+0.6; rh=ah-qs-0.6; }
+      }
+      const tot=L.reduce((s,l)=>s+l.rel,0);
+      const base=Math.max(3,Math.min(11, rh/PT_MM/(tot*1.15)));  // pagrindinis numeris – ne didesnis kaip 11 pt
+      const fit=(t,bold,pt)=>{ if(measure(t,bold,pt)<=rw+0.05)return t; let s=t; while(s.length>1&&measure(s+'…',bold,pt)>rw)s=s.slice(0,-1); return s+'…'; };
+      const lines=L.map(l=>{ let pt=base*l.rel; const w1=measure(l.t,!!l.bold,1);
+        if(w1*pt>rw){ const fs=rw/w1; pt=l.trunc?Math.max(fs,Math.min(pt,5)):fs; }
+        pt=Math.max(2.5,pt); return { t:fit(l.t,!!l.bold,pt), pt, bold:!!l.bold }; });
+      const bh=lines.reduce((s,l)=>s+l.pt*1.15*PT_MM,0);
+      let y=ry+Math.max(0,(rh-bh)/2);
+      lines.forEach(l=>{ const lh=l.pt*1.15*PT_MM; const tw=measure(l.t,l.bold,l.pt);
+        l.x=align==='left'?rx:rx+(rw-tw)/2; l.base=y+lh*0.8; y+=lh; });
+      return { qr, lines };
+    }
     function lbExpand(){
-      const byQty=$('lbCopies').value==='qty', out=[];
-      LB_ITEMS.forEach(a=>{ let n=1; if(byQty){ const q=Math.round(Number(a.inventory_qty!=null?a.inventory_qty:a.quantity)); n=isFinite(q)&&q>0?q:1; } for(let i=0;i<n;i++)out.push(a); });
+      const out=[];
+      LB_ITEMS.forEach(a=>{ const n=LB_CNT.get(a.id)??1; for(let i=1;i<=n;i++)out.push({ a, k:i, n }); });
       return out;
     }
     function lbValid(g){
@@ -7240,86 +7353,88 @@
       if(rw>210.5||rh>297.5)return 'Lipdukai netelpa į A4 lapą (užima '+rw.toFixed(1)+' × '+rh.toFixed(1)+' mm). Patikrinkite matmenis ir paraštes.';
       return '';
     }
+    let LB_CANVAS_CTX=null;
     function lbRender(){
       const g=lbGeom(), err=lbValid(g);
       const all=lbExpand(), per=g.cols*g.rows, skip=Math.max(0,Math.round(lbNum('lbSkip')))%Math.max(1,per);
       const pages=Math.ceil((all.length+skip)/per)||1;
+      $('lbCntSum').textContent=all.length+' lipd.';
+      const withQr=$('lbQr').checked&&!!window.qrcode;
+      let qrWarn='';
+      if(withQr&&all.length&&!err){ const m=lbQrMatrix(all[0].a); const lay=lbLayout(g,lbLines(all[0].a,1,1),true,()=>0);
+        const mod=lay.qr.s/(m.length+2); if(mod<0.25)qrWarn=' · <span style="color:#B3261E;">QR smulkus ('+mod.toFixed(2)+' mm modulis) – telefonu gali nenuskaityti, rinkitės didesnį lipduką (nuo ~16 mm aukščio)</span>'; }
       $('lbStats').innerHTML=err?'<span style="color:#B3261E;">'+esc(err)+'</span>':
-        'Lapelyje <b>'+per+'</b> lipdukų · iš viso lipdukų <b>'+all.length+'</b> · lapų <b>'+pages+'</b>'+(skip?' · praleidžiama '+skip:'');
-      const k=300/210, el=$('lbPreview'); let html='';
-      if(!err){
-        for(let i=0;i<per;i++){
-          const r=Math.floor(i/g.cols), c=i%g.cols;
-          const x=(g.ml+g.ox+c*(g.w+g.gx))*k, y=(g.mt+g.oy+r*(g.h+g.gy))*k;
-          const idx=i-skip, a=idx>=0?all[idx]:null;
-          let inner='';
-          if(a){ const L=lbLines(a); const tot=L.reduce((s,l)=>s+l.rel,0);
-            const bh=(g.h*k*0.8)/(tot*1.15);
-            inner=L.map(l=>`<div style="font-size:${Math.max(3,Math.min(bh*l.rel,(g.w*k*0.9)/(Math.max(1,l.t.length)*0.55)))}px;line-height:1.15;${l.bold?'font-weight:700;':''}white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(l.t)}</div>`).join(''); }
-          html+=`<div style="position:absolute;left:${x}px;top:${y}px;width:${g.w*k}px;height:${g.h*k}px;border:1px ${a?'solid #9AA5B1':'dashed #D5DBE1'};border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;font-family:Arial,sans-serif;color:#0B1E3F;${idx<0?'background:repeating-linear-gradient(45deg,#F3F4F6 0 3px,#fff 3px 6px);':''}">${inner}</div>`;
-        }
+        'Lapelyje <b>'+per+'</b> lipdukų · iš viso lipdukų <b>'+all.length+'</b> · lapų <b>'+pages+'</b>'+(skip?' · praleidžiama '+skip:'')+qrWarn;
+      const box=$('lbPreview');
+      let cv=box.querySelector('canvas');
+      if(!cv){ box.innerHTML=''; cv=document.createElement('canvas'); cv.width=630; cv.height=891; cv.style.cssText='width:300px;height:424px;display:block;'; box.appendChild(cv); }
+      const K=3, ctx=cv.getContext('2d'); ctx.clearRect(0,0,cv.width,cv.height); ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+      if(err)return;
+      const measure=(t,b,pt)=>{ ctx.font=(b?'bold ':'')+(pt*PT_MM*K)+'px Arial, sans-serif'; return ctx.measureText(t).width/K; };
+      for(let i=0;i<per;i++){
+        const r=Math.floor(i/g.cols), c=i%g.cols;
+        const x=g.ml+g.ox+c*(g.w+g.gx), y=g.mt+g.oy+r*(g.h+g.gy);
+        const idx=i-skip, it=idx>=0?all[idx]:null;
+        ctx.strokeStyle=it?'#9AA5B1':'#D5DBE1'; ctx.lineWidth=1; ctx.setLineDash(it?[]:[3,3]);
+        ctx.strokeRect(x*K+.5,y*K+.5,g.w*K-1,g.h*K-1); ctx.setLineDash([]);
+        if(idx<0){ ctx.fillStyle='#F3F4F6'; ctx.fillRect(x*K+1,y*K+1,g.w*K-2,g.h*K-2); continue; }
+        if(!it)continue;
+        const lay=lbLayout(g,lbLines(it.a,it.k,it.n),withQr,measure);
+        if(lay.qr){ const m=lbQrMatrix(it.a); if(m){ const n=m.length, ms=lay.qr.s/(n+2); ctx.fillStyle='#000';
+          for(let rr=0;rr<n;rr++)for(let cc=0;cc<n;cc++)if(m[rr][cc])ctx.fillRect((x+lay.qr.x+(cc+1)*ms)*K,(y+lay.qr.y+(rr+1)*ms)*K,ms*K+.3,ms*K+.3); } }
+        ctx.fillStyle='#0B1E3F';
+        lay.lines.forEach(l=>{ ctx.font=(l.bold?'bold ':'')+(l.pt*PT_MM*K)+'px Arial, sans-serif'; ctx.fillText(l.t,(x+l.x)*K,(y+l.base)*K); });
       }
-      el.innerHTML=html;
     }
     async function lbPdf(){
       const g=lbGeom(), err=lbValid(g);
       if(err){ $('lbMsg').innerHTML='<div class="error">'+esc(err)+'</div>'; return; }
       const all=lbExpand();
-      if(!all.length){ $('lbMsg').innerHTML='<div class="error">Nėra pozicijų.</div>'; return; }
+      if(!all.length){ $('lbMsg').innerHTML='<div class="error">Nėra lipdukų (visų pozicijų lipdukų skaičius 0).</div>'; return; }
       if(all.length>2000&&!confirm('Bus suformuota '+all.length+' lipdukų. Tęsti?'))return;
       $('lbMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Formuojama…</div>';
       try{
+        const withQr=$('lbQr').checked;
+        if(withQr)await ensureQrLib();
         const { PDFDocument, rgb }=PDFLib;
         const pdf=await PDFDocument.create();
+        pdf.setTitle('Turto lipdukai'); pdf.setCreator('NPVS');
         const F=await getBodyFonts(pdf);
         const MM=72/25.4, PW=210*MM, PH=297*MM;
         const per=g.cols*g.rows, skip=Math.max(0,Math.round(lbNum('lbSkip')))%per;
         const outline=$('lbOutline').checked;
-        const pad=Math.min(1.2,g.h*0.1,g.w*0.06);
-        const fit=(font,t,size,maxW)=>{ // sutrumpina tekstą, kad tilptų
-          if(font.widthOfTextAtSize(t,size)<=maxW)return t;
-          let s=t; while(s.length>1&&font.widthOfTextAtSize(s+'…',size)>maxW)s=s.slice(0,-1);
-          return s+'…';
-        };
-        let page=null;
-        const total=all.length+skip;
+        const measure=(t,b,pt)=>(b?F.bold:F.reg).widthOfTextAtSize(t,pt)/MM;
+        const navy=rgb(0.04,0.12,0.25), black=rgb(0,0,0);
+        let page=null; const total=all.length+skip;
         for(let i=0;i<total;i++){
-          const pos=i%per;
-          if(pos===0)page=pdf.addPage([PW,PH]);
-          const a=i>=skip?all[i-skip]:null;
+          const pos=i%per; if(pos===0)page=pdf.addPage([PW,PH]);
+          const it=i>=skip?all[i-skip]:null;
           const r=Math.floor(pos/g.cols), c=pos%g.cols;
-          const x0=(g.ml+g.ox+c*(g.w+g.gx))*MM, yTop=PH-(g.mt+g.oy+r*(g.h+g.gy))*MM;
-          const W=g.w*MM, H=g.h*MM;
-          if(outline)page.drawRectangle({ x:x0, y:yTop-H, width:W, height:H, borderColor:rgb(.6,.6,.6), borderWidth:.4 });
-          if(!a)continue;
-          const L=lbLines(a);
-          const availW=W-2*pad*MM, availH=H-2*pad*MM;
-          const tot=L.reduce((s,l)=>s+l.rel,0);
-          const base=Math.min(28, availH/(tot*1.15));
-          const sized=L.map(l=>{ const font=l.bold?F.bold:F.reg;
-            let size=base*l.rel; const w1=font.widthOfTextAtSize(l.t,1);
-            if(w1*size>availW){ const fs=availW/w1; size=l.trunc?Math.max(fs,Math.min(size,6)):fs; } // ilgi tekstai – ne mažiau 6 pt, likusi dalis trumpinama
-            size=Math.max(3,size);
-            return { font, size, t:fit(font,l.t,size,availW) }; });
-          const blockH=sized.reduce((s,l)=>s+l.size*1.15,0);
-          let y=yTop-pad*MM-(availH-blockH)/2;
-          sized.forEach(l=>{ y-=l.size*1.15; const tw=l.font.widthOfTextAtSize(l.t,l.size);
-            page.drawText(l.t,{ x:x0+(W-tw)/2, y:y+l.size*0.22, size:l.size, font:l.font, color:rgb(0.04,0.12,0.25) }); });
+          const x=g.ml+g.ox+c*(g.w+g.gx), y=g.mt+g.oy+r*(g.h+g.gy);  // mm nuo viršaus kairės
+          if(outline)page.drawRectangle({ x:x*MM, y:PH-(y+g.h)*MM, width:g.w*MM, height:g.h*MM, borderColor:rgb(.6,.6,.6), borderWidth:.4 });
+          if(!it)continue;
+          const lay=lbLayout(g,lbLines(it.a,it.k,it.n),withQr,measure);
+          if(lay.qr){ const m=lbQrMatrix(it.a), n=m.length, ms=lay.qr.s/(n+2);
+            for(let rr=0;rr<n;rr++){ let cc=0;
+              while(cc<n){ if(!m[rr][cc]){ cc++; continue; } let e=cc; while(e<n&&m[rr][e])e++;
+                page.drawRectangle({ x:(x+lay.qr.x+(cc+1)*ms)*MM, y:PH-(y+lay.qr.y+(rr+2)*ms)*MM, width:(e-cc)*ms*MM, height:ms*MM+0.05, color:black });
+                cc=e; } } }
+          lay.lines.forEach(l=>page.drawText(l.t,{ x:(x+l.x)*MM, y:PH-(y+l.base)*MM, size:l.pt, font:l.bold?F.bold:F.reg, color:navy }));
         }
         const bytes=await pdf.save();
-        const blob=new Blob([bytes],{type:'application/pdf'});
-        const url=URL.createObjectURL(blob);
+        const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
         const aEl=document.createElement('a'); aEl.href=url; aEl.download='Lipdukai_'+(CURRENT.case_short_code||'byla')+'_'+new Date().toISOString().slice(0,10)+'.pdf';
         document.body.appendChild(aEl); aEl.click(); aEl.remove(); setTimeout(()=>URL.revokeObjectURL(url),60000);
         lbSaveCfg();
         $('lbMsg').innerHTML='<div class="success" style="font-size:13px;"><span class="ic ic-check"></span> PDF suformuotas: '+all.length+' lipdukų, '+Math.ceil(total/per)+' lap. Spausdinkite 100 % mastelio.</div>';
-        try{ logEvent('asset_labels_printed',{ count:all.length, positions:LB_ITEMS.length, w:g.w, h:g.h }); }catch(_){}
+        try{ logEvent('asset_labels_printed',{ count:all.length, positions:LB_ITEMS.length, w:g.w, h:g.h, qr:withQr, mode:LB_MODE }); }catch(_){}
       }catch(e){ $('lbMsg').innerHTML='<div class="error">'+esc(e.message||String(e))+'</div>'; }
     }
-    function openLabels(items,srcText){
+    async function openLabels(items,srcText){
       LB_ITEMS=items.slice();
       if(!LB_ITEMS.length){ alert('Nėra pozicijų lipdukams.'); return; }
-      $('lbSrc').textContent=srcText+' · pozicijų: '+LB_ITEMS.length+(LB_ITEMS.filter(a=>!a.inventory_no).length?' (be įmonės inv. Nr.: '+LB_ITEMS.filter(a=>!a.inventory_no).length+' — bus naudojamas sistemos kodas)':'');
+      const noInv=LB_ITEMS.filter(a=>!a.inventory_no).length;
+      $('lbSrc').textContent=srcText+' · pozicijų: '+LB_ITEMS.length+(noInv?' (be įmonės inv. Nr.: '+noInv+' — bus naudojamas sistemos kodas)':'');
       $('lbFmt').innerHTML=LB_FORMATS.map(f=>`<option value="${f.id}">${esc(f.label)}</option>`).join('');
       let cfg=null; try{ cfg=JSON.parse(localStorage.getItem(LB_KEY)||'null'); }catch(_){}
       if(cfg&&cfg.g){
@@ -7327,17 +7442,24 @@
         const g=cfg.g; $('lbW').value=g.w; $('lbH').value=g.h; $('lbC').value=g.cols; $('lbR').value=g.rows;
         $('lbML').value=g.ml; $('lbMT').value=g.mt; $('lbGX').value=g.gx; $('lbGY').value=g.gy; $('lbOX').value=g.ox||0; $('lbOY').value=g.oy||0;
         $('lbPrimary').value=cfg.primary||'inv'; $('lbShowCode').checked=!!cfg.code; $('lbShowName').checked=!!cfg.name; $('lbShowOwner').checked=!!cfg.owner;
-        $('lbCopies').value=cfg.copies||'one'; $('lbOutline').checked=!!cfg.outline;
+        $('lbQr').checked=cfg.v===2?!!cfg.qr:true; $('lbNumber').checked=cfg.v===2?!!cfg.number:true;
+        $('lbCopies').value=['units','qty','one'].includes(cfg.copies)?cfg.copies:'units'; $('lbOutline').checked=!!cfg.outline;
       } else {
         $('lbFmt').value='l7651'; lbApplyFmt('l7651'); $('lbOX').value=0; $('lbOY').value=0;
-        $('lbPrimary').value='inv'; $('lbShowCode').checked=true; $('lbShowName').checked=true; $('lbShowOwner').checked=false; $('lbCopies').value='one'; $('lbOutline').checked=false;
+        $('lbPrimary').value='inv'; $('lbQr').checked=true; $('lbShowCode').checked=true; $('lbShowName').checked=true; $('lbShowOwner').checked=false;
+        $('lbCopies').value='units'; $('lbNumber').checked=true; $('lbOutline').checked=false;
       }
       $('lbSkip').value=0; $('lbMsg').innerHTML='';
-      lbRender(); show('labelModal');
+      lbResetCounts();
+      show('labelModal');
+      lbRender();
+      if($('lbQr').checked&&!window.qrcode){ try{ await ensureQrLib(); lbRender(); }catch(e){ $('lbMsg').innerHTML='<div class="error">'+esc(e.message)+'</div>'; } }
     }
     $('lbFmt').onchange=()=>{ lbApplyFmt($('lbFmt').value); lbRender(); };
     document.querySelectorAll('#labelModal .lbg').forEach(el=>el.addEventListener('input',()=>{ $('lbFmt').value='custom'; lbRender(); }));
-    ['lbPrimary','lbShowCode','lbShowName','lbShowOwner','lbCopies','lbSkip','lbOX','lbOY','lbOutline'].forEach(id=>{ $(id).addEventListener('input',lbRender); $(id).addEventListener('change',lbRender); });
+    $('lbCopies').addEventListener('change',()=>{ lbResetCounts(); lbRender(); });
+    $('lbQr').addEventListener('change',async()=>{ if($('lbQr').checked&&!window.qrcode){ try{ await ensureQrLib(); }catch(_){} } lbRender(); });
+    ['lbPrimary','lbShowCode','lbShowName','lbShowOwner','lbNumber','lbSkip','lbOX','lbOY','lbOutline'].forEach(id=>{ $(id).addEventListener('input',lbRender); $(id).addEventListener('change',lbRender); });
     $('lbPdfBtn').onclick=lbPdf;
     $('lbCloseBtn').onclick=()=>hide('labelModal');
     $('invLabelsBtn').onclick=()=>openLabels(invStageRows(),'Inventorizacijos etapas (pagal filtrus)');
@@ -7425,6 +7547,7 @@
             <button type="button" class="btn btn-sm btn-ghost" id="avInvEdit" style="text-transform:none;">Keisti būseną</button></div>
           <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:13px;align-items:baseline;">
             <div>${lbl}${a.inventory_checked_at?' <span class="muted">'+esc(a.inventory_checked_at.slice(0,10))+'</span>':''}</div>
+            ${a.inventory_units!=null?'<div>Daiktų (lipdukų): <b>'+esc(String(a.inventory_units))+'</b></div>':''}
             ${a.inventory_qty!=null?'<div>Faktinis kiekis: <b'+(diff?' style="color:#8A5A00;"':'')+'>'+esc(String(a.inventory_qty))+'</b> '+esc(a.unit||'')+(diff?' <span class="muted">(apskaitoje '+esc(String(a.quantity))+')</span>':'')+'</div>':''}
           </div>
           ${a.inventory_note?'<div class="av-note" style="margin-top:6px;'+(st==='not_found'?'background:#FDECEA;':'')+'">'+esc(a.inventory_note)+'</div>':''}`;
@@ -7440,6 +7563,7 @@
         </div>
         <div class="row">
           <div style="max-width:170px;"><label class="label">Faktinis kiekis</label><input id="avInvQty" class="input" type="number" step="any" min="0" value="${esc(String(qv))}"></div>
+          <div style="max-width:170px;"><label class="label" title="Kiek fizinių daiktų sudaro poziciją (lipdukų skaičius)">Daiktų sk. (lipdukų)</label><input id="avInvUnits" class="input" type="number" step="1" min="1" value="${a.inventory_units!=null?esc(String(a.inventory_units)):''}"></div>
           <div><label class="label">Pastaba (kodėl keičiama, kas rasta)</label><textarea id="avInvNote" class="textarea" style="min-height:44px;">${esc(a.inventory_note||'')}</textarea></div>
         </div>
         <div id="avInvMsg" style="margin:6px 0;"></div>
@@ -7455,10 +7579,12 @@
         let qty=qr===''?null:Number(qr.replace(',','.'));
         if(qty!=null&&(!isFinite(qty)||qty<0)){ $('avInvMsg').innerHTML='<div class="error">Neteisingas kiekis.</div>'; return; }
         if(ns==='not_found')qty=0; if(ns===null)qty=null;
+        const ur=$('avInvUnits').value.trim(); const units=ur===''?null:Math.round(Number(ur));
+        if(units!=null&&(!isFinite(units)||units<1)){ $('avInvMsg').innerHTML='<div class="error">Daiktų skaičius turi būti teigiamas sveikas skaičius.</div>'; return; }
         if((ns||'')!==st&&!note){ $('avInvMsg').innerHTML='<div class="error">Keičiant būseną įrašykite pastabą (priežastį) — ji fiksuojama veiksmų žurnale.</div>'; $('avInvNote').focus(); return; }
-        const { data, error }=await sb.rpc('set_asset_inventory',{ p_asset_id:a.id, p_state:ns, p_note:note||null, p_qty:qty });
+        const { data, error }=await sb.rpc('set_asset_inventory',{ p_asset_id:a.id, p_state:ns, p_note:note||null, p_qty:qty, p_units:units });
         if(error||(data&&data.ok===false)){ $('avInvMsg').innerHTML='<div class="error">'+esc(error?error.message:data.error_code)+'</div>'; return; }
-        a.inventory_state=ns; a.inventory_note=note||null; a.inventory_qty=qty;
+        a.inventory_state=ns; a.inventory_note=note||null; a.inventory_qty=qty; a.inventory_units=units;
         a.inventory_checked_at=ns?new Date().toISOString():null; if(ns==='found')a.needs_review=false;
         renderAvInv(false); renderAssets();
         const b=$('avBadges'); if(b)openAssetView(a.id);

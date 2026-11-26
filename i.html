@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="lt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Turto kortelė</title>
+<style>body{font-family:system-ui,Arial,sans-serif;color:#0B1E3F;display:flex;min-height:90vh;align-items:center;justify-content:center;margin:0 16px;text-align:center}</style>
+</head><body><div id="m">Atidaroma turto kortelė…</div>
+<script>
+/* Trumpa nuoroda iš turto lipduko QR kodo: help.vvc.lt/i#<22 ženklų ID>
+   ID – turto įrašo UUID, užkoduotas base64url. Duomenų čia nėra: kortelė atidaroma
+   tik prisijungus prie sistemos ir turint teisę matyti tą bylą. */
+(function(){
+  try{
+    var s=(location.hash||'').replace(/^#/,'').trim();
+    var id='';
+    if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) id=s.toLowerCase();
+    else if(/^[A-Za-z0-9_-]{22}$/.test(s)){
+      var b=atob(s.replace(/-/g,'+').replace(/_/g,'/')+'=='), hx='';
+      for(var i=0;i<b.length;i++) hx+=('0'+b.charCodeAt(i).toString(16)).slice(-2);
+      id=hx.slice(0,8)+'-'+hx.slice(8,12)+'-'+hx.slice(12,16)+'-'+hx.slice(16,20)+'-'+hx.slice(20,32);
+    }
+    if(!id){ document.getElementById('m').textContent='Neteisinga nuoroda.'; return; }
+    location.replace('admin-bankrotas.html?asset='+id);
+  }catch(e){ document.getElementById('m').textContent='Neteisinga nuoroda.'; }
+})();
+</script></body></html>
