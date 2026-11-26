@@ -11483,7 +11483,7 @@
           const canUnlock = mlocked && (IS_SUPERADMIN || a.manual_locked_by===CURRENT_UID);
           const isInvAct = a.act_type==='inventory_check';
           const canEdit = !mlocked && (!locked || IS_SUPERADMIN);
-          const canDel = true;   // aktą (bet kokio tipo, ir su PDF) gali ištrinti bet kuris administratorius; užraktas taikomas tik redagavimui
+          const canDel = actCanDelete();   // superadmin arba bylos „Aktai“ teisės (ne tik skaitymo); užraktas taikomas tik redagavimui
           const editBtn = canEdit ? `<button class="btn btn-sm btn-ghost" onclick="editAct('${a.id}')"><span class="ic ic-pencil"></span> Koreguoti</button> `
             : (!mlocked && locked && isInvAct) ? `<button class="btn btn-sm btn-ghost" title="Ištrinti šį aktą ir sukurti naują tam pačiam objektui su atnaujintu turto sąrašu" onclick="redoInvAct('${a.id}')"><span class="ic ic-refresh"></span> Sukurti iš naujo</button> ` : '';
           const delBtn = canDel ? `<button class="btn btn-sm btn-danger" title="Ištrinti aktą" onclick="delAct('${a.id}')"><span class="ic ic-trash"></span></button>` : '';
@@ -11615,8 +11615,29 @@
       if(locked&&IS_SUPERADMIN&&!confirm('DĖMESIO: šis aktas yra galutinis ir jo PDF jau sugeneruotas.\n\nKoreguojant akto turinį jis nebesutaps su sugeneruotu PDF failu — pakoregavę BŪTINAI iš naujo sugeneruokite PDF.\n\nVeiksmas bus užfiksuotas veiklos žurnale. Tęsti?'))return;
       openActEditor(a);
     };
+    // Trinti aktą gali superadministratorius arba šiai bylai priskirtas naudotojas su „Aktai“ teisėmis
+    function actCanDelete(){ if(IS_SUPERADMIN)return true; const l=subLevel('acts'); return !!l&&!['none','read','view'].includes(l); }
+    // Trynimas: pirmiausia per serverio funkciją (žurnalas, numeracija); jei serverio funkcija dar
+    // senos versijos ir atmeta užrakintą aktą – trinama tiesiogiai (bylos teisės tikrinamos RLS) ir įrašoma į žurnalą.
+    async function actDeleteRow(a){
+      const res=await sb.rpc('delete_insolvency_act',{ p_id:a.id });
+      if(res.error)return { ok:false, msg:res.error.message };
+      if(!(res.data&&res.data.ok===false))return { ok:true, assets:(res.data&&res.data.assets_unlinked)||0 };
+      const code=res.data.error_code;
+      if(code==='no_case_access')return { ok:false, msg:'Neturite teisės trinti šios bylos aktų.' };
+      if(code!=='act_locked'&&code!=='act_locked_manual')return { ok:false, msg:'Klaida: '+code };
+      try{ await sb.from('act_sign_requests').delete().eq('act_id',a.id); }catch(_){}
+      const d=await sb.from('insolvency_acts').delete().eq('id',a.id).select('id');
+      if(d.error)return { ok:false, msg:'Klaida: '+d.error.message };
+      if(!d.data||!d.data.length)return { ok:false, msg:'Aktas neištrintas: duomenų bazė neleido ištrinti šio akto (teisių taisyklė). Reikia įdiegti duomenų bazės atnaujinimą „delete_insolvency_act“.' };
+      try{ await sb.rpc('log_insolvency_event',{ p_case_id:a.case_id||CURRENT.id, p_action:'act_deleted', p_details:{ act_id:a.id, act_no:a.act_no||'', act_type:a.act_type, act_date:a.act_date||null,
+        status:a.status, had_pdf:!!a.pdf_path, pdf_path:a.pdf_path||null, signed_copy_path:a.signed_copy_path||null, manual_locked:!!a.manual_locked,
+        rows:(a.rows||[]).length, by:CURRENT_UID, by_email:($('userEmail')&&$('userEmail').textContent)||'' } }); }catch(_){}
+      return { ok:true, assets:0 };
+    }
     window.delAct=async id=>{
       const a=ACTS.find(x=>x.id===id); if(!a)return;
+      if(!actCanDelete()){ alert('Neturite teisės trinti šios bylos aktų.'); return; }
       const name=(ACT_LABELS[a.act_type]||ACT_TITLES[a.act_type]||'Aktas')+(a.act_no?' Nr. '+a.act_no:'')+(a.act_date?' ('+a.act_date+')':'');
       const warn=[];
       if(a.status==='final'&&a.pdf_path)warn.push('• aktui jau sugeneruotas PDF');
@@ -11625,24 +11646,17 @@
       if(a.manual_locked)warn.push('• aktas užrakintas redagavimui');
       if(!confirm('Ištrinti '+name+'?'+(warn.length?'\n\nDĖMESIO:\n'+warn.join('\n'):'')+
         '\n\nAkto eilutės ir pasirašymo užklausos bus pašalintos, turto kortelės lieka sistemoje ir galės būti įtrauktos į naują aktą. Trynimas (kas, kada, koks aktas) fiksuojamas veiklos žurnale.'))return;
-      const res=await sb.rpc('delete_insolvency_act',{ p_id:id });
-      if(res.error){ alert('Klaida: '+res.error.message); return; }
-      if(res.data&&res.data.ok===false){
-        alert(res.data.error_code==='act_locked'||res.data.error_code==='act_locked_manual'
-          ? 'Aktas neištrintas: duomenų bazėje dar neįdiegtas atnaujinimas, leidžiantis trinti užrakintus aktus. Kreipkitės į sistemos administratorių.'
-          : 'Klaida: '+res.data.error_code);
-        return;
-      }
+      const r=await actDeleteRow(a);
+      if(!r.ok){ alert(r.msg); return; }
       await loadActs();
-      if(res.data&&res.data.assets_unlinked&&typeof loadAssets==='function'&&ASSETS.length){ try{ await loadAssets(); }catch(_){} }
+      if(ASSETS.length&&typeof loadAssets==='function'){ try{ await loadAssets(); }catch(_){} }
     };
     // Užrakintas (sugeneruotas) inventorizacijos aktas: ištrinti ir sukurti naują tam pačiam objektui ir datai
     window.redoInvAct=async id=>{
       const a=ACTS.find(x=>x.id===id); if(!a)return;
       if(!confirm('Inventorizacijos aktas '+(a.act_no||'')+' jau sugeneruotas (PDF), todėl jo koreguoti negalima.\n\nIštrinti šį aktą ir sukurti naują tam pačiam objektui su atnaujintu turto sąrašu?\n(Trynimas fiksuojamas veiklos žurnale.)'))return;
-      const res=await sb.rpc('delete_insolvency_act',{ p_id:id });
-      if(res.error||(res.data&&res.data.ok===false)){
-        alert(res.error?res.error.message:(res.data.error_code==='act_locked'||res.data.error_code==='act_locked_manual')?'Aktas neištrintas: duomenų bazėje dar neįdiegtas atnaujinimas, leidžiantis trinti užrakintus aktus.':('Klaida: '+res.data.error_code)); return; }
+      const r=await actDeleteRow(a);
+      if(!r.ok){ alert(r.msg); return; }
       const m=a.meta||{};
       await openActEditor({ act_type:'inventory_check', act_date:a.act_date, handover_person:a.handover_person, receiver_person:a.receiver_person,
         meta:{ address:m.address||'', others:m.others||'', object:m.object||'' }, _autoload:true });
