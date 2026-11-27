@@ -7808,6 +7808,39 @@
         '<b>Rasta '+n+' neprisegtų nuotraukų prie '+found.length+' pozicijų.</b> Jos yra saugykloje, bet nerodomos kortelėse. Atidarykite poziciją – nuotraukas pamatysite ir galėsite prisegti po vieną arba visas.'+
         '<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">'+found.map(x=>`<button class="btn btn-sm btn-ghost" onclick="openAssetView('${x.a.id}')">${esc(x.a.inventory_no||x.a.asset_code||'')} · ${esc((x.a.name||'').slice(0,30))} <b>(${x.l.length})</b></button>`).join('')+'</div></div>';
     };
+
+    // ===== NAUJOS VERSIJOS PRANEŠIMAS =====
+    // Jei puslapis atidarytas seniai (pvz. planšetėje nuo ryto), pataisymai jame neveikia, kol jo neatnaujini.
+    // Kas 3 min. ir grįžus į langą tikrinama, ar serveryje nauja versija (ETag / Last-Modified) – jei taip,
+    // rodoma juosta „Atnaujinti“. Prieš generuojant aktą – papildomas perspėjimas.
+    const APP_VER=(()=>{
+      let base=null, newer=false;
+      async function sig(){
+        try{ const r=await fetch(location.pathname+'?v='+Date.now(),{ method:'HEAD', cache:'no-store' });
+          return (r.headers.get('etag')||'')+'|'+(r.headers.get('last-modified')||'')+'|'+(r.headers.get('content-length')||''); }catch(_){ return null; }
+      }
+      function banner(){
+        if(document.getElementById('verBar'))return;
+        const d=document.createElement('div'); d.id='verBar';
+        d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:500;background:#0B1E3F;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.25);display:flex;gap:12px;align-items:center;font-size:13.5px;max-width:calc(100vw - 32px);';
+        d.innerHTML='<span><b>Sistema atnaujinta.</b> Kad veiktų naujausi pataisymai, atnaujinkite puslapį.</span><button class="btn btn-sm btn-gold" id="verReload">Atnaujinti</button><button class="btn btn-sm btn-ghost" id="verLater" style="color:#fff;border-color:rgba(255,255,255,.35);">Vėliau</button>';
+        document.body.appendChild(d);
+        $('verReload').onclick=reload; $('verLater').onclick=()=>d.remove();
+      }
+      function reload(){
+        const dirty=[...document.querySelectorAll('.modal-bg:not(.hidden)')].some(m=>m.id&&MODAL.isDirty(m.id));
+        if(dirty&&!confirm('Atidarytame lange yra neišsaugotų pakeitimų. Atnaujinti puslapį vis tiek?'))return;
+        location.reload();
+      }
+      async function check(){
+        const s=await sig(); if(!s)return;
+        if(base===null){ base=s; return; }
+        if(s!==base){ newer=true; banner(); }
+      }
+      check(); setInterval(check,3*60*1000);
+      document.addEventListener('visibilitychange',()=>{ if(!document.hidden)check(); });
+      return { check, isNewer:()=>newer, reload };
+    })();
     /* ===== TURTO PERŽIŪROS KORTELĖ =====
        Atidaroma iš sąrašo. Tik skaitymui; „Redaguoti“ atidaro redagavimo formą.
        Nuotraukas čia galima PRIDĖTI (aiškus veiksmas – įrašoma iš karto), bet ne trinti. */
@@ -12379,6 +12412,9 @@
     $('actGenPdf').onclick=async()=>{
       $('actMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Generuojama…</div>'; $('actGenPdf').disabled=true;
       try{
+        await APP_VER.check();
+        if(APP_VER.isNewer()&&confirm('Sistemoje yra naujesnė versija (su pataisymais). Rekomenduojama pirmiau atnaujinti puslapį.\n\nGerai – išsaugoti juodraštį ir atnaujinti puslapį (aktą sugeneruosite po atnaujinimo).\nAtšaukti – generuoti dabar.')){
+          await saveAct('draft'); MODAL.clean('actEditor'); location.reload(); return; }
         if(!(await actPrepareForPdf()))return;
         const id=await saveAct('final'); if(!id)return;
         const p=collectAct('final');
