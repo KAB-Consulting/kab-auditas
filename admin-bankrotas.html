@@ -1034,6 +1034,7 @@
             <div class="muted" style="font-size:12px;">Inventorizuotas turtas, kainos ir jų keitimo istorija, pardavimo fiksavimas, turto kortelės su fotofiksacija.</div></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-sm btn-ghost" id="assetReportBtn"><span class="ic ic-down"></span> Ataskaitos / Eksportas</button>
+            <button class="btn btn-sm btn-ghost" id="assetOrphanBtn" title="Patikrinti, ar saugykloje nėra nuotraukų, kurios neprisegtos prie turto kortelių, ir jas atkurti"><span class="ic ic-search"></span> Nuotraukų patikra</button>
             <button class="btn btn-sm btn-ghost" id="assetPhotoPdfBtn" title="Atsisiųsti pasirinkto objekto viso turto nuotraukas vienu PDF"><span class="ic ic-image"></span> Nuotraukos (PDF)</button>
             <button class="btn btn-sm btn-ghost" id="assetPasteBtn"><span class="ic ic-clipboard"></span> Įklijuoti sąrašą</button>
             <button class="btn btn-sm btn-ghost" id="assetPriceImpBtn"><span class="ic ic-euro"></span> Importuoti kainas</button>
@@ -4959,6 +4960,32 @@
         return new File([b],file.name.replace(/\.(png|webp|heic|heif|jpe?g)$/i,'')+'.jpg',{ type:'image/jpeg', lastModified:file.lastModified });
       }catch(_){ return file; }
     }
+    // ===== SAUGUS TURTO NUOTRAUKŲ SĄRAŠO KEITIMAS =====
+    // Anksčiau kiekvienas veiksmas įrašydavo VISĄ nuotraukų sąrašą iš naršyklės atminties. Jei dvi
+    // nuotraukos buvo įkeliamos vienu metu (greitai fotografuojant) ar kortelė buvo atidaryta seniau,
+    // vėlesnis įrašas „užrašydavo“ ankstesnį ir nuoroda į nuotrauką dingdavo (failas lieka saugykloje).
+    // Dabar: to paties turto keitimai vykdomi eilėje, prieš įrašant sąrašas perskaitomas iš DB iš naujo
+    // ir keičiami tik konkretūs elementai (pridėti / pašalinti pagal kelią).
+    const PH_QUEUE=new Map();
+    function assetPhotosMutate(assetId,add,removePaths){
+      const prev=PH_QUEUE.get(assetId)||Promise.resolve();
+      const job=prev.catch(()=>{}).then(async()=>{
+        const { data, error }=await sb.from('insolvency_assets').select('photos').eq('id',assetId).single();
+        if(error)throw error;
+        let ph=Array.isArray(data&&data.photos)?data.photos.slice():[];
+        const rm=new Set(removePaths||[]);
+        if(rm.size)ph=ph.filter(x=>!rm.has(x&&x.path));
+        const have=new Set(ph.map(x=>x&&x.path));
+        (add||[]).forEach(x=>{ if(x&&x.path&&!have.has(x.path)){ ph.push(x); have.add(x.path); } });
+        const up=await sb.from('insolvency_assets').update({ photos:ph, updated_at:new Date().toISOString() }).eq('id',assetId);
+        if(up.error)throw up.error;
+        const loc=(typeof ASSETS!=='undefined'?ASSETS:[]).find(x=>x.id===assetId); if(loc)loc.photos=ph;
+        return ph;
+      });
+      PH_QUEUE.set(assetId,job);
+      job.finally(()=>{ if(PH_QUEUE.get(assetId)===job)PH_QUEUE.delete(assetId); });
+      return job;
+    }
     // Lygiagretus apdorojimas su ribotu srautų skaičiumi
     async function mapLimit(items,limit,fn){
       const out=new Array(items.length); let i=0;
@@ -6107,7 +6134,7 @@
     };
 
     // ---------- TURTAS ----------
-    let ASSETS=[], AS_PHOTOS=[], AS_SRC_ACT=null, AS_ACT_PHOTOS=[];
+    let ASSETS=[], AS_PHOTOS=[], AS_PHOTOS_ORIG=[], AS_SRC_ACT=null, AS_ACT_PHOTOS=[];
     const AS_SEL=new Set();   // masiniam priskyrimui pažymėtos pozicijos
     const AS_CAT={ realestate:'Nekilnojamas', movable:'Kilnojamas', inventory:'Atsargos', vehicle:'Transportas', intangible:'Nematerialus', other:'Kita' };
     const AS_ST={ in_stock:'Apskaitytas', for_sale:'Parduodamas', sold:'Parduotas', written_off:'Nurašytas', transferred:'Perduotas' };
@@ -6269,7 +6296,7 @@
       $('asAcqPrice').value=a.acquisition_price??'';
       $('asStatus').value=(a.status&&a.status!=='sold')?a.status:'in_stock';
       $('asNotes').value=a.notes||''; $('assetMsg').innerHTML='';
-      AS_PHOTOS=(a.photos||[]).slice();
+      AS_PHOTOS=(a.photos||[]).slice(); AS_PHOTOS_ORIG=(a.photos||[]).map(x=>x&&x.path);
       AS_SRC_ACT=a.source_act_id||null; AS_ACT_PHOTOS=[];
       $('assetPhotoSec').classList.remove('hidden');   // nuotraukas galima pridėti ir naujai pozicijai
       $('asActPhotoBtn').classList.toggle('hidden',!(id&&AS_SRC_ACT));
@@ -6447,7 +6474,14 @@
         status:$('asStatus').value, notes:$('asNotes').value.trim()||null, needs_review:false, updated_at:new Date().toISOString(),
         photos:AS_PHOTOS.slice() };
       let res;
-      if(id){ row.current_price=price; res=await sb.from('insolvency_assets').update(row).eq('id',id).select().single(); }
+      if(id){
+        // nuotraukos: ne perrašomas visas sąrašas, o pritaikomi tik šioje kortelėje atlikti pakeitimai
+        delete row.photos;
+        const now=AS_PHOTOS.map(x=>x.path), orig=new Set(AS_PHOTOS_ORIG);
+        const addPh=AS_PHOTOS.filter(x=>!orig.has(x.path)), rmPh=AS_PHOTOS_ORIG.filter(pth=>!now.includes(pth));
+        if(addPh.length||rmPh.length){ try{ await assetPhotosMutate(id,addPh,rmPh); }catch(err){ $('assetMsg').innerHTML='<div class="error">Nuotraukų įrašyti nepavyko: '+esc(err.message||String(err))+'</div>'; MODAL.dirty('assetModal'); return; } }
+        row.current_price=price; res=await sb.from('insolvency_assets').update(row).eq('id',id).select().single();
+      }
       else {
         // kodą duoda duomenų bazė, ne naršyklė
         const rc=await sb.rpc('next_case_code',{ p_case_id:CURRENT.id, p_key:'asset' });
@@ -7128,27 +7162,27 @@
     window.invDelPhoto=async i=>{
       const a=ASSETS.find(x=>x.id===INV_ID); if(!a)return;
       if(!confirm('Pašalinti šią nuotrauką? Veiksmas įrašomas iš karto.'))return;
-      const ph=(a.photos||[]).slice(); ph.splice(i,1);
-      await sb.from('insolvency_assets').update({ photos:ph, updated_at:new Date().toISOString() }).eq('id',a.id);
-      a.photos=ph; renderInvPhotos(); renderInvList();
+      const it=(a.photos||[])[i]; if(!it)return;
+      try{ await assetPhotosMutate(a.id,[],[it.path]); }catch(err){ $('invMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
+      renderInvPhotos(); renderInvList();
     };
     async function invHandlePhotos(e){
       const a=ASSETS.find(x=>x.id===INV_ID);
       if(!a||!e.target.files||!e.target.files.length){ e.target.value=''; return; }
       $('invMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliama…</div>';
       try{
-        const ph=(a.photos||[]).slice();
+        // kiekviena nuotrauka prisegama iškart po įkėlimo – nutrūkus ryšiui ankstesnės neprarandamos
         for(const file0 of e.target.files){
           const file=await prepUploadImage(file0);
           const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
-          const path=`${CURRENT.case_short_code}/assets/${a.id}/${Date.now()}_${safe}`;
-          const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+          const path=`${CURRENT.case_short_code}/assets/${a.id}/${Date.now()}_${Math.random().toString(36).slice(2,6)}_${safe}`;
+          const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:false });
           if(error)throw error;
-          ph.push({ path, name:file.name });
+          await assetPhotosMutate(a.id,[{ path, name:file.name }],[]);
+          if(INV_ID===a.id)renderInvPhotos();
         }
-        await sb.from('insolvency_assets').update({ photos:ph, updated_at:new Date().toISOString() }).eq('id',a.id);
-        a.photos=ph; renderInvPhotos(); renderInvList();
-        $('invMsg').innerHTML='<div class="success">Nuotraukos įkeltos.</div>';
+        if(INV_ID===a.id)renderInvPhotos(); renderInvList();
+        if(INV_ID===a.id)$('invMsg').innerHTML='<div class="success">Nuotraukos įkeltos.</div>';
       }catch(err){ $('invMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
       finally{ e.target.value=''; }
     }
@@ -7734,6 +7768,46 @@
     $('assetPhotoPdfBtn').onclick=()=>openPhotoPdf(null);
     $('invPhotoPdfBtn').onclick=()=>openPhotoPdf($('invFilterLoc').value||null);
 
+    // ===== NEPRISEGTŲ NUOTRAUKŲ PAIEŠKA IR ATKŪRIMAS =====
+    // Failai turto aplanke (byla/assets/<turto id>/), kurių nėra kortelės nuotraukų sąraše.
+    // Taip galėjo atsitikti dėl ankstesnės klaidos (vienu metu įkeltos nuotraukos) arba nuotrauka pašalinta sąmoningai.
+    async function assetOrphans(a){
+      const dir=`${CURRENT.case_short_code}/assets/${a.id}`;
+      const { data, error }=await sb.storage.from('insolvency-docs').list(dir,{ limit:500, sortBy:{ column:'created_at', order:'asc' } });
+      if(error)throw error;
+      const have=new Set((a.photos||[]).map(x=>x&&x.path));
+      return (data||[]).filter(f=>f&&f.name&&f.id&&/\.(jpe?g|png|webp|heic|heif|gif)$/i.test(f.name)).map(f=>({ path:dir+'/'+f.name, name:f.name, created:f.created_at, size:(f.metadata&&f.metadata.size)||0 })).filter(f=>!have.has(f.path));
+    }
+    async function avCheckOrphans(a){
+      const el=$('avOrphans'); if(!el)return; el.innerHTML='';
+      let list=[]; try{ list=await assetOrphans(a); }catch(_){ return; }
+      if(AV_ID!==a.id||!list.length)return;
+      el.innerHTML=`<div style="margin-top:10px;padding:10px;border:1px solid #E3D3AC;background:#FFF8E6;border-radius:var(--r-sm);font-size:12.5px;">
+        <b>Rasta neprisegtų nuotraukų: ${list.length}.</b> Jos įkeltos šiai pozicijai, bet nėra kortelėje (ankstesnė klaida arba pašalintos sąmoningai).
+        <div id="avOrphGrid" class="ph-grid" style="margin-top:8px;"></div>
+        <button type="button" class="btn btn-sm" id="avOrphAll" style="margin-top:6px;">Prisegti visas (${list.length})</button></div>`;
+      const urls=await Promise.all(list.map(f=>photoUrl(f.path)));
+      $('avOrphGrid').innerHTML=list.map((f,i)=>`<div class="ph-thumb" style="background:#F3F5F8;"><img src="${urls[i]||''}" loading="lazy" onclick="openPhotoBox([{path:'${esc(f.path)}',name:'${esc(f.name)}'}],0)">
+        <button type="button" class="btn btn-sm" data-i="${i}" style="position:absolute;left:4px;bottom:4px;padding:2px 8px;font-size:11px;">Prisegti</button></div>`).join('');
+      const attach=async sel=>{ try{ await assetPhotosMutate(a.id,sel.map(f=>({ path:f.path, name:f.name })),[]); try{ logEvent('asset_photos_restored',{ asset_id:a.id, code:a.asset_code, count:sel.length }); }catch(_){}
+          renderAvPhotos(); renderAssets(); avCheckOrphans(ASSETS.find(x=>x.id===a.id)||a); }catch(err){ alert(err.message||String(err)); } };
+      $('avOrphGrid').querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>attach([list[+b.dataset.i]]));
+      $('avOrphAll').onclick=()=>attach(list);
+    }
+    // visos bylos patikra
+    $('assetOrphanBtn').onclick=async()=>{
+      if(!ASSETS.length){ alert('Turto sąrašas tuščias.'); return; }
+      $('assetsMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Tikrinama saugykla: 0 iš '+ASSETS.length+'…</div>';
+      let done=0; const found=[];
+      await mapLimit(ASSETS,6,async a=>{ try{ const l=await assetOrphans(a); if(l.length)found.push({ a, l }); }catch(_){} done++;
+        if(done%10===0)$('assetsMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Tikrinama saugykla: '+done+' iš '+ASSETS.length+'…</div>'; });
+      if(!found.length){ $('assetsMsg').innerHTML='<div class="success"><span class="ic ic-check"></span> Patikrinta '+ASSETS.length+' pozicijų: visos įkeltos nuotraukos prisegtos prie kortelių.</div>'; return; }
+      found.sort((x,y)=>actSortKey(x.a).localeCompare(actSortKey(y.a),'lt',{numeric:true}));
+      const n=found.reduce((s,x)=>s+x.l.length,0);
+      $('assetsMsg').innerHTML='<div style="padding:10px 12px;border:1px solid #E3D3AC;background:#FFF8E6;border-radius:var(--r-sm);font-size:13px;">'+
+        '<b>Rasta '+n+' neprisegtų nuotraukų prie '+found.length+' pozicijų.</b> Jos yra saugykloje, bet nerodomos kortelėse. Atidarykite poziciją – nuotraukas pamatysite ir galėsite prisegti po vieną arba visas.'+
+        '<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">'+found.map(x=>`<button class="btn btn-sm btn-ghost" onclick="openAssetView('${x.a.id}')">${esc(x.a.inventory_no||x.a.asset_code||'')} · ${esc((x.a.name||'').slice(0,30))} <b>(${x.l.length})</b></button>`).join('')+'</div></div>';
+    };
     /* ===== TURTO PERŽIŪROS KORTELĖ =====
        Atidaroma iš sąrašo. Tik skaitymui; „Redaguoti“ atidaro redagavimo formą.
        Nuotraukas čia galima PRIDĖTI (aiškus veiksmas – įrašoma iš karto), bet ne trinti. */
@@ -7782,6 +7856,7 @@
           <div class="sec-title" style="margin-top:0;">Fotofiksacija <span class="muted" style="text-transform:none;font-weight:400;">(${(a.photos||[]).length})</span></div>
           <div id="avPhotos" class="ph-grid"></div>
           <div id="avPhotoMsg" style="margin-top:6px;"></div>
+          <div id="avOrphans"></div>
         </div>
         <div class="av-sec">
           <div class="sec-title" style="margin-top:0;">Dokumentai</div>
@@ -7791,6 +7866,7 @@
       `;
       renderAvPhotos();
       renderAvInv(false);
+      avCheckOrphans(a);
       show('assetViewModal');
       // dokumentai (tik peržiūrai)
       try{
@@ -7871,18 +7947,16 @@
       if(!a||!e.target.files||!e.target.files.length){ e.target.value=''; return; }
       $('avPhotoMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliama…</div>';
       try{
-        const ph=(a.photos||[]).slice();
         for(const file0 of e.target.files){
           const file=await prepUploadImage(file0);
           const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
-          const path=`${CURRENT.case_short_code}/assets/${a.id}/${Date.now()}_${safe}`;
-          const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
+          const path=`${CURRENT.case_short_code}/assets/${a.id}/${Date.now()}_${Math.random().toString(36).slice(2,6)}_${safe}`;
+          const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:false });
           if(error)throw error;
-          ph.push({ path, name:file.name });
+          await assetPhotosMutate(a.id,[{ path, name:file.name }],[]);
+          if(AV_ID===a.id)renderAvPhotos();
         }
-        const { error }=await sb.from('insolvency_assets').update({ photos:ph, updated_at:new Date().toISOString() }).eq('id',a.id);
-        if(error)throw error;
-        a.photos=ph; renderAvPhotos(); renderAssets();
+        if(AV_ID===a.id)renderAvPhotos(); renderAssets();
         $('avPhotoMsg').innerHTML='<div class="success" style="font-size:12px;">Nuotraukos pridėtos.</div>';
         setTimeout(()=>{ if($('avPhotoMsg'))$('avPhotoMsg').innerHTML=''; },2500);
       }catch(err){ $('avPhotoMsg').innerHTML='<div class="error">'+esc(err.message||String(err))+'</div>'; }
