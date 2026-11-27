@@ -4904,19 +4904,66 @@
        Nuotrauka nėra dokumentas: ją reikia matyti, o ne atidaryti per failo peržiūrą.
        Todėl visur rodomos miniatiūros, o paspaudus – pilno dydžio peržiūra viršutiniame
        sluoksnyje (veikia ir atidarius iš turto kortelės). */
-    const PH_URL=new Map();                       // path -> pasirašyta nuoroda (podėlis)
-    async function photoUrl(path){
+    // path -> { u, t } pasirašyta nuoroda. Serveris (get-insolvency-url) nuorodą duoda 5 min., todėl
+    // podėlyje laikome tik 4 min. – anksčiau laikydavome visam laikui ir po 5 min. nuotraukos
+    // nebeatsisiųsdavo (HTTP 400), o aktai susiformuodavo be nuotraukų.
+    const PH_URL=new Map(), PH_TTL=4*60*1000;
+    async function photoUrl(path,fresh){
       if(!path)return '';
-      if(PH_URL.has(path))return PH_URL.get(path);
+      const c=PH_URL.get(path);
+      if(c&&!fresh&&Date.now()-c.t<PH_TTL)return c.u;
       try{
         const { data:{ session } } = await sb.auth.getSession();
         const res=await fetch(`${SUPABASE_URL}/functions/v1/get-insolvency-url`,{
           method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON_KEY},
           body:JSON.stringify({ path })});
         const r=await res.json(); const u=r.url||'';
-        if(u)PH_URL.set(path,u);
+        if(u)PH_URL.set(path,{ u, t:Date.now() }); else PH_URL.delete(path);
         return u;
       }catch(_){ return ''; }
+    }
+    // Nuotraukos failas: jei nuoroda nebegalioja ar nutrūko ryšys – nauja nuoroda ir dar 2 bandymai
+    async function photoBlob(path){
+      let last='';
+      for(let k=0;k<3;k++){
+        try{
+          const u=await photoUrl(path,k>0); if(!u){ last='nepavyko gauti nuorodos'; continue; }
+          const r=await fetch(u);
+          if(!r.ok){ last='HTTP '+r.status; PH_URL.delete(path); continue; }
+          const b=await r.blob();
+          if(!/^image\//.test(b.type||'')&&b.size<2048){ last='ne paveikslėlis'; PH_URL.delete(path); continue; }
+          return b;
+        }catch(e){ last=e.message||String(e); PH_URL.delete(path); }
+        await new Promise(rs=>setTimeout(rs,400*(k+1)));
+      }
+      throw new Error(last||'nepavyko');
+    }
+    // Paveikslėlio sumažinimas į JPEG (grąžina Blob). max – ilgoji kraštinė px.
+    async function shrinkImageBlob(blob,max,q){
+      const obj=URL.createObjectURL(blob);
+      try{
+        const im=await new Promise((rs,rj)=>{ const i=new Image(); i.onload=()=>rs(i); i.onerror=()=>rj(new Error('paveikslėlio nepavyko atidaryti')); i.src=obj; });
+        const k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));
+        const cv=document.createElement('canvas'); cv.width=Math.max(1,Math.round(im.naturalWidth*k)); cv.height=Math.max(1,Math.round(im.naturalHeight*k));
+        const cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,cv.width,cv.height); cx.drawImage(im,0,0,cv.width,cv.height);
+        return await new Promise((rs,rj)=>cv.toBlob(b=>b?rs(b):rj(new Error('suspaudimas nepavyko')),'image/jpeg',q));
+      } finally { URL.revokeObjectURL(obj); }
+    }
+    // Įkeliamos nuotraukos suspaudžiamos (telefono 3–4 MB → ~0,5–0,9 MB, ilgoji kraštinė 2560 px):
+    // greičiau įkeliama per mobilų ryšį, greičiau formuojami aktai ir PDF. Ne paveikslėliai – nekeičiami.
+    async function prepUploadImage(file){
+      try{
+        if(!file||!/^image\/(jpeg|jpg|png|webp|heic|heif)$/i.test(file.type||'')||file.size<900*1024)return file;
+        const b=await shrinkImageBlob(file,2560,0.82);
+        if(!b||b.size>=file.size)return file;
+        return new File([b],file.name.replace(/\.(png|webp|heic|heif|jpe?g)$/i,'')+'.jpg',{ type:'image/jpeg', lastModified:file.lastModified });
+      }catch(_){ return file; }
+    }
+    // Lygiagretus apdorojimas su ribotu srautų skaičiumi
+    async function mapLimit(items,limit,fn){
+      const out=new Array(items.length); let i=0;
+      await Promise.all(Array.from({length:Math.min(limit,items.length)},async()=>{ while(i<items.length){ const k=i++; out[k]=await fn(items[k],k); } }));
+      return out;
     }
     // Miniatiūrų tinklelis. items: [{path,name}], onDel – funkcijos pavadinimas (string) arba null
     async function photoThumbs(el,items,onDel,addBtns){
@@ -4931,7 +4978,7 @@
       bindAdd();
       const urls=await Promise.all(items.map(p=>photoUrl(p.path)));
       el.querySelectorAll('.ph-thumb').forEach((d,i)=>{
-        d.innerHTML=`<img src="${urls[i]||''}" alt="${esc(items[i].name||'')}" loading="lazy">`
+        d.innerHTML=`<img src="${urls[i]||''}" alt="${esc(items[i].name||'')}" loading="lazy" onerror="if(!this.dataset.r){this.dataset.r=1;photoUrl('${esc(items[i].path)}',true).then(u=>{if(u)this.src=u;});}">`
           +`<span class="ph-n">${i+1}</span>`
           +(onDel?`<button type="button" class="ph-del" title="Pašalinti">✕</button>`:'');
         d.onclick=e=>{ if(e.target.closest('.ph-del'))return; openPhotoBox(items,i); };
@@ -4953,7 +5000,9 @@
       const one=PB_ITEMS.length<2;
       $('pbPrev').style.display=one?'none':'flex';
       $('pbNext').style.display=one?'none':'flex';
-      $('pbImg').src=await photoUrl(p.path);
+      const im=$('pbImg'); im.dataset.r='';
+      im.onerror=()=>{ if(im.dataset.r)return; im.dataset.r='1'; photoUrl(p.path,true).then(u=>{ if(u)im.src=u; }); };
+      im.src=await photoUrl(p.path);
     }
     function pbStep(d){ if(!PB_ITEMS.length)return; PB_I=(PB_I+d+PB_ITEMS.length)%PB_ITEMS.length; pbRender(); }
     function pbClose(){ hide('photoBox'); $('pbImg').src=''; document.body.style.overflow=''; }
@@ -6368,7 +6417,8 @@
       const dir=id||AS_TMP_DIR;                 // naujai pozicijai – laikinas aplankas
       $('assetMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliama…</div>';
       try{
-        for(const file of e.target.files){
+        for(const file0 of e.target.files){
+          const file=await prepUploadImage(file0);
           const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
           const path=`${CURRENT.case_short_code}/assets/${dir}/${Date.now()}_${safe}`;
           const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
@@ -7088,7 +7138,8 @@
       $('invMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliama…</div>';
       try{
         const ph=(a.photos||[]).slice();
-        for(const file of e.target.files){
+        for(const file0 of e.target.files){
+          const file=await prepUploadImage(file0);
           const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
           const path=`${CURRENT.case_short_code}/assets/${a.id}/${Date.now()}_${safe}`;
           const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
@@ -7522,8 +7573,7 @@
     }
     // nuotraukos sumažinimas: ilgoji kraštinė ≤ max px, JPEG
     async function ppShrink(path,max,q){
-      const url=await photoUrl(path); if(!url)throw new Error('no url');
-      const blob=await (await fetch(url)).blob();
+      const blob=await photoBlob(path);
       const obj=URL.createObjectURL(blob);
       try{
         const im=await new Promise((rs,rj)=>{ const i=new Image(); i.onload=()=>rs(i); i.onerror=rj; i.src=obj; });
@@ -7822,7 +7872,8 @@
       $('avPhotoMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Įkeliama…</div>';
       try{
         const ph=(a.photos||[]).slice();
-        for(const file of e.target.files){
+        for(const file0 of e.target.files){
+          const file=await prepUploadImage(file0);
           const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');
           const path=`${CURRENT.case_short_code}/assets/${a.id}/${Date.now()}_${safe}`;
           const { error }=await sb.storage.from('insolvency-docs').upload(path,file,{ upsert:true });
@@ -12276,26 +12327,23 @@
             });
           }
           ACT_PHOTOS.forEach(ph=>wanted.push({ path:ph.path, label:'' }));
-          for(const w of wanted){
+          // atsisiunčiama po 4 lygiagrečiai, su pakartojimu; langelis ~40×30 mm, todėl 640 px pakanka
+          let done=0; const failed=[];
+          const res=await mapLimit(wanted,4,async w=>{
             try{
-              const url=await photoUrl(w.path); if(!url)continue;
-              const blob=await (await fetch(url)).blob();
-              const b64=await new Promise(rs=>{ const fr=new FileReader(); fr.onload=()=>rs(fr.result); fr.readAsDataURL(blob); });
-              // sumažinam: langelis ~40×30 mm, todėl 640 px pakanka; kitaip PDF tampa milžiniškas
-              const small=await new Promise(rs=>{
-                const im=new Image();
-                im.onload=()=>{ try{
-                  const mx=640, k=Math.min(1,mx/Math.max(im.width,im.height));
-                  const cv=document.createElement('canvas');
-                  cv.width=Math.max(1,Math.round(im.width*k)); cv.height=Math.max(1,Math.round(im.height*k));
-                  cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
-                  rs(cv.toDataURL('image/jpeg',0.78));
-                }catch(_){ rs(b64); } };
-                im.onerror=()=>rs(b64); im.src=b64;
-              });
-              p._photoData.push({ src:small, label:w.label });
-            }catch(_){}
+              const blob=await photoBlob(w.path);
+              const small=await shrinkImageBlob(blob,640,0.78);
+              const src=await new Promise(rs=>{ const fr=new FileReader(); fr.onload=()=>rs(fr.result); fr.readAsDataURL(small); });
+              return { src, label:w.label };
+            }catch(err){ failed.push((w.label||'priedas')+' ('+(err.message||err)+')'); return null; }
+            finally{ done++; $('actMsg').innerHTML='<div class="muted"><span class="ic ic-clock"></span> Ruošiamas nuotraukų priedas: '+done+' iš '+wanted.length+'…</div>'; }
+          });
+          res.forEach(x=>{ if(x)p._photoData.push(x); });
+          if(failed.length&&!confirm('Nepavyko įkelti '+failed.length+' iš '+wanted.length+' nuotraukų:\n'+failed.slice(0,8).join('\n')+(failed.length>8?'\n…':'')+'\n\nGerai – generuoti aktą be jų.\nAtšaukti – negeneruoti (bandykite dar kartą vėliau).')){
+            await sb.rpc('save_insolvency_act',{ p_id:id, p:{ status:'draft' } });
+            $('actMsg').innerHTML='<div class="error">Aktas negeneruotas: nepavyko įkelti '+failed.length+' nuotraukų. Patikrinkite ryšį ir bandykite dar kartą.</div>'; return;
           }
+          p._photoFailed=failed.length;
         }
         const holder=document.createElement('div'); holder.style.position='fixed'; holder.style.left='-9999px'; holder.style.top='0';
         holder.innerHTML=actHtml(p); document.body.appendChild(holder);
