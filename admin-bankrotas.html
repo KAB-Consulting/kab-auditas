@@ -5001,10 +5001,12 @@
         btn.onclick=()=>{ const t=document.getElementById(b.target); if(t)t.click(); };
       });
       if(!items.length){ el.innerHTML=add||'<span class="muted" style="font-size:12px;">Nuotraukų nėra.</span>'; bindAdd(); return; }
+      const tok=(el._phTok||0)+1; el._phTok=tok;   // vėlesnis atvaizdavimas atšaukia ankstesnį (lygiagretūs įkėlimai)
       el.innerHTML=items.map((p,i)=>`<div class="ph-thumb" data-i="${i}" style="background:#F3F5F8;"></div>`).join('')+add;
       bindAdd();
       const urls=await Promise.all(items.map(p=>photoUrl(p.path)));
-      el.querySelectorAll('.ph-thumb').forEach((d,i)=>{
+      if(el._phTok!==tok)return;
+      el.querySelectorAll('.ph-thumb').forEach((d,i)=>{ if(!items[i])return;
         d.innerHTML=`<img src="${urls[i]||''}" alt="${esc(items[i].name||'')}" loading="lazy" onerror="if(!this.dataset.r){this.dataset.r=1;photoUrl('${esc(items[i].path)}',true).then(u=>{if(u)this.src=u;});}">`
           +`<span class="ph-n">${i+1}</span>`
           +(onDel?`<button type="button" class="ph-del" title="Pašalinti">✕</button>`:'');
